@@ -17,12 +17,10 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
 */
-// Quake is a trademark of Id Software, Inc., (c) 1996 Id Software, Inc. All
-// rights reserved.
 
-#include <windows.h>
 #include "client.h"
 
+#if 0
 extern	HWND	cl_hwnd;
 
 static qboolean cdValid = false;
@@ -35,11 +33,13 @@ static byte 	remap[100];
 static byte		cdrom;
 static byte		playTrack;
 static byte		maxTrack;
+#endif
 
 cvar_t *cd_nocd;
 cvar_t *cd_loopcount;
 cvar_t *cd_looptrack;
 
+#if 0
 UINT	wDeviceID;
 int		loopcounter;
 
@@ -107,11 +107,12 @@ static int CDAudio_GetAudioDiskInfo (void)
 
 	return 0;
 }
-
+#endif
 
 
 void CDAudio_Play2 (int track, qboolean looping)
 {
+#if 0
 	DWORD				dwReturn;
 	MCI_PLAY_PARMS		mciPlayParms;
 	MCI_STATUS_PARMS	mciStatusParms;
@@ -188,19 +189,23 @@ void CDAudio_Play2 (int track, qboolean looping)
 
 	if (Cvar_VariableValue ("cd_nocd"))
 		CDAudio_Pause ();
+#endif
 }
 
 
 void CDAudio_Play (int track, qboolean looping)
 {
+#if 0
 	// set a loop counter so that this track will change to the
 	// looptrack later
 	loopcounter = 0;
 	CDAudio_Play2 (track, looping);
+#endif
 }
 
 void CDAudio_Stop (void)
 {
+#if 0
 	DWORD	dwReturn;
 
 	if (!enabled)
@@ -214,11 +219,13 @@ void CDAudio_Stop (void)
 
 	wasPlaying = false;
 	playing = false;
+#endif
 }
 
 
 void CDAudio_Pause (void)
 {
+#if 0
 	DWORD				dwReturn;
 	MCI_GENERIC_PARMS	mciGenericParms;
 
@@ -235,11 +242,13 @@ void CDAudio_Pause (void)
 
 	wasPlaying = playing;
 	playing = false;
+#endif
 }
 
 
 void CDAudio_Resume (void)
 {
+#if 0
 	DWORD			dwReturn;
 	MCI_PLAY_PARMS	mciPlayParms;
 
@@ -264,9 +273,10 @@ void CDAudio_Resume (void)
 	}
 
 	playing = true;
+#endif
 }
 
-
+#if 0
 static void CD_f (void)
 {
 	char	*command;
@@ -440,10 +450,11 @@ LONG CDAudio_MessageHandler (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 	return 0;
 }
-
+#endif
 
 void CDAudio_Update (void)
 {
+#if 0
 	if (cd_nocd->value != !enabled)
 	{
 		if (cd_nocd->value)
@@ -457,11 +468,13 @@ void CDAudio_Update (void)
 			CDAudio_Resume ();
 		}
 	}
+#endif
 }
 
 
 int CDAudio_Init (void)
 {
+#if 0
 	DWORD	dwReturn;
 	MCI_OPEN_PARMS	mciOpenParms;
 	MCI_SET_PARMS	mciSetParms;
@@ -512,11 +525,15 @@ int CDAudio_Init (void)
 	Com_Printf ("CD Audio Initialized\n");
 
 	return 0;
+#else
+	return -1;
+#endif
 }
 
 
 void CDAudio_Shutdown (void)
 {
+#if 0
 	if (!initialized)
 		return;
 
@@ -524,6 +541,7 @@ void CDAudio_Shutdown (void)
 
 	if (mciSendCommand (wDeviceID, MCI_CLOSE, MCI_WAIT, (DWORD) NULL))
 		Com_DPrintf ("CDAudio_Shutdown: MCI_CLOSE failed\n");
+#endif
 }
 
 
@@ -538,8 +556,10 @@ between a deactivate and an activate.
 */
 void CDAudio_Activate (qboolean active)
 {
+#if 0
 	if (active)
 		CDAudio_Resume ();
 	else
 		CDAudio_Pause ();
+#endif
 }
