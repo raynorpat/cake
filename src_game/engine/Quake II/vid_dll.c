@@ -260,8 +260,6 @@ MainWndProc
 main window procedure
 ====================
 */
-LONG CDAudio_MessageHandler (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
-
 LONG WINAPI MainWndProc (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	switch (uMsg)
@@ -356,10 +354,6 @@ LONG WINAPI MainWndProc (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	case WM_SYSKEYUP:
 	case WM_KEYUP:
 		Key_Event (MapKey (lParam), false, sys_msg_time);
-		return 0;
-
-	case MM_MCINOTIFY:
-		CDAudio_MessageHandler (hWnd, uMsg, wParam, lParam);
 		return 0;
 
 	default:

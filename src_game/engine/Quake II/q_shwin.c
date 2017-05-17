@@ -31,7 +31,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
 int		hunkcount;
 
-
 byte	*membase;
 int		hunkmaxsize;
 int		cursize;
@@ -58,7 +57,6 @@ void *Hunk_Alloc (int size)
 
 	// commit pages as needed
 	buf = VirtualAlloc (membase + cursize, size, MEM_COMMIT, PAGE_READWRITE);
-	//buf = VirtualAlloc (membase, cursize + size, MEM_COMMIT, PAGE_READWRITE);
 
 	if (!buf)
 	{
@@ -215,6 +213,4 @@ void Sys_FindClose (void)
 	findhandle = 0;
 }
 
-
 //============================================
-

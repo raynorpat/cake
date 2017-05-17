@@ -82,7 +82,7 @@
     </ResourceCompile>
     <Link>
       <AdditionalOptions>/NODEFAULTLIB:libcmt.lib %(AdditionalOptions)</AdditionalOptions>
-      <AdditionalDependencies>winmm.lib;wsock32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>winmm.lib;wsock32.lib;SDL2.lib;SDL2main.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <OutputFile>C:\Quake II\Quake II.exe</OutputFile>
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -130,7 +130,7 @@
       <Culture>0x0409</Culture>
     </ResourceCompile>
     <Link>
-      <AdditionalDependencies>winmm.lib;wsock32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>winmm.lib;wsock32.lib;SDL2.lib;SDL2main.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <OutputFile>.\release/quake2.exe</OutputFile>
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <ProgramDatabaseFile>.\release/quake2.pdb</ProgramDatabaseFile>
@@ -179,7 +179,7 @@
     <ResourceCompile Include="q2.rc" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="cd_win.c" />
+    <ClCompile Include="cd_sdl.c" />
     <ClCompile Include="cl_cin.c" />
     <ClCompile Include="cl_ents.c" />
     <ClCompile Include="cl_fx.c" />
@@ -231,7 +231,7 @@
     <ClCompile Include="snd_dma.c" />
     <ClCompile Include="snd_mem.c" />
     <ClCompile Include="snd_mix.c" />
-    <ClCompile Include="snd_win.c" />
+    <ClCompile Include="snd_sdl.c" />
     <ClCompile Include="sv_ccmds.c" />
     <ClCompile Include="sv_cmodel.c" />
     <ClCompile Include="sv_ents.c" />

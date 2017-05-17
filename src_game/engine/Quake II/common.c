@@ -30,7 +30,6 @@ void *Scratch_Alloc (void)
 {
 	// this buffer should never be accessed directly but always via a call to here
 	static char scratchbuf[20 * 1024 * 1024];
-
 	return scratchbuf;
 }
 
