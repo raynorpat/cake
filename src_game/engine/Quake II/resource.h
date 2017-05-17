@@ -1,8 +1,6 @@
 
 #define IDI_ICON1			101
 
-#define IDR_WARPGRAD		400
-
 #define IDR_BRUSH			600
 #define IDR_DRAW			610
 #define IDR_LIQUID			620

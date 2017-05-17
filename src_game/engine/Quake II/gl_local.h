@@ -93,7 +93,6 @@ void RWarp_DoWaterWarp (void);
 
 void R_DrawSurfaceChain (struct msurface_s *chain, int numindexes);
 
-void LoadTGAResource (int ResourceID, byte **pic, int *width, int *height);
 void LoadTGAFile (char *name, byte **pic, int *width, int *height);
 
 

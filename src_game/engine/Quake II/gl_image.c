@@ -23,11 +23,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 unsigned	d_8to24table_rgba[256];
 unsigned	d_8to24table_bgra[256];
 
-
 int img_base = 0;
-
-HANDLE ImageHeap = NULL;
-
 
 void *Img_Alloc (int size)
 {
@@ -39,16 +35,13 @@ void *Img_Alloc (int size)
 	return data;
 }
 
-
 void Img_Free (void)
 {
 	img_base = 0;
 }
 
 
-int Sys_LoadResourceData (int resourceid, void **resbuf);
 void GL_ResampleTexture (unsigned *in, int inwidth, int inheight, unsigned *out, int outwidth, int outheight);
-
 
 void GL_Image8To32 (byte *data8, unsigned *data32, int size, unsigned *palette)
 {
@@ -367,7 +360,6 @@ int Scrap_AllocBlock (int w, int h, int *x, int *y)
 	}
 
 	return -1;
-	//	Sys_Error ("Scrap_AllocBlock: full");
 }
 
 int	scrap_uploads;
@@ -807,17 +799,6 @@ void LoadTGACommon (int length, byte *buffer, byte **pic, int *width, int *heigh
 breakOut:;
 		}
 	}
-}
-
-
-void LoadTGAResource (int ResourceID, byte **pic, int *width, int *height)
-{
-	int length;
-	byte *buffer;
-
-	length = Sys_LoadResourceData (ResourceID, (void **) &buffer);
-
-	LoadTGACommon (length, buffer, pic, width, height);
 }
 
 

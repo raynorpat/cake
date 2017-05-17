@@ -50,8 +50,7 @@ void RUnderwater_CreatePrograms (void)
 	byte *data = NULL;
 	int width, height;
 
-	LoadTGAResource (IDR_WARPGRAD, &data, &width, &height);
-
+	LoadTGAFile("env/warpgradient.tga", &data, &width, &height);
 	if (data)
 		r_warpgradient = GL_UploadTexture (data, width, height, false, 32);
 

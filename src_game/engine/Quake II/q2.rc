@@ -4,9 +4,6 @@
 // standard resources
 IDI_ICON1			ICON  DISCARDABLE   "q2.ico"
 
-// textures
-IDR_WARPGRAD		RCDATA		"warpgradient.tga"
-
 // shaders
 IDR_BRUSH			RCDATA		"brush.glsl"
 IDR_DRAW			RCDATA		"draw.glsl"
