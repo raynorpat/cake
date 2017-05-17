@@ -1,0 +1,513 @@
+/*
+Copyright (C) 1997-2001 Id Software, Inc.
+
+This program is free software; you can redistribute it and/or
+modify it under the terms of the GNU General Public License
+as published by the Free Software Foundation; either version 2
+of the License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+See the GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, write to the Free Software
+Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+
+*/
+
+// draw.c
+
+#include "gl_local.h"
+
+
+int r_lastrawcols = -1;
+int r_lastrawrows = -1;
+GLuint r_rawtexture = 0;
+image_t *draw_chars;
+
+extern	qboolean	scrap_check_dirty;
+void Scrap_Upload (void);
+
+GLuint gl_drawprog = 0;
+GLuint u_drawtexturecolormix = 0;
+
+#define MAX_DRAW_QUADS	2048
+
+typedef struct drawvert_s
+{
+	float position[2];
+
+	union
+	{
+		unsigned color;
+		byte rgba[4];
+	};
+
+	float texcoord[2];
+} drawvert_t;
+
+typedef struct drawstate_s
+{
+	qboolean drawing;
+	GLuint currenttexture;
+	GLuint currentsampler;
+	float texturecolormix;
+	int firstquad;
+	int numquads;
+} drawstate_t;
+
+drawstate_t gl_drawstate = {false, 0xffffffff, 0, 0};
+drawvert_t gl_drawquads[MAX_DRAW_QUADS * 4];
+
+GLuint gl_drawvbo = 0;
+GLuint gl_drawvao = 0;
+GLuint gl_drawibo = 0;
+
+void RDraw_CreatePrograms (void)
+{
+	int i;
+	unsigned short *ndx;
+
+	glGenBuffers (1, &gl_drawvbo);
+	glNamedBufferDataEXT (gl_drawvbo, MAX_DRAW_QUADS * 4 * sizeof (drawvert_t), NULL, GL_STREAM_DRAW);
+
+	glGenBuffers (1, &gl_drawibo);
+	glNamedBufferDataEXT (gl_drawibo, MAX_DRAW_QUADS * 6 * sizeof (unsigned short), NULL, GL_STATIC_DRAW);
+
+	ndx = glMapNamedBufferEXT (gl_drawibo, GL_WRITE_ONLY);
+
+	for (i = 0; i < MAX_DRAW_QUADS; i++, ndx += 6)
+	{
+		ndx[0] = (i << 2) + 0;
+		ndx[1] = (i << 2) + 1;
+		ndx[2] = (i << 2) + 2;
+		ndx[3] = (i << 2) + 0;
+		ndx[4] = (i << 2) + 2;
+		ndx[5] = (i << 2) + 3;
+	}
+
+	glUnmapNamedBufferEXT (gl_drawibo);
+
+	gl_drawstate.drawing = false;
+	gl_drawstate.firstquad = 0;
+	gl_drawstate.numquads = 0;
+	gl_drawstate.currenttexture = 0xffffffff;
+	gl_drawstate.currentsampler = 0xffffffff;
+
+	glDeleteTextures (1, &r_rawtexture);
+	glGenTextures (1, &r_rawtexture);
+
+	r_lastrawcols = -1;
+	r_lastrawrows = -1;
+
+	gl_drawprog = GL_CreateShaderFromResource (IDR_DRAW, "DrawVS", "DrawFS");
+
+	glProgramUniformMatrix4fv (gl_drawprog, glGetUniformLocation (gl_drawprog, "orthomatrix"), 1, GL_FALSE, r_drawmatrix.m[0]);
+	glProgramUniform1i (gl_drawprog, glGetUniformLocation (gl_drawprog, "diffuse"), 0);
+
+	u_drawtexturecolormix = glGetUniformLocation (gl_drawprog, "texturecolormix");
+
+	glGenVertexArrays (1, &gl_drawvao);
+
+	glEnableVertexArrayAttribEXT (gl_drawvao, 0);
+	glVertexArrayVertexAttribOffsetEXT (gl_drawvao, gl_drawvbo, 0, 2, GL_FLOAT, GL_FALSE, sizeof (drawvert_t), 0);
+
+	glEnableVertexArrayAttribEXT (gl_drawvao, 1);
+	glVertexArrayVertexAttribOffsetEXT (gl_drawvao, gl_drawvbo, 1, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof (drawvert_t), 8);
+
+	glEnableVertexArrayAttribEXT (gl_drawvao, 2);
+	glVertexArrayVertexAttribOffsetEXT (gl_drawvao, gl_drawvbo, 2, 2, GL_FLOAT, GL_FALSE, sizeof (drawvert_t), 12);
+
+	GL_BindVertexArray (gl_drawvao);
+	glBindBuffer (GL_ELEMENT_ARRAY_BUFFER, gl_drawibo);
+}
+
+
+void Draw_Begin2D (void)
+{
+	if (!gl_drawstate.drawing)
+	{
+		drawvert_t *dv = NULL;
+
+		// set 2D virtual screen size
+		glViewport (0, 0, vid.width, vid.height);
+
+		GL_Enable (BLEND_BIT);
+
+		GL_BindVertexArray (gl_drawvao);
+
+		gl_drawstate.currenttexture = 0xffffffff;
+		gl_drawstate.currentsampler = 0xffffffff;
+		gl_drawstate.numquads = 0;
+		gl_drawstate.drawing = true;
+
+		// force a recache on first hit
+		gl_drawstate.texturecolormix = -1.0f;
+
+		// program is always active
+		GL_UseProgram (gl_drawprog);
+	}
+}
+
+
+void Draw_Flush (void)
+{
+	if (gl_drawstate.numquads)
+	{
+		GLvoid *dst = NULL;
+		drawvert_t *data = &gl_drawquads[gl_drawstate.firstquad * 4];
+
+		int offset = gl_drawstate.firstquad * sizeof (drawvert_t) * 4;
+		int size = gl_drawstate.numquads * sizeof (drawvert_t) * 4;
+
+		if ((dst = glMapNamedBufferRangeEXT (gl_drawvbo, offset, size, BUFFER_NO_OVERWRITE)) != NULL)
+		{
+			memcpy (dst, data, size);
+			glUnmapNamedBufferEXT (gl_drawvbo);
+
+			glDrawElements (
+				GL_TRIANGLES,
+				gl_drawstate.numquads * 6,
+				GL_UNSIGNED_SHORT,
+				(void *) (gl_drawstate.firstquad * 6 * sizeof (unsigned short))
+			);
+		}
+
+		gl_drawstate.firstquad += gl_drawstate.numquads;
+		gl_drawstate.numquads = 0;
+	}
+}
+
+
+void Draw_End2D (void)
+{
+	if (gl_drawstate.drawing)
+	{
+		Draw_Flush ();
+		gl_drawstate.drawing = false;
+	}
+}
+
+
+void Draw_GenericRect (GLuint texture, GLuint sampler, float texturecolormix, float x, float y, float w, float h, unsigned color, float sl, float tl, float sh, float th)
+{
+	drawvert_t *dv = NULL;
+
+	Draw_Begin2D ();
+
+	if (texturecolormix != gl_drawstate.texturecolormix)
+	{
+		Draw_Flush ();
+
+		glProgramUniform1f (gl_drawprog, u_drawtexturecolormix, texturecolormix);
+
+		gl_drawstate.texturecolormix = texturecolormix;
+	}
+
+	if (texture != gl_drawstate.currenttexture || sampler != gl_drawstate.currentsampler)
+	{
+		Draw_Flush ();
+
+		GL_BindTexture (GL_TEXTURE0, GL_TEXTURE_2D, sampler, texture);
+
+		gl_drawstate.currenttexture = texture;
+		gl_drawstate.currentsampler = sampler;
+	}
+
+	if (gl_drawstate.firstquad + gl_drawstate.numquads + 1 >= MAX_DRAW_QUADS)
+	{
+		Draw_Flush ();
+
+		glNamedBufferDataEXT (gl_drawvbo, MAX_DRAW_QUADS * 4 * sizeof (drawvert_t), NULL, GL_STREAM_DRAW);
+
+		gl_drawstate.firstquad = 0;
+	}
+
+	dv = &gl_drawquads[(gl_drawstate.firstquad + gl_drawstate.numquads) * 4];
+
+	Vector2Set (dv[0].position, x, y);
+	dv[0].color = color;
+	Vector2Set (dv[0].texcoord, sl, tl);
+
+	Vector2Set (dv[1].position, x + w, y);
+	dv[1].color = color;
+	Vector2Set (dv[1].texcoord, sh, tl);
+
+	Vector2Set (dv[2].position, x + w, y + h);
+	dv[2].color = color;
+	Vector2Set (dv[2].texcoord, sh, th);
+
+	Vector2Set (dv[3].position, x, y + h);
+	dv[3].color = color;
+	Vector2Set (dv[3].texcoord, sl, th);
+
+	gl_drawstate.numquads++;
+}
+
+
+void Draw_TexturedRect (GLuint texnum, GLuint sampler, float x, float y, float w, float h, float sl, float tl, float sh, float th)
+{
+	Draw_GenericRect (texnum, sampler, 0.0f, x, y, w, h, 0xffffffff, sl, tl, sh, th);
+}
+
+
+void Draw_ColouredRect (float x, float y, float w, float h, unsigned color)
+{
+	// prevent a texture change here
+	Draw_GenericRect (gl_drawstate.currenttexture, gl_drawstate.currentsampler, 1.0f, x, y, w, h, color, 0, 0, 0, 0);
+}
+
+
+/*
+===============
+Draw_InitLocal
+===============
+*/
+void Draw_InitLocal (void)
+{
+	// load console characters (don't bilerp characters)
+	draw_chars = GL_FindImage ("pics/conchars.pcx", it_pic);
+}
+
+
+/*
+================
+Draw_Char
+
+Draws one 8*8 graphics character with 0 being transparent.
+It can be clipped to the top of the screen to allow the console to be
+smoothly scrolled off.
+================
+*/
+void Draw_Char (int x, int y, int num)
+{
+	float frow, fcol, size;
+
+	num &= 255;
+
+	if ((num & 127) == 32)
+		return;		// space
+
+	if (y <= -8)
+		return;			// totally off screen
+
+	frow = (num >> 4) * 0.0625;
+	fcol = (num & 15) * 0.0625;
+	size = 0.0625;
+
+	Draw_TexturedRect (draw_chars->texnum, r_charsetsampler, x, y, 8, 8, fcol, frow, fcol + size, frow + size);
+}
+
+
+/*
+=============
+Draw_FindPic
+=============
+*/
+image_t	*Draw_FindPic (char *name)
+{
+	image_t *gl;
+	char	fullname[MAX_QPATH];
+
+	if (name[0] != '/' && name[0] != '\\')
+	{
+		Com_sprintf (fullname, sizeof (fullname), "pics/%s.pcx", name);
+		gl = GL_FindImage (fullname, it_pic);
+	}
+	else gl = GL_FindImage (name + 1, it_pic);
+
+	return gl;
+}
+
+/*
+=============
+Draw_GetPicSize
+=============
+*/
+void Draw_GetPicSize (int *w, int *h, char *pic)
+{
+	image_t *gl;
+
+	gl = Draw_FindPic (pic);
+
+	if (!gl)
+	{
+		*w = *h = -1;
+		return;
+	}
+
+	*w = gl->width;
+	*h = gl->height;
+}
+
+/*
+=============
+Draw_StretchPic
+=============
+*/
+void Draw_StretchPic (int x, int y, int w, int h, char *pic)
+{
+	image_t *gl;
+
+	gl = Draw_FindPic (pic);
+
+	if (!gl)
+	{
+		VID_Printf (PRINT_ALL, "Can't find pic: %s\n", pic);
+		return;
+	}
+
+	if (scrap_check_dirty)
+	{
+		Draw_End2D ();
+		Scrap_Upload ();
+	}
+
+	Draw_TexturedRect (gl->texnum, r_drawclampsampler, x, y, w, h, gl->sl, gl->tl, gl->sh, gl->th);
+}
+
+
+/*
+=============
+Draw_Pic
+=============
+*/
+void Draw_Pic (int x, int y, char *pic)
+{
+	image_t *gl;
+
+	gl = Draw_FindPic (pic);
+
+	if (!gl)
+	{
+		VID_Printf (PRINT_ALL, "Can't find pic: %s\n", pic);
+		return;
+	}
+
+	if (scrap_check_dirty)
+		Scrap_Upload ();
+
+	Draw_TexturedRect (gl->texnum, r_drawclampsampler, x, y, gl->width, gl->height, gl->sl, gl->tl, gl->sh, gl->th);
+}
+
+/*
+=============
+Draw_TileClear
+
+This repeats a 64*64 tile graphic to fill the screen around a sized down
+refresh window.
+=============
+*/
+void Draw_TileClear (int x, int y, int w, int h, char *pic)
+{
+	image_t	*image;
+
+	image = Draw_FindPic (pic);
+
+	if (!image)
+	{
+		VID_Printf (PRINT_ALL, "Can't find pic: %s\n", pic);
+		return;
+	}
+
+	Draw_TexturedRect (image->texnum, r_drawwrapsampler, x, y, w, h, x / 64.0, y / 64.0, (x + w) / 64.0, (y + h) / 64.0);
+}
+
+
+/*
+=============
+Draw_Fill
+
+Fills a box of pixels with a single color
+=============
+*/
+void Draw_Fill (int x, int y, int w, int h, int c)
+{
+	Draw_ColouredRect (x, y, w, h, d_8to24table_rgba[c & 255]);
+}
+
+
+//=============================================================================
+
+/*
+================
+Draw_FadeScreen
+
+================
+*/
+void Draw_FadeScreen (void)
+{
+	Draw_ColouredRect (0, 0, vid.width, vid.height, 0xcc000000);
+}
+
+
+void Draw_PolyBlend (void)
+{
+	union
+	{
+		unsigned c;
+		byte rgba[4];
+	} polyblend;
+
+	int i;
+
+	if (!gl_polyblend->value) return;
+	if (!v_blend[3]) return;
+
+	for (i = 0; i < 4; i++)
+	{
+		if (v_blend[i] > 1)
+			polyblend.rgba[i] = 255;
+		else if (v_blend[i] < 0)
+			polyblend.rgba[i] = 0;
+		else polyblend.rgba[i] = v_blend[i] * 255;
+	}
+
+	Draw_ColouredRect (0, 0, vid.width, vid.height, polyblend.c);
+
+	// hack
+	Draw_End2D ();
+}
+
+
+//====================================================================
+
+
+/*
+=============
+Draw_StretchRaw
+=============
+*/
+extern unsigned	r_rawpalette[256];
+
+void Draw_StretchRaw (int x, int y, int w, int h, int cols, int rows, byte *data)
+{
+	Draw_End2D ();
+
+	// bind-to-modify madness here
+	if (r_lastrawcols != cols || r_lastrawrows != rows)
+	{
+		// initial teximage
+		glDeleteTextures (1, &r_rawtexture);
+		glGenTextures (1, &r_rawtexture);
+		glTextureStorage2DEXT (r_rawtexture, GL_TEXTURE_2D, 1, GL_RGBA8, cols, rows);
+
+		// recache
+		r_lastrawcols = cols;
+		r_lastrawrows = rows;
+	}
+
+	// update the texture
+	GL_Image8To32 (data, (unsigned *) Scratch_Alloc (), rows * cols, r_rawpalette);
+	glTextureSubImage2DEXT (r_rawtexture, GL_TEXTURE_2D, 0, 0, 0, cols, rows, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, Scratch_Alloc ());
+
+	Draw_TexturedRect (r_rawtexture, r_drawclampsampler, x, y, w, h, 0, 0, 1, 1);
+
+	// hack
+	Draw_End2D ();
+}
+
+

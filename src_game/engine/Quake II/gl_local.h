@@ -1,0 +1,463 @@
+/*
+Copyright (C) 1997-2001 Id Software, Inc.
+
+This program is free software; you can redistribute it and/or
+modify it under the terms of the GNU General Public License
+as published by the Free Software Foundation; either version 2
+of the License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+See the GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, write to the Free Software
+Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+
+*/
+
+#ifdef _WIN32
+# include <windows.h>
+#endif
+
+#include <stdio.h>
+
+#define GLEW_STATIC
+
+#include <GL/glew.h>
+#include <GL/wglew.h>
+#include <GL/gl.h>
+#include <GL/glu.h>
+#include <math.h>
+
+#include "ref.h"
+#include "qgl.h"
+
+// for shader loading...
+#include "resource.h"
+
+#define	LIGHTMAP_SIZE	128
+#define	MAX_LIGHTMAPS	128
+
+typedef struct gllightmapstate_s
+{
+	int	current_lightmap_texture;
+
+	int			allocated[LIGHTMAP_SIZE];
+	qboolean	modified[MAX_LIGHTMAPS];
+	RECT		lightrect[MAX_LIGHTMAPS];
+
+	// the lightmap texture data needs to be kept in
+	// main memory so texsubimage can update properly
+	int			lmhunkmark;
+	byte		*lmhunkbase;
+	unsigned	*lightmap_data[MAX_LIGHTMAPS];
+} gllightmapstate_t;
+
+#define	REF_VERSION	"GL 0.01"
+
+extern float v_blend[4];
+
+void RMesh_MakeVertexBuffers (struct model_s *mod);
+void Sprite_MakeVertexBuffers (struct model_s *mod);
+
+#define BUFFER_DISCARD		(GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT)
+#define BUFFER_NO_OVERWRITE (GL_MAP_WRITE_BIT | GL_MAP_UNSYNCHRONIZED_BIT | GL_MAP_INVALIDATE_RANGE_BIT)
+
+GLuint GL_CreateShaderFromResource (int ResourceID, char *vsentry, char *fsentry);
+
+typedef struct ubodef_s
+{
+	GLuint ubo;
+	GLuint binding;
+} ubodef_t;
+
+void GL_UseProgram (GLuint progid);
+void GL_UseProgramWithUBOs (GLuint progid, ubodef_t *ubodef, int numubos);
+
+
+void RSurf_CreatePrograms (void);
+void RWarp_CreatePrograms (void);
+void RUnderwater_CreatePrograms (void);
+void RSky_CreatePrograms (void);
+void RDraw_CreatePrograms (void);
+void RMesh_CreatePrograms (void);
+void RBeam_CreatePrograms (void);
+void RNull_CreatePrograms (void);
+void Sprite_CreatePrograms (void);
+void RPart_CreatePrograms (void);
+void RWarp_BeginWaterWarp (void);
+void RWarp_DoWaterWarp (void);
+
+void R_DrawSurfaceChain (struct msurface_s *chain, int numindexes);
+
+void LoadTGAResource (int ResourceID, byte **pic, int *width, int *height);
+void LoadTGAFile (char *name, byte **pic, int *width, int *height);
+
+
+// up / down
+#define	PITCH	0
+
+// left / right
+#define	YAW		1
+
+// fall over
+#define	ROLL	2
+
+
+#ifndef __VIDDEF_T
+#define __VIDDEF_T
+typedef struct
+{
+	unsigned		width, height;			// coordinates from main game
+} viddef_t;
+#endif
+
+extern	viddef_t	vid;
+
+
+/*
+
+ skins will be outline flood filled and mip mapped
+ pics and sprites with alpha will be outline flood filled
+ pic won't be mip mapped
+
+ model skin
+ sprite frame
+ wall texture
+ pic
+
+*/
+
+typedef enum
+{
+	it_skin,
+	it_sprite,
+	it_wall,
+	it_pic,
+	it_sky
+} imagetype_t;
+
+typedef struct image_s
+{
+	char	name[MAX_QPATH];			// game path, including extension
+	imagetype_t	type;
+	int		width, height;				// source image
+	int		upload_width, upload_height;	// after power of two and picmip
+	int		registration_sequence;		// 0 = free
+	struct msurface_s	*texturechain;	// for sort-by-texture world drawing
+	int		texnum;						// gl texture binding
+	float	sl, tl, sh, th;				// 0,0 - 1,1 unless part of the scrap
+	qboolean	scrap;
+	qboolean	mipmap;
+} image_t;
+
+
+#define		MAX_GLTEXTURES	1024
+
+//===================================================================
+
+typedef enum
+{
+	rserr_ok,
+
+	rserr_invalid_fullscreen,
+	rserr_invalid_mode,
+
+	rserr_unknown
+} rserr_t;
+
+#include "gl_model.h"
+
+void GL_BeginRendering (int *x, int *y, int *width, int *height);
+void GL_EndRendering (void);
+
+void GL_SetDefaultState (void);
+void GL_UpdateSwapInterval (void);
+
+extern	float	gldepthmin, gldepthmax;
+
+typedef struct
+{
+	float	x, y, z;
+	float	s, t;
+	float	r, g, b;
+} glvert_t;
+
+
+#define	MAX_LBM_HEIGHT		480
+
+#define BACKFACE_EPSILON	0.01
+
+
+//====================================================
+
+extern	image_t		gltextures[MAX_GLTEXTURES];
+extern	int			numgltextures;
+
+
+extern	image_t		*r_notexture;
+extern	int			r_visframecount;
+extern	int			r_framecount;
+extern	cplane_t	frustum[4];
+extern	int			c_brush_polys, c_alias_polys;
+
+
+extern	int			gl_filter_min, gl_filter_max;
+
+//
+// view origin
+//
+extern	vec3_t	vup;
+extern	vec3_t	vpn;
+extern	vec3_t	vright;
+extern	vec3_t	r_origin;
+
+//
+// screen size info
+//
+extern	refdef_t	r_newrefdef;
+extern	int		r_viewcluster, r_viewcluster2, r_oldviewcluster, r_oldviewcluster2;
+
+extern	cvar_t	*r_norefresh;
+extern	cvar_t	*r_lefthand;
+extern	cvar_t	*r_drawentities;
+extern	cvar_t	*r_drawworld;
+extern	cvar_t	*r_speeds;
+extern	cvar_t	*r_fullbright;
+extern	cvar_t	*r_novis;
+extern	cvar_t	*r_nocull;
+extern	cvar_t	*r_lerpmodels;
+
+extern	cvar_t	*r_lightlevel;	// FIXME: This is a HACK to get the client's light level
+
+extern	cvar_t	*gl_mode;
+extern	cvar_t	*gl_lightmap;
+extern	cvar_t	*gl_shadows;
+extern	cvar_t	*gl_dynamic;
+extern  cvar_t  *gl_monolightmap;
+extern	cvar_t	*gl_showtris;
+extern	cvar_t	*gl_finish;
+extern	cvar_t	*gl_clear;
+extern	cvar_t	*gl_cull;
+extern	cvar_t	*gl_polyblend;
+extern	cvar_t	*gl_swapinterval;
+extern	cvar_t	*gl_texturemode;
+extern	cvar_t	*gl_textureanisotropy;
+extern  cvar_t  *gl_lockpvs;
+
+extern	cvar_t	*vid_fullscreen;
+extern	cvar_t	*vid_gamma;
+extern	cvar_t	*r_lightscale;
+
+extern	cvar_t	*intensity;
+
+extern	int		c_visible_lightmaps;
+extern	int		c_visible_textures;
+
+extern	glmatrix	r_drawmatrix;
+extern	glmatrix	r_worldmatrix;
+extern	glmatrix	r_projectionmatrix;
+extern	glmatrix	r_mvpmatrix;
+
+extern GLuint r_surfacesampler;
+extern GLuint r_lightmapsampler;
+extern GLuint r_drawclampsampler;
+extern GLuint r_drawwrapsampler;
+extern GLuint r_charsetsampler;
+extern GLuint r_skysampler;
+extern GLuint r_modelsampler;
+
+void RImage_CreateSamplers (void);
+
+void GL_BindTexture (GLuint tmu, GLenum target, GLuint sampler, GLuint texnum);
+
+void R_LightPoint (vec3_t p, vec3_t color);
+void R_PushDlights (mnode_t *headnode, glmatrix *transform);
+
+//====================================================================
+
+extern	model_t	*r_worldmodel;
+
+extern	unsigned	d_8to24table_rgba[256];
+
+extern	int		registration_sequence;
+
+int	R_Init (void *hinstance, void *hWnd);
+void R_Shutdown (void);
+
+void R_RenderView (refdef_t *fd);
+void GL_ScreenShot_f (void);
+void R_DrawAliasModel (entity_t *e);
+void R_DrawBrushModel (entity_t *e);
+void R_DrawSpriteModel (entity_t *e);
+void R_DrawBeam (entity_t *e);
+void R_DrawWorld (void);
+void R_DrawAlphaSurfaces (void);
+void R_InitParticleTexture (void);
+void Draw_InitLocal (void);
+qboolean R_CullBox (vec3_t mins, vec3_t maxs);
+void R_MarkLeaves (void);
+void R_DrawNullModel (entity_t *e);
+void R_DrawParticles (void);
+
+void R_DrawSkyChain (msurface_t *surf);
+void R_MarkLights (dlight_t *light, int bit, mnode_t *node);
+
+#if 0
+short LittleShort (short l);
+short BigShort (short l);
+int	LittleLong (int l);
+float LittleFloat (float f);
+
+char	*va (char *format, ...);
+// does a varargs printf into a temp buffer
+#endif
+
+void COM_StripExtension (char *in, char *out);
+
+void Draw_GetPicSize (int *w, int *h, char *name);
+void Draw_Pic (int x, int y, char *name);
+void Draw_StretchPic (int x, int y, int w, int h, char *name);
+void Draw_Char (int x, int y, int c);
+void Draw_TileClear (int x, int y, int w, int h, char *name);
+void Draw_Fill (int x, int y, int w, int h, int c);
+void Draw_FadeScreen (void);
+void Draw_StretchRaw (int x, int y, int w, int h, int cols, int rows, byte *data);
+void Draw_PolyBlend (void);
+void Draw_Begin2D (void);
+void Draw_End2D (void);
+
+void R_BeginFrame (float camera_separation);
+void R_SetPalette (const unsigned char *palette);
+
+int	Draw_GetPalette (void);
+
+void GL_ResampleTexture (unsigned *in, int inwidth, int inheight, unsigned *out, int outwidth, int outheight);
+
+struct image_s *R_RegisterSkin (char *name);
+
+void LoadPCX (char *filename, byte **pic, byte **palette, int *width, int *height);
+image_t *GL_LoadPic (char *name, byte *pic, int width, int height, imagetype_t type, int bits);
+image_t	*GL_FindImage (char *name, imagetype_t type);
+void GL_TextureMode (char *string, int anisotropy);
+void GL_ImageList_f (void);
+
+
+void GL_InitImages (void);
+void GL_ShutdownImages (void);
+
+void GL_FreeUnusedImages (void);
+
+
+typedef struct
+{
+	const char *renderer_string;
+	const char *vendor_string;
+	const char *version_string;
+	const char *extensions_string;
+} glconfig_t;
+
+typedef struct
+{
+	qboolean fullscreen;
+
+	int   prev_mode;
+
+	GLuint	lightmap_textures;
+
+	GLuint	currentsamplers[32];
+	GLuint	currenttextures[32];
+	GLuint	currentprogram;
+	int		currentvertexarray;
+	int		statebits;
+
+	GLenum srcblend;
+	GLenum dstblend;
+
+	unsigned char originalRedGammaTable[256];
+	unsigned char originalGreenGammaTable[256];
+	unsigned char originalBlueGammaTable[256];
+} glstate_t;
+
+extern glconfig_t gl_config;
+extern glstate_t  gl_state;
+
+extern GLuint gl_sharedubo;
+
+void RMain_InvalidateCachedState (void);
+
+#define CULLFACE_BIT		(1 << 0)
+#define BLEND_BIT			(1 << 1)
+#define DEPTHTEST_BIT		(1 << 2)
+#define SCISSOR_BIT			(1 << 3)
+#define DEPTHWRITE_BIT		(1 << 4)
+#define GOURAUD_BIT			(1 << 5)
+
+#define VAA0	(1 << 0)
+#define VAA1	(1 << 1)
+#define VAA2	(1 << 2)
+#define VAA3	(1 << 3)
+
+#define VAA4	(1 << 4)
+#define VAA5	(1 << 5)
+#define VAA6	(1 << 6)
+#define VAA7	(1 << 7)
+
+#define VAA8	(1 << 8)
+#define VAA9	(1 << 9)
+#define VAA10	(1 << 10)
+#define VAA11	(1 << 11)
+
+#define VAA12	(1 << 12)
+#define VAA13	(1 << 13)
+#define VAA14	(1 << 14)
+#define VAA15	(1 << 15)
+
+void GL_Enable (int bits);
+void GL_BlendFunc (GLenum sfactor, GLenum dfactor);
+void GL_BindVertexArray (GLuint vertexarray);
+
+typedef struct cubeface_s
+{
+	int width;
+	int height;
+	byte *data;
+} cubeface_t;
+
+GLuint GL_UploadTexture (byte *data, int width, int height, qboolean mipmap, int bits);
+GLuint GL_LoadCubeMap (cubeface_t *faces);
+void GL_Image8To32 (byte *data8, unsigned *data32, int size, unsigned *palette);
+
+void *Img_Alloc (int size);
+void Img_Free (void);
+
+typedef struct sharedubo_s
+{
+	glmatrix worldMatrix;
+
+	// padded for std140
+	float forwardVec[4];
+	float upVec[4];
+	float rightVec[4];
+	float viewOrigin[4];
+} sharedubo_t;
+
+
+/*
+====================================================================
+
+IMPLEMENTATION SPECIFIC FUNCTIONS
+
+====================================================================
+*/
+
+void GLimp_BeginFrame (float camera_separation);
+void GLimp_EndFrame (void);
+int GLimp_Init (void *hinstance, void *hWnd);
+void GLimp_Shutdown (void);
+int GLimp_SetMode (int *pwidth, int *pheight, int mode, qboolean fullscreen);
+void GLimp_AppActivate (qboolean active);
+
