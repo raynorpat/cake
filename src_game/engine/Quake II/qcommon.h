@@ -19,9 +19,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 */
 
 // qcommon.h -- definitions common between client and server, but not game.dll
-
 #include "q_shared.h"
-
 
 #define	VERSION		3.21
 
@@ -37,8 +35,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
 #ifdef _M_IX86
 #define	CPUSTRING	"x86"
-#elif defined _M_ALPHA
-#define	CPUSTRING	"AXP"
 #endif
 
 #elif defined __linux__
@@ -148,7 +144,6 @@ void COM_ClearArgv (int arg);
 int COM_CheckParm (char *parm);
 void COM_AddParm (char *parm);
 
-void COM_Init (void);
 void COM_InitArgv (int argc, char **argv);
 
 char *CopyString (char *in);
@@ -157,14 +152,11 @@ char *CopyString (char *in);
 
 void Info_Print (char *s);
 
-
 /* crc.h */
-
 void CRC_Init (unsigned short *crcvalue);
 void CRC_ProcessByte (unsigned short *crcvalue, byte data);
 unsigned short CRC_Value (unsigned short crcvalue);
 unsigned short CRC_Block (byte *start, int count);
-
 
 
 /*
@@ -190,8 +182,6 @@ PROTOCOL
 #define	UPDATE_BACKUP	16	// copies of entity_state_t to keep buffered
 // must be power of two
 #define	UPDATE_MASK		(UPDATE_BACKUP-1)
-
-
 
 //==================
 // the svc_strings[] array in cl_parse.c should mirror this
@@ -448,7 +438,6 @@ CVAR
 */
 
 /*
-
 cvar_t variables are used to hold scalar or string variables that can be changed or displayed at the console or prog code as well as accessed directly
 in C code.
 
@@ -527,7 +516,7 @@ NET
 #define	MAX_MSGLEN		1400		// max length of a message
 #define	PACKET_HEADER	10			// two ints and a short
 
-typedef enum {NA_LOOPBACK, NA_BROADCAST, NA_IP, NA_IPX, NA_BROADCAST_IPX} netadrtype_t;
+typedef enum {NA_LOOPBACK, NA_BROADCAST, NA_IP} netadrtype_t;
 
 typedef enum {NS_CLIENT, NS_SERVER} netsrc_t;
 
@@ -599,7 +588,6 @@ typedef struct
 extern	netadr_t	net_from;
 extern	sizebuf_t	net_message;
 extern	byte		net_message_buffer[MAX_MSGLEN];
-
 
 void Netchan_Init (void);
 void Netchan_Setup (netsrc_t sock, netchan_t *chan, netadr_t adr, int qport);
@@ -821,6 +809,5 @@ void SCR_BeginLoadingPlaque (void);
 void SV_Init (void);
 void SV_Shutdown (char *finalmsg, qboolean reconnect);
 void SV_Frame (int msec);
-
 
 void *Scratch_Alloc (void);
