@@ -149,13 +149,7 @@ idnewt:28000
 192.246.40.70:28000
 =============
 */
-#define DO(src,dest)	\
-	copy[0] = s[src];	\
-	copy[1] = s[src + 1];	\
-	sscanf (copy, "%x", &val);	\
-	((struct sockaddr_ipx *)sadr)->dest = val
-
-qboolean	NET_StringToSockaddr (char *s, struct sockaddr *sadr)
+qboolean NET_StringToSockaddr (char *s, struct sockaddr *sadr)
 {
 	struct hostent	*h;
 	char	*colon;
@@ -164,56 +158,33 @@ qboolean	NET_StringToSockaddr (char *s, struct sockaddr *sadr)
 
 	memset (sadr, 0, sizeof (*sadr));
 
-	if ((strlen (s) >= 23) && (s[8] == ':') && (s[21] == ':'))	// check for an IPX address
+	((struct sockaddr_in *) sadr)->sin_family = AF_INET;
+	((struct sockaddr_in *) sadr)->sin_port = 0;
+
+	strcpy (copy, s);
+
+	// strip off a trailing :port if present
+	for (colon = copy; *colon; colon++)
+		if (*colon == ':')
+		{
+			*colon = 0;
+			((struct sockaddr_in *) sadr)->sin_port = htons ((short) atoi (colon + 1));
+		}
+
+	if (copy[0] >= '0' && copy[0] <= '9')
 	{
-		((struct sockaddr_ipx *) sadr)->sa_family = AF_IPX;
-		copy[2] = 0;
-		DO (0, sa_netnum[0]);
-		DO (2, sa_netnum[1]);
-		DO (4, sa_netnum[2]);
-		DO (6, sa_netnum[3]);
-		DO (9, sa_nodenum[0]);
-		DO (11, sa_nodenum[1]);
-		DO (13, sa_nodenum[2]);
-		DO (15, sa_nodenum[3]);
-		DO (17, sa_nodenum[4]);
-		DO (19, sa_nodenum[5]);
-		sscanf (&s[22], "%u", &val);
-		((struct sockaddr_ipx *) sadr)->sa_socket = htons ((unsigned short) val);
+		* (int *) & ((struct sockaddr_in *) sadr)->sin_addr = inet_addr (copy);
 	}
 	else
 	{
-		((struct sockaddr_in *) sadr)->sin_family = AF_INET;
+		if (!(h = gethostbyname (copy)))
+			return 0;
 
-		((struct sockaddr_in *) sadr)->sin_port = 0;
-
-		strcpy (copy, s);
-
-		// strip off a trailing :port if present
-		for (colon = copy; *colon; colon++)
-			if (*colon == ':')
-			{
-				*colon = 0;
-				((struct sockaddr_in *) sadr)->sin_port = htons ((short) atoi (colon + 1));
-			}
-
-		if (copy[0] >= '0' && copy[0] <= '9')
-		{
-			* (int *) & ((struct sockaddr_in *) sadr)->sin_addr = inet_addr (copy);
-		}
-		else
-		{
-			if (!(h = gethostbyname (copy)))
-				return 0;
-
-			* (int *) & ((struct sockaddr_in *) sadr)->sin_addr = * (int *) h->h_addr_list[0];
-		}
+		* (int *) & ((struct sockaddr_in *) sadr)->sin_addr = * (int *) h->h_addr_list[0];
 	}
 
 	return true;
 }
-
-#undef DO
 
 /*
 =============
@@ -244,7 +215,6 @@ qboolean	NET_StringToAdr (char *s, netadr_t *a)
 
 	return true;
 }
-
 
 qboolean	NET_IsLocalAddress (netadr_t adr)
 {
