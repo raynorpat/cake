@@ -227,7 +227,7 @@
     <ClCompile Include="qgl.c" />
     <ClCompile Include="qmenu.c" />
     <ClCompile Include="q_shared.c" />
-    <ClCompile Include="q_shwin.c" />
+    <ClCompile Include="sys_shared.c" />
     <ClCompile Include="snd_dma.c" />
     <ClCompile Include="snd_mem.c" />
     <ClCompile Include="snd_mix.c" />
