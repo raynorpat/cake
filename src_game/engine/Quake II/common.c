@@ -54,7 +54,7 @@ cvar_t	*dedicated;
 
 FILE	*logfile;
 
-int			server_state;
+int		server_state;
 
 // host_speeds times
 int		time_before_game;
@@ -1153,115 +1153,105 @@ void Info_Print (char *s)
 
 just cleared malloc with counters now...
 
-writing your own malloc and free around this is cutesy but is it a worthwhile
-waste of your time?  HeapAlloc, HeapFree and (especially) HeapDestroy just do
-so much better here.
-
-this also resolves a crasher when trasitioning from biggun
-
 ==============================================================================
 */
 
-// gamex86 just uses 2; this is headroom for mods
-#define MAX_ZONE_HEAPS	65536
-
-HANDLE zonehandles[MAX_ZONE_HEAPS];
-
-#define	Z_MAGIC		0x1d1d1d1d
+#define	Z_MAGIC		0x1d1d
 
 typedef struct zhead_s
 {
-	int		magic;
-	int		tag;
+	struct zhead_s	*prev, *next;
+	short	magic;
+	short	tag;			// for group free
+	int		size;
 } zhead_t;
+static zhead_t z_chain = { 0 };
 
+int		z_count, z_bytes;
+
+/*
+========================
+Z_Free
+========================
+*/
 void Z_Free (void *ptr)
 {
-	if (ptr)
-	{
-		zhead_t	*z = ((zhead_t *) ptr) - 1;
+	zhead_t	*z;
 
-		if (z->magic != Z_MAGIC)
-			Com_Error (ERR_FATAL, "Z_Free: bad magic");
+	z = ((zhead_t *)ptr) - 1;
 
-		if (z->tag < 0) Com_Error (ERR_FATAL, "Z_Free : tag list underflow");
-		if (z->tag >= MAX_ZONE_HEAPS) Com_Error (ERR_FATAL, "Z_Free : tag list overflow");
+	if (z->magic != Z_MAGIC)
+		Com_Error (ERR_FATAL, "Z_Free: bad magic");
 
-		if (zonehandles[z->tag])
-		{
-			HeapFree (zonehandles[z->tag], 0, z);
-		}
-	}
+	z->prev->next = z->next;
+	z->next->prev = z->prev;
+
+	z_count--;
+	z_bytes -= z->size;
+	free (z);
 }
 
 
-void *Z_TagMalloc (int size, int tag)
-{
-	zhead_t	*z = NULL;
-
-	if (tag < 0) Com_Error (ERR_FATAL, "Z_TagMalloc : tag list underflow");
-	if (tag >= MAX_ZONE_HEAPS) Com_Error (ERR_FATAL, "Z_TagMalloc : tag list overflow");
-
-	if (!zonehandles[tag])
-		zonehandles[tag] = HeapCreate (0, 0x10000, 0);
-
-	size = size + sizeof (zhead_t);
-	z = HeapAlloc (zonehandles[tag], 0, size);
-
-	memset (z, 0, size);
-
-	z->magic = Z_MAGIC;
-	z->tag = tag;
-
-	return (void *) (z + 1);
-}
-
-
-void Z_FreeTags (int tag)
-{
-	if (zonehandles[tag])
-	{
-		HeapDestroy (zonehandles[tag]);
-		zonehandles[tag] = NULL;
-	}
-}
-
-
+/*
+========================
+Z_Stats_f
+========================
+*/
 void Z_Stats_f (void)
 {
-	int i;
+	Com_Printf ("%i bytes in %i blocks\n", z_bytes, z_count);
+}
 
-	for (i = 0; i < MAX_ZONE_HEAPS; i++)
+/*
+========================
+Z_FreeTags
+========================
+*/
+void Z_FreeTags (int tag)
+{
+	zhead_t	*z, *next;
+
+	for (z=z_chain.next ; z != &z_chain ; z=next)
 	{
-		if (!zonehandles[i]) continue;
-
-		if (HeapLock (zonehandles[i]))
-		{
-			PROCESS_HEAP_ENTRY phe;
-			int data = 0;
-			int overhead = 0;
-			int allocs = 0;
-
-			phe.lpData = NULL;
-
-			while (1)
-			{
-				if (!HeapWalk (zonehandles[i], &phe)) break;
-
-				data += phe.cbData;
-				overhead += phe.cbOverhead;
-				allocs++;
-			}
-
-			HeapUnlock (zonehandles[i]);
-
-			Com_Printf ("heap %5i  data %i  overhead %i  allocs %i\n", i, data, overhead, allocs);
-		}
-		else Com_Printf ("Z_Stats_f : failed to obtain lock on heap %i\n", i);
+		next = z->next;
+		if (z->tag == tag)
+			Z_Free ((void *)(z+1));
 	}
 }
 
+/*
+========================
+Z_TagMalloc
+========================
+*/
+void *Z_TagMalloc (int size, int tag)
+{
+	zhead_t	*z;
+	
+	size = size + sizeof(zhead_t);
+	z = malloc(size);
+	if (!z)
+		Com_Error (ERR_FATAL, "Z_Malloc: failed on allocation of %i bytes",size);
+	memset (z, 0, size);
+	z_count++;
+	z_bytes += size;
+	z->magic = Z_MAGIC;
+	z->tag = tag;
+	z->size = size;
 
+	z->next = z_chain.next;
+	z->prev = &z_chain;
+	z_chain.next->prev = z;
+	z_chain.next = z;
+
+	return (void *)(z+1);
+}
+
+/*
+========================
+Z_Malloc
+========================
+*/
 void *Z_Malloc (int size)
 {
 	return Z_TagMalloc (size, 0);
@@ -1353,7 +1343,6 @@ byte COM_BlockSequenceCRCByte (byte *base, int length, int sequence)
 	byte chkb[60 + 4];
 	unsigned short crc;
 
-
 	if (sequence < 0)
 		Sys_Error ("sequence < 0, this shouldn't happen\n");
 
@@ -1421,6 +1410,8 @@ void Qcommon_Init (int argc, char **argv)
 
 	if (setjmp (abortframe))
 		Sys_Error ("Error during initialization");
+
+	z_chain.next = z_chain.prev = &z_chain;
 
 	// prepare enough of the subsystems to handle
 	// cvar and command buffer management

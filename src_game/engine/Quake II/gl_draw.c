@@ -103,7 +103,7 @@ void RDraw_CreatePrograms (void)
 	r_lastrawcols = -1;
 	r_lastrawrows = -1;
 
-	gl_drawprog = GL_CreateShaderFromResource (IDR_DRAW, "DrawVS", "DrawFS");
+	gl_drawprog = GL_CreateShaderFromName ("glsl/draw.glsl", "DrawVS", "DrawFS");
 
 	glProgramUniformMatrix4fv (gl_drawprog, glGetUniformLocation (gl_drawprog, "orthomatrix"), 1, GL_FALSE, r_drawmatrix.m[0]);
 	glProgramUniform1i (gl_drawprog, glGetUniformLocation (gl_drawprog, "diffuse"), 0);

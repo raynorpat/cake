@@ -363,7 +363,7 @@ int FS_LoadFile (char *path, void **buffer)
 		return len;
 	}
 
-	buf = Z_Malloc (len);
+	buf = malloc (len);
 	*buffer = buf;
 
 	FS_Read (buf, len, h);
@@ -381,7 +381,7 @@ FS_FreeFile
 */
 void FS_FreeFile (void *buffer)
 {
-	Z_Free (buffer);
+	free (buffer);
 }
 
 /*

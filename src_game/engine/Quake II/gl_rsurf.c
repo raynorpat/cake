@@ -80,7 +80,7 @@ void RSurf_CreatePrograms (void)
 			r_surfuboblocksize += addsize;
 	}
 
-	gl_lightmappedsurfprog = GL_CreateShaderFromResource (IDR_BRUSH, "LightmappedVS", "LightmappedFS");
+	gl_lightmappedsurfprog = GL_CreateShaderFromName ("glsl/brush.glsl", "LightmappedVS", "LightmappedFS");
 
 	glProgramUniform1i (gl_lightmappedsurfprog, glGetUniformLocation (gl_lightmappedsurfprog, "diffuse"), 0);
 	glProgramUniform1i (gl_lightmappedsurfprog, glGetUniformLocation (gl_lightmappedsurfprog, "lightmap"), 2);

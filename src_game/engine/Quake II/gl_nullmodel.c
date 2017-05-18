@@ -51,7 +51,7 @@ void RNull_CreatePrograms (void)
 	glGenBuffers (1, &r_nullvbo);
 	glNamedBufferDataEXT (r_nullvbo, NUM_NULL_VERTS * 3 * sizeof (float), nullverts, GL_STATIC_DRAW);
 
-	gl_nullprog = GL_CreateShaderFromResource (IDR_UNTEXTURED, "UntexturedVS", "UntexturedFS");
+	gl_nullprog = GL_CreateShaderFromName ("glsl/untextured.glsl", "UntexturedVS", "UntexturedFS");
 
 	u_nullmatrix = glGetUniformLocation (gl_nullprog, "localMatrix");
 	u_nullcolour = glGetUniformLocation (gl_nullprog, "color");

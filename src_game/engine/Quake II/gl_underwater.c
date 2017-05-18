@@ -54,7 +54,7 @@ void RUnderwater_CreatePrograms (void)
 	if (data)
 		r_warpgradient = GL_UploadTexture (data, width, height, false, 32);
 
-	gl_underwaterprog = GL_CreateShaderFromResource (IDR_UNDERWATER, "WaterWarpVS", "WaterWarpFS");
+	gl_underwaterprog = GL_CreateShaderFromName ("glsl/underwater.glsl", "WaterWarpVS", "WaterWarpFS");
 
 	// create a texture for use by the FBO
 	glDeleteTextures (1, &r_waterwarptexture);

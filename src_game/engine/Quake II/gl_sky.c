@@ -30,7 +30,7 @@ GLuint u_skytexturematrix = 0;
 
 void RSky_CreatePrograms (void)
 {
-	gl_skycubeprog = GL_CreateShaderFromResource (IDR_SKY, "SkyVS", "SkyFS");
+	gl_skycubeprog = GL_CreateShaderFromName ("glsl/sky.glsl", "SkyVS", "SkyFS");
 
 	u_skylocalMatrix = glGetUniformLocation (gl_skycubeprog, "localMatrix");
 	u_skytexturematrix = glGetUniformLocation (gl_skycubeprog, "skymatrix");

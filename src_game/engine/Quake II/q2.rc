@@ -3,15 +3,3 @@
 
 // standard resources
 IDI_ICON1			ICON  DISCARDABLE   "q2.ico"
-
-// shaders
-IDR_BRUSH			RCDATA		"brush.glsl"
-IDR_DRAW			RCDATA		"draw.glsl"
-IDR_LIQUID			RCDATA		"liquid.glsl"
-IDR_MESH			RCDATA		"mesh.glsl"
-IDR_PARTICLES		RCDATA		"particles.glsl"
-IDR_SKY				RCDATA		"sky.glsl"
-IDR_SPRITE			RCDATA		"sprite.glsl"
-IDR_UNDERWATER		RCDATA		"underwater.glsl"
-IDR_UNTEXTURED		RCDATA		"untextured.glsl"
-

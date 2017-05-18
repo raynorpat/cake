@@ -17,11 +17,10 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
 */
-// sys_win.h
+// sys_win.c
 
 #include "qcommon.h"
 #include "winquake.h"
-#include "resource.h"
 #include <errno.h>
 #include <float.h>
 #include <fcntl.h>
@@ -52,8 +51,6 @@ static HANDLE		qwclsemaphore;
 int			argc;
 char		*argv[MAX_NUM_ARGVS];
 
-cvar_t *sys_sleep;
-
 /*
 ===============================================================================
 
@@ -61,32 +58,6 @@ SYSTEM IO
 
 ===============================================================================
 */
-
-
-int Sys_LoadResourceData (int resourceid, void **resbuf)
-{
-	// per MSDN, UnlockResource is obsolete and does nothing any more.  There is
-	// no way to free the memory used by a resource after you're finished with it.
-	// If you ask me this is kinda fucked, but what do I know?  We'll just leak it.
-	if (resbuf)
-	{
-		HRSRC hResInfo = FindResource (NULL, MAKEINTRESOURCE (resourceid), RT_RCDATA);
-
-		if (hResInfo)
-		{
-			HGLOBAL hResData = LoadResource (NULL, hResInfo);
-
-			if (hResData)
-			{
-				resbuf[0] = (byte *) LockResource (hResData);
-				return SizeofResource (NULL, hResInfo);
-			}
-		}
-	}
-
-	return 0;
-}
-
 
 void Sys_Error (char *error, ...)
 {
@@ -546,9 +517,6 @@ int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLin
 
 	ParseCommandLine (lpCmdLine);
 
-	// allow them to sleep if desired
-	sys_sleep = Cvar_Get ("sys_sleep", "0", CVAR_ARCHIVE);
-
 	Qcommon_Init (argc, argv);
 	oldtime = Sys_Milliseconds ();
 
@@ -584,8 +552,6 @@ int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLin
 
 			oldtime = newtime;
 		}
-
-		if (sys_sleep->value > 0) Sleep (sys_sleep->value);
 	}
 
 	// never gets here

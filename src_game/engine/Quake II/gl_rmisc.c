@@ -22,9 +22,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #include "gl_local.h"
 
 
-int Sys_LoadResourceData (int resourceid, void **resbuf);
-
-
 void GL_BindVertexArray (GLuint vertexarray)
 {
 	if (gl_state.currentvertexarray != vertexarray)
@@ -134,52 +131,57 @@ qboolean GL_CompileShader (GLuint sh, char *src, GLenum shadertype, char *entryp
 	else return true;
 }
 
-
-GLuint GL_CreateShaderFromResource (int ResourceID, char *vsentry, char *fsentry)
+GLuint GL_CreateShaderFromName(char *name, char *vsentry, char *fsentry)
 {
 	GLuint progid = 0;
 	char *resbuf = NULL;
-	int reslen = Sys_LoadResourceData (ResourceID, (void **) &resbuf);
+	int reslen = FS_LoadFile(name, (void **)&resbuf);
+	char *ressrc;
 	GLuint vs, fs;
 	int result = 0;
-	static char ressrc[65536];
 
-	if (!reslen || !resbuf) return 0;
+	if (!reslen)
+		return 0;
 
-	vs = glCreateShader (GL_VERTEX_SHADER);
-	fs = glCreateShader (GL_FRAGMENT_SHADER);
+	// the file doesn't have a trailing 0, so we need to copy it off
+	ressrc = malloc(reslen + 1);
+	memcpy(ressrc, resbuf, reslen);
+	ressrc[reslen] = 0;
 
-	// copy it out so that we can null terminate it properly because resource data isn't null terminated
-	// this is just copied to a big static buffer so that we can return at any time without worrying about free-ing it.
-	memset (ressrc, 0, reslen + 10);
-	memcpy (ressrc, resbuf, reslen);
-
-	glGetError ();
-
+	vs = glCreateShader(GL_VERTEX_SHADER);
+	fs = glCreateShader(GL_FRAGMENT_SHADER);
+	
+	glGetError();
+	
 	// this crap really should have been built-in to GLSL...
-	if (!GL_CompileShader (vs, ressrc, GL_VERTEX_SHADER, vsentry)) return 0;
-	if (!GL_CompileShader (fs, ressrc, GL_FRAGMENT_SHADER, fsentry)) return 0;
+	if (!GL_CompileShader(vs, ressrc, GL_VERTEX_SHADER, vsentry))
+		return 0;
+	if (!GL_CompileShader(fs, ressrc, GL_FRAGMENT_SHADER, fsentry))
+		return 0;
 
-	progid = glCreateProgram ();
+	progid = glCreateProgram();
 
-	glAttachShader (progid, vs);
-	glAttachShader (progid, fs);
+	glAttachShader(progid, vs);
+	glAttachShader(progid, fs);
 
-	glLinkProgram (progid);
-	glGetProgramiv (progid, GL_LINK_STATUS, &result);
+	glLinkProgram(progid);
+	glGetProgramiv(progid, GL_LINK_STATUS, &result);
 
 	// the shaders are compiled, attached and linked so this just marks them for deletion
-	glDeleteShader (vs);
-	glDeleteShader (fs);
+	glDeleteShader(vs);
+	glDeleteShader(fs);
 
-	GL_GetShaderInfoLog (progid, "", true);
+	GL_GetShaderInfoLog(progid, "", true);
+
+	free(ressrc);
+	FS_FreeFile(resbuf);
 
 	if (result != GL_TRUE)
 		return 0;
 	else
 	{
 		// make it active for any further work we may be doing
-		glUseProgram (progid);
+		glUseProgram(progid);
 		gl_state.currentprogram = progid;
 
 		return progid;

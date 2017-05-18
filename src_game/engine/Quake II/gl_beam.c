@@ -74,7 +74,7 @@ void RBeam_CreatePrograms (void)
 	glGenBuffers (1, &r_beamvbo);
 	glNamedBufferDataEXT (r_beamvbo, NUM_CYLINDER_VERTS * 3 * sizeof (float), cylinderverts, GL_STATIC_DRAW);
 
-	gl_beamprog = GL_CreateShaderFromResource (IDR_UNTEXTURED, "UntexturedVS", "UntexturedFS");
+	gl_beamprog = GL_CreateShaderFromName("glsl/untextured.glsl", "UntexturedVS", "UntexturedFS");
 
 	u_beammatrix = glGetUniformLocation (gl_beamprog, "localMatrix");
 	u_beamcolour = glGetUniformLocation (gl_beamprog, "color");

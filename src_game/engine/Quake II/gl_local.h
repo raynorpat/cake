@@ -35,9 +35,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #include "ref.h"
 #include "qgl.h"
 
-// for shader loading...
-#include "resource.h"
-
 #define	LIGHTMAP_SIZE	128
 #define	MAX_LIGHTMAPS	128
 
@@ -66,7 +63,7 @@ void Sprite_MakeVertexBuffers (struct model_s *mod);
 #define BUFFER_DISCARD		(GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT)
 #define BUFFER_NO_OVERWRITE (GL_MAP_WRITE_BIT | GL_MAP_UNSYNCHRONIZED_BIT | GL_MAP_INVALIDATE_RANGE_BIT)
 
-GLuint GL_CreateShaderFromResource (int ResourceID, char *vsentry, char *fsentry);
+GLuint GL_CreateShaderFromName (char *name, char *vsentry, char *fsentry);
 
 typedef struct ubodef_s
 {

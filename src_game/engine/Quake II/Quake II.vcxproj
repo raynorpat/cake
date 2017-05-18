@@ -245,17 +245,6 @@
     <ClCompile Include="vid_dll.c" />
     <ClCompile Include="vid_menu.c" />
   </ItemGroup>
-  <ItemGroup>
-    <None Include="brush.glsl" />
-    <None Include="draw.glsl" />
-    <None Include="liquid.glsl" />
-    <None Include="mesh.glsl" />
-    <None Include="particles.glsl" />
-    <None Include="sky.glsl" />
-    <None Include="sprite.glsl" />
-    <None Include="underwater.glsl" />
-    <None Include="untextured.glsl" />
-  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

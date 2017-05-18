@@ -99,7 +99,7 @@ void RMesh_CreatePrograms (void)
 			gl_meshuboblocksize += addsize;
 	}
 
-	gl_meshprog = GL_CreateShaderFromResource (IDR_MESH, "MeshVS", "MeshFS");
+	gl_meshprog = GL_CreateShaderFromName ("glsl/mesh.glsl", "MeshVS", "MeshFS");
 
 	glUniformBlockBinding (gl_meshprog, glGetUniformBlockIndex (gl_meshprog, "MeshUniforms"), gl_meshubobinding);
 

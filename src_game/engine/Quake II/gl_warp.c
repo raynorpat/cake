@@ -31,7 +31,7 @@ GLuint u_warpscroll = 0;
 
 void RWarp_CreatePrograms (void)
 {
-	gl_warpsurfprog = GL_CreateShaderFromResource (IDR_LIQUID, "LiquidVS", "LiquidFS");
+	gl_warpsurfprog = GL_CreateShaderFromName ("glsl/liquid.glsl", "LiquidVS", "LiquidFS");
 
 	u_warpmatrix = glGetUniformLocation (gl_warpsurfprog, "localMatrix");
 	u_warpparams = glGetUniformLocation (gl_warpsurfprog, "warpparams");

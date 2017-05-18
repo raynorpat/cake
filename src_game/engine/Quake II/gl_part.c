@@ -35,7 +35,7 @@ void RPart_CreatePrograms (void)
 	glGenBuffers (1, &gl_particlevbo);
 	glNamedBufferDataEXT (gl_particlevbo, MAX_PARTICLES * sizeof (particle_t), NULL, GL_STREAM_DRAW);
 
-	gl_particleprog = GL_CreateShaderFromResource (IDR_PARTICLES, "ParticleVS", "ParticleFS");
+	gl_particleprog = GL_CreateShaderFromName ("glsl/particles.glsl", "ParticleVS", "ParticleFS");
 	r_firstparticle = 0;
 
 	glUniformBlockBinding (gl_particleprog, glGetUniformBlockIndex (gl_particleprog, "GlobalUniforms"), gl_particleubobinding);

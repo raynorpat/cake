@@ -38,7 +38,7 @@ typedef struct spritevert_s
 
 void Sprite_CreatePrograms (void)
 {
-	gl_spriteprog = GL_CreateShaderFromResource (IDR_SPRITE, "SpriteVS", "SpriteFS");
+	gl_spriteprog = GL_CreateShaderFromName ("glsl/sprite.glsl", "SpriteVS", "SpriteFS");
 
 	u_spritecolour = glGetUniformLocation (gl_spriteprog, "colour");
 	u_spriteorigin = glGetUniformLocation (gl_spriteprog, "entOrigin");
