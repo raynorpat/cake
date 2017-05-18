@@ -53,5 +53,16 @@
 *.idb
 *.pdb
 
-baseq2
-
+baseq2/*.pak
+baseq2/*.cfg
+baseq2/demos
+baseq2/env
+baseq2/maps
+baseq2/models
+baseq2/pics
+baseq2/players
+baseq2/save
+baseq2/screenshots
+baseq2/sound
+baseq2/sprites
+baseq2/textures
