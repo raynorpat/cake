@@ -18,8 +18,34 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
 */
 
-// net_wins.c
-#include "winsock.h"
+// net.c
+#ifdef _WIN32
+#ifndef _INC_WINDOWS
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
+#endif
+#if !(defined(_WINSOCKAPI_) || defined(_WINSOCK_H))
+#include <winsock2.h>
+#endif
+#elif defined(__linux__) || defined(__FreeBSD__) || defined(__APPLE__)
+#include <unistd.h>
+#include <sys/socket.h>
+#include <sys/time.h>
+#include <netinet/in.h>
+#include <netdb.h>
+#include <sys/param.h>
+#include <sys/ioctl.h>
+#include <sys/uio.h>
+#include <errno.h>
+#include <arpa/inet.h>
+#define SOCKET int
+#define INVALID_SOCKET 0
+#define SOCKET_ERROR -1
+#define closesocket close
+#define ioctlsocket ioctl
+#else
+#error Unknown target OS
+#endif
 #include "qcommon.h"
 
 #define	MAX_LOOPBACK	4
@@ -297,22 +323,30 @@ qboolean	NET_GetPacket (netsrc_t sock, netadr_t *net_from, sizebuf_t *net_messag
 
 		if (ret == -1)
 		{
+#ifdef _WIN32
 			err = WSAGetLastError ();
-
-			if (err == WSAEWOULDBLOCK)
-				continue;
-
-			if (err == WSAEMSGSIZE)
-			{
-				Com_Printf ("Warning: Oversize packet from %s\n", NET_AdrToString (*net_from));
-				continue;
+			switch (err) {
+				case WSAEWOULDBLOCK:
+					// wouldblock is silent
+					break;
+				case WSAEMSGSIZE:
+					Com_Printf("NET_GetPacket: Oversize packet from %s\n", NET_AdrToString(*net_from));
+					break;
+				default:
+					Com_Printf("NET_GetPacket: %s from %s\n", NET_ErrorString(), NET_AdrToString(*net_from));
+					break;
 			}
-
-			if (dedicated->value)	// let dedicated servers continue after errors
-				Com_Printf ("NET_GetPacket: %s from %s\n", NET_ErrorString(), NET_AdrToString (*net_from));
-			else
-				Com_Error (ERR_DROP, "NET_GetPacket: %s from %s", NET_ErrorString(), NET_AdrToString (*net_from));
-
+#else
+			err = errno;
+			switch (err) {
+				case EWOULDBLOCK:
+					// wouldblock is silent
+					break;
+				default:
+					Com_Printf("NET_GetPacket: %s from %s\n", NET_ErrorString(), NET_AdrToString(*net_from));
+					break;
+			}
+#endif
 			continue;
 		}
 
@@ -333,7 +367,7 @@ qboolean	NET_GetPacket (netsrc_t sock, netadr_t *net_from, sizebuf_t *net_messag
 
 void NET_SendPacket (netsrc_t sock, int length, void *data, netadr_t to)
 {
-	int		ret;
+	int		ret, err;
 	struct sockaddr	addr;
 	int		net_socket;
 
@@ -366,34 +400,39 @@ void NET_SendPacket (netsrc_t sock, int length, void *data, netadr_t to)
 
 	if (ret == -1)
 	{
-		int err = WSAGetLastError ();
-
-		// wouldblock is silent
-		if (err == WSAEWOULDBLOCK)
-			return;
-
-		// some PPP links dont allow broadcasts
-		if ((err == WSAEADDRNOTAVAIL) && (to.type == NA_BROADCAST))
-			return;
-
-		if (dedicated->value)	// let dedicated servers continue after errors
-		{
-			Com_Printf ("NET_SendPacket ERROR: %s to %s\n", NET_ErrorString(),
-						NET_AdrToString (to));
+#ifdef _WIN32
+		err = WSAGetLastError();
+		switch (err) {
+			case WSAEWOULDBLOCK:
+			case WSAEINTR:
+				// wouldblock is silent
+				break;
+			case WSAEADDRNOTAVAIL:
+				// some PPP links dont allow broadcasts
+				if (to.type == NA_BROADCAST)
+					break;
+				// intentional fallthrough
+			default:
+				Com_Printf("NET_SendPacket ERROR: %s (%d) to %s\n",	NET_ErrorString(), err, NET_AdrToString(to));
+				break;
 		}
-		else
-		{
-			if (err == WSAEADDRNOTAVAIL)
-			{
-				Com_DPrintf ("NET_SendPacket Warning: %s : %s\n",
-							 NET_ErrorString(), NET_AdrToString (to));
-			}
-			else
-			{
-				Com_Error (ERR_DROP, "NET_SendPacket ERROR: %s to %s\n",
-						  NET_ErrorString(), NET_AdrToString (to));
-			}
+#else
+		err = errno;
+
+		switch (err) {
+			case EWOULDBLOCK:
+				// wouldblock is silent
+				break;
+			case ECONNRESET:
+			case EHOSTUNREACH:
+			case ENETUNREACH:
+			case ENETDOWN:
+				break;
+			default:
+				Com_Printf("NET_SendPacket ERROR: %s (%d) to %s\n", NET_ErrorString(), err, NET_AdrToString(to));
+				break;
 		}
+#endif
 	}
 }
 
@@ -412,13 +451,12 @@ int NET_IPSocket (char *net_interface, int port)
 	struct sockaddr_in	address;
 	qboolean			_true = true;
 	int					i = 1;
-	int					err;
 
 	if ((newsocket = socket (PF_INET, SOCK_DGRAM, IPPROTO_UDP)) == -1)
 	{
-		err = WSAGetLastError ();
-
-		if (err != WSAEAFNOSUPPORT)
+#ifdef _WIN32
+		if (WSAGetLastError() != WSAEAFNOSUPPORT)
+#endif
 			Com_Printf ("WARNING: UDP_OpenSocket: socket: %s", NET_ErrorString());
 
 		return 0;
@@ -592,8 +630,6 @@ void NET_Sleep (int msec)
 //===================================================================
 
 
-static WSADATA		winsockdata;
-
 /*
 ====================
 NET_Init
@@ -601,17 +637,23 @@ NET_Init
 */
 void NET_Init (void)
 {
-	WORD	wVersionRequested;
+#ifdef _WIN32
+	WSADATA	winsockdata;
 	int		r;
+	char *errmsg;
 
-	wVersionRequested = MAKEWORD (1, 1);
+	r = WSAStartup(MAKEWORD(1, 1), &winsockdata);
+	if (r) {
+		errmsg = va("Winsock initialization failed, returned %i", r);
+		if (dedicated->value) {
+			Com_Error(ERR_FATAL, "%s", errmsg);
+		}
 
-	r = WSAStartup (MAKEWORD (1, 1), &winsockdata);
-
-	if (r)
-		Com_Error (ERR_FATAL, "Winsock initialization failed.");
-
-	Com_Printf ("Winsock Initialized\n");
+		Com_Printf("%s\n", errmsg);
+		return;
+	}
+	Com_Printf("Winsock Initialized\n");
+#endif
 
 	noudp = Cvar_Get ("noudp", "0", CVAR_NOSET);
 
@@ -628,7 +670,9 @@ void	NET_Shutdown (void)
 {
 	NET_Config (false);	// close sockets
 
+#ifdef _WIN32
 	WSACleanup ();
+#endif
 }
 
 
@@ -639,10 +683,10 @@ NET_ErrorString
 */
 char *NET_ErrorString (void)
 {
-	int		code;
+	int	code;
 
+#ifdef _WIN32
 	code = WSAGetLastError ();
-
 	switch (code)
 	{
 	case WSAEINTR: return "WSAEINTR";
@@ -691,4 +735,8 @@ char *NET_ErrorString (void)
 	case WSANO_DATA: return "WSANO_DATA";
 	default: return "NO ERROR";
 	}
+#else
+	code = errno;
+	return strerror(code);
+#endif
 }

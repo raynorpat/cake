@@ -222,7 +222,7 @@
     <ClCompile Include="menu.c" />
     <ClCompile Include="m_flash.c" />
     <ClCompile Include="net_chan.c" />
-    <ClCompile Include="net_wins.c" />
+    <ClCompile Include="net.c" />
     <ClCompile Include="pmove.c" />
     <ClCompile Include="qgl.c" />
     <ClCompile Include="qmenu.c" />
