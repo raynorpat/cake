@@ -282,9 +282,9 @@ It can be clipped to the top of the screen to allow the console to be
 smoothly scrolled off.
 ================
 */
-void Draw_Char (int x, int y, int num)
+void Draw_CharScaled (int x, int y, int num, float scale)
 {
-	float frow, fcol, size;
+	float frow, fcol, size, scaledSize;
 
 	num &= 255;
 
@@ -298,9 +298,15 @@ void Draw_Char (int x, int y, int num)
 	fcol = (num & 15) * 0.0625;
 	size = 0.0625;
 
-	Draw_TexturedRect (draw_chars->texnum, r_charsetsampler, x, y, 8, 8, fcol, frow, fcol + size, frow + size);
+	scaledSize = 8 * scale;
+
+	Draw_TexturedRect(draw_chars->texnum, r_charsetsampler, x, y, scaledSize, scaledSize, fcol, frow, fcol + size, frow + size);
 }
 
+void Draw_Char(int x, int y, int num)
+{
+	Draw_CharScaled(x, y, num, 1.0f);
+}
 
 /*
 =============
@@ -375,22 +381,30 @@ void Draw_StretchPic (int x, int y, int w, int h, char *pic)
 Draw_Pic
 =============
 */
-void Draw_Pic (int x, int y, char *pic)
+void Draw_PicScaled (int x, int y, char *pic, float scale)
 {
 	image_t *gl;
 
-	gl = Draw_FindPic (pic);
+	gl = Draw_FindPic(pic);
 
 	if (!gl)
 	{
-		VID_Printf (PRINT_ALL, "Can't find pic: %s\n", pic);
+		VID_Printf(PRINT_ALL, "Can't find pic: %s\n", pic);
 		return;
 	}
 
 	if (scrap_check_dirty)
-		Scrap_Upload ();
+		Scrap_Upload();
 
-	Draw_TexturedRect (gl->texnum, r_drawclampsampler, x, y, gl->width, gl->height, gl->sl, gl->tl, gl->sh, gl->th);
+	GLfloat w = gl->width * scale;
+	GLfloat h = gl->height * scale;
+
+	Draw_TexturedRect(gl->texnum, r_drawclampsampler, x, y, w, h, gl->sl, gl->tl, gl->sh, gl->th);
+}
+
+void Draw_Pic (int x, int y, char *pic)
+{
+	Draw_PicScaled(x, y, pic, 1.0f);
 }
 
 /*
