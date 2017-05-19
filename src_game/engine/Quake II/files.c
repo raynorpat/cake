@@ -515,30 +515,6 @@ char *FS_Gamedir (void)
 }
 
 /*
-=============
-FS_ExecAutoexec
-=============
-*/
-void FS_ExecAutoexec (void)
-{
-	char *dir;
-	char name [MAX_QPATH];
-
-	dir = Cvar_VariableString ("gamedir");
-
-	if (*dir)
-		Com_sprintf (name, sizeof (name), "%s/%s/autoexec.cfg", fs_basedir->string, dir);
-	else
-		Com_sprintf (name, sizeof (name), "%s/%s/autoexec.cfg", fs_basedir->string, BASEDIRNAME);
-
-	if (Sys_FindFirst (name, 0, SFF_SUBDIR | SFF_HIDDEN | SFF_SYSTEM))
-		Cbuf_AddText ("exec autoexec.cfg\n");
-
-	Sys_FindClose ();
-}
-
-
-/*
 ================
 FS_SetGamedir
 

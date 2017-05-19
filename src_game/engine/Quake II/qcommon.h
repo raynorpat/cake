@@ -684,7 +684,6 @@ void	FS_InitFilesystem (void);
 void	FS_SetGamedir (char *dir);
 char	*FS_Gamedir (void);
 char	*FS_NextPath (char *prevpath);
-void	FS_ExecAutoexec (void);
 
 int		FS_FOpenFile (char *filename, FILE **file);
 void	FS_FCloseFile (FILE *f);

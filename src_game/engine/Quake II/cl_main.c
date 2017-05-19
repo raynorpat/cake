@@ -1828,8 +1828,6 @@ void CL_Init (void)
 	CL_InitLocal ();
 	IN_Init ();
 
-	//	Cbuf_AddText ("exec autoexec.cfg\n");
-	FS_ExecAutoexec ();
 	Cbuf_Execute ();
 }
 

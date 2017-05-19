@@ -236,7 +236,6 @@ cvar_t *Cvar_Set2 (char *var_name, char *value, qboolean force)
 				if (!strcmp (var->name, "game"))
 				{
 					FS_SetGamedir (var->string);
-					FS_ExecAutoexec ();
 				}
 			}
 
@@ -360,7 +359,6 @@ void Cvar_GetLatchedVars (void)
 		if (!strcmp (var->name, "game"))
 		{
 			FS_SetGamedir (var->string);
-			FS_ExecAutoexec ();
 		}
 	}
 }

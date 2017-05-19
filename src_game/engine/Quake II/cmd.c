@@ -839,6 +839,8 @@ char *Cmd_CompleteCommand (char *partial)
 	return NULL;
 }
 
+// ugly hack to suppress warnings from default.cfg in Key_Bind_f()
+qboolean doneWithDefaultCfg;
 
 /*
 ============
@@ -858,6 +860,12 @@ void	Cmd_ExecuteString (char *text)
 	// execute the command line
 	if (!Cmd_Argc())
 		return;		// no tokens
+
+	if (Cmd_Argc() > 1 && Q_strcasecmp(cmd_argv[0], "exec") == 0 && Q_strcasecmp(cmd_argv[1], "config.cfg") == 0)
+	{
+		// exec config.cfg is done directly after exec default.cfg, see Qcommon_Init() */
+		doneWithDefaultCfg = true;
+	}
 
 	// check functions
 	for (cmd = cmd_functions; cmd; cmd = cmd->next)
