@@ -640,6 +640,9 @@ void SCR_PlayCinematic (char *arg)
 	char	name[MAX_OSPATH], *dot;
 	int		old_khz;
 
+	// empty input queue
+	In_FlushQueue();
+
 	// make sure CD isn't playing music
 	CDAudio_Stop ();
 
