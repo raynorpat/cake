@@ -87,6 +87,8 @@ cvar_t	*r_lightlevel;	// FIXME: This is a HACK to get the client's light level
 cvar_t	*gl_lightmap;
 cvar_t	*gl_shadows;
 cvar_t	*gl_mode;
+cvar_t  *gl_customwidth;
+cvar_t  *gl_customheight;
 cvar_t	*gl_dynamic;
 cvar_t  *gl_monolightmap;
 cvar_t	*gl_showtris;
@@ -522,7 +524,9 @@ void R_Register (void)
 
 	r_lightlevel = Cvar_Get ("r_lightlevel", "0", 0);
 
-	gl_mode = Cvar_Get ("gl_mode", "3", CVAR_ARCHIVE);
+	gl_mode = Cvar_Get ("gl_mode", "8", CVAR_ARCHIVE);
+	gl_customwidth = Cvar_Get("gl_customwidth", "1024", CVAR_ARCHIVE);
+	gl_customheight = Cvar_Get("gl_customheight", "768", CVAR_ARCHIVE);
 	gl_lightmap = Cvar_Get ("gl_lightmap", "0", 0);
 	gl_shadows = Cvar_Get ("gl_shadows", "0", CVAR_ARCHIVE);
 	gl_dynamic = Cvar_Get ("gl_dynamic", "1", 0);
@@ -549,15 +553,43 @@ void R_Register (void)
 	Cmd_AddCommand ("gl_strings", GL_Strings_f);
 }
 
-
-/*
-==================
-R_SetMode
-==================
-*/
-qboolean R_SetMode (void)
+// the following is only used in the next to functions,
+// no need to put it in a header
+enum
 {
-	rserr_t err;
+	rserr_ok,
+
+	rserr_invalid_fullscreen,
+	rserr_invalid_mode,
+
+	rserr_unknown
+};
+
+static int SetMode_impl(int *pwidth, int *pheight, int mode, qboolean fullscreen)
+{
+	VID_Printf(PRINT_ALL, "setting mode %d:", mode);
+
+	/* mode -1 is not in the vid mode table - so we keep the values in pwidth
+	and pheight and don't even try to look up the mode info */
+	if ((mode != -1) && !VID_GetModeInfo(pwidth, pheight, mode))
+	{
+		VID_Printf(PRINT_ALL, " invalid mode\n");
+		return rserr_invalid_mode;
+	}
+
+	VID_Printf(PRINT_ALL, " %d %d\n", *pwidth, *pheight);
+
+	if (!GLimp_InitGraphics(fullscreen, pwidth, pheight))
+	{
+		return rserr_invalid_mode;
+	}
+
+	return rserr_ok;
+}
+
+static qboolean R_SetMode(void)
+{
+	int err;
 	qboolean fullscreen;
 
 	fullscreen = vid_fullscreen->value;
@@ -565,32 +597,54 @@ qboolean R_SetMode (void)
 	vid_fullscreen->modified = false;
 	gl_mode->modified = false;
 
-	if ((err = GLimp_SetMode (&vid.width, &vid.height, gl_mode->value, fullscreen)) == rserr_ok)
+	// a bit hackish approach to enable custom resolutions:
+	// Glimp_SetMode needs these values set for mode -1
+	vid.width = gl_customwidth->value;
+	vid.height = gl_customheight->value;
+
+	if ((err = SetMode_impl(&vid.width, &vid.height, gl_mode->value, fullscreen)) == rserr_ok)
 	{
-		gl_state.prev_mode = gl_mode->value;
+		if (gl_mode->value == -1)
+		{
+			gl_state.prev_mode = 10; // safe default for custom mode
+		}
+		else
+		{
+			gl_state.prev_mode = gl_mode->value;
+		}
 	}
 	else
 	{
 		if (err == rserr_invalid_fullscreen)
 		{
-			Cvar_SetValue ("vid_fullscreen", 0);
+			Cvar_SetValue("vid_fullscreen", 0);
 			vid_fullscreen->modified = false;
-			VID_Printf (PRINT_ALL, "ref_gl::R_SetMode() - fullscreen unavailable in this mode\n");
+			VID_Printf(PRINT_ALL, "ref_gl::R_SetMode() - fullscreen unavailable in this mode\n");
 
-			if ((err = GLimp_SetMode (&vid.width, &vid.height, gl_mode->value, false)) == rserr_ok)
+			if ((err = SetMode_impl(&vid.width, &vid.height, gl_mode->value, false)) == rserr_ok)
+			{
 				return true;
+			}
 		}
 		else if (err == rserr_invalid_mode)
 		{
-			Cvar_SetValue ("gl_mode", gl_state.prev_mode);
+			VID_Printf(PRINT_ALL, "ref_gl::R_SetMode() - invalid mode\n");
+
+			if (gl_mode->value == gl_state.prev_mode)
+			{
+				// trying again would result in a crash anyway, give up already
+				// (this would happen if your initing fails at all and your resolution already was 640x480)
+				return false;
+			}
+
+			Cvar_SetValue("gl_mode", gl_state.prev_mode);
 			gl_mode->modified = false;
-			VID_Printf (PRINT_ALL, "ref_gl::R_SetMode() - invalid mode\n");
 		}
 
 		// try setting it back to something safe
-		if ((err = GLimp_SetMode (&vid.width, &vid.height, gl_state.prev_mode, false)) != rserr_ok)
+		if ((err = SetMode_impl(&vid.width, &vid.height, gl_state.prev_mode, false)) != rserr_ok)
 		{
-			VID_Printf (PRINT_ALL, "ref_gl::R_SetMode() - could not revert to safe mode\n");
+			VID_Printf(PRINT_ALL, "ref_gl::R_SetMode() - could not revert to safe mode\n");
 			return false;
 		}
 	}
@@ -623,7 +677,7 @@ void RMain_InvalidateCachedState (void)
 
 void RMain_CheckExtension (char *ext)
 {
-	if (!strstr (gl_config.extensions_string, ext))
+	if (!glewIsSupported(ext))
 	{
 		VID_Error (ERR_FATAL, "R_Init : could not find %s", ext);
 		return;
@@ -636,12 +690,12 @@ void RMain_CheckExtension (char *ext)
 R_Init
 ===============
 */
-qboolean R_Init (void *hinstance, void *hWnd)
+qboolean R_Init (void)
 {
 	char renderer_buffer[1000];
 	char vendor_buffer[1000];
 	int		err;
-	int		i, j;
+	int		i, j, numExtensions;
 
 	VID_Printf (PRINT_ALL, "ref_gl version: "REF_VERSION"\n");
 
@@ -658,14 +712,14 @@ qboolean R_Init (void *hinstance, void *hWnd)
 	}
 
 	// initialize OS-specific parts of OpenGL
-	if (!GLimp_Init (hinstance, hWnd))
+	if (!GLimp_Init ())
 	{
 		QGL_Shutdown ();
 		return -1;
 	}
 
 	// set our "safe" modes
-	gl_state.prev_mode = 3;
+	gl_state.prev_mode = 10;
 
 	// create the window and set up the context
 	if (!R_SetMode ())
@@ -685,8 +739,14 @@ qboolean R_Init (void *hinstance, void *hWnd)
 	gl_config.version_string = glGetString (GL_VERSION);
 	VID_Printf (PRINT_ALL, "GL_VERSION: %s\n", gl_config.version_string);
 
-	gl_config.extensions_string = glGetString (GL_EXTENSIONS);
-	// VID_Printf (PRINT_ALL, "GL_EXTENSIONS: %s\n", gl_config.extensions_string );
+	glGetIntegerv(GL_NUM_EXTENSIONS, &numExtensions);
+
+	VID_Printf(PRINT_ALL, "GL_EXTENSIONS:");
+	for (i = 0; i < numExtensions; i++)
+	{
+		VID_Printf(PRINT_ALL, " %s", (const char*)glGetStringi(GL_EXTENSIONS, i));
+	}
+	VID_Printf(PRINT_ALL, "\n");
 
 	strcpy (renderer_buffer, gl_config.renderer_string);
 	strlwr (renderer_buffer);
@@ -771,7 +831,7 @@ void R_Shutdown (void)
 	GL_ShutdownImages ();
 
 	// shut down OS specific OpenGL stuff like contexts, etc.
-	GLimp_Shutdown ();
+	GLimp_Shutdown (true);
 
 	// shutdown our QGL subsystem
 	QGL_Shutdown ();

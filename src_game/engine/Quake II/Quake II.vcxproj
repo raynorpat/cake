@@ -152,7 +152,6 @@
     <ClInclude Include="console.h" />
     <ClInclude Include="crc.h" />
     <ClInclude Include="game.h" />
-    <ClInclude Include="glw_win.h" />
     <ClInclude Include="gl_local.h" />
     <ClInclude Include="gl_model.h" />
     <ClInclude Include="input.h" />
@@ -170,7 +169,6 @@
     <ClInclude Include="sound.h" />
     <ClInclude Include="vid.h" />
     <ClInclude Include="vid_common.h" />
-    <ClInclude Include="winquake.h" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="q2.ico" />
@@ -194,12 +192,11 @@
     <ClCompile Include="cl_view.c" />
     <ClCompile Include="cmd.c" />
     <ClCompile Include="common.c" />
-    <ClCompile Include="conproc.c" />
     <ClCompile Include="console.c" />
     <ClCompile Include="crc.c" />
     <ClCompile Include="cvar.c" />
     <ClCompile Include="files.c" />
-    <ClCompile Include="glw_imp.c" />
+    <ClCompile Include="gl_imp.c" />
     <ClCompile Include="gl_beam.c" />
     <ClCompile Include="gl_draw.c" />
     <ClCompile Include="gl_image.c" />
@@ -215,7 +212,7 @@
     <ClCompile Include="gl_sprite.c" />
     <ClCompile Include="gl_underwater.c" />
     <ClCompile Include="gl_warp.c" />
-    <ClCompile Include="in_win.c" />
+    <ClCompile Include="input.c" />
     <ClCompile Include="keys.c" />
     <ClCompile Include="matrix.c" />
     <ClCompile Include="md4.c" />
@@ -241,8 +238,8 @@
     <ClCompile Include="sv_send.c" />
     <ClCompile Include="sv_user.c" />
     <ClCompile Include="sv_world.c" />
-    <ClCompile Include="sys_win.c" />
-    <ClCompile Include="vid_dll.c" />
+    <ClCompile Include="sys.c" />
+    <ClCompile Include="vid.c" />
     <ClCompile Include="vid_menu.c" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

@@ -942,7 +942,6 @@ void CL_ConnectionlessPacket (void)
 			return;
 		}
 
-		Sys_AppActivate ();
 		s = MSG_ReadString (&net_message);
 		Cbuf_AddText (s);
 		Cbuf_AddText ("\n");
@@ -1671,9 +1670,6 @@ void CL_SendCommand (void)
 	// get new key events
 	Sys_SendKeyEvents ();
 
-	// allow mice or other external controllers to add commands
-	IN_Commands ();
-
 	// process console commands
 	Cbuf_Execute ();
 
@@ -1700,9 +1696,6 @@ void CL_Frame (int msec)
 		return;
 
 	realtime += msec;
-
-	// let the mouse activate or deactivate
-	IN_Frame ();
 
 	if (!cl_timedemo->value)
 	{

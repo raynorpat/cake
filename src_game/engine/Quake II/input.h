@@ -19,16 +19,27 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 */
 // input.h -- external (non-keyboard) input devices
 
-void IN_Init (void);
+/*
+* Initializes the input backend
+*/
+void IN_Init(void);
 
-void IN_Shutdown (void);
+/*
+* Move handling
+*/
+void IN_Move(usercmd_t *cmd);
 
-void IN_Commands (void);
-// oportunity for devices to stick commands on the script buffer
+/*
+* Shuts the backend down
+*/
+void IN_Shutdown(void);
 
-void IN_Frame (void);
+/*
+* Updates the state of the input queue
+*/
+void IN_Update(void);
 
-void IN_Move (usercmd_t *cmd);
-// add additional movement on top of the keyboard move cmd
-
-void IN_Activate (qboolean active);
+/*
+* Removes all pending events from SDLs queue.
+*/
+void In_FlushQueue(void);

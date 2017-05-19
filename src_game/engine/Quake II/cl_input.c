@@ -46,7 +46,7 @@ state bit 1 is edge triggered on the up to down transition
 state bit 2 is edge triggered on the down to up transition
 
 
-Key_Event (int key, qboolean down, unsigned time);
+Key_Event (int key, qboolean down, qboolean special);
 
  +mlook src time
 

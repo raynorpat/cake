@@ -155,16 +155,6 @@ typedef struct image_s
 
 //===================================================================
 
-typedef enum
-{
-	rserr_ok,
-
-	rserr_invalid_fullscreen,
-	rserr_invalid_mode,
-
-	rserr_unknown
-} rserr_t;
-
 #include "gl_model.h"
 
 void GL_BeginRendering (int *x, int *y, int *width, int *height);
@@ -281,7 +271,7 @@ extern	unsigned	d_8to24table_rgba[256];
 
 extern	int		registration_sequence;
 
-int	R_Init (void *hinstance, void *hWnd);
+int	R_Init (void);
 void R_Shutdown (void);
 
 void R_RenderView (refdef_t *fd);
@@ -353,7 +343,6 @@ typedef struct
 	const char *renderer_string;
 	const char *vendor_string;
 	const char *version_string;
-	const char *extensions_string;
 } glconfig_t;
 
 typedef struct
@@ -452,8 +441,6 @@ IMPLEMENTATION SPECIFIC FUNCTIONS
 
 void GLimp_BeginFrame (float camera_separation);
 void GLimp_EndFrame (void);
-int GLimp_Init (void *hinstance, void *hWnd);
-void GLimp_Shutdown (void);
-int GLimp_SetMode (int *pwidth, int *pheight, int mode, qboolean fullscreen);
-void GLimp_AppActivate (qboolean active);
-
+int GLimp_Init (void);
+void GLimp_Shutdown(qboolean contextOnly);
+qboolean GLimp_InitGraphics(qboolean fullscreen, int *pwidth, int *pheight);

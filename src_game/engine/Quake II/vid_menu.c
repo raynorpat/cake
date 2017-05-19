@@ -93,11 +93,36 @@ static void CancelChanges (void *unused)
 /*
 VID_MenuInit
 */
-extern char *vid_resolutions[];
-extern int vid_nummodes;
-
 void VID_MenuInit (void)
 {
+	static const char *resolutions[] = {
+		"[320 240   ]",
+		"[400 300   ]",
+		"[512 384   ]",
+		"[640 400   ]",
+		"[640 480   ]",
+		"[800 500   ]",
+		"[800 600   ]",
+		"[960 720   ]",
+		"[1024 480  ]",
+		"[1024 640  ]",
+		"[1024 768  ]",
+		"[1152 768  ]",
+		"[1152 864  ]",
+		"[1280 800  ]",
+		"[1280 720  ]",
+		"[1280 960  ]",
+		"[1280 1024 ]",
+		"[1366 768  ]",
+		"[1440 900  ]",
+		"[1600 1200 ]",
+		"[1680 1050 ]",
+		"[1920 1080 ]",
+		"[1920 1200 ]",
+		"[2048 1536 ]",
+		"[custom    ]",
+		0
+	};
 	static const char *yesno_names[] =
 	{
 		"no",
@@ -118,7 +143,7 @@ void VID_MenuInit (void)
 	s_mode_list.generic.name = "video mode";
 	s_mode_list.generic.x = 0;
 	s_mode_list.generic.y = 0;
-	s_mode_list.itemnames = vid_resolutions;
+	s_mode_list.itemnames = resolutions;
 
 	s_fs_box.generic.type = MTYPE_SPINCONTROL;
 	s_fs_box.generic.x	= 0;

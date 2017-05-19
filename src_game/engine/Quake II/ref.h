@@ -209,14 +209,13 @@ void Draw_FadeScreen (void);
 
 void Draw_StretchRaw (int x, int y, int w, int h, int cols, int rows, byte *data);
 
-qboolean R_Init (void *hinstance, void *hWnd);
+qboolean R_Init (void);
 void R_Shutdown (void);
 
 void R_SetPalette (const unsigned char *palette);
 
 void R_BeginFrame (float camera_separation);
 void GLimp_EndFrame (void);
-void GLimp_AppActivate (qboolean active);
 
 void Swap_Init (void);
 
