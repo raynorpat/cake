@@ -80,6 +80,8 @@ cvar_t	*name;
 cvar_t	*skin;
 cvar_t	*rate;
 cvar_t	*fov;
+cvar_t  *horplus;
+cvar_t  *windowed_mouse;
 cvar_t	*msg;
 cvar_t	*hand;
 cvar_t	*gender;
@@ -1568,6 +1570,8 @@ void CL_InitLocal (void)
 	msg = Cvar_Get ("msg", "1", CVAR_USERINFO | CVAR_ARCHIVE);
 	hand = Cvar_Get ("hand", "0", CVAR_USERINFO | CVAR_ARCHIVE);
 	fov = Cvar_Get ("fov", "90", CVAR_USERINFO | CVAR_ARCHIVE);
+	horplus = Cvar_Get("horplus", "1", CVAR_ARCHIVE);
+	windowed_mouse = Cvar_Get("windowed_mouse", "1", CVAR_USERINFO | CVAR_ARCHIVE);
 	gender = Cvar_Get ("gender", "male", CVAR_USERINFO | CVAR_ARCHIVE);
 	gender_auto = Cvar_Get ("gender_auto", "1", CVAR_ARCHIVE);
 	gender->modified = false; // clear this so we know when user sets it manually
@@ -1665,7 +1669,18 @@ void CL_WriteConfiguration (void)
 
 
 //============================================================================
-// removed client-side cheat protection because it's bogus
+
+void CL_UpdateWindowedMouse(void)
+{
+	if (cls.key_dest == key_console || (cls.key_dest == key_game && cls.state == ca_disconnected))
+	{
+		Cvar_SetValue("windowed_mouse", 0);
+	}
+	else
+	{
+		Cvar_SetValue("windowed_mouse", 1);
+	}
+}
 
 /*
 ==================
@@ -1675,6 +1690,9 @@ CL_SendCommand
 */
 void CL_SendCommand (void)
 {
+	// update windowed_mouse cvar
+	CL_UpdateWindowedMouse();
+
 	// get new key events
 	Sys_SendKeyEvents ();
 

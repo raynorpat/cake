@@ -34,7 +34,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #include <io.h>
 #include <conio.h>
 
-unsigned	sys_frame_time;
+unsigned int sys_frame_time;
 
 qboolean	stdin_active = true;
 cvar_t		*nostdout;

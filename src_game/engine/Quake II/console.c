@@ -633,11 +633,9 @@ void Con_DrawConsole (float frac)
 
 #if 0
 	rows = (lines - 8) >> 3;		// rows of text to draw
-
 	y = (lines - 24 * scale) / scale;
 #else
 	rows = (lines - 22) >> 3;		// rows of text to draw
-
 	y = (lines - 30 * scale) / scale;
 #endif
 
@@ -668,9 +666,7 @@ void Con_DrawConsole (float frac)
 			Draw_CharScaled (((x + 1) << 3) * scale, y * scale, text[x], scale);
 	}
 
-	//ZOID
 	// draw the download bar
-	// figure out width
 	if (cls.download)
 	{
 		if ((text = strrchr (cls.downloadname, '/')) != NULL)
@@ -678,6 +674,7 @@ void Con_DrawConsole (float frac)
 		else
 			text = cls.downloadname;
 
+		// figure out width
 		x = con.linewidth - ((con.linewidth * 7) / 40);
 		y = x - strlen (text) - 8;
 		i = con.linewidth / 3;
@@ -719,8 +716,6 @@ void Con_DrawConsole (float frac)
 		for (i = 0; i < strlen (dlbar); i++)
 			Draw_CharScaled (((i + 1) << 3) * scale, y * scale, dlbar[i], scale);
 	}
-
-	//ZOID
 
 	// draw the input prompt, user text, and cursor if desired
 	Con_DrawInput ();
