@@ -802,8 +802,6 @@ qboolean R_Init (void)
 
 	VID_MenuInit ();
 
-	Cvar_Set ("scr_drawall", "1");
-
 	GL_SetDefaultState ();
 
 	GL_InitImages ();

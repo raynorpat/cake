@@ -53,7 +53,6 @@ cvar_t		*scr_debuggraph;
 cvar_t		*scr_graphheight;
 cvar_t		*scr_graphscale;
 cvar_t		*scr_graphshift;
-cvar_t		*scr_drawall;
 
 cvar_t		*cl_hudscale;
 cvar_t		*cl_consolescale;
@@ -374,7 +373,6 @@ void SCR_Init (void)
 	scr_graphheight = Cvar_Get ("graphheight", "32", 0);
 	scr_graphscale = Cvar_Get ("graphscale", "1", 0);
 	scr_graphshift = Cvar_Get ("graphshift", "0", 0);
-	scr_drawall = Cvar_Get ("scr_drawall", "0", 0);
 
 	cl_hudscale = Cvar_Get("cl_hudscale", "-1", CVAR_ARCHIVE);
 	cl_consolescale = Cvar_Get("cl_consolescale", "-1", CVAR_ARCHIVE);
