@@ -1060,12 +1060,12 @@ void ai_run (edict_t *self, float dist)
 			self->s.angles[YAW] = self->ideal_yaw = vectoyaw(v);
 			AngleVectors(self->s.angles, v_forward, v_right, NULL);
 
-			VectorSet(v, d2, -16, 0);
+			Vector3Set(v, d2, -16, 0);
 			G_ProjectSource (self->s.origin, v, v_forward, v_right, left_target);
 			tr = gi.trace(self->s.origin, self->mins, self->maxs, left_target, self, MASK_PLAYERSOLID);
 			left = tr.fraction;
 
-			VectorSet(v, d2, 16, 0);
+			Vector3Set(v, d2, 16, 0);
 			G_ProjectSource (self->s.origin, v, v_forward, v_right, right_target);
 			tr = gi.trace(self->s.origin, self->mins, self->maxs, right_target, self, MASK_PLAYERSOLID);
 			right = tr.fraction;
@@ -1075,7 +1075,7 @@ void ai_run (edict_t *self, float dist)
 			{
 				if (left < 1)
 				{
-					VectorSet(v, d2 * left * 0.5, -16, 0);
+					Vector3Set(v, d2 * left * 0.5, -16, 0);
 					G_ProjectSource (self->s.origin, v, v_forward, v_right, left_target);
 //					gi.dprintf("incomplete path, go part way and adjust again\n");
 				}
@@ -1092,7 +1092,7 @@ void ai_run (edict_t *self, float dist)
 			{
 				if (right < 1)
 				{
-					VectorSet(v, d2 * right * 0.5, 16, 0);
+					Vector3Set(v, d2 * right * 0.5, 16, 0);
 					G_ProjectSource (self->s.origin, v, v_forward, v_right, right_target);
 //					gi.dprintf("incomplete path, go part way and adjust again\n");
 				}

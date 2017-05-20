@@ -66,8 +66,8 @@ void SP_monster_boss3_stand (edict_t *self)
 
 	gi.soundindex ("misc/bigtele.wav");
 
-	VectorSet (self->mins, -32, -32, 0);
-	VectorSet (self->maxs, 32, 32, 90);
+	Vector3Set (self->mins, -32, -32, 0);
+	Vector3Set (self->maxs, 32, 32, 90);
 
 	self->use = Use_Boss3;
 	self->think = Think_Boss3Stand;

@@ -705,8 +705,8 @@ void tank_attack(edict_t *self)
 
 void tank_dead (edict_t *self)
 {
-	VectorSet (self->mins, -16, -16, -16);
-	VectorSet (self->maxs, 16, 16, -0);
+	Vector3Set (self->mins, -16, -16, -16);
+	Vector3Set (self->maxs, 16, 16, -0);
 	self->movetype = MOVETYPE_TOSS;
 	self->svflags |= SVF_DEADMONSTER;
 	self->nextthink = 0;
@@ -798,8 +798,8 @@ void SP_monster_tank (edict_t *self)
 	}
 
 	self->s.modelindex = gi.modelindex ("models/monsters/tank/tris.md2");
-	VectorSet (self->mins, -32, -32, -16);
-	VectorSet (self->maxs, 32, 32, 72);
+	Vector3Set (self->mins, -32, -32, -16);
+	Vector3Set (self->maxs, 32, 32, 72);
 	self->movetype = MOVETYPE_STEP;
 	self->solid = SOLID_BBOX;
 

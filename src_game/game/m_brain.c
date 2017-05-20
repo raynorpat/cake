@@ -409,7 +409,7 @@ void brain_hit_right (edict_t *self)
 {
 	vec3_t	aim;
 
-	VectorSet (aim, MELEE_DISTANCE, self->maxs[0], 8);
+	Vector3Set (aim, MELEE_DISTANCE, self->maxs[0], 8);
 	if (fire_hit (self, aim, (15 + (rand() %5)), 40))
 		gi.sound (self, CHAN_WEAPON, sound_melee3, 1, ATTN_NORM, 0);
 }
@@ -423,7 +423,7 @@ void brain_hit_left (edict_t *self)
 {
 	vec3_t	aim;
 
-	VectorSet (aim, MELEE_DISTANCE, self->mins[0], 8);
+	Vector3Set (aim, MELEE_DISTANCE, self->mins[0], 8);
 	if (fire_hit (self, aim, (15 + (rand() %5)), 40))
 		gi.sound (self, CHAN_WEAPON, sound_melee3, 1, ATTN_NORM, 0);
 }
@@ -462,7 +462,7 @@ void brain_tentacle_attack (edict_t *self)
 {
 	vec3_t	aim;
 
-	VectorSet (aim, MELEE_DISTANCE, 0, 8);
+	Vector3Set (aim, MELEE_DISTANCE, 0, 8);
 	if (fire_hit (self, aim, (10 + (rand() %5)), -600) && skill->value > 0)
 		self->spawnflags |= 65536;
 	gi.sound (self, CHAN_WEAPON, sound_tentacles_retract, 1, ATTN_NORM, 0);
@@ -573,8 +573,8 @@ void brain_pain (edict_t *self, edict_t *other, float kick, int damage)
 
 void brain_dead (edict_t *self)
 {
-	VectorSet (self->mins, -16, -16, -24);
-	VectorSet (self->maxs, 16, 16, -8);
+	Vector3Set (self->mins, -16, -16, -24);
+	Vector3Set (self->maxs, 16, 16, -8);
 	self->movetype = MOVETYPE_TOSS;
 	self->svflags |= SVF_DEADMONSTER;
 	self->nextthink = 0;
@@ -644,8 +644,8 @@ void SP_monster_brain (edict_t *self)
 	self->movetype = MOVETYPE_STEP;
 	self->solid = SOLID_BBOX;
 	self->s.modelindex = gi.modelindex ("models/monsters/brain/tris.md2");
-	VectorSet (self->mins, -16, -16, -24);
-	VectorSet (self->maxs, 16, 16, 32);
+	Vector3Set (self->mins, -16, -16, -24);
+	Vector3Set (self->maxs, 16, 16, 32);
 
 	self->health = 300;
 	self->gib_health = -150;

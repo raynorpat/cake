@@ -303,8 +303,8 @@ void infantry_sight (edict_t *self, edict_t *other)
 
 void infantry_dead (edict_t *self)
 {
-	VectorSet (self->mins, -16, -16, -24);
-	VectorSet (self->maxs, 16, 16, -8);
+	Vector3Set (self->mins, -16, -16, -24);
+	Vector3Set (self->maxs, 16, 16, -8);
 	self->movetype = MOVETYPE_TOSS;
 	self->svflags |= SVF_DEADMONSTER;
 	gi.linkentity (self);
@@ -524,7 +524,7 @@ void infantry_smack (edict_t *self)
 {
 	vec3_t	aim;
 
-	VectorSet (aim, MELEE_DISTANCE, 0, 0);
+	Vector3Set (aim, MELEE_DISTANCE, 0, 0);
 	if (fire_hit (self, aim, (5 + (rand() % 5)), 50))
 		gi.sound (self, CHAN_WEAPON, sound_punch_hit, 1, ATTN_NORM, 0);
 }
@@ -579,8 +579,8 @@ void SP_monster_infantry (edict_t *self)
 	self->movetype = MOVETYPE_STEP;
 	self->solid = SOLID_BBOX;
 	self->s.modelindex = gi.modelindex("models/monsters/infantry/tris.md2");
-	VectorSet (self->mins, -16, -16, -24);
-	VectorSet (self->maxs, 16, 16, 32);
+	Vector3Set (self->mins, -16, -16, -24);
+	Vector3Set (self->maxs, 16, 16, 32);
 
 	self->health = 100;
 	self->gib_health = -40;

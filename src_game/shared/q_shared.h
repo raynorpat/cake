@@ -156,9 +156,9 @@ void Q_sincos (float angradians, float *angsin, float *angcos);
 #define DotProduct(x,y)			(x[0]*y[0]+x[1]*y[1]+x[2]*y[2])
 #define VectorSubtract(a,b,dst)	(dst[0]=a[0]-b[0],dst[1]=a[1]-b[1],dst[2]=a[2]-b[2])
 #define VectorAdd(a,b,dst)		(dst[0]=a[0]+b[0],dst[1]=a[1]+b[1],dst[2]=a[2]+b[2])
-#define VectorCopy(src,dst)			(dst[0]=src[0],dst[1]=src[1],dst[2]=src[2])
+#define VectorCopy(src,dst)		(dst[0]=src[0],dst[1]=src[1],dst[2]=src[2])
 #define VectorClear(a)			(a[0]=a[1]=a[2]=0)
-#define VectorNegate(src,dst)		(dst[0]=-src[0],dst[1]=-src[1],dst[2]=-src[2])
+#define VectorNegate(src,dst)	(dst[0]=-src[0],dst[1]=-src[1],dst[2]=-src[2])
 
 #define Vector2Set(v, x, y)		(v[0]=(x), v[1]=(y))
 #define Vector3Set(v, x, y, z)	(v[0]=(x), v[1]=(y), v[2]=(z))

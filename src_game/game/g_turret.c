@@ -395,8 +395,8 @@ void SP_turret_driver (edict_t *self)
 	self->movetype = MOVETYPE_PUSH;
 	self->solid = SOLID_BBOX;
 	self->s.modelindex = gi.modelindex("models/monsters/infantry/tris.md2");
-	VectorSet (self->mins, -16, -16, -24);
-	VectorSet (self->maxs, 16, 16, 32);
+	Vector3Set (self->mins, -16, -16, -24);
+	Vector3Set (self->maxs, 16, 16, 32);
 
 	self->health = 100;
 	self->gib_health = 0;

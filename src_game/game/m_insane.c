@@ -570,8 +570,8 @@ void insane_dead (edict_t *self)
 	}
 	else
 	{
-		VectorSet (self->mins, -16, -16, -24);
-		VectorSet (self->maxs, 16, 16, -8);
+		Vector3Set (self->mins, -16, -16, -24);
+		Vector3Set (self->maxs, 16, 16, -8);
 		self->movetype = MOVETYPE_TOSS;
 	}
 	self->svflags |= SVF_DEADMONSTER;
@@ -646,8 +646,8 @@ void SP_misc_insane (edict_t *self)
 	self->solid = SOLID_BBOX;
 	self->s.modelindex = gi.modelindex("models/monsters/insane/tris.md2");
 
-	VectorSet (self->mins, -16, -16, -24);
-	VectorSet (self->maxs, 16, 16, 32);
+	Vector3Set (self->mins, -16, -16, -24);
+	Vector3Set (self->maxs, 16, 16, 32);
 
 	self->health = 100;
 	self->gib_health = -50;
@@ -682,8 +682,8 @@ void SP_misc_insane (edict_t *self)
 
 	if (self->spawnflags & 8)					// Crucified ?
 	{
-		VectorSet (self->mins, -16, 0, 0);
-		VectorSet (self->maxs, 16, 8, 32);
+		Vector3Set (self->mins, -16, 0, 0);
+		Vector3Set (self->maxs, 16, 8, 32);
 		self->flags |= FL_NO_KNOCKBACK;
 		flymonster_start (self);
 	}

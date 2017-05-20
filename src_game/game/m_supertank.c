@@ -582,8 +582,8 @@ void supertank_attack(edict_t *self)
 
 void supertank_dead (edict_t *self)
 {
-	VectorSet (self->mins, -60, -60, 0);
-	VectorSet (self->maxs, 60, 60, 72);
+	Vector3Set (self->mins, -60, -60, 0);
+	Vector3Set (self->maxs, 60, 60, 72);
 	self->movetype = MOVETYPE_TOSS;
 	self->svflags |= SVF_DEADMONSTER;
 	self->nextthink = 0;
@@ -690,8 +690,8 @@ void SP_monster_supertank (edict_t *self)
 	self->movetype = MOVETYPE_STEP;
 	self->solid = SOLID_BBOX;
 	self->s.modelindex = gi.modelindex ("models/monsters/boss1/tris.md2");
-	VectorSet (self->mins, -64, -64, 0);
-	VectorSet (self->maxs, 64, 64, 112);
+	Vector3Set (self->mins, -64, -64, 0);
+	Vector3Set (self->maxs, 64, 64, 112);
 
 	self->health = 1500;
 	self->gib_health = -500;

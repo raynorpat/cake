@@ -496,8 +496,8 @@ void boss2_pain (edict_t *self, edict_t *other, float kick, int damage)
 
 void boss2_dead (edict_t *self)
 {
-	VectorSet (self->mins, -56, -56, 0);
-	VectorSet (self->maxs, 56, 56, 80);
+	Vector3Set (self->mins, -56, -56, 0);
+	Vector3Set (self->maxs, 56, 56, 80);
 	self->movetype = MOVETYPE_TOSS;
 	self->svflags |= SVF_DEADMONSTER;
 	self->nextthink = 0;
@@ -652,8 +652,8 @@ void SP_monster_boss2 (edict_t *self)
 	self->movetype = MOVETYPE_STEP;
 	self->solid = SOLID_BBOX;
 	self->s.modelindex = gi.modelindex ("models/monsters/boss2/tris.md2");
-	VectorSet (self->mins, -56, -56, 0);
-	VectorSet (self->maxs, 56, 56, 80);
+	Vector3Set (self->mins, -56, -56, 0);
+	Vector3Set (self->maxs, 56, 56, 80);
 
 	self->health = 2000;
 	self->gib_health = -200;

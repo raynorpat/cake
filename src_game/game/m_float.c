@@ -530,7 +530,7 @@ void floater_zap (edict_t *self)
 
 	AngleVectors (self->s.angles, forward, right, NULL);
 	//FIXME use a flash and replace these two lines with the commented one
-	VectorSet (offset, 18.5, -0.9, 10);
+	Vector3Set (offset, 18.5, -0.9, 10);
 	G_ProjectSource (self->s.origin, offset, forward, right, origin);
 //	G_ProjectSource (self->s.origin, monster_flash_offset[flash_number], forward, right, origin);
 
@@ -592,8 +592,8 @@ void floater_pain (edict_t *self, edict_t *other, float kick, int damage)
 
 void floater_dead (edict_t *self)
 {
-	VectorSet (self->mins, -16, -16, -24);
-	VectorSet (self->maxs, 16, 16, -8);
+	Vector3Set (self->mins, -16, -16, -24);
+	Vector3Set (self->maxs, 16, 16, -8);
 	self->movetype = MOVETYPE_TOSS;
 	self->svflags |= SVF_DEADMONSTER;
 	self->nextthink = 0;
@@ -631,8 +631,8 @@ void SP_monster_floater (edict_t *self)
 	self->movetype = MOVETYPE_STEP;
 	self->solid = SOLID_BBOX;
 	self->s.modelindex = gi.modelindex ("models/monsters/float/tris.md2");
-	VectorSet (self->mins, -24, -24, -24);
-	VectorSet (self->maxs, 24, 24, 32);
+	Vector3Set (self->mins, -24, -24, -24);
+	Vector3Set (self->maxs, 24, 24, 32);
 
 	self->health = 200;
 	self->gib_health = -80;

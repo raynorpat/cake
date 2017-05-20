@@ -245,8 +245,8 @@ void ThrowClientHead (edict_t *self, int damage)
 	self->s.origin[2] += 32;
 	self->s.frame = 0;
 	gi.setmodel (self, gibname);
-	VectorSet (self->mins, -16, -16, 0);
-	VectorSet (self->maxs, 16, 16, 16);
+	Vector3Set (self->mins, -16, -16, 0);
+	Vector3Set (self->maxs, 16, 16, 16);
 
 	self->takedamage = DAMAGE_NO;
 	self->solid = SOLID_NOT;
@@ -407,8 +407,8 @@ void SP_path_corner (edict_t *self)
 
 	self->solid = SOLID_TRIGGER;
 	self->touch = path_corner_touch;
-	VectorSet (self->mins, -8, -8, -8);
-	VectorSet (self->maxs, 8, 8, 8);
+	Vector3Set (self->mins, -8, -8, -8);
+	Vector3Set (self->maxs, 8, 8, 8);
 	self->svflags |= SVF_NOCLIENT;
 	gi.linkentity (self);
 }
@@ -480,8 +480,8 @@ void SP_point_combat (edict_t *self)
 	}
 	self->solid = SOLID_TRIGGER;
 	self->touch = point_combat_touch;
-	VectorSet (self->mins, -8, -8, -16);
-	VectorSet (self->maxs, 8, 8, 16);
+	Vector3Set (self->mins, -8, -8, -16);
+	Vector3Set (self->maxs, 8, 8, 16);
 	self->svflags = SVF_NOCLIENT;
 	gi.linkentity (self);
 }
@@ -503,8 +503,8 @@ void SP_viewthing(edict_t *ent)
 	ent->movetype = MOVETYPE_NONE;
 	ent->solid = SOLID_BBOX;
 	ent->s.renderfx = RF_FRAMELERP;
-	VectorSet (ent->mins, -16, -16, -24);
-	VectorSet (ent->maxs, 16, 16, 32);
+	Vector3Set (ent->mins, -16, -16, -24);
+	Vector3Set (ent->maxs, 16, 16, 32);
 	ent->s.modelindex = gi.modelindex ("models/objects/banner/tris.md2");
 	gi.linkentity (ent);
 	ent->nextthink = level.time + 0.5;
@@ -988,8 +988,8 @@ void SP_misc_explobox (edict_t *self)
 
 	self->model = "models/objects/barrels/tris.md2";
 	self->s.modelindex = gi.modelindex (self->model);
-	VectorSet (self->mins, -16, -16, 0);
-	VectorSet (self->maxs, 16, 16, 40);
+	Vector3Set (self->mins, -16, -16, 0);
+	Vector3Set (self->maxs, 16, 16, 40);
 
 	if (!self->mass)
 		self->mass = 400;
@@ -1044,8 +1044,8 @@ void SP_misc_blackhole (edict_t *ent)
 {
 	ent->movetype = MOVETYPE_NONE;
 	ent->solid = SOLID_NOT;
-	VectorSet (ent->mins, -64, -64, 0);
-	VectorSet (ent->maxs, 64, 64, 8);
+	Vector3Set (ent->mins, -64, -64, 0);
+	Vector3Set (ent->maxs, 64, 64, 8);
 	ent->s.modelindex = gi.modelindex ("models/objects/black/tris.md2");
 	ent->s.renderfx = RF_TRANSLUCENT;
 	ent->use = misc_blackhole_use;
@@ -1072,8 +1072,8 @@ void SP_misc_eastertank (edict_t *ent)
 {
 	ent->movetype = MOVETYPE_NONE;
 	ent->solid = SOLID_BBOX;
-	VectorSet (ent->mins, -32, -32, -16);
-	VectorSet (ent->maxs, 32, 32, 32);
+	Vector3Set (ent->mins, -32, -32, -16);
+	Vector3Set (ent->maxs, 32, 32, 32);
 	ent->s.modelindex = gi.modelindex ("models/monsters/tank/tris.md2");
 	ent->s.frame = 254;
 	ent->think = misc_eastertank_think;
@@ -1100,8 +1100,8 @@ void SP_misc_easterchick (edict_t *ent)
 {
 	ent->movetype = MOVETYPE_NONE;
 	ent->solid = SOLID_BBOX;
-	VectorSet (ent->mins, -32, -32, 0);
-	VectorSet (ent->maxs, 32, 32, 32);
+	Vector3Set (ent->mins, -32, -32, 0);
+	Vector3Set (ent->maxs, 32, 32, 32);
 	ent->s.modelindex = gi.modelindex ("models/monsters/bitch/tris.md2");
 	ent->s.frame = 208;
 	ent->think = misc_easterchick_think;
@@ -1128,8 +1128,8 @@ void SP_misc_easterchick2 (edict_t *ent)
 {
 	ent->movetype = MOVETYPE_NONE;
 	ent->solid = SOLID_BBOX;
-	VectorSet (ent->mins, -32, -32, 0);
-	VectorSet (ent->maxs, 32, 32, 32);
+	Vector3Set (ent->mins, -32, -32, 0);
+	Vector3Set (ent->maxs, 32, 32, 32);
 	ent->s.modelindex = gi.modelindex ("models/monsters/bitch/tris.md2");
 	ent->s.frame = 248;
 	ent->think = misc_easterchick2_think;
@@ -1173,8 +1173,8 @@ void SP_monster_commander_body (edict_t *self)
 	self->solid = SOLID_BBOX;
 	self->model = "models/monsters/commandr/tris.md2";
 	self->s.modelindex = gi.modelindex (self->model);
-	VectorSet (self->mins, -32, -32, 0);
-	VectorSet (self->maxs, 32, 32, 48);
+	Vector3Set (self->mins, -32, -32, 0);
+	Vector3Set (self->maxs, 32, 32, 48);
 	self->use = commander_body_use;
 	self->takedamage = DAMAGE_YES;
 	self->flags = FL_GODMODE;
@@ -1253,8 +1253,8 @@ void SP_misc_deadsoldier (edict_t *ent)
 	else
 		ent->s.frame = 0;
 
-	VectorSet (ent->mins, -16, -16, 0);
-	VectorSet (ent->maxs, 16, 16, 16);
+	Vector3Set (ent->mins, -16, -16, 0);
+	Vector3Set (ent->maxs, 16, 16, 16);
 	ent->deadflag = DEAD_DEAD;
 	ent->takedamage = DAMAGE_YES;
 	ent->svflags |= SVF_MONSTER|SVF_DEADMONSTER;
@@ -1297,8 +1297,8 @@ void SP_misc_viper (edict_t *ent)
 	ent->movetype = MOVETYPE_PUSH;
 	ent->solid = SOLID_NOT;
 	ent->s.modelindex = gi.modelindex ("models/ships/viper/tris.md2");
-	VectorSet (ent->mins, -16, -16, 0);
-	VectorSet (ent->maxs, 16, 16, 32);
+	Vector3Set (ent->mins, -16, -16, 0);
+	Vector3Set (ent->maxs, 16, 16, 32);
 
 	ent->think = func_train_find;
 	ent->nextthink = level.time + FRAMETIME;
@@ -1317,8 +1317,8 @@ void SP_misc_bigviper (edict_t *ent)
 {
 	ent->movetype = MOVETYPE_NONE;
 	ent->solid = SOLID_BBOX;
-	VectorSet (ent->mins, -176, -120, -24);
-	VectorSet (ent->maxs, 176, 120, 72);
+	Vector3Set (ent->mins, -176, -120, -24);
+	Vector3Set (ent->maxs, 176, 120, 72);
 	ent->s.modelindex = gi.modelindex ("models/ships/bigviper/tris.md2");
 	gi.linkentity (ent);
 }
@@ -1379,8 +1379,8 @@ void SP_misc_viper_bomb (edict_t *self)
 {
 	self->movetype = MOVETYPE_NONE;
 	self->solid = SOLID_NOT;
-	VectorSet (self->mins, -8, -8, -8);
-	VectorSet (self->maxs, 8, 8, 8);
+	Vector3Set (self->mins, -8, -8, -8);
+	Vector3Set (self->maxs, 8, 8, 8);
 
 	self->s.modelindex = gi.modelindex ("models/objects/bomb/tris.md2");
 
@@ -1427,8 +1427,8 @@ void SP_misc_strogg_ship (edict_t *ent)
 	ent->movetype = MOVETYPE_PUSH;
 	ent->solid = SOLID_NOT;
 	ent->s.modelindex = gi.modelindex ("models/ships/strogg1/tris.md2");
-	VectorSet (ent->mins, -16, -16, 0);
-	VectorSet (ent->maxs, 16, 16, 32);
+	Vector3Set (ent->mins, -16, -16, 0);
+	Vector3Set (ent->maxs, 16, 16, 32);
 
 	ent->think = func_train_find;
 	ent->nextthink = level.time + FRAMETIME;
@@ -1460,8 +1460,8 @@ void SP_misc_satellite_dish (edict_t *ent)
 {
 	ent->movetype = MOVETYPE_NONE;
 	ent->solid = SOLID_BBOX;
-	VectorSet (ent->mins, -64, -64, 0);
-	VectorSet (ent->maxs, 64, 64, 128);
+	Vector3Set (ent->mins, -64, -64, 0);
+	Vector3Set (ent->maxs, 64, 64, 128);
 	ent->s.modelindex = gi.modelindex ("models/objects/satellite/tris.md2");
 	ent->use = misc_satellite_dish_use;
 	gi.linkentity (ent);
@@ -1846,8 +1846,8 @@ void SP_misc_teleporter (edict_t *ent)
 	ent->s.sound = gi.soundindex ("world/amb10.wav");
 	ent->solid = SOLID_BBOX;
 
-	VectorSet (ent->mins, -32, -32, -24);
-	VectorSet (ent->maxs, 32, 32, -16);
+	Vector3Set (ent->mins, -32, -32, -24);
+	Vector3Set (ent->maxs, 32, 32, -16);
 	gi.linkentity (ent);
 
 	trig = G_Spawn ();
@@ -1856,8 +1856,8 @@ void SP_misc_teleporter (edict_t *ent)
 	trig->target = ent->target;
 	trig->owner = ent;
 	VectorCopy (ent->s.origin, trig->s.origin);
-	VectorSet (trig->mins, -8, -8, 8);
-	VectorSet (trig->maxs, 8, 8, 24);
+	Vector3Set (trig->mins, -8, -8, 8);
+	Vector3Set (trig->maxs, 8, 8, 24);
 	gi.linkentity (trig);
 	
 }
@@ -1871,8 +1871,8 @@ void SP_misc_teleporter_dest (edict_t *ent)
 	ent->s.skinnum = 0;
 	ent->solid = SOLID_BBOX;
 //	ent->s.effects |= EF_FLIES;
-	VectorSet (ent->mins, -32, -32, -24);
-	VectorSet (ent->maxs, 32, 32, -16);
+	Vector3Set (ent->mins, -32, -32, -24);
+	Vector3Set (ent->maxs, 32, 32, -16);
 	gi.linkentity (ent);
 }
 

@@ -296,8 +296,8 @@ void chick_pain (edict_t *self, edict_t *other, float kick, int damage)
 
 void chick_dead (edict_t *self)
 {
-	VectorSet (self->mins, -16, -16, 0);
-	VectorSet (self->maxs, 16, 16, 16);
+	Vector3Set (self->mins, -16, -16, 0);
+	Vector3Set (self->maxs, 16, 16, 16);
 	self->movetype = MOVETYPE_TOSS;
 	self->svflags |= SVF_DEADMONSTER;
 	self->nextthink = 0;
@@ -442,7 +442,7 @@ void ChickSlash (edict_t *self)
 {
 	vec3_t	aim;
 
-	VectorSet (aim, MELEE_DISTANCE, self->mins[0], 10);
+	Vector3Set (aim, MELEE_DISTANCE, self->mins[0], 10);
 	gi.sound (self, CHAN_WEAPON, sound_melee_swing, 1, ATTN_NORM, 0);
 	fire_hit (self, aim, (10 + (rand() %6)), 100);
 }
@@ -652,8 +652,8 @@ void SP_monster_chick (edict_t *self)
 	self->movetype = MOVETYPE_STEP;
 	self->solid = SOLID_BBOX;
 	self->s.modelindex = gi.modelindex ("models/monsters/bitch/tris.md2");
-	VectorSet (self->mins, -16, -16, 0);
-	VectorSet (self->maxs, 16, 16, 56);
+	Vector3Set (self->mins, -16, -16, 0);
+	Vector3Set (self->maxs, 16, 16, 56);
 
 	self->health = 175;
 	self->gib_health = -70;

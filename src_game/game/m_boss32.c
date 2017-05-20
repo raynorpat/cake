@@ -646,8 +646,8 @@ void makron_torso (edict_t *ent)
 {
 	ent->movetype = MOVETYPE_NONE;
 	ent->solid = SOLID_NOT;
-	VectorSet (ent->mins, -8, -8, 0);
-	VectorSet (ent->maxs, 8, 8, 8);
+	Vector3Set (ent->mins, -8, -8, 0);
+	Vector3Set (ent->maxs, 8, 8, 8);
 	ent->s.frame = 346;
 	ent->s.modelindex = gi.modelindex ("models/monsters/boss3/rider/tris.md2");
 	ent->think = makron_torso_think;
@@ -663,8 +663,8 @@ void makron_torso (edict_t *ent)
 
 void makron_dead (edict_t *self)
 {
-	VectorSet (self->mins, -60, -60, 0);
-	VectorSet (self->maxs, 60, 60, 72);
+	Vector3Set (self->mins, -60, -60, 0);
+	Vector3Set (self->maxs, 60, 60, 72);
 	self->movetype = MOVETYPE_TOSS;
 	self->svflags |= SVF_DEADMONSTER;
 	self->nextthink = 0;
@@ -842,8 +842,8 @@ void SP_monster_makron (edict_t *self)
 	self->movetype = MOVETYPE_STEP;
 	self->solid = SOLID_BBOX;
 	self->s.modelindex = gi.modelindex ("models/monsters/boss3/rider/tris.md2");
-	VectorSet (self->mins, -30, -30, 0);
-	VectorSet (self->maxs, 30, 30, 90);
+	Vector3Set (self->mins, -30, -30, 0);
+	Vector3Set (self->maxs, 30, 30, 90);
 
 	self->health = 3000;
 	self->gib_health = -2000;

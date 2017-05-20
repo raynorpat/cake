@@ -13,6 +13,7 @@
   <PropertyGroup Label="Globals">
     <ProjectGuid>{8339F308-3E42-4C14-964C-0BAB80308DCE}</ProjectGuid>
     <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
+    <ProjectName>quake</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
@@ -140,7 +141,6 @@
     <ClInclude Include="input.h" />
     <ClInclude Include="keys.h" />
     <ClInclude Include="qcommon.h" />
-    <ClInclude Include="qgl.h" />
     <ClInclude Include="qmenu.h" />
     <ClInclude Include="ref.h" />
     <ClInclude Include="resource.h" />
@@ -203,7 +203,6 @@
     <ClCompile Include="net_chan.c" />
     <ClCompile Include="net.c" />
     <ClCompile Include="pmove.c" />
-    <ClCompile Include="qgl.c" />
     <ClCompile Include="qmenu.c" />
     <ClCompile Include="snd_dma.c" />
     <ClCompile Include="snd_mem.c" />
@@ -220,7 +219,7 @@
     <ClCompile Include="sv_world.c" />
     <ClCompile Include="sys.c" />
     <ClCompile Include="vid.c" />
-    <ClCompile Include="vid_menu.c" />
+    <ClCompile Include="menu_vid.c" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

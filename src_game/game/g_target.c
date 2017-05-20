@@ -629,8 +629,8 @@ void target_laser_start (edict_t *self)
 	if (!self->dmg)
 		self->dmg = 1;
 
-	VectorSet (self->mins, -8, -8, -8);
-	VectorSet (self->maxs, 8, 8, 8);
+	Vector3Set (self->mins, -8, -8, -8);
+	Vector3Set (self->maxs, 8, 8, 8);
 	gi.linkentity (self);
 
 	if (self->spawnflags & 1)

@@ -320,7 +320,7 @@ void parasite_drain_attack (edict_t *self)
 	int damage;
 
 	AngleVectors (self->s.angles, f, r, NULL);
-	VectorSet (offset, 24, 0, 6);
+	Vector3Set (offset, 24, 0, 6);
 	G_ProjectSource (self->s.origin, offset, f, r, start);
 
 	VectorCopy (self->enemy->s.origin, end);
@@ -448,8 +448,8 @@ Death Stuff Starts
 
 void parasite_dead (edict_t *self)
 {
-	VectorSet (self->mins, -16, -16, -24);
-	VectorSet (self->maxs, 16, 16, -8);
+	Vector3Set (self->mins, -16, -16, -24);
+	Vector3Set (self->maxs, 16, 16, -8);
 	self->movetype = MOVETYPE_TOSS;
 	self->svflags |= SVF_DEADMONSTER;
 	self->nextthink = 0;
@@ -524,8 +524,8 @@ void SP_monster_parasite (edict_t *self)
 	sound_search = gi.soundindex("parasite/parsrch1.wav");
 
 	self->s.modelindex = gi.modelindex ("models/monsters/parasite/tris.md2");
-	VectorSet (self->mins, -16, -16, -24);
-	VectorSet (self->maxs, 16, 16, 24);
+	Vector3Set (self->mins, -16, -16, -24);
+	Vector3Set (self->maxs, 16, 16, 24);
 	self->movetype = MOVETYPE_STEP;
 	self->solid = SOLID_BBOX;
 

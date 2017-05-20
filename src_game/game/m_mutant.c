@@ -256,7 +256,7 @@ void mutant_hit_left (edict_t *self)
 {
 	vec3_t	aim;
 
-	VectorSet (aim, MELEE_DISTANCE, self->mins[0], 8);
+	Vector3Set (aim, MELEE_DISTANCE, self->mins[0], 8);
 	if (fire_hit (self, aim, (10 + (rand() %5)), 100))
 		gi.sound (self, CHAN_WEAPON, sound_hit, 1, ATTN_NORM, 0);
 	else
@@ -267,7 +267,7 @@ void mutant_hit_right (edict_t *self)
 {
 	vec3_t	aim;
 
-	VectorSet (aim, MELEE_DISTANCE, self->maxs[0], 8);
+	Vector3Set (aim, MELEE_DISTANCE, self->maxs[0], 8);
 	if (fire_hit (self, aim, (10 + (rand() %5)), 100))
 		gi.sound (self, CHAN_WEAPON, sound_hit2, 1, ATTN_NORM, 0);
 	else
@@ -533,8 +533,8 @@ void mutant_pain (edict_t *self, edict_t *other, float kick, int damage)
 
 void mutant_dead (edict_t *self)
 {
-	VectorSet (self->mins, -16, -16, -24);
-	VectorSet (self->maxs, 16, 16, -8);
+	Vector3Set (self->mins, -16, -16, -24);
+	Vector3Set (self->maxs, 16, 16, -8);
 	self->movetype = MOVETYPE_TOSS;
 	self->svflags |= SVF_DEADMONSTER;
 	gi.linkentity (self);
@@ -633,8 +633,8 @@ void SP_monster_mutant (edict_t *self)
 	self->movetype = MOVETYPE_STEP;
 	self->solid = SOLID_BBOX;
 	self->s.modelindex = gi.modelindex ("models/monsters/mutant/tris.md2");
-	VectorSet (self->mins, -32, -32, -24);
-	VectorSet (self->maxs, 32, 32, 48);
+	Vector3Set (self->mins, -32, -32, -24);
+	Vector3Set (self->maxs, 32, 32, 48);
 
 	self->health = 300;
 	self->gib_health = -120;

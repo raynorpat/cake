@@ -529,8 +529,8 @@ void hover_deadthink (edict_t *self)
 
 void hover_dead (edict_t *self)
 {
-	VectorSet (self->mins, -16, -16, -24);
-	VectorSet (self->maxs, 16, 16, -8);
+	Vector3Set (self->mins, -16, -16, -24);
+	Vector3Set (self->maxs, 16, 16, -8);
 	self->movetype = MOVETYPE_TOSS;
 	self->think = hover_deadthink;
 	self->nextthink = level.time + FRAMETIME;
@@ -593,8 +593,8 @@ void SP_monster_hover (edict_t *self)
 	self->movetype = MOVETYPE_STEP;
 	self->solid = SOLID_BBOX;
 	self->s.modelindex = gi.modelindex("models/monsters/hover/tris.md2");
-	VectorSet (self->mins, -24, -24, -24);
-	VectorSet (self->maxs, 24, 24, 32);
+	Vector3Set (self->mins, -24, -24, -24);
+	Vector3Set (self->maxs, 24, 24, 32);
 
 	self->health = 240;
 	self->gib_health = -100;

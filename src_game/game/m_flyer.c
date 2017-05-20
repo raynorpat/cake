@@ -424,7 +424,7 @@ void flyer_slash_left (edict_t *self)
 {
 	vec3_t	aim;
 
-	VectorSet (aim, MELEE_DISTANCE, self->mins[0], 0);
+	Vector3Set (aim, MELEE_DISTANCE, self->mins[0], 0);
 	fire_hit (self, aim, 5, 0);
 	gi.sound (self, CHAN_WEAPON, sound_slash, 1, ATTN_NORM, 0);
 }
@@ -433,7 +433,7 @@ void flyer_slash_right (edict_t *self)
 {
 	vec3_t	aim;
 
-	VectorSet (aim, MELEE_DISTANCE, self->maxs[0], 0);
+	Vector3Set (aim, MELEE_DISTANCE, self->maxs[0], 0);
 	fire_hit (self, aim, 5, 0);
 	gi.sound (self, CHAN_WEAPON, sound_slash, 1, ATTN_NORM, 0);
 }
@@ -596,8 +596,8 @@ void SP_monster_flyer (edict_t *self)
 	gi.soundindex ("flyer/flyatck3.wav");
 
 	self->s.modelindex = gi.modelindex ("models/monsters/flyer/tris.md2");
-	VectorSet (self->mins, -16, -16, -24);
-	VectorSet (self->maxs, 16, 16, 32);
+	Vector3Set (self->mins, -16, -16, -24);
+	Vector3Set (self->maxs, 16, 16, 32);
 	self->movetype = MOVETYPE_STEP;
 	self->solid = SOLID_BBOX;
 

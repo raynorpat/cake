@@ -562,13 +562,13 @@ void jorg_dead (edict_t *self)
 #if 0
 	edict_t	*tempent;
 	/*
-	VectorSet (self->mins, -16, -16, -24);
-	VectorSet (self->maxs, 16, 16, -8);
+	Vector3Set (self->mins, -16, -16, -24);
+	Vector3Set (self->maxs, 16, 16, -8);
 	*/
 	
 	// Jorg is on modelindex2. Do not clear him.
-	VectorSet (self->mins, -60, -60, 0);
-	VectorSet (self->maxs, 60, 60, 72);
+	Vector3Set (self->mins, -60, -60, 0);
+	Vector3Set (self->maxs, 60, 60, 72);
 	self->movetype = MOVETYPE_TOSS;
 	self->nextthink = 0;
 	gi.linkentity (self);
@@ -722,8 +722,8 @@ void SP_monster_jorg (edict_t *self)
 	self->solid = SOLID_BBOX;
 	self->s.modelindex = gi.modelindex ("models/monsters/boss3/rider/tris.md2");
 	self->s.modelindex2 = gi.modelindex ("models/monsters/boss3/jorg/tris.md2");
-	VectorSet (self->mins, -80, -80, 0);
-	VectorSet (self->maxs, 80, 80, 140);
+	Vector3Set (self->mins, -80, -80, 0);
+	Vector3Set (self->maxs, 80, 80, 140);
 
 	self->health = 3000;
 	self->gib_health = -2000;
