@@ -1479,6 +1479,23 @@ void CL_AddViewWeapon (player_state_t *ps, player_state_t *ops)
 	V_AddEntity (&gun);
 }
 
+static inline float AdaptFov(float fov, float w, float h)
+{
+	static const float pi = M_PI; // float instead of double
+
+	if (w <= 0 || h <= 0)
+		return fov;
+
+	/*
+	 * Formula:
+	 *
+	 * fov = 2.0 * atan(width / height * 3.0 / 4.0 * tan(fov43 / 2.0))
+	 *
+	 * The code below is equivalent but precalculates a few values and
+	 * converts between degrees and radians when needed.
+	 */
+	return (atanf(tanf(fov / 360.0f * pi) * (w / h * 0.75f)) / pi * 360.0f);
+}
 
 /*
 ===============
@@ -1487,10 +1504,10 @@ CL_CalcViewValues
 Sets cl.refdef view values
 ===============
 */
-void CL_CalcViewValues (void)
+void CL_CalcViewValues(void)
 {
 	int			i;
-	float		lerp, backlerp;
+	float		lerp, backlerp, ifov;
 	centity_t	*ent;
 	frame_t		*oldframe;
 	player_state_t	*ps, *ops;
@@ -1506,12 +1523,12 @@ void CL_CalcViewValues (void)
 	ops = &oldframe->playerstate;
 
 	// see if the player entity was teleported this frame
-	if (fabs (ops->pmove.origin[0] - ps->pmove.origin[0]) > 256 * 8
-			|| abs (ops->pmove.origin[1] - ps->pmove.origin[1]) > 256 * 8
-			|| abs (ops->pmove.origin[2] - ps->pmove.origin[2]) > 256 * 8)
+	if (fabs(ops->pmove.origin[0] - ps->pmove.origin[0]) > 256 * 8
+		|| abs(ops->pmove.origin[1] - ps->pmove.origin[1]) > 256 * 8
+		|| abs(ops->pmove.origin[2] - ps->pmove.origin[2]) > 256 * 8)
 		ops = ps;		// don't interpolate
 
-	ent = &cl_entities[cl.playernum+1];
+	ent = &cl_entities[cl.playernum + 1];
 	lerp = cl.lerpfrac;
 
 	// calculate the origin
@@ -1525,8 +1542,8 @@ void CL_CalcViewValues (void)
 		for (i = 0; i < 3; i++)
 		{
 			cl.refdef.vieworg[i] = cl.predicted_origin[i] + ops->viewoffset[i]
-								  + cl.lerpfrac * (ps->viewoffset[i] - ops->viewoffset[i])
-								  - backlerp * cl.prediction_error[i];
+				+ cl.lerpfrac * (ps->viewoffset[i] - ops->viewoffset[i])
+				- backlerp * cl.prediction_error[i];
 		}
 
 		// smooth out stair climbing
@@ -1540,8 +1557,8 @@ void CL_CalcViewValues (void)
 		// just use interpolated values
 		for (i = 0; i < 3; i++)
 			cl.refdef.vieworg[i] = ops->pmove.origin[i] * 0.125 + ops->viewoffset[i]
-								  + lerp * (ps->pmove.origin[i] * 0.125 + ps->viewoffset[i]
-											 - (ops->pmove.origin[i] * 0.125 + ops->viewoffset[i]));
+			+ lerp * (ps->pmove.origin[i] * 0.125 + ps->viewoffset[i]
+				- (ops->pmove.origin[i] * 0.125 + ops->viewoffset[i]));
 	}
 
 	// if not running a demo or on a locked frame, add the local angle movement
@@ -1555,16 +1572,24 @@ void CL_CalcViewValues (void)
 	{
 		// just use interpolated values
 		for (i = 0; i < 3; i++)
-			cl.refdef.viewangles[i] = LerpAngle (ops->viewangles[i], ps->viewangles[i], lerp);
+			cl.refdef.viewangles[i] = LerpAngle(ops->viewangles[i], ps->viewangles[i], lerp);
 	}
 
 	for (i = 0; i < 3; i++)
-		cl.refdef.viewangles[i] += LerpAngle (ops->kick_angles[i], ps->kick_angles[i], lerp);
+		cl.refdef.viewangles[i] += LerpAngle(ops->kick_angles[i], ps->kick_angles[i], lerp);
 
-	AngleVectors (cl.refdef.viewangles, cl.v_forward, cl.v_right, cl.v_up);
+	AngleVectors(cl.refdef.viewangles, cl.v_forward, cl.v_right, cl.v_up);
 
 	// interpolate field of view
-	cl.refdef.fov_x = ops->fov + lerp * (ps->fov - ops->fov);
+	ifov = ops->fov + lerp * (ps->fov - ops->fov);
+	if (horplus->value)
+	{
+		cl.refdef.fov_x = AdaptFov(ifov, cl.refdef.width, cl.refdef.height);
+	}
+	else
+	{
+		cl.refdef.fov_x = ops->fov + lerp * (ps->fov - ops->fov);
+	}
 
 	// don't interpolate blend color
 	for (i = 0; i < 4; i++)
