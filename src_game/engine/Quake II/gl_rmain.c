@@ -501,11 +501,9 @@ void R_RenderFrame (refdef_t *fd)
 
 	if (r_speeds->value)
 	{
-		VID_Printf (PRINT_ALL, "%4i wpoly %4i epoly %i tex %i lmaps\n",
+		VID_Printf (PRINT_ALL, "%4i wpoly %4i epoly\n",
 					  c_brush_polys,
-					  c_alias_polys,
-					  c_visible_textures,
-					  c_visible_lightmaps);
+					  c_alias_polys);
 	}
 }
 

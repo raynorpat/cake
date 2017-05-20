@@ -240,9 +240,6 @@ extern	cvar_t	*r_lightscale;
 
 extern	cvar_t	*intensity;
 
-extern	int		c_visible_lightmaps;
-extern	int		c_visible_textures;
-
 extern	glmatrix	r_drawmatrix;
 extern	glmatrix	r_worldmatrix;
 extern	glmatrix	r_projectionmatrix;

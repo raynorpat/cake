@@ -124,11 +124,7 @@ typedef struct brushpolyvert_s
 } brushpolyvert_t;
 
 
-int		c_visible_lightmaps;
-int		c_visible_textures;
-
 static gllightmapstate_t gl_lms;
-
 
 static void		LM_BeginBlock (void);
 static void		LM_FinishBlock (void);
