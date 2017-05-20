@@ -280,7 +280,7 @@ void GL_MapShot_f (char *name)
 	byte *src;
 	byte *dst;
 	char picname[MAX_OSPATH];
-	int i, c, temp;
+	int i;
 	FILE *f;
 	refdef_t refdef;
 
@@ -338,7 +338,7 @@ void GL_ScreenShot_f (void)
 	byte		*buffer;
 	char		picname[80];
 	char		checkname[MAX_OSPATH];
-	int			i, c, temp;
+	int			i, c;
 	FILE		*f;
 
 	// create the scrnshots directory if it doesn't exist

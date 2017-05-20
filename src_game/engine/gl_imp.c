@@ -35,9 +35,6 @@ GLimp_SwitchFullscreen
 #include <SDL.h>
 #include "gl_local.h"
 
-#pragma comment (lib, "glew32s.lib")
-#pragma comment (lib, "opengl32.lib")
-
 #if SDL_VERSION_ATLEAST(2, 0, 0)
 static SDL_Window* window = NULL;
 static SDL_GLContext context = NULL;

@@ -221,7 +221,6 @@ int FS_FOpenFile (char *filename, FILE **file)
 	searchpath_t	*search;
 	char			netpath[MAX_OSPATH];
 	pack_t			*pak;
-	int				i;
 
 	file_from_pak = 0;
 

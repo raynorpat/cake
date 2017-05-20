@@ -129,7 +129,6 @@ void VID_MenuInit (void)
 		"yes",
 		0
 	};
-	int i;
 
 	if (!gl_mode) gl_mode = Cvar_Get ("gl_mode", "3", 0);
 	if (!gl_finish) gl_finish = Cvar_Get ("gl_finish", "0", CVAR_ARCHIVE);

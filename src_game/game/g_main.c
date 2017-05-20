@@ -111,7 +111,7 @@ Returns a pointer to the structure with all entry points
 and global variables
 =================
 */
-game_export_t *GetGameAPI (game_import_t *import)
+Q_DLL_EXPORT game_export_t *GetGameAPI (game_import_t *import)
 {
 	gi = *import;
 
@@ -142,7 +142,7 @@ game_export_t *GetGameAPI (game_import_t *import)
 }
 
 #ifndef GAME_HARD_LINKED
-// this is only here so the functions in q_shared.c and q_shwin.c can link
+// this is only here so the functions in q_shared.c can link
 void Sys_Error (char *error, ...)
 {
 	va_list		argptr;
@@ -166,7 +166,6 @@ void Com_Printf (char *msg, ...)
 
 	gi.dprintf ("%s", text);
 }
-
 #endif
 
 //======================================================================

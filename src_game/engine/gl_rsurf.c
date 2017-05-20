@@ -212,7 +212,7 @@ void RSurf_BeginFrame (void)
 
 void RSurf_SelectProgramAndStates (glmatrix *matrix, float alpha)
 {
-	int i, j;
+	int i;
 	qboolean stateset = false;
 
 	glProgramUniformMatrix4fv (gl_lightmappedsurfprog, u_brushlocalMatrix, 1, GL_FALSE, matrix->m[0]);
@@ -362,7 +362,7 @@ void R_DrawSurfaceChain (msurface_t *chain, int numindexes)
 
 void R_DrawTextureChains (entity_t *e)
 {
-	int i, j;
+	int i;
 	image_t *image = NULL;
 	msurface_t *surf = NULL;
 	float *v = NULL;
@@ -634,7 +634,6 @@ void R_RecursiveWorldNode (mnode_t *node)
 	msurface_t	*surf, **mark;
 	mleaf_t		*pleaf;
 	float		dot;
-	image_t		*image;
 
 	if (node->contents == CONTENTS_SOLID)
 		return;		// solid
@@ -731,7 +730,6 @@ R_DrawWorld
 */
 void R_DrawWorld (void)
 {
-	int i;
 	entity_t ent;
 	glmatrix localMatrix;
 
@@ -892,7 +890,7 @@ GL_BuildPolygonFromSurface
 */
 void GL_BuildPolygonFromSurface (model_t *mod, msurface_t *surf)
 {
-	int	i, j;
+	int	i;
 	float s, t;
 	static brushpolyvert_t vertbuf[64];
 

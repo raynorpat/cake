@@ -1359,7 +1359,7 @@ GL_InitImages
 */
 void GL_InitImages (void)
 {
-	int		i, j;
+	int		i;
 	float	g = vid_gamma->value;
 
 	R_LoadResourceTextures ();

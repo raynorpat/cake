@@ -179,7 +179,6 @@ qboolean NET_StringToSockaddr (char *s, struct sockaddr *sadr)
 {
 	struct hostent	*h;
 	char	*colon;
-	int		val;
 	char	copy[128];
 
 	memset (sadr, 0, sizeof (*sadr));

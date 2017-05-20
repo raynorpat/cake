@@ -707,8 +707,6 @@ qboolean R_Init (void)
 {
 	char renderer_buffer[1000];
 	char vendor_buffer[1000];
-	int		err;
-	int		i, j/*, numExtensions*/;
 
 	VID_Printf (PRINT_ALL, "ref_gl version: "REF_VERSION"\n");
 
@@ -741,17 +739,6 @@ qboolean R_Init (void)
 
 	gl_config.version_string = glGetString (GL_VERSION);
 	VID_Printf (PRINT_ALL, "GL_VERSION: %s\n", gl_config.version_string);
-
-	/*
-	glGetIntegerv(GL_NUM_EXTENSIONS, &numExtensions);
-
-	VID_Printf(PRINT_ALL, "GL_EXTENSIONS:");
-	for (i = 0; i < numExtensions; i++)
-	{
-		VID_Printf(PRINT_ALL, " %s", (const char*)glGetStringi(GL_EXTENSIONS, i));
-	}
-	VID_Printf(PRINT_ALL, "\n");
-	*/
 
 	strcpy (renderer_buffer, gl_config.renderer_string);
 	strlwr (renderer_buffer);

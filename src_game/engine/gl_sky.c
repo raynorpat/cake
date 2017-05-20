@@ -72,7 +72,6 @@ void R_SetSky (char *name, float rotate, vec3_t axis)
 
 void R_DrawSkyChain (msurface_t *surf)
 {
-	int i;
 	msurface_t *reversechain = NULL;
 	int numindexes = 0;
 

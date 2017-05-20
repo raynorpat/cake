@@ -60,6 +60,24 @@ typedef enum {false, true}	qboolean;
 #endif
 
 
+// Generic helper definitions for shared library support
+#if defined _WIN32 || defined __CYGWIN__
+# define Q_DLL_IMPORT __declspec( dllimport )
+# define Q_DLL_EXPORT __declspec( dllexport )
+# define Q_DLL_LOCAL
+#else
+# if __GNUC__ >= 4
+#  define Q_DLL_IMPORT __attribute__ ( ( visibility( "default" ) ) )
+#  define Q_DLL_EXPORT __attribute__ ( ( visibility( "default" ) ) )
+#  define Q_DLL_LOCAL  __attribute__ ( ( visibility( "hidden" ) ) )
+# else
+#  define Q_DLL_IMPORT
+#  define Q_DLL_EXPORT
+#  define Q_DLL_LOCAL
+# endif
+#endif
+
+
 // angle indexes
 #define	PITCH				0		// up / down
 #define	YAW					1		// left / right

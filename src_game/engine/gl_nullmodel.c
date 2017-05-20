@@ -71,7 +71,6 @@ R_DrawNullModel
 void R_DrawNullModel (entity_t *e)
 {
 	vec3_t	shadelight;
-	int		i;
 
 	if (e->flags & RF_FULLBRIGHT)
 		shadelight[0] = shadelight[1] = shadelight[2] = 1.0f;
