@@ -61,9 +61,6 @@ void Sys_Error (char *error, ...)
 
 	SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Error", text, NULL);
 
-	// shut down QHOST hooks if necessary
-	//DeinitConProc ();
-
 	exit (1);
 }
 
@@ -72,19 +69,53 @@ void Sys_Quit (void)
 	CL_Shutdown ();
 	Qcommon_Shutdown ();
 
-	/*
-	if (dedicated && dedicated->value)
-		FreeConsole ();
-
-	// shut down QHOST hooks if necessary
-	DeinitConProc ();
-	*/
-
 	exit (0);
 }
 
 
 //================================================================
+
+
+static unsigned int freq;
+int curtime; // time returned by last Sys_Milliseconds
+
+/*
+================
+Sys_InitTime
+================
+*/
+static void Sys_InitTime (void)
+{
+	freq = SDL_GetPerformanceFrequency();
+}
+
+/*
+================
+Sys_Microseconds
+================
+*/
+unsigned int Sys_Microseconds (void)
+{
+	static unsigned int base = 0;
+	if (!base) {
+		base = SDL_GetPerformanceCounter();
+	}
+	return 1000000ULL * (SDL_GetPerformanceCounter() - base) / freq;
+}
+
+/*
+================
+Sys_Milliseconds
+================
+*/
+int Sys_Milliseconds (void)
+{
+	curtime = Sys_Microseconds() / 1000;
+	return curtime;
+}
+
+
+//===============================================================================
 
 
 /*
@@ -94,6 +125,7 @@ Sys_Init
 */
 void Sys_Init (void)
 {
+	Sys_InitTime();
 }
 
 
@@ -120,7 +152,7 @@ char *Sys_ConsoleInput (void)
 	}
 
 	FD_ZERO(&fdset);
-	FD_SET(0, &fdset); /* stdin */
+	FD_SET(0, &fdset); // stdin
 	timeout.tv_sec = 0;
 	timeout.tv_usec = 0;
 
@@ -131,7 +163,7 @@ char *Sys_ConsoleInput (void)
 
 	len = read(0, text, sizeof(text));
 
-	if (len == 0) /* eof! */
+	if (len == 0) // eof!
 	{
 		stdin_active = false;
 		return (NULL);
@@ -142,7 +174,7 @@ char *Sys_ConsoleInput (void)
 		return (NULL);
 	}
 
-	text[len - 1] = 0; /* rip off the /n and terminate */
+	text[len - 1] = 0; // rip off the /n and terminate
 
 	return (text);
 }
@@ -309,8 +341,6 @@ int main(int argc, char **argv)
 	nostdout = Cvar_Get("nostdout", "0", 0);
 
 	oldtime = Sys_Milliseconds();
-
-	// The legendary mainloop
 	while (1)
 	{
 		// find time spent rendering last frame
@@ -320,6 +350,7 @@ int main(int argc, char **argv)
 			time = newtime - oldtime;
 		} while (time < 1);
 
+		// run the frame
 		Qcommon_Frame(time);
 
 		oldtime = newtime;

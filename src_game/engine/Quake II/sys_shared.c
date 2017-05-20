@@ -162,56 +162,6 @@ void Hunk_Free (void *base)
 
 //===============================================================================
 
-
-/*
-================
-Sys_Milliseconds
-================
-*/
-int	curtime;
-
-// timeBeginPeriod needs to modify system global stuff so don't use it
-int Sys_Milliseconds (void)
-{
-#ifdef _WIN32
-	static __int64 qpf;
-	static __int64 qpcstart;
-	static qboolean	initialized = false;
-
-	__int64 qpcnow;
-
-	if (!initialized)
-	{
-		QueryPerformanceFrequency ((LARGE_INTEGER *) &qpf);
-		QueryPerformanceCounter ((LARGE_INTEGER *) &qpcstart);
-		initialized = true;
-		return 0;
-	}
-
-	QueryPerformanceCounter ((LARGE_INTEGER *) &qpcnow);
-
-	curtime = (((qpcnow - qpcstart) * 1000) + (qpf >> 1)) / qpf;
-
-	return curtime;
-#else
-	struct timeval tp;
-	struct timezone tzp;
-	static int secbase;
-
-	gettimeofday(&tp, &tzp);
-
-	if (!secbase)
-	{
-		secbase = tp.tv_sec;
-		return (tp.tv_usec / 1000);
-	}
-
-	curtime = (tp.tv_sec - secbase) * 1000 + tp.tv_usec / 1000;
-
-	return (curtime);
-#endif
-}
-
 void Sys_Mkdir (char *path)
 {
 #ifdef _WIN32
@@ -221,7 +171,7 @@ void Sys_Mkdir (char *path)
 #endif
 }
 
-//============================================
+//===============================================================================
 
 char	findbase[MAX_OSPATH];
 char	findpath[MAX_OSPATH];
