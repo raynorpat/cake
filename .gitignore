@@ -55,6 +55,8 @@
 *.idb
 *.pdb
 
+src_game/build
+
 baseq2/*.pak
 baseq2/*.cfg
 baseq2/demos
