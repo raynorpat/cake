@@ -33,7 +33,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #include <math.h>
 
 #include "ref.h"
-#include "qgl.h"
 
 #define	LIGHTMAP_SIZE	128
 #define	MAX_LIGHTMAPS	128

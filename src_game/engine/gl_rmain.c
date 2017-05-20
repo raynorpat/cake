@@ -693,7 +693,7 @@ qboolean R_Init (void)
 	char renderer_buffer[1000];
 	char vendor_buffer[1000];
 	int		err;
-	int		i, j, numExtensions;
+	int		i, j/*, numExtensions*/;
 
 	VID_Printf (PRINT_ALL, "ref_gl version: "REF_VERSION"\n");
 
@@ -701,18 +701,9 @@ qboolean R_Init (void)
 
 	R_Register ();
 
-	// initialize our gl dynamic bindings
-	if (!QGL_Init ())
-	{
-		QGL_Shutdown ();
-		VID_Printf (PRINT_ALL, "ref_gl::R_Init() - could not load Refresh\n");
-		return -1;
-	}
-
 	// initialize OS-specific parts of OpenGL
 	if (!GLimp_Init ())
 	{
-		QGL_Shutdown ();
 		return -1;
 	}
 
@@ -722,7 +713,6 @@ qboolean R_Init (void)
 	// create the window and set up the context
 	if (!R_SetMode ())
 	{
-		QGL_Shutdown ();
 		VID_Printf (PRINT_ALL, "ref_gl::R_Init() - could not R_SetMode()\n");
 		return -1;
 	}
@@ -737,6 +727,7 @@ qboolean R_Init (void)
 	gl_config.version_string = glGetString (GL_VERSION);
 	VID_Printf (PRINT_ALL, "GL_VERSION: %s\n", gl_config.version_string);
 
+	/*
 	glGetIntegerv(GL_NUM_EXTENSIONS, &numExtensions);
 
 	VID_Printf(PRINT_ALL, "GL_EXTENSIONS:");
@@ -745,6 +736,7 @@ qboolean R_Init (void)
 		VID_Printf(PRINT_ALL, " %s", (const char*)glGetStringi(GL_EXTENSIONS, i));
 	}
 	VID_Printf(PRINT_ALL, "\n");
+	*/
 
 	strcpy (renderer_buffer, gl_config.renderer_string);
 	strlwr (renderer_buffer);
@@ -828,9 +820,6 @@ void R_Shutdown (void)
 
 	// shut down OS specific OpenGL stuff like contexts, etc.
 	GLimp_Shutdown (true);
-
-	// shutdown our QGL subsystem
-	QGL_Shutdown ();
 }
 
 /*
