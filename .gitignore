@@ -6,6 +6,8 @@
 *.DS_Store
 *.filters
 *.user
+*.db-shm
+*.db-wal
 
 # Object files
 *.o
