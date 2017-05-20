@@ -1350,9 +1350,17 @@ float SCR_GetHUDScale(void)
 {
 	float scale;
 
-	if (cl_hudscale->value < 0)
+	if (!scr_initialized)
+	{
+		scale = 1;
+	}
+	else if (cl_hudscale->value < 0)
 	{
 		scale = SCR_GetScale();
+	}
+	else if (cl_hudscale->value == 0) // HACK: allow scale 0 to hide the HUD
+	{
+		scale = 0;
 	}
 	else
 	{
@@ -1366,7 +1374,11 @@ float SCR_GetConsoleScale(void)
 {
 	float scale;
 
-	if (cl_consolescale->value < 0)
+	if (!scr_initialized)
+	{
+		scale = 1;
+	}
+	else if (cl_consolescale->value < 0)
 	{
 		scale = SCR_GetScale();
 	}
@@ -1382,7 +1394,11 @@ float SCR_GetMenuScale(void)
 {
 	float scale;
 
-	if (cl_menuscale->value < 0)
+	if (!scr_initialized)
+	{
+		scale = 1;
+	}
+	else if (cl_menuscale->value < 0)
 	{
 		scale = SCR_GetScale();
 	}
