@@ -1190,6 +1190,8 @@ static void ConsoleFunc (void *unused)
 	// the proper way to do this is probably to have ToggleConsole_f accept a parameter
 	extern void Key_ClearTyping (void);
 
+	SCR_EndLoadingPlaque(); // get rid of loading plaque
+
 	if (cl.attractloop)
 	{
 		Cbuf_AddText ("killserver\n");
@@ -1201,6 +1203,11 @@ static void ConsoleFunc (void *unused)
 
 	M_ForceMenuOff ();
 	cls.key_dest = key_console;
+
+	if ((Cvar_VariableValue("maxclients") == 1) && Com_ServerState())
+	{
+		Cvar_Set("paused", "1");
+	}
 }
 
 static void UpdateSoundQualityFunc (void *unused)
