@@ -445,7 +445,7 @@ void SCR_DrawCrosshair (void)
 		scale = crosshair_scale->value;
 	}
 
-	Draw_PicScaled ((viddef.width - crosshair_width) >> 1, (viddef.height - crosshair_height) >> 1, crosshair_pic, scale);
+	Draw_PicScaled ((viddef.width - crosshair_width * scale) / 2, (viddef.height - crosshair_height * scale) / 2, crosshair_pic, scale);
 }
 
 /*
