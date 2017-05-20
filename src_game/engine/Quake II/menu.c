@@ -75,9 +75,10 @@ int		m_menudepth;
 static void M_Banner (char *name)
 {
 	int w, h;
+	float scale = SCR_GetMenuScale();
 
 	Draw_GetPicSize (&w, &h, name);
-	Draw_Pic (viddef.width / 2 - w / 2, viddef.height / 2 - 110, name);
+	Draw_PicScaled(viddef.width / 2 - (w * scale) / 2, viddef.height / 2 - (110 * scale), name, scale);
 }
 
 void M_PushMenu (void (*draw) (void), const char * (*key) (int k))
@@ -220,10 +221,8 @@ const char *Default_MenuKey (menuframework_s *m, int key)
 	case K_MOUSE1:
 	case K_MOUSE2:
 	case K_MOUSE3:
-	case K_JOY1:
-	case K_JOY2:
-	case K_JOY3:
-	case K_JOY4:
+    case K_MOUSE4:
+    case K_MOUSE5:
 	case K_AUX1:
 	case K_AUX2:
 	case K_AUX3:
@@ -283,14 +282,17 @@ higher res screens.
 */
 void M_DrawCharacter (int cx, int cy, int num)
 {
-	Draw_Char (cx + ((viddef.width - 320) >> 1), cy + ((viddef.height - 240) >> 1), num);
+	float scale = SCR_GetMenuScale();
+	Draw_CharScaled(cx + ((int)(viddef.width - 320 * scale) >> 1), cy + ((int)(viddef.height - 240 * scale) >> 1), num, scale);
 }
 
 void M_Print (int cx, int cy, char *str)
 {
+	float scale = SCR_GetMenuScale();
+
 	while (*str)
 	{
-		M_DrawCharacter (cx, cy, (*str) + 128);
+		M_DrawCharacter (cx * scale, cy * scale, (*str) + 128);
 		str++;
 		cx += 8;
 	}
@@ -298,9 +300,11 @@ void M_Print (int cx, int cy, char *str)
 
 void M_PrintWhite (int cx, int cy, char *str)
 {
+	float scale = SCR_GetMenuScale();
+
 	while (*str)
 	{
-		M_DrawCharacter (cx, cy, *str);
+		M_DrawCharacter (cx * scale, cy * scale, *str);
 		str++;
 		cx += 8;
 	}
@@ -308,7 +312,9 @@ void M_PrintWhite (int cx, int cy, char *str)
 
 void M_DrawPic (int x, int y, char *pic)
 {
-	Draw_Pic (x + ((viddef.width - 320) >> 1), y + ((viddef.height - 240) >> 1), pic);
+	float scale = SCR_GetMenuScale();
+
+	Draw_PicScaled((x + ((viddef.width - 320) >> 1)) * scale, (y + ((viddef.height - 240) >> 1)) * scale, pic, scale);
 }
 
 
@@ -325,6 +331,7 @@ void M_DrawCursor (int x, int y, int f)
 {
 	char	cursorname[80];
 	static qboolean cached;
+	float scale = SCR_GetMenuScale();
 
 	if (!cached)
 	{
@@ -341,26 +348,27 @@ void M_DrawCursor (int x, int y, int f)
 	}
 
 	Com_sprintf (cursorname, sizeof (cursorname), "m_cursor%d", f);
-	Draw_Pic (x, y, cursorname);
+	Draw_PicScaled (x * scale, y * scale, cursorname, scale);
 }
 
 void M_DrawTextBox (int x, int y, int width, int lines)
 {
 	int		cx, cy;
 	int		n;
+	float	scale = SCR_GetMenuScale();
 
 	// draw left side
 	cx = x;
 	cy = y;
-	M_DrawCharacter (cx, cy, 1);
+	M_DrawCharacter (cx * scale, cy * scale, 1);
 
 	for (n = 0; n < lines; n++)
 	{
 		cy += 8;
-		M_DrawCharacter (cx, cy, 4);
+		M_DrawCharacter (cx * scale, cy * scale, 4);
 	}
 
-	M_DrawCharacter (cx, cy + 8, 7);
+    M_DrawCharacter(cx * scale, cy * scale + 8 * scale, 7);
 
 	// draw middle
 	cx += 8;
@@ -368,30 +376,30 @@ void M_DrawTextBox (int x, int y, int width, int lines)
 	while (width > 0)
 	{
 		cy = y;
-		M_DrawCharacter (cx, cy, 2);
+		M_DrawCharacter (cx * scale, cy * scale, 2);
 
 		for (n = 0; n < lines; n++)
 		{
 			cy += 8;
-			M_DrawCharacter (cx, cy, 5);
+			M_DrawCharacter (cx * scale, cy * scale, 5);
 		}
 
-		M_DrawCharacter (cx, cy + 8, 8);
+        M_DrawCharacter(cx * scale, cy *scale + 8 * scale, 8);
 		width -= 1;
 		cx += 8;
 	}
 
 	// draw right side
 	cy = y;
-	M_DrawCharacter (cx, cy, 3);
+	M_DrawCharacter (cx * scale, cy * scale, 3);
 
 	for (n = 0; n < lines; n++)
 	{
 		cy += 8;
-		M_DrawCharacter (cx, cy, 6);
+		M_DrawCharacter (cx * scale, cy * scale, 6);
 	}
 
-	M_DrawCharacter (cx, cy + 8, 9);
+    M_DrawCharacter(cx * scale, cy * scale + 8 * scale, 9);
 }
 
 
@@ -414,6 +422,7 @@ void M_Main_Draw (void)
 	int widest = -1;
 	int totalheight = 0;
 	char litname[80];
+	float scale = SCR_GetMenuScale();
 	char *names[] =
 	{
 		"m_main_game",
@@ -434,25 +443,25 @@ void M_Main_Draw (void)
 		totalheight += (h + 12);
 	}
 
-	ystart = (viddef.height / 2 - 110);
-	xoffset = (viddef.width - widest + 70) / 2;
+	ystart = (viddef.height / (2 * scale) - 110);
+	xoffset = (viddef.width / scale - widest + 70) / 2;
 
 	for (i = 0; names[i] != 0; i++)
 	{
 		if (i != m_main_cursor)
-			Draw_Pic (xoffset, ystart + i * 40 + 13, names[i]);
+			Draw_PicScaled (xoffset * scale, (ystart + i * 40 + 13) * scale, names[i], scale);
 	}
 
 	strcpy (litname, names[m_main_cursor]);
 	strcat (litname, "_sel");
-	Draw_Pic (xoffset, ystart + m_main_cursor * 40 + 13, litname);
+	Draw_PicScaled (xoffset * scale, (ystart + m_main_cursor * 40 + 13) * scale, litname, scale);
 
 	M_DrawCursor (xoffset - 25, ystart + m_main_cursor * 40 + 11, (int) (cls.realtime / 100) % NUM_CURSOR_FRAMES);
 
 	Draw_GetPicSize (&w, &h, "m_main_plaque");
-	Draw_Pic (xoffset - 30 - w, ystart, "m_main_plaque");
+	Draw_PicScaled ((xoffset - 30 - w) * scale, ystart * scale, "m_main_plaque", scale);
 
-	Draw_Pic (xoffset - 30 - w, ystart + h + 5, "m_main_logo");
+	Draw_PicScaled ((xoffset - 30 - w) * scale, (ystart + h + 5) * scale, "m_main_logo", scale);
 }
 
 
@@ -556,7 +565,9 @@ static void StartNetworkServerFunc (void *unused)
 
 void Multiplayer_MenuInit (void)
 {
-	s_multiplayer_menu.x = viddef.width * 0.50 - 64;
+	float scale = SCR_GetMenuScale();
+
+	s_multiplayer_menu.x = (int)(viddef.width * 0.50f) - 64 * scale;
 	s_multiplayer_menu.nitems = 0;
 
 	s_join_network_server_action.generic.type	= MTYPE_ACTION;
@@ -716,22 +727,25 @@ static void M_FindKeysForCommand (char *command, int *twokeys)
 
 static void KeyCursorDrawFunc (menuframework_s *menu)
 {
+	float scale = SCR_GetMenuScale();
+
 	if (bind_grab)
-		Draw_Char (menu->x, menu->y + menu->cursor * 9, '=');
+		Draw_CharScaled (menu->x, (menu->y + menu->cursor * 9) * scale, '=', scale);
 	else
-		Draw_Char (menu->x, menu->y + menu->cursor * 9, 12 + ((int) (Sys_Milliseconds() / 250) & 1));
+		Draw_CharScaled (menu->x, (menu->y + menu->cursor * 9) * scale, 12 + ((int)(Sys_Milliseconds() / 250) & 1), scale);
 }
 
 static void DrawKeyBindingFunc (void *self)
 {
 	int keys[2];
 	menuaction_s *a = (menuaction_s *) self;
+	float scale = SCR_GetMenuScale();
 
 	M_FindKeysForCommand (bindnames[a->generic.localdata[0]][0], keys);
 
 	if (keys[0] == -1)
 	{
-		Menu_DrawString (a->generic.x + a->generic.parent->x + 16, a->generic.y + a->generic.parent->y, "???");
+		Menu_DrawString (a->generic.x + a->generic.parent->x + 16 * scale, a->generic.y + a->generic.parent->y, "???");
 	}
 	else
 	{
@@ -740,14 +754,14 @@ static void DrawKeyBindingFunc (void *self)
 
 		name = Key_KeynumToString (keys[0]);
 
-		Menu_DrawString (a->generic.x + a->generic.parent->x + 16, a->generic.y + a->generic.parent->y, name);
+		Menu_DrawString (a->generic.x + a->generic.parent->x + 16 * scale, a->generic.y + a->generic.parent->y, name);
 
 		x = strlen (name) * 8;
 
 		if (keys[1] != -1)
 		{
-			Menu_DrawString (a->generic.x + a->generic.parent->x + 24 + x, a->generic.y + a->generic.parent->y, "or");
-			Menu_DrawString (a->generic.x + a->generic.parent->x + 48 + x, a->generic.y + a->generic.parent->y, Key_KeynumToString (keys[1]));
+			Menu_DrawString (a->generic.x + a->generic.parent->x + 24 * scale + (x * scale), a->generic.y + a->generic.parent->y, "or");
+			Menu_DrawString (a->generic.x + a->generic.parent->x + 48 * scale + (x * scale), a->generic.y + a->generic.parent->y, Key_KeynumToString (keys[1]));
 		}
 	}
 }
@@ -1009,7 +1023,7 @@ static const char *Keys_MenuKey (int key)
 
 	if (bind_grab)
 	{
-		if (key != K_ESCAPE && key != '`')
+        if ((key != K_ESCAPE) && (key != '`'))
 		{
 			char cmd[1024];
 
@@ -1271,11 +1285,13 @@ void Options_MenuInit (void)
 		0
 	};
 
+	float scale = SCR_GetMenuScale();
+
 //	win_noalttab = Cvar_Get ("win_noalttab", "0", CVAR_ARCHIVE);
 
 	// configure controls menu and menu items
 	s_options_menu.x = viddef.width / 2;
-	s_options_menu.y = viddef.height / 2 - 58;
+	s_options_menu.y = viddef.height / (2 * scale) - 58;
 	s_options_menu.nitems = 0;
 
 	s_options_sfxvolume_slider.generic.type	= MTYPE_SLIDER;
@@ -1662,7 +1678,7 @@ static const char *xatcredits[] =
 	"Chris Toft",
 	"Juan Valdes",
 	"",
-	"+THANKS TO INTERGRAPH COMPUTER SYTEMS",
+    "+THANKS TO INTERGRAPH COMPUTER SYSTEMS",
 	"+IN PARTICULAR:",
 	"",
 	"Michael T. Nicolaou",
@@ -1807,9 +1823,10 @@ static const char *roguecredits[] =
 void M_Credits_MenuDraw (void)
 {
 	int i, y;
+	float scale = SCR_GetMenuScale();
 
 	// draw the credits
-	for (i = 0, y = viddef.height - ((cls.realtime - credits_start_time) / 40.0F); credits[i] && y < viddef.height; y += 10, i++)
+	for (i = 0, y = (int)(viddef.height / scale - ((cls.realtime - credits_start_time) / 40.0f)); credits[i] && y < viddef.height / scale; y += 10, i++)
 	{
 		int j, stringoffset = 0;
 		int bold = false;
@@ -1832,12 +1849,12 @@ void M_Credits_MenuDraw (void)
 		{
 			int x;
 
-			x = (viddef.width - strlen (credits[i]) * 8 - stringoffset * 8) / 2 + (j + stringoffset) * 8;
+			x = (viddef.width / scale - strlen (credits[i]) * 8 - stringoffset * 8) / 2 + (j + stringoffset) * 8;
 
 			if (bold)
-				Draw_Char (x, y, credits[i][j+stringoffset] + 128);
+				Draw_CharScaled (x * scale, y * scale, credits[i][j + stringoffset] + 128, scale);
 			else
-				Draw_Char (x, y, credits[i][j+stringoffset]);
+				Draw_CharScaled (x * scale, y * scale, credits[i][j + stringoffset], scale);
 		}
 	}
 
@@ -1940,6 +1957,7 @@ static menuframework_s	s_game_menu;
 static menuaction_s		s_easy_game_action;
 static menuaction_s		s_medium_game_action;
 static menuaction_s		s_hard_game_action;
+static menuaction_s 	s_hardp_game_action;
 static menuaction_s		s_load_game_action;
 static menuaction_s		s_save_game_action;
 static menuaction_s		s_credits_action;
@@ -1952,8 +1970,6 @@ static void StartGame (void)
 	M_ForceMenuOff ();
 	Cvar_SetValue ("deathmatch", 0);
 	Cvar_SetValue ("coop", 0);
-
-	Cvar_SetValue ("gamerules", 0);		//PGM
 
 	Cbuf_AddText ("loading; killserver; wait; newgame\n");
 	cls.key_dest = key_game;
@@ -1977,6 +1993,12 @@ static void HardGameFunc (void *data)
 	StartGame ();
 }
 
+static void HardpGameFunc(void *data)
+{
+    Cvar_ForceSet("skill", "3");
+    StartGame();
+}
+
 static void LoadGameFunc (void *unused)
 {
 	M_Menu_LoadGame_f ();
@@ -1994,15 +2016,7 @@ static void CreditsFunc (void *unused)
 
 void Game_MenuInit (void)
 {
-	static const char *difficulty_names[] =
-	{
-		"easy",
-		"medium",
-		"hard",
-		0
-	};
-
-	s_game_menu.x = viddef.width * 0.50;
+	s_game_menu.x = (int)(viddef.width * 0.50f);
 	s_game_menu.nitems = 0;
 
 	s_easy_game_action.generic.type	= MTYPE_ACTION;
@@ -2026,32 +2040,40 @@ void Game_MenuInit (void)
 	s_hard_game_action.generic.name	= "hard";
 	s_hard_game_action.generic.callback = HardGameFunc;
 
+    s_hardp_game_action.generic.type = MTYPE_ACTION;
+    s_hardp_game_action.generic.flags = QMF_LEFT_JUSTIFY;
+    s_hardp_game_action.generic.x = 0;
+    s_hardp_game_action.generic.y = 30;
+    s_hardp_game_action.generic.name = "nightmare";
+    s_hardp_game_action.generic.callback = HardpGameFunc;
+
 	s_blankline.generic.type = MTYPE_SEPARATOR;
 
 	s_load_game_action.generic.type	= MTYPE_ACTION;
 	s_load_game_action.generic.flags = QMF_LEFT_JUSTIFY;
 	s_load_game_action.generic.x		= 0;
-	s_load_game_action.generic.y		= 40;
+    s_load_game_action.generic.y = 50;
 	s_load_game_action.generic.name	= "load game";
 	s_load_game_action.generic.callback = LoadGameFunc;
 
 	s_save_game_action.generic.type	= MTYPE_ACTION;
 	s_save_game_action.generic.flags = QMF_LEFT_JUSTIFY;
 	s_save_game_action.generic.x		= 0;
-	s_save_game_action.generic.y		= 50;
+    s_save_game_action.generic.y = 60;
 	s_save_game_action.generic.name	= "save game";
 	s_save_game_action.generic.callback = SaveGameFunc;
 
 	s_credits_action.generic.type	= MTYPE_ACTION;
 	s_credits_action.generic.flags = QMF_LEFT_JUSTIFY;
 	s_credits_action.generic.x		= 0;
-	s_credits_action.generic.y		= 60;
+    s_credits_action.generic.y = 70;
 	s_credits_action.generic.name	= "credits";
 	s_credits_action.generic.callback = CreditsFunc;
 
 	Menu_AddItem (&s_game_menu, (void *) &s_easy_game_action);
 	Menu_AddItem (&s_game_menu, (void *) &s_medium_game_action);
 	Menu_AddItem (&s_game_menu, (void *) &s_hard_game_action);
+    Menu_AddItem (&s_game_menu, (void *) &s_hardp_game_action);
 	Menu_AddItem (&s_game_menu, (void *) &s_blankline);
 	Menu_AddItem (&s_game_menu, (void *) &s_load_game_action);
 	Menu_AddItem (&s_game_menu, (void *) &s_save_game_action);
@@ -2136,9 +2158,10 @@ void LoadGameCallback (void *self)
 void LoadGame_MenuInit (void)
 {
 	int i;
+	float scale = SCR_GetMenuScale();
 
-	s_loadgame_menu.x = viddef.width / 2 - 120;
-	s_loadgame_menu.y = viddef.height / 2 - 58;
+	s_loadgame_menu.x = viddef.width / 2 - (120 * scale);
+	s_loadgame_menu.y = viddef.height / (2 * scale) - 58;
 	s_loadgame_menu.nitems = 0;
 
 	Create_Savestrings ();
@@ -2217,9 +2240,10 @@ void SaveGame_MenuDraw (void)
 void SaveGame_MenuInit (void)
 {
 	int i;
+	float scale = SCR_GetMenuScale();
 
-	s_savegame_menu.x = viddef.width / 2 - 120;
-	s_savegame_menu.y = viddef.height / 2 - 58;
+	s_savegame_menu.x = viddef.width / 2 - (120 * scale);
+	s_savegame_menu.y = viddef.height / (2 * scale) - 58;
 	s_savegame_menu.nitems = 0;
 
 	Create_Savestrings ();
@@ -2366,8 +2390,9 @@ void SearchLocalGamesFunc (void *self)
 void JoinServer_MenuInit (void)
 {
 	int i;
+	float scale = SCR_GetMenuScale();
 
-	s_joinserver_menu.x = viddef.width * 0.50 - 120;
+	s_joinserver_menu.x = (int)(viddef.width * 0.50f) - 120 * scale;
 	s_joinserver_menu.nitems = 0;
 
 	s_joinserver_address_book_action.generic.type	= MTYPE_ACTION;
@@ -2387,7 +2412,7 @@ void JoinServer_MenuInit (void)
 
 	s_joinserver_server_title.generic.type = MTYPE_SEPARATOR;
 	s_joinserver_server_title.generic.name = "connect to...";
-	s_joinserver_server_title.generic.x  = 80;
+	s_joinserver_server_title.generic.x  = 80 * scale;
 	s_joinserver_server_title.generic.y	  = 30;
 
 	for (i = 0; i < MAX_LOCAL_SERVERS; i++)
@@ -2602,6 +2627,7 @@ void StartServer_MenuInit (void)
 	int length;
 	int i;
 	FILE *fp;
+	float scale = SCR_GetMenuScale();
 
 	// load the list of map names
 	Com_sprintf (mapsname, sizeof (mapsname), "%s/maps.lst", FS_Gamedir());
@@ -2757,7 +2783,7 @@ void StartServer_MenuInit (void)
 	s_startserver_dmoptions_action.generic.type = MTYPE_ACTION;
 	s_startserver_dmoptions_action.generic.name	= " deathmatch flags";
 	s_startserver_dmoptions_action.generic.flags = QMF_LEFT_JUSTIFY;
-	s_startserver_dmoptions_action.generic.x	= 24;
+	s_startserver_dmoptions_action.generic.x	= 24 * scale;
 	s_startserver_dmoptions_action.generic.y	= 108;
 	s_startserver_dmoptions_action.generic.statusbar = NULL;
 	s_startserver_dmoptions_action.generic.callback = DMOptionsFunc;
@@ -2765,7 +2791,7 @@ void StartServer_MenuInit (void)
 	s_startserver_start_action.generic.type = MTYPE_ACTION;
 	s_startserver_start_action.generic.name	= " begin";
 	s_startserver_start_action.generic.flags = QMF_LEFT_JUSTIFY;
-	s_startserver_start_action.generic.x	= 24;
+	s_startserver_start_action.generic.x	= 24 * scale;
 	s_startserver_start_action.generic.y	= 128;
 	s_startserver_start_action.generic.callback = StartServerActionFunc;
 
@@ -3012,7 +3038,7 @@ void DMOptions_MenuInit (void)
 	int dmflags = Cvar_VariableValue ("dmflags");
 	int y = 0;
 
-	s_dmoptions_menu.x = viddef.width * 0.50;
+    s_dmoptions_menu.x = (int)(viddef.width * 0.50f);
 	s_dmoptions_menu.nitems = 0;
 
 	s_falls_box.generic.type = MTYPE_SPINCONTROL;
@@ -3280,13 +3306,14 @@ void DownloadOptions_MenuInit (void)
 		"no", "yes", 0
 	};
 	int y = 0;
+	float scale = SCR_GetMenuScale();
 
-	s_downloadoptions_menu.x = viddef.width * 0.50;
+    s_downloadoptions_menu.x = (int)(viddef.width * 0.50f);
 	s_downloadoptions_menu.nitems = 0;
 
 	s_download_title.generic.type = MTYPE_SEPARATOR;
 	s_download_title.generic.name = "Download Options";
-	s_download_title.generic.x  = 48;
+	s_download_title.generic.x  = 48 * scale;
 	s_download_title.generic.y	 = y;
 
 	s_allow_download_box.generic.type = MTYPE_SPINCONTROL;
@@ -3373,9 +3400,10 @@ static menufield_s		s_addressbook_fields[NUM_ADDRESSBOOK_ENTRIES];
 void AddressBook_MenuInit (void)
 {
 	int i;
+	float scale = SCR_GetMenuScale();
 
-	s_addressbook_menu.x = viddef.width / 2 - 142;
-	s_addressbook_menu.y = viddef.height / 2 - 58;
+	s_addressbook_menu.x = viddef.width / 2 - (142 * scale);
+	s_addressbook_menu.y = viddef.height / (2 * scale) - 58;
 	s_addressbook_menu.nitems = 0;
 
 	for (i = 0; i < NUM_ADDRESSBOOK_ENTRIES; i++)
@@ -3699,6 +3727,7 @@ qboolean PlayerConfig_MenuInit (void)
 	char currentdirectory[1024];
 	char currentskin[1024];
 	int i = 0;
+	float scale = SCR_GetMenuScale();
 
 	int currentdirectoryindex = 0;
 	int currentskinindex = 0;
@@ -3758,8 +3787,8 @@ qboolean PlayerConfig_MenuInit (void)
 		}
 	}
 
-	s_player_config_menu.x = viddef.width / 2 - 95;
-	s_player_config_menu.y = viddef.height / 2 - 97;
+	s_player_config_menu.x = viddef.width / 2 - 95 * scale;
+	s_player_config_menu.y = viddef.height / (2 * scale) - 97;
 	s_player_config_menu.nitems = 0;
 
 	s_player_name_field.generic.type = MTYPE_FIELD;
@@ -3774,11 +3803,11 @@ qboolean PlayerConfig_MenuInit (void)
 
 	s_player_model_title.generic.type = MTYPE_SEPARATOR;
 	s_player_model_title.generic.name = "model";
-	s_player_model_title.generic.x  = -8;
+	s_player_model_title.generic.x = -8 * scale;
 	s_player_model_title.generic.y	 = 60;
 
 	s_player_model_box.generic.type = MTYPE_SPINCONTROL;
-	s_player_model_box.generic.x	= -56;
+	s_player_model_box.generic.x = -56 * scale;
 	s_player_model_box.generic.y	= 70;
 	s_player_model_box.generic.callback = ModelCallback;
 	s_player_model_box.generic.cursor_offset = -48;
@@ -3787,11 +3816,11 @@ qboolean PlayerConfig_MenuInit (void)
 
 	s_player_skin_title.generic.type = MTYPE_SEPARATOR;
 	s_player_skin_title.generic.name = "skin";
-	s_player_skin_title.generic.x  = -16;
+	s_player_skin_title.generic.x  = -16 * scale;
 	s_player_skin_title.generic.y	 = 84;
 
 	s_player_skin_box.generic.type = MTYPE_SPINCONTROL;
-	s_player_skin_box.generic.x	= -56;
+	s_player_skin_box.generic.x	= -56 * scale;
 	s_player_skin_box.generic.y	= 94;
 	s_player_skin_box.generic.name	= 0;
 	s_player_skin_box.generic.callback = 0;
@@ -3801,11 +3830,11 @@ qboolean PlayerConfig_MenuInit (void)
 
 	s_player_hand_title.generic.type = MTYPE_SEPARATOR;
 	s_player_hand_title.generic.name = "handedness";
-	s_player_hand_title.generic.x  = 32;
+	s_player_hand_title.generic.x  = 32 * scale;
 	s_player_hand_title.generic.y	 = 108;
 
 	s_player_handedness_box.generic.type = MTYPE_SPINCONTROL;
-	s_player_handedness_box.generic.x	= -56;
+	s_player_handedness_box.generic.x	= -56 * scale;
 	s_player_handedness_box.generic.y	= 118;
 	s_player_handedness_box.generic.name	= 0;
 	s_player_handedness_box.generic.cursor_offset = -48;
@@ -3819,11 +3848,11 @@ qboolean PlayerConfig_MenuInit (void)
 
 	s_player_rate_title.generic.type = MTYPE_SEPARATOR;
 	s_player_rate_title.generic.name = "connect speed";
-	s_player_rate_title.generic.x  = 56;
-	s_player_rate_title.generic.y	 = 156;
+	s_player_rate_title.generic.x = 56 * scale;
+	s_player_rate_title.generic.y = 156;
 
 	s_player_rate_box.generic.type = MTYPE_SPINCONTROL;
-	s_player_rate_box.generic.x	= -56;
+	s_player_rate_box.generic.x	= -56 * scale;
 	s_player_rate_box.generic.y	= 166;
 	s_player_rate_box.generic.name	= 0;
 	s_player_rate_box.generic.cursor_offset = -48;
@@ -3834,7 +3863,7 @@ qboolean PlayerConfig_MenuInit (void)
 	s_player_download_action.generic.type = MTYPE_ACTION;
 	s_player_download_action.generic.name	= "download options";
 	s_player_download_action.generic.flags = QMF_LEFT_JUSTIFY;
-	s_player_download_action.generic.x	= -24;
+	s_player_download_action.generic.x	= -24 * scale;
 	s_player_download_action.generic.y	= 186;
 	s_player_download_action.generic.statusbar = NULL;
 	s_player_download_action.generic.callback = DownloadOptionsFunc;
@@ -3863,19 +3892,19 @@ float SCR_CalcFovY (float fov_x, float width, float height);
 
 void PlayerConfig_MenuDraw (void)
 {
-	//extern float CalcFov (float fov_x, float w, float h);
 	refdef_t refdef;
 	char scratch[MAX_QPATH];
+	float scale = SCR_GetMenuScale();
 
 	memset (&refdef, 0, sizeof (refdef));
 
 	refdef.x = viddef.width / 2;
-	refdef.y = viddef.height / 2 - 72;
-	refdef.width = 144;
-	refdef.height = 168;
+	refdef.y = viddef.height / 2 - 72 * scale;
+	refdef.width = 144 * scale;
+	refdef.height = 168 * scale;
 	refdef.fov_x = 40;
-	refdef.fov_y = SCR_CalcFovY (refdef.fov_x, refdef.width, refdef.height);
-	refdef.time = cls.realtime * 0.001;
+	refdef.fov_y = SCR_CalcFovY (refdef.fov_x, (float)refdef.width, (float)refdef.height);
+	refdef.time = cls.realtime * 0.001f;
 
 	if (s_pmi[s_player_model_box.curvalue].skindisplaynames)
 	{
@@ -3910,15 +3939,15 @@ void PlayerConfig_MenuDraw (void)
 
 		Menu_Draw (&s_player_config_menu);
 
-		M_DrawTextBox ((refdef.x) * (320.0F / viddef.width) - 8, (viddef.height / 2) * (240.0F / viddef.height) - 77, refdef.width / 8, refdef.height / 8);
-		refdef.height += 4;
+		M_DrawTextBox ((refdef.x) * (320.0f / viddef.width) - 8, (viddef.height / 2) * (240.0f / viddef.height) - 77, refdef.width / (8 * scale), refdef.height / (8 * scale));
+		refdef.height += 4 * scale;
 
 		R_RenderFrame (&refdef);
 
 		Com_sprintf (scratch, sizeof (scratch), "/players/%s/%s_i.pcx",
 					 s_pmi[s_player_model_box.curvalue].directory,
 					 s_pmi[s_player_model_box.curvalue].skindisplaynames[s_player_skin_box.curvalue]);
-		Draw_Pic (s_player_config_menu.x - 40, refdef.y, scratch);
+		Draw_PicScaled (s_player_config_menu.x - 40 * scale, refdef.y, scratch, scale);
 	}
 }
 
@@ -3971,24 +4000,6 @@ void M_Menu_PlayerConfig_f (void)
 	Menu_SetStatusBar (&s_multiplayer_menu, NULL);
 	M_PushMenu (PlayerConfig_MenuDraw, PlayerConfig_MenuKey);
 }
-
-
-/*
-=======================================================================
-
-GALLERY MENU
-
-=======================================================================
-*/
-#if 0
-void M_Menu_Gallery_f (void)
-{
-	extern void Gallery_MenuDraw (void);
-	extern const char *Gallery_MenuKey (int key);
-
-	M_PushMenu (Gallery_MenuDraw, Gallery_MenuKey);
-}
-#endif
 
 /*
 =======================================================================
