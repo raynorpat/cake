@@ -611,6 +611,7 @@ char *bindnames[][2] =
 {
 	{"+attack", 		"attack"},
 	{"weapnext", 		"next weapon"},
+	{"weapprev", 		"previous weapon"},
 	{"+forward", 		"walk forward"},
 	{"+back", 			"backpedal"},
 	{"+left", 			"turn left"},
@@ -631,7 +632,7 @@ char *bindnames[][2] =
 	{"invdrop",			"drop item"},
 	{"invprev",			"prev item"},
 	{"invnext",			"next item"},
-	{"cmd help", 		"help computer" },
+	{"cmd help", 		"help computer"},
 	{ 0, 0 }
 };
 
