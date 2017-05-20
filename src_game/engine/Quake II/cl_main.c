@@ -1886,6 +1886,8 @@ void Draw_FPS (void)
 	static qboolean first = true;
 	static float fps = 0.0f;
 
+	float scale = SCR_GetConsoleScale();
+
 	if (first)
 	{
 		starttime = cls.realtime;
@@ -1913,7 +1915,7 @@ void Draw_FPS (void)
 		{
 			if (!str[i]) break;
 
-			Draw_Char (viddef.width - len, 8, str[i]);
+			Draw_CharScaled (viddef.width - len * scale, 8 * scale, str[i], scale);
 			len -= 8;
 		}
 	}
