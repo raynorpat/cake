@@ -17,17 +17,14 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
 */
-// console.c
+// cl_console.c
 
 #include "client.h"
 
 console_t	con;
-
 cvar_t		*con_notifytime;
 
-
-#define		MAXCMDLINE	256
-extern	char	key_lines[32][MAXCMDLINE];
+extern	char	key_lines[NUM_KEY_LINES][MAXCMDLINE];
 extern	int		edit_line;
 extern	int		key_linepos;
 
@@ -104,8 +101,7 @@ void Con_ToggleConsole_f (void)
 		M_ForceMenuOff ();
 		cls.key_dest = key_console;
 
-		if (Cvar_VariableValue ("maxclients") == 1
-				&& Com_ServerState ())
+		if (Cvar_VariableValue ("maxclients") == 1 && Com_ServerState ())
 			Cvar_Set ("paused", "1");
 	}
 }
@@ -165,6 +161,12 @@ void Con_Dump_f (void)
 		return;
 	}
 
+	if (con.linewidth >= 1024)
+	{
+		Com_Printf("con.linewidth too large!\n");
+		return;
+	}
+
 	Com_sprintf (name, sizeof (name), "%s/%s.txt", FS_Gamedir(), Cmd_Argv (1));
 
 	Com_Printf ("Dumped console text to %s.\n", name);
@@ -196,7 +198,7 @@ void Con_Dump_f (void)
 	for (; l <= con.current; l++)
 	{
 		line = con.text + (l % con.totallines) * con.linewidth;
-		strncpy (buffer, line, con.linewidth);
+		memcpy (buffer, line, con.linewidth);
 
 		for (x = con.linewidth - 1; x >= 0; x--)
 		{
@@ -377,7 +379,7 @@ void Con_Print (char *txt)
 	if (!con.initialized)
 		return;
 
-	if (txt[0] == 1 || txt[0] == 2)
+	if ((txt[0] == 1) || (txt[0] == 2))
 	{
 		mask = 128;		// go to colored text
 		txt++;
@@ -394,7 +396,7 @@ void Con_Print (char *txt)
 				break;
 
 		// word wrap
-		if (l != con.linewidth && (con.x + l > con.linewidth))
+		if ((l != con.linewidth) && (con.x + l > con.linewidth))
 			con.x = 0;
 
 		txt++;
@@ -404,7 +406,6 @@ void Con_Print (char *txt)
 			con.current--;
 			cr = false;
 		}
-
 
 		if (!con.x)
 		{
@@ -454,10 +455,10 @@ void Con_CenteredPrint (char *text)
 	l = strlen (text);
 	l = (con.linewidth - l) / 2;
 
-	if (l < 0)
+	if (l <= 0)
 		l = 0;
-
-	memset (buffer, ' ', l);
+	else
+		memset (buffer, ' ', l);
 	strcpy (buffer + l, text);
 	strcat (buffer, "\n");
 	Con_Print (buffer);
@@ -481,7 +482,6 @@ The input line scrolls horizontally if typing goes beyond the right edge
 */
 void Con_DrawInput (void)
 {
-	int		y;
 	int		i;
 	float	scale;
 	char	*text;
@@ -493,7 +493,6 @@ void Con_DrawInput (void)
 		return;		// don't draw anything (always draw if not active)
 
 	scale = SCR_GetConsoleScale();
-
 	text = key_lines[edit_line];
 
 	// add the cursor frame
@@ -508,8 +507,6 @@ void Con_DrawInput (void)
 		text += 1 + key_linepos - con.linewidth;
 
 	// draw it
-	y = con.vislines - 16;
-
 	for (i = 0; i < con.linewidth; i++)
 		Draw_CharScaled (((i + 1) << 3) * scale, con.vislines - 22 * scale, text[i], scale);
 
@@ -556,7 +553,7 @@ void Con_DrawNotify (void)
 		text = con.text + (i % con.totallines) * con.linewidth;
 
 		for (x = 0; x < con.linewidth; x++)
-			Draw_CharScaled (((x + 1) << 3) * scale, v, text[x], scale);
+			Draw_CharScaled (((x + 1) << 3) * scale, v * scale, text[x], scale);
 
 		v += 8;
 	}
@@ -565,12 +562,12 @@ void Con_DrawNotify (void)
 	{
 		if (chat_team)
 		{
-			DrawStringScaled (8 * scale, v, "say_team:", scale);
+			DrawStringScaled (8 * scale, v * scale, "say_team:", scale);
 			skip = 11;
 		}
 		else
 		{
-			DrawStringScaled (8 * scale, v, "say:", scale);
+			DrawStringScaled (8 * scale, v * scale, "say:", scale);
 			skip = 5;
 		}
 
@@ -631,13 +628,8 @@ void Con_DrawConsole (float frac)
 	// draw the text
 	con.vislines = lines;
 
-#if 0
-	rows = (lines - 8) >> 3;		// rows of text to draw
-	y = (lines - 24 * scale) / scale;
-#else
 	rows = (lines - 22) >> 3;		// rows of text to draw
 	y = (lines - 30 * scale) / scale;
-#endif
 
 	// draw from the bottom up
 	if (con.display != con.current)
@@ -682,7 +674,7 @@ void Con_DrawConsole (float frac)
 		if (strlen (text) > i)
 		{
 			y = x - i - 11;
-			strncpy (dlbar, text, i);
+			memcpy (dlbar, text, i);
 			dlbar[i] = 0;
 			strcat (dlbar, "...");
 		}
