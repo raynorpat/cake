@@ -542,7 +542,7 @@ void Draw_FPS (void);
 
 void GLimp_EndFrame (void)
 {
-	Draw_FPS ();
+	//Draw_FPS ();
 	Draw_End2D ();
 	GL_UseProgram (0);
 
