@@ -67,7 +67,7 @@
       <TreatWarningAsError>true</TreatWarningAsError>
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
-      <AdditionalIncludeDirectories>..\libs\glew\include;..\libs\SDL2\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\shared;..\libs\glew\include;..\libs\SDL2\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <ResourceCompile>
       <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
@@ -108,7 +108,7 @@
       <WarningLevel>Level1</WarningLevel>
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <DebugInformationFormat>OldStyle</DebugInformationFormat>
-      <AdditionalIncludeDirectories>..\libs\glew\include;..\libs\SDL2\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\shared;..\libs\glew\include;..\libs\SDL2\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <ResourceCompile>
       <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
@@ -128,21 +128,20 @@
     </Bscmake>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="..\shared\game.h" />
+    <ClInclude Include="..\shared\qfiles.h" />
+    <ClInclude Include="..\shared\q_shared.h" />
     <ClInclude Include="cdaudio.h" />
     <ClInclude Include="client.h" />
-    <ClInclude Include="conproc.h" />
     <ClInclude Include="console.h" />
     <ClInclude Include="crc.h" />
-    <ClInclude Include="game.h" />
     <ClInclude Include="gl_local.h" />
     <ClInclude Include="gl_model.h" />
     <ClInclude Include="input.h" />
     <ClInclude Include="keys.h" />
     <ClInclude Include="qcommon.h" />
-    <ClInclude Include="qfiles.h" />
     <ClInclude Include="qgl.h" />
     <ClInclude Include="qmenu.h" />
-    <ClInclude Include="q_shared.h" />
     <ClInclude Include="ref.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="screen.h" />
@@ -159,6 +158,8 @@
     <ResourceCompile Include="q2.rc" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\shared\m_flash.c" />
+    <ClCompile Include="..\shared\q_shared.c" />
     <ClCompile Include="cd_sdl.c" />
     <ClCompile Include="cl_cin.c" />
     <ClCompile Include="cl_ents.c" />
@@ -199,14 +200,11 @@
     <ClCompile Include="matrix.c" />
     <ClCompile Include="md4.c" />
     <ClCompile Include="menu.c" />
-    <ClCompile Include="m_flash.c" />
     <ClCompile Include="net_chan.c" />
     <ClCompile Include="net.c" />
     <ClCompile Include="pmove.c" />
     <ClCompile Include="qgl.c" />
     <ClCompile Include="qmenu.c" />
-    <ClCompile Include="q_shared.c" />
-    <ClCompile Include="sys_shared.c" />
     <ClCompile Include="snd_dma.c" />
     <ClCompile Include="snd_mem.c" />
     <ClCompile Include="snd_mix.c" />
