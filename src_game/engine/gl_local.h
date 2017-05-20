@@ -157,9 +157,6 @@ typedef struct image_s
 
 #include "gl_model.h"
 
-void GL_BeginRendering (int *x, int *y, int *width, int *height);
-void GL_EndRendering (void);
-
 void GL_SetDefaultState (void);
 void GL_UpdateSwapInterval (void);
 

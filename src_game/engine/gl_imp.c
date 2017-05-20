@@ -468,9 +468,7 @@ void GLimp_GrabInput(qboolean grab)
 GLimp_ShutdownWindow
 
 This routine does all OS specific shutdown procedures for the OpenGL
-subsystem. Under OpenGL this means NULLing out the current DC and
-HGLRC, deleting the rendering context, and releasing the DC acquired
-for the window. The state structure is also nulled out.
+subsystem.
 */
 void GLimp_ShutdownWindow (void)
 {
