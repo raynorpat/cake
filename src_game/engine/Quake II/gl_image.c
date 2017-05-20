@@ -213,7 +213,7 @@ void GL_TextureMode (char *string, int anisotropy)
 
 	gl_texture_anisotropy = 1;
 
-	if (GLEW_EXT_texture_filter_anisotropic)
+	if (GLEW_EXT_texture_filter_anisotropic & (anisotropy > 1))
 	{
 		glGetFloatv (GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &maxaf);
 
@@ -1114,14 +1114,13 @@ image_t *GL_LoadPic (char *name, byte *pic, int width, int height, imagetype_t t
 		R_FloodFillSkin (pic, width, height);
 
 	// load little pics into the scrap
-	if (image->type == it_pic && bits == 8 && image->width < 128 && image->height < 128)
+	if (image->type == it_pic && bits == 8 && image->width < 64 && image->height < 64)
 	{
 		int		x, y;
 		int		i, j, k;
 		int		texnum;
 
-		// offset the allocation by 1 in each direction so that bilerp filtering doesn't cause adjacent scrap images to bleed into each other
-		texnum = Scrap_AllocBlock (image->width + 2, image->height + 2, &x, &y);
+		texnum = Scrap_AllocBlock (image->width, image->height, &x, &y);
 
 		if (texnum == -1) goto nonscrap;
 		if (texnum >= MAX_SCRAPS) goto nonscrap;
@@ -1130,7 +1129,7 @@ image_t *GL_LoadPic (char *name, byte *pic, int width, int height, imagetype_t t
 		scrap_check_dirty = true;
 
 		// copy the texels into the scrap block
-		k = 0; x++; y++;
+		k = 0;
 
 		for (i = 0; i < image->height; i++)
 			for (j = 0; j < image->width; j++, k++)

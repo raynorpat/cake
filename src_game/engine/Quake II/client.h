@@ -293,6 +293,10 @@ extern	cvar_t	*cl_timedemo;
 
 extern	cvar_t	*cl_vwep;
 
+extern  cvar_t	*cl_hudscale;
+extern  cvar_t	*cl_consolescale;
+extern  cvar_t	*cl_menuscale;
+
 typedef struct
 {
 	int		key;				// so entities can reuse same entry
@@ -319,7 +323,10 @@ extern	netadr_t	net_from;
 extern	sizebuf_t	net_message;
 
 void DrawString (int x, int y, char *s);
+void DrawStringScaled (int x, int y, char *s, float factor);
 void DrawAltString (int x, int y, char *s);	// toggle high bit
+void DrawAltStringScaled (int x, int y, char *s, float factor);
+
 qboolean CL_CheckOrDownloadFile (char *filename);
 
 void CL_AddNetgraph (void);
@@ -428,7 +435,6 @@ void CL_SmokeAndFlash(vec3_t origin);
 
 void CL_SetLightstyle (int i);
 
-void CL_RunParticles (void);
 void CL_RunDLights (void);
 void CL_RunLightStyles (void);
 

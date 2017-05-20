@@ -87,6 +87,10 @@ cvar_t	*gender_auto;
 
 cvar_t	*cl_vwep;
 
+cvar_t	*cl_hudscale;
+cvar_t	*cl_consolescale;
+cvar_t	*cl_menuscale;
+
 client_static_t	cls;
 client_state_t	cl;
 
@@ -1569,6 +1573,10 @@ void CL_InitLocal (void)
 	gender->modified = false; // clear this so we know when user sets it manually
 
 	cl_vwep = Cvar_Get ("cl_vwep", "1", CVAR_ARCHIVE);
+
+	cl_hudscale = Cvar_Get("cl_hudscale", "-1", CVAR_ARCHIVE);
+	cl_consolescale = Cvar_Get("cl_consolescale", "-1", CVAR_ARCHIVE);
+	cl_menuscale = Cvar_Get("cl_menuscale", "-1", CVAR_ARCHIVE);
 
 	// register our commands
 	Cmd_AddCommand ("cmd", CL_ForwardToServer_f);

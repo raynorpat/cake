@@ -201,8 +201,10 @@ void R_RenderFrame (refdef_t *fd);
 void Draw_GetPicSize (int *w, int *h, char *pic);
 
 void Draw_Pic (int x, int y, char *pic);
+void Draw_PicScaled (int x, int y, char *pic, float scale);
 void Draw_StretchPic (int x, int y, int w, int h, char *pic);
 void Draw_Char (int x, int y, int num);
+void Draw_CharScaled (int x, int y, int num, float scale);
 void Draw_TileClear (int x, int y, int w, int h, char *pic);
 void Draw_Fill (int x, int y, int w, int h, int c);
 void Draw_FadeScreen (void);

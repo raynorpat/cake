@@ -34,20 +34,30 @@ extern	int		key_linepos;
 
 void DrawString (int x, int y, char *s)
 {
+	DrawStringScaled(x, y, s, 1.0f);
+}
+
+void DrawStringScaled (int x, int y, char *s, float factor)
+{
 	while (*s)
 	{
-		Draw_Char (x, y, *s);
-		x += 8;
+		Draw_CharScaled(x, y, *s, factor);
+		x += 8 * factor;
 		s++;
 	}
 }
 
 void DrawAltString (int x, int y, char *s)
 {
+	DrawAltStringScaled(x, y, s, 1.0f);
+}
+
+void DrawAltStringScaled (int x, int y, char *s, float factor)
+{
 	while (*s)
 	{
-		Draw_Char (x, y, *s ^ 0x80);
-		x += 8;
+		Draw_CharScaled(x, y, *s ^ 0x80, factor);
+		x += 8 * factor;
 		s++;
 	}
 }
@@ -472,6 +482,7 @@ void Con_DrawInput (void)
 {
 	int		y;
 	int		i;
+	float	scale;
 	char	*text;
 
 	if (cls.key_dest == key_menu)
@@ -479,6 +490,8 @@ void Con_DrawInput (void)
 
 	if (cls.key_dest != key_console && cls.state == ca_active)
 		return;		// don't draw anything (always draw if not active)
+
+	scale = SCR_GetConsoleScale();
 
 	text = key_lines[edit_line];
 
@@ -497,7 +510,7 @@ void Con_DrawInput (void)
 	y = con.vislines - 16;
 
 	for (i = 0; i < con.linewidth; i++)
-		Draw_Char ((i + 1) << 3, con.vislines - 22, text[i]);
+		Draw_CharScaled (((i + 1) << 3) * scale, con.vislines - 22 * scale, text[i], scale);
 
 	// remove cursor
 	key_lines[edit_line][key_linepos] = 0;
@@ -519,8 +532,10 @@ void Con_DrawNotify (void)
 	int		time;
 	char	*s;
 	int		skip;
+	float	scale;
 
 	v = 0;
+	scale = SCR_GetConsoleScale();
 
 	for (i = con.current - NUM_CON_TIMES + 1; i <= con.current; i++)
 	{
@@ -540,22 +555,21 @@ void Con_DrawNotify (void)
 		text = con.text + (i % con.totallines) * con.linewidth;
 
 		for (x = 0; x < con.linewidth; x++)
-			Draw_Char ((x + 1) << 3, v, text[x]);
+			Draw_CharScaled (((x + 1) << 3) * scale, v, text[x], scale);
 
 		v += 8;
 	}
-
 
 	if (cls.key_dest == key_message)
 	{
 		if (chat_team)
 		{
-			DrawString (8, v, "say_team:");
+			DrawStringScaled (8 * scale, v, "say_team:", scale);
 			skip = 11;
 		}
 		else
 		{
-			DrawString (8, v, "say:");
+			DrawStringScaled (8 * scale, v, "say:", scale);
 			skip = 5;
 		}
 
@@ -568,11 +582,11 @@ void Con_DrawNotify (void)
 
 		while (s[x])
 		{
-			Draw_Char ((x + skip) << 3, v, s[x]);
+			Draw_CharScaled (((x + skip) << 3) * scale, v * scale, s[x], scale);
 			x++;
 		}
 
-		Draw_Char ((x + skip) << 3, v, 10 + ((cls.realtime >> 8) & 1));
+		Draw_CharScaled (((x + skip) << 3) * scale, v + scale, 10 + ((cls.realtime >> 8) & 1), scale);
 		v += 8;
 	}
 }
@@ -592,9 +606,11 @@ void Con_DrawConsole (float frac)
 	char			*text;
 	int				row;
 	int				lines;
+	float			scale;
 	char			version[64];
 	char			dlbar[1024];
 
+	scale = SCR_GetConsoleScale();
 	lines = viddef.height * frac;
 
 	if (lines <= 0)
@@ -609,7 +625,7 @@ void Con_DrawConsole (float frac)
 	Com_sprintf (version, sizeof (version), "v%4.2f", VERSION);
 
 	for (x = 0; x < 5; x++)
-		Draw_Char (viddef.width - 44 + x * 8, lines - 12, 128 + version[x]);
+		Draw_CharScaled (viddef.width - (44 * scale) + x * 8 * scale, lines - 12 * scale, 128 + version[x], scale);
 
 	// draw the text
 	con.vislines = lines;
@@ -617,11 +633,11 @@ void Con_DrawConsole (float frac)
 #if 0
 	rows = (lines - 8) >> 3;		// rows of text to draw
 
-	y = lines - 24;
+	y = (lines - 24 * scale) / scale;
 #else
 	rows = (lines - 22) >> 3;		// rows of text to draw
 
-	y = lines - 30;
+	y = (lines - 30 * scale) / scale;
 #endif
 
 	// draw from the bottom up
@@ -629,7 +645,7 @@ void Con_DrawConsole (float frac)
 	{
 		// draw arrows to show the buffer is backscrolled
 		for (x = 0; x < con.linewidth; x += 4)
-			Draw_Char ((x + 1) << 3, y, '^');
+			Draw_CharScaled (((x + 1) << 3) * scale, y * scale, '^', scale);
 
 		y -= 8;
 		rows--;
@@ -648,7 +664,7 @@ void Con_DrawConsole (float frac)
 		text = con.text + (row % con.totallines) * con.linewidth;
 
 		for (x = 0; x < con.linewidth; x++)
-			Draw_Char ((x + 1) << 3, y, text[x]);
+			Draw_CharScaled (((x + 1) << 3) * scale, y * scale, text[x], scale);
 	}
 
 	//ZOID
@@ -700,7 +716,7 @@ void Con_DrawConsole (float frac)
 		y = con.vislines - 12;
 
 		for (i = 0; i < strlen (dlbar); i++)
-			Draw_Char ((i + 1) << 3, y, dlbar[i]);
+			Draw_CharScaled (((i + 1) << 3) * scale, y * scale, dlbar[i], scale);
 	}
 
 	//ZOID

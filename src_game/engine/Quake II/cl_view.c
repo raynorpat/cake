@@ -31,6 +31,7 @@ struct model_s	*gun_model;
 //=============
 
 cvar_t		*crosshair;
+cvar_t		*crosshair_scale;
 cvar_t		*cl_testparticles;
 cvar_t		*cl_testentities;
 cvar_t		*cl_testlights;
@@ -421,6 +422,8 @@ SCR_DrawCrosshair
 */
 void SCR_DrawCrosshair (void)
 {
+	float scale;
+
 	if (!crosshair->value)
 		return;
 
@@ -433,7 +436,16 @@ void SCR_DrawCrosshair (void)
 	if (!crosshair_pic[0])
 		return;
 
-	Draw_Pic ((viddef.width - crosshair_width) >> 1, (viddef.height - crosshair_height) >> 1, crosshair_pic);
+	if (crosshair_scale->value < 0)
+	{
+		scale = SCR_GetScale();
+	}
+	else
+	{
+		scale = crosshair_scale->value;
+	}
+
+	Draw_PicScaled ((viddef.width - crosshair_width) >> 1, (viddef.height - crosshair_height) >> 1, crosshair_pic, scale);
 }
 
 /*
@@ -580,6 +592,7 @@ void V_Init (void)
 	Cmd_AddCommand ("viewpos", V_Viewpos_f);
 
 	crosshair = Cvar_Get ("crosshair", "0", CVAR_ARCHIVE);
+	crosshair_scale = Cvar_Get("crosshair_scale", "-1", CVAR_ARCHIVE);
 
 	cl_testblend = Cvar_Get ("cl_testblend", "0", 0);
 	cl_testparticles = Cvar_Get ("cl_testparticles", "0", 0);

@@ -40,14 +40,19 @@ void CL_ParseInventory (void)
 Inv_DrawString
 ================
 */
-void Inv_DrawString (int x, int y, char *string)
+void Inv_DrawStringScaled (int x, int y, char *string, float factor)
 {
 	while (*string)
 	{
-		Draw_Char (x, y, *string);
-		x += 8;
+		Draw_CharScaled (x, y, *string, factor);
+		x += 8 * factor;
 		string++;
 	}
+}
+
+void Inv_DrawString (int x, int y, char *string)
+{
+	Inv_DrawStringScaled (x, y, string, 1.0f);
 }
 
 void SetStringHighBit (char *s)
@@ -75,6 +80,8 @@ void CL_DrawInventory (void)
 	int		selected;
 	int		top;
 
+	float	scale = SCR_GetHUDScale();
+
 	selected = cl.frame.playerstate.stats[STAT_SELECTED_ITEM];
 
 	num = 0;
@@ -101,16 +108,16 @@ void CL_DrawInventory (void)
 	if (top < 0)
 		top = 0;
 
-	x = (viddef.width - 256) / 2;
-	y = (viddef.height - 240) / 2;
+	x = (viddef.width - scale * 256) / 2;
+	y = (viddef.height - scale * 240) / 2;
 
-	Draw_Pic (x, y + 8, "inventory");
+	Draw_PicScaled (x, y + scale * 8, "inventory", scale);
 
-	y += 24;
-	x += 24;
-	Inv_DrawString (x, y, "hotkey ### item");
-	Inv_DrawString (x, y + 8, "------ --- ----");
-	y += 16;
+	y += scale * 24;
+	x += scale * 24;
+	Inv_DrawStringScaled (x, y, "hotkey ### item", scale);
+	Inv_DrawStringScaled (x, y + scale * 8, "------ --- ----", scale);
+	y += scale * 16;
 
 	for (i = top; i < num && i < top + DISPLAY_ITEMS; i++)
 	{
@@ -134,14 +141,12 @@ void CL_DrawInventory (void)
 		else	// draw a blinky cursor by the selected item
 		{
 			if ((int) (cls.realtime * 10) & 1)
-				Draw_Char (x - 8, y, 15);
+				Draw_CharScaled (x - scale * 8, y, 15, scale);
 		}
 
-		Inv_DrawString (x, y, string);
-		y += 8;
+		Inv_DrawStringScaled (x, y, string, scale);
+		y += 8 * scale;
 	}
-
-
 }
 
 

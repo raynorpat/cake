@@ -23,8 +23,11 @@ void	SCR_Init (void);
 
 void	SCR_UpdateScreen (void);
 
-void	SCR_SizeUp (void);
-void	SCR_SizeDown (void);
+float	SCR_GetScale (void);
+float	SCR_GetHUDScale (void);
+float	SCR_GetConsoleScale (void);
+float	SCR_GetMenuScale (void);
+
 void	SCR_CenterPrint (char *str);
 void	SCR_BeginLoadingPlaque (void);
 void	SCR_EndLoadingPlaque (void);
