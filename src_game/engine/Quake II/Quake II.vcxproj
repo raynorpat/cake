@@ -192,7 +192,7 @@
     <ClCompile Include="cl_view.c" />
     <ClCompile Include="cmd.c" />
     <ClCompile Include="common.c" />
-    <ClCompile Include="console.c" />
+    <ClCompile Include="cl_console.c" />
     <ClCompile Include="crc.c" />
     <ClCompile Include="cvar.c" />
     <ClCompile Include="files.c" />
