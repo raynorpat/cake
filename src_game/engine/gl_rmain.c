@@ -675,9 +675,24 @@ void RMain_InvalidateCachedState (void)
 
 void RMain_CheckExtension (char *ext)
 {
+	// check in glew first...
 	if (!glewIsSupported(ext))
 	{
-		VID_Error (ERR_FATAL, "R_Init : could not find %s", ext);
+		// lets double check the actual extension list,
+		// glew is known to be buggy checking for extensions...
+		GLint n = 0;
+
+		glGetIntegerv (GL_NUM_EXTENSIONS, &n);
+		for (GLint i = 0; i < n; i++)
+		{
+			const char* extension =	(const char*)glGetStringi(GL_EXTENSIONS, i);
+			if (!strcmp(ext, extension))
+			{
+				return;
+			}
+		}
+
+		VID_Error (ERR_FATAL, "RMain_CheckExtension : could not find %s", ext);
 		return;
 	}
 }
