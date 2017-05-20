@@ -18,6 +18,14 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
 */
 
+// max length of a console command line
+#define MAXCMDLINE 256
+
+// number of console command lines saved in history,
+// must be a power of two, because we use & (NUM_KEY_LINES-1)
+// instead of % so -1 wraps to NUM_KEY_LINES-1
+#define NUM_KEY_LINES 32
+
 //
 // these are the key numbers that should be passed to Key_Event
 //

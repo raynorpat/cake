@@ -25,9 +25,7 @@ key up events are sent even if in console mode
 
 */
 
-
-#define		MAXCMDLINE	256
-char	key_lines[32][MAXCMDLINE];
+char	key_lines[NUM_KEY_LINES][MAXCMDLINE];
 int		key_linepos;
 int		shift_down = false;
 int	anykeydown;
@@ -582,7 +580,7 @@ void Key_Unbindall_f (void)
 			Key_SetBinding (i, "");
 }
 
-/* ugly hack, set in Cmd_ExecuteString() when config.cfg is executed (=> default.cfg is done) */
+// ugly hack, set in Cmd_ExecuteString() when config.cfg is executed (=> default.cfg is done)
 extern qboolean doneWithDefaultCfg;
 
 
@@ -869,7 +867,7 @@ void Key_Event (int key, qboolean down, qboolean special)
 	}
 
 	// any key during the attract mode will bring up the menu
-	if (cl.attractloop && cls.key_dest != key_menu && !(key >= K_F1 && key <= K_F12))
+	if (cl.attractloop && (cls.key_dest != key_menu) && !((key >= K_F1) && (key <= K_F12)))
 		key = K_ESCAPE;
 
 	// menu key is hardcoded, so the user can never unbind it

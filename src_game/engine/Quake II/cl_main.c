@@ -89,10 +89,6 @@ cvar_t	*gender_auto;
 
 cvar_t	*cl_vwep;
 
-cvar_t	*cl_hudscale;
-cvar_t	*cl_consolescale;
-cvar_t	*cl_menuscale;
-
 client_static_t	cls;
 client_state_t	cl;
 
@@ -1578,10 +1574,6 @@ void CL_InitLocal (void)
 
 	cl_vwep = Cvar_Get ("cl_vwep", "1", CVAR_ARCHIVE);
 
-	cl_hudscale = Cvar_Get("cl_hudscale", "-1", CVAR_ARCHIVE);
-	cl_consolescale = Cvar_Get("cl_consolescale", "-1", CVAR_ARCHIVE);
-	cl_menuscale = Cvar_Get("cl_menuscale", "-1", CVAR_ARCHIVE);
-
 	// register our commands
 	Cmd_AddCommand ("cmd", CL_ForwardToServer_f);
 	Cmd_AddCommand ("pause", CL_Pause_f);
@@ -1830,8 +1822,14 @@ void CL_Init (void)
 	// all archived variables will now be loaded
 
 	Con_Init ();
+
+	S_Init ();
+
+	SCR_Init ();
+
 	VID_Init ();
-	S_Init ();	// sound must be initialized after window is created
+
+	IN_Init ();
 
 	V_Init ();
 
@@ -1840,12 +1838,10 @@ void CL_Init (void)
 
 	M_Init ();
 
-	SCR_Init ();
 	cls.disable_screen = true;	// don't draw yet
 
 	CDAudio_Init ();
 	CL_InitLocal ();
-	IN_Init ();
 
 	Cbuf_Execute ();
 }

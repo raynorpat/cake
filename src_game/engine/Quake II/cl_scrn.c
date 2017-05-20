@@ -55,6 +55,10 @@ cvar_t		*scr_graphscale;
 cvar_t		*scr_graphshift;
 cvar_t		*scr_drawall;
 
+cvar_t		*cl_hudscale;
+cvar_t		*cl_consolescale;
+cvar_t		*cl_menuscale;
+
 char		crosshair_pic[MAX_QPATH];
 int			crosshair_width, crosshair_height;
 
@@ -371,6 +375,10 @@ void SCR_Init (void)
 	scr_graphscale = Cvar_Get ("graphscale", "1", 0);
 	scr_graphshift = Cvar_Get ("graphshift", "0", 0);
 	scr_drawall = Cvar_Get ("scr_drawall", "0", 0);
+
+	cl_hudscale = Cvar_Get("cl_hudscale", "-1", CVAR_ARCHIVE);
+	cl_consolescale = Cvar_Get("cl_consolescale", "-1", CVAR_ARCHIVE);
+	cl_menuscale = Cvar_Get("cl_menuscale", "-1", CVAR_ARCHIVE);
 
 	// register our commands
 	Cmd_AddCommand ("timerefresh", SCR_TimeRefresh_f);
@@ -1289,7 +1297,6 @@ void SCR_UpdateScreen (void)
 		}
 		else
 		{
-
 			// make sure the game palette is active
 			if (cl.cinematicpalette_active)
 			{

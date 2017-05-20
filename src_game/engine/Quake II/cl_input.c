@@ -71,11 +71,11 @@ void KeyDown (kbutton_t *b)
 	c = Cmd_Argv (1);
 
 	if (c[0])
-		k = atoi (c);
+		k = (int)strtol(c, (char **)NULL, 10);
 	else
 		k = -1;		// typed manually at the console for continuous down
 
-	if (k == b->down[0] || k == b->down[1])
+	if ((k == b->down[0]) || (k == b->down[1]))
 		return;		// repeating key
 
 	if (!b->down[0])
@@ -93,7 +93,7 @@ void KeyDown (kbutton_t *b)
 
 	// save timestamp
 	c = Cmd_Argv (2);
-	b->downtime = atoi (c);
+	b->downtime = (int)strtol(c, (char **)NULL, 10);
 
 	if (!b->downtime)
 		b->downtime = sys_frame_time - 100;
@@ -110,7 +110,9 @@ void KeyUp (kbutton_t *b)
 	c = Cmd_Argv (1);
 
 	if (c[0])
-		k = atoi (c);
+	{
+		k = (int)strtol(c, (char **)NULL, 10);
+	}
 	else
 	{
 		// typed manually at the console, assume for unsticking, so clear all
@@ -134,7 +136,7 @@ void KeyUp (kbutton_t *b)
 
 	// save timestamp
 	c = Cmd_Argv (2);
-	uptime = atoi (c);
+	uptime = (int)strtol(c, (char **)NULL, 10);
 
 	if (uptime)
 		b->msec += uptime - b->downtime;
@@ -358,7 +360,7 @@ void CL_FinishMove (usercmd_t *cmd)
 
 	in_use.state &= ~2;
 
-	if (anykeydown && cls.key_dest == key_game)
+	if (anykeydown && (cls.key_dest == key_game))
 		cmd->buttons |= BUTTON_ANY;
 
 	// send milliseconds of time to apply the move
