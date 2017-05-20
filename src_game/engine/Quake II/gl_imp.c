@@ -52,11 +52,6 @@ static SDL_Surface* window = NULL;
 #define SDL_OPENGL SDL_WINDOW_OPENGL
 #endif
 
-qboolean have_stencil = false;
-static qboolean vsyncActive = false;
-
-cvar_t *gl_msaa_samples;
-
 void GLimp_ShutdownWindow(void);
 
 #if SDL_VERSION_ATLEAST(2, 0, 0)
@@ -189,26 +184,9 @@ static qboolean GetWindowSize(int* w, int* h)
 }
 
 
-void GLimp_SetSwapInterval(void)
-{
-#if SDL_VERSION_ATLEAST(2, 0, 0)
-	/* Set vsync - TODO: -1 could be set for "late swap tearing" */
-	SDL_GL_SetSwapInterval(gl_swapinterval->value ? 1 : 0);
-	vsyncActive = SDL_GL_GetSwapInterval() != 0;
-#else
-	VID_Printf(PRINT_ALL, "SDL1.2 requires a vid_restart to apply changes to gl_swapinterval (vsync)!\n");
-#endif
-}
-
-qboolean GLimp_IsVsyncActive(void)
-{
-	return vsyncActive;
-}
-
-
 // called by GLimp_InitGraphics() before creating window,
 // returns flags for SDL window creation, -1 on error
-int GLimp_PrepareForWindow(void)
+static int PrepareForWindow(void)
 {
 	unsigned int flags = 0;
 	int msaa_samples = 0;
@@ -236,40 +214,16 @@ int GLimp_PrepareForWindow(void)
 	{
 		SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, contextFlags);
 	}
-	//gl3config.compat_profile = false;
-#else // SDL1.2 doesn't have all this, so we'll have some kind of compatibility profile
-	//gl3config.compat_profile = true;
+#else 
+	// SDL1.2 doesn't have all this, so we'll have some kind of compatibility profile
 #endif
 
-
 #if !SDL_VERSION_ATLEAST(2, 0, 0)
-	/* Set vsync - For SDL1.2, this must be done before creating the window */
+	// Set vsync - For SDL1.2, this must be done before creating the window
 	SDL_GL_SetAttribute(SDL_GL_SWAP_CONTROL, gl_swapinterval->value ? 1 : 0);
 #endif
 
-	/*
-	if (gl_msaa_samples->value)
-	{
-		msaa_samples = gl_msaa_samples->value;
-
-		if (SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, 1) < 0)
-		{
-			VID_Printf(PRINT_ALL, "MSAA is unsupported: %s\n", SDL_GetError());
-			Cvar_SetValue("gl_msaa_samples", 0);
-			SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, 0);
-			SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, 0);
-		}
-		else if (SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, msaa_samples) < 0)
-		{
-			VID_Printf(PRINT_ALL, "MSAA %ix is unsupported: %s\n", msaa_samples, SDL_GetError());
-			Cvar_SetValue("gl_msaa_samples", 0);
-			SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, 0);
-			SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, 0);
-		}
-	}
-	*/
-
-	/* Initiate the flags */
+	// Initiate the flags
 #if SDL_VERSION_ATLEAST(2, 0, 0)
 	flags = SDL_WINDOW_OPENGL;
 #else // SDL 1.2
@@ -279,9 +233,20 @@ int GLimp_PrepareForWindow(void)
 	return flags;
 }
 
+
+void GLimp_SetSwapInterval(void)
+{
+#if SDL_VERSION_ATLEAST(2, 0, 0)
+	// Set vsync - TODO: -1 could be set for "late swap tearing"
+	SDL_GL_SetSwapInterval(gl_swapinterval->value ? 1 : 0);
+#else
+	VID_Printf(PRINT_ALL, "SDL1.2 requires a vid_restart to apply changes to gl_swapinterval (vsync)!\n");
+#endif
+}
+
+
 int GLimp_InitContext(void* win)
 {
-	int msaa_samples = 0, stencil_bits = 0;
 	char title[40] = { 0 };
 
 	if (win == NULL)
@@ -300,40 +265,16 @@ int GLimp_InitContext(void* win)
 		return false;
 	}
 #else // SDL 1.2
-
 	window = (SDL_Surface*)win;
 	// context is created implicitly with window, nothing to do here
-
 #endif
-
-	/*
-	if (gl_msaa_samples->value)
-	{
-		if (SDL_GL_GetAttribute(SDL_GL_MULTISAMPLESAMPLES, &msaa_samples) == 0)
-		{
-			Cvar_SetValue("gl_msaa_samples", msaa_samples);
-		}
-	}
-	*/
 
 #if SDL_VERSION_ATLEAST(2, 0, 0)
-	/* For SDL2, this must be done after creating the window */
+	// For SDL2, this must be done after creating the window
 	GLimp_SetSwapInterval();
-#else // SDL1.2 - set vsyncActive to whatever is configured, hoping it was actually set
-	vsyncActive = gl_swapinterval->value ? 1 : 0;
 #endif
 
-	/* Initialize the stencil buffer */
-	if (SDL_GL_GetAttribute(SDL_GL_STENCIL_SIZE, &stencil_bits) == 0)
-	{
-		VID_Printf(PRINT_ALL, "Got %d bits of stencil.\n", stencil_bits);
-
-		if (stencil_bits >= 1)
-		{
-			have_stencil = true;
-		}
-	}
-
+	// init glew
 	glewExperimental = true;
 	if (GLEW_OK != glewInit())
 	{
@@ -342,7 +283,7 @@ int GLimp_InitContext(void* win)
 	}
 	else
 	{
-		VID_Printf(PRINT_ALL, "Successfully loaded OpenGL function pointers using glad!\n");
+		VID_Printf(PRINT_ALL, "Successfully loaded OpenGL function pointers using glew!\n");
 	}
 
 	/* Window title */
@@ -360,12 +301,8 @@ int GLimp_InitContext(void* win)
 */
 void GLimp_Shutdown(qboolean contextOnly)
 {
-	/* Clear the backbuffer and make it
-	current. This may help some broken
-	video drivers like the AMD Catalyst
-	to avoid artifacts in unused screen
-	areas.
-	Only do this if we have a context, though. */
+	// Clear the backbuffer and make it current. 
+	// Only do this if we have a context, though.
 	if (window)
 	{
 #if SDL_VERSION_ATLEAST(2, 0, 0)
@@ -394,7 +331,6 @@ void GLimp_Shutdown(qboolean contextOnly)
 }
 
 
-
 /*
 * Initializes the OpenGL window
 */
@@ -407,7 +343,7 @@ qboolean GLimp_InitGraphics(qboolean fullscreen, int *pwidth, int *pheight)
 
 	if (GetWindowSize(&curWidth, &curHeight) && (curWidth == width) && (curHeight == height))
 	{
-		/* If we want fullscreen, but aren't */
+		// If we want fullscreen, but aren't
 		if (fullscreen != IsFullscreen())
 		{
 #if SDL_VERSION_ATLEAST(2, 0, 0)
@@ -419,14 +355,14 @@ qboolean GLimp_InitGraphics(qboolean fullscreen, int *pwidth, int *pheight)
 			Cvar_SetValue("vid_fullscreen", fullscreen);
 		}
 
-		/* Are we now? */
+		// Are we now?
 		if (fullscreen == IsFullscreen())
 		{
 			return true;
 		}
 	}
 
-	/* Is the surface used? */
+	// Is the window surface used?
 	if (window)
 	{
 #if SDL_VERSION_ATLEAST(2, 0, 0)
@@ -439,11 +375,11 @@ qboolean GLimp_InitGraphics(qboolean fullscreen, int *pwidth, int *pheight)
 		window = NULL;
 	}
 
-	/* Create the window */
+	// Create the window
 	VID_NewWindow(width, height);
 
 	// let renderer prepare things (set OpenGL attributes)
-	flags = GLimp_PrepareForWindow();
+	flags = PrepareForWindow();
 	if (flags == -1)
 	{
 		// hopefully PrepareForWindow() logged an error
@@ -456,38 +392,21 @@ qboolean GLimp_InitGraphics(qboolean fullscreen, int *pwidth, int *pheight)
 	}
 
 #if !SDL_VERSION_ATLEAST(2, 0, 0)
-	/* Set window icon - For SDL1.2, this must be done before creating the window */
+	// Set window icon - For SDL1.2, this must be done before creating the window
 	SetSDLIcon();
 #endif
-
-	cvar_t *gl_msaa_samples = Cvar_Get("gl_msaa_samples", "0", CVAR_ARCHIVE);
 
 	while (1)
 	{
 		if (!CreateSDLWindow(flags, width, height))
 		{
-			if (flags & SDL_OPENGL)
-			{
-				if (gl_msaa_samples->value)
-				{
-					Com_Printf("SDL SetVideoMode failed: %s\n", SDL_GetError());
-					Com_Printf("Reverting to %s gl_mode %i (%ix%i) without MSAA.\n",
-						(flags & SDL_FULLSCREEN) ? "fullscreen" : "windowed",
-						(int)Cvar_VariableValue("gl_mode"), width, height);
-
-					/* Try to recover */
-					Cvar_SetValue("gl_msaa_samples", 0);
-					SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, 0);
-					SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, 0);
-				}
-			}
-			else if (width != 640 || height != 480 || (flags & SDL_FULLSCREEN))
+			if (width != 640 || height != 480 || (flags & SDL_FULLSCREEN))
 			{
 				Com_Printf("SDL SetVideoMode failed: %s\n", SDL_GetError());
-				Com_Printf("Reverting to windowed gl_mode 4 (640x480).\n");
+				Com_Printf("Reverting to windowed gl_mode 5 (640x480).\n");
 
-				/* Try to recover */
-				Cvar_SetValue("gl_mode", 4);
+				// Try to recover
+				Cvar_SetValue("gl_mode", 5);
 				Cvar_SetValue("vid_fullscreen", 0);
 				VID_NewWindow(width, height);
 				*pwidth = width = 640;
@@ -496,7 +415,7 @@ qboolean GLimp_InitGraphics(qboolean fullscreen, int *pwidth, int *pheight)
 			}
 			else
 			{
-				Com_Error(ERR_FATAL, "Failed to revert to gl_mode 4. Exiting...\n");
+				Com_Error(ERR_FATAL, "Failed to revert to gl_mode 5. Exiting...\n");
 				return false;
 			}
 		}
@@ -512,13 +431,12 @@ qboolean GLimp_InitGraphics(qboolean fullscreen, int *pwidth, int *pheight)
 		return false;
 	}
 
-	/* Note: window title is now set in re.InitContext() to include renderer name */
 #if SDL_VERSION_ATLEAST(2, 0, 0)
-	/* Set the window icon - For SDL2, this must be done after creating the window */
+	// Set the window icon - For SDL2, this must be done after creating the window
 	SetSDLIcon();
 #endif
 
-	/* No cursor */
+	// No cursor
 	SDL_ShowCursor(0);
 
 	return true;
@@ -546,43 +464,8 @@ void GLimp_GrabInput(qboolean grab)
 }
 
 
-int glimp_refreshRate = -1;
-
 /*
-* Returns the current display refresh rate.
-*/
-int GLimp_GetRefreshRate(void)
-{
-#if SDL_VERSION_ATLEAST(2, 0, 0)
-
-	// do this only once, assuming people don't change their display settings
-	// or plug in new displays while the game is running
-	if (glimp_refreshRate == -1)
-	{
-		SDL_DisplayMode mode;
-		// TODO: probably refreshRate should be reset to -1 if window is moved
-		int i = SDL_GetWindowDisplayIndex(window);
-		if (i >= 0 && SDL_GetCurrentDisplayMode(i, &mode) == 0)
-		{
-			glimp_refreshRate = mode.refresh_rate;
-		}
-
-		if (glimp_refreshRate <= 0)
-		{
-			glimp_refreshRate = 60; // apparently the stuff above failed, use default
-		}
-	}
-
-	return glimp_refreshRate;
-#else
-	// Asume 60hz.
-	return 60;
-#endif
-}
-
-
-/*
-GLimp_Shutdown
+GLimp_ShutdownWindow
 
 This routine does all OS specific shutdown procedures for the OpenGL
 subsystem. Under OpenGL this means NULLing out the current DC and
@@ -604,8 +487,6 @@ void GLimp_ShutdownWindow (void)
 	}
 
 	window = NULL;
-	// make sure that after vid_restart the refreshrate will be queried from SDL2 again.
-	glimp_refreshRate = -1;
 
 	if (SDL_WasInit(SDL_INIT_EVERYTHING) == SDL_INIT_VIDEO)
 	{
@@ -663,8 +544,6 @@ void Draw_FPS (void);
 
 void GLimp_EndFrame (void)
 {
-	int		err;
-
 	Draw_FPS ();
 	Draw_End2D ();
 	GL_UseProgram (0);
