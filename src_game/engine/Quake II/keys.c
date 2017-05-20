@@ -27,8 +27,7 @@ key up events are sent even if in console mode
 
 char	key_lines[NUM_KEY_LINES][MAXCMDLINE];
 int		key_linepos;
-int		shift_down = false;
-int	anykeydown;
+int		anykeydown;
 
 int		edit_line = 0;
 int		history_line = 0;
@@ -37,7 +36,6 @@ int		key_waiting;
 char	*keybindings[K_LAST];
 qboolean	consolekeys[K_LAST];	// if true, can't be rebound while in console
 qboolean	menubound[K_LAST];	// if true, can't be rebound while in menu
-int		keyshift[K_LAST];		// key to map to if shift held down in console
 int		key_repeats[K_LAST];	// if > 1, it is autorepeating
 qboolean	keydown[K_LAST];
 
@@ -49,106 +47,109 @@ typedef struct
 
 keyname_t keynames[] =
 {
-	{"TAB", K_TAB},
-	{"ENTER", K_ENTER},
-	{"ESCAPE", K_ESCAPE},
-	{"SPACE", K_SPACE},
-	{"BACKSPACE", K_BACKSPACE},
-	{"UPARROW", K_UPARROW},
-	{"DOWNARROW", K_DOWNARROW},
-	{"LEFTARROW", K_LEFTARROW},
-	{"RIGHTARROW", K_RIGHTARROW},
+	{ "TAB", K_TAB },
+	{ "ENTER", K_ENTER },
+	{ "ESCAPE", K_ESCAPE },
+	{ "SPACE", K_SPACE },
+	{ "BACKSPACE", K_BACKSPACE },
 
-	{"ALT", K_ALT},
-	{"CTRL", K_CTRL},
-	{"SHIFT", K_SHIFT},
+	{ "COMMAND", K_COMMAND },
+	{ "CAPSLOCK", K_CAPSLOCK },
+	{ "POWER", K_POWER },
+	{ "PAUSE", K_PAUSE },
 
-	{"F1", K_F1},
-	{"F2", K_F2},
-	{"F3", K_F3},
-	{"F4", K_F4},
-	{"F5", K_F5},
-	{"F6", K_F6},
-	{"F7", K_F7},
-	{"F8", K_F8},
-	{"F9", K_F9},
-	{"F10", K_F10},
-	{"F11", K_F11},
-	{"F12", K_F12},
+	{ "UPARROW", K_UPARROW },
+	{ "DOWNARROW", K_DOWNARROW },
+	{ "LEFTARROW", K_LEFTARROW },
+	{ "RIGHTARROW", K_RIGHTARROW },
 
-	{"INS", K_INS},
-	{"DEL", K_DEL},
-	{"PGDN", K_PGDN},
-	{"PGUP", K_PGUP},
-	{"HOME", K_HOME},
-	{"END", K_END},
+	{ "ALT", K_ALT },
+	{ "CTRL", K_CTRL },
+	{ "SHIFT", K_SHIFT },
 
-	{"MOUSE1", K_MOUSE1},
-	{"MOUSE2", K_MOUSE2},
-	{"MOUSE3", K_MOUSE3},
+	{ "F1", K_F1 },
+	{ "F2", K_F2 },
+	{ "F3", K_F3 },
+	{ "F4", K_F4 },
+	{ "F5", K_F5 },
+	{ "F6", K_F6 },
+	{ "F7", K_F7 },
+	{ "F8", K_F8 },
+	{ "F9", K_F9 },
+	{ "F10", K_F10 },
+	{ "F11", K_F11 },
+	{ "F12", K_F12 },
 
-	{"JOY1", K_JOY1},
-	{"JOY2", K_JOY2},
-	{"JOY3", K_JOY3},
-	{"JOY4", K_JOY4},
+	{ "INS", K_INS },
+	{ "DEL", K_DEL },
+	{ "PGDN", K_PGDN },
+	{ "PGUP", K_PGUP },
+	{ "HOME", K_HOME },
+	{ "END", K_END },
 
-	{"AUX1", K_AUX1},
-	{"AUX2", K_AUX2},
-	{"AUX3", K_AUX3},
-	{"AUX4", K_AUX4},
-	{"AUX5", K_AUX5},
-	{"AUX6", K_AUX6},
-	{"AUX7", K_AUX7},
-	{"AUX8", K_AUX8},
-	{"AUX9", K_AUX9},
-	{"AUX10", K_AUX10},
-	{"AUX11", K_AUX11},
-	{"AUX12", K_AUX12},
-	{"AUX13", K_AUX13},
-	{"AUX14", K_AUX14},
-	{"AUX15", K_AUX15},
-	{"AUX16", K_AUX16},
-	{"AUX17", K_AUX17},
-	{"AUX18", K_AUX18},
-	{"AUX19", K_AUX19},
-	{"AUX20", K_AUX20},
-	{"AUX21", K_AUX21},
-	{"AUX22", K_AUX22},
-	{"AUX23", K_AUX23},
-	{"AUX24", K_AUX24},
-	{"AUX25", K_AUX25},
-	{"AUX26", K_AUX26},
-	{"AUX27", K_AUX27},
-	{"AUX28", K_AUX28},
-	{"AUX29", K_AUX29},
-	{"AUX30", K_AUX30},
-	{"AUX31", K_AUX31},
-	{"AUX32", K_AUX32},
+	{ "MOUSE1", K_MOUSE1 },
+	{ "MOUSE2", K_MOUSE2 },
+	{ "MOUSE3", K_MOUSE3 },
+	{ "MOUSE4", K_MOUSE4 },
+	{ "MOUSE5", K_MOUSE5 },
 
-	{"KP_HOME",			K_KP_HOME },
-	{"KP_UPARROW",		K_KP_UPARROW },
-	{"KP_PGUP",			K_KP_PGUP },
-	{"KP_LEFTARROW",	K_KP_LEFTARROW },
-	{"KP_5",			K_KP_5 },
-	{"KP_RIGHTARROW",	K_KP_RIGHTARROW },
-	{"KP_END",			K_KP_END },
-	{"KP_DOWNARROW",	K_KP_DOWNARROW },
-	{"KP_PGDN",			K_KP_PGDN },
-	{"KP_ENTER",		K_KP_ENTER },
-	{"KP_INS",			K_KP_INS },
-	{"KP_DEL",			K_KP_DEL },
-	{"KP_SLASH",		K_KP_SLASH },
-	{"KP_MINUS",		K_KP_MINUS },
-	{"KP_PLUS",			K_KP_PLUS },
+	{ "AUX1", K_AUX1 },
+	{ "AUX2", K_AUX2 },
+	{ "AUX3", K_AUX3 },
+	{ "AUX4", K_AUX4 },
+	{ "AUX5", K_AUX5 },
+	{ "AUX6", K_AUX6 },
+	{ "AUX7", K_AUX7 },
+	{ "AUX8", K_AUX8 },
+	{ "AUX9", K_AUX9 },
+	{ "AUX10", K_AUX10 },
+	{ "AUX11", K_AUX11 },
+	{ "AUX12", K_AUX12 },
+	{ "AUX13", K_AUX13 },
+	{ "AUX14", K_AUX14 },
+	{ "AUX15", K_AUX15 },
+	{ "AUX16", K_AUX16 },
+	{ "AUX17", K_AUX17 },
+	{ "AUX18", K_AUX18 },
+	{ "AUX19", K_AUX19 },
+	{ "AUX20", K_AUX20 },
+	{ "AUX21", K_AUX21 },
+	{ "AUX22", K_AUX22 },
+	{ "AUX23", K_AUX23 },
+	{ "AUX24", K_AUX24 },
+	{ "AUX25", K_AUX25 },
+	{ "AUX26", K_AUX26 },
+	{ "AUX27", K_AUX27 },
+	{ "AUX28", K_AUX28 },
+	{ "AUX29", K_AUX29 },
+	{ "AUX30", K_AUX30 },
+	{ "AUX31", K_AUX31 },
+	{ "AUX32", K_AUX32 },
 
-	{"MWHEELUP", K_MWHEELUP },
-	{"MWHEELDOWN", K_MWHEELDOWN },
+	{ "KP_HOME", K_KP_HOME },
+	{ "KP_UPARROW", K_KP_UPARROW },
+	{ "KP_PGUP", K_KP_PGUP },
+	{ "KP_LEFTARROW", K_KP_LEFTARROW },
+	{ "KP_5", K_KP_5 },
+	{ "KP_RIGHTARROW", K_KP_RIGHTARROW },
+	{ "KP_END", K_KP_END },
+	{ "KP_DOWNARROW", K_KP_DOWNARROW },
+	{ "KP_PGDN", K_KP_PGDN },
+	{ "KP_ENTER", K_KP_ENTER },
+	{ "KP_INS", K_KP_INS },
+	{ "KP_DEL", K_KP_DEL },
+	{ "KP_SLASH", K_KP_SLASH },
+	{ "KP_MINUS", K_KP_MINUS },
+	{ "KP_PLUS", K_KP_PLUS },
 
-	{"PAUSE", K_PAUSE},
+	{ "MWHEELUP", K_MWHEELUP },
+	{ "MWHEELDOWN", K_MWHEELDOWN },
 
-	{"SEMICOLON", ';'},	// because a raw semicolon seperates commands
+	{ "PAUSE", K_PAUSE },
 
-	{NULL, 0}
+	{ "SEMICOLON", ';' }, // because a raw semicolon seperates commands
+
+	{ NULL, 0 }
 };
 
 /*
@@ -165,7 +166,7 @@ void CompleteCommand (void)
 
 	s = key_lines[edit_line] + 1;
 
-	if (*s == '\\' || *s == '/')
+	if ((*s == '\\') || (*s == '/'))
 		s++;
 
 	cmd = Cmd_CompleteCommand (s);
@@ -194,55 +195,42 @@ Interactive line editing and console scrollback
 */
 void Key_Console (int key)
 {
-
+	// Ignore keypad in console to prevent duplicate
+	// entries through key presses processed as a
+	// normal char event and additionally as key event.
 	switch (key)
 	{
-	case K_KP_SLASH:
-		key = '/';
-		break;
-	case K_KP_MINUS:
-		key = '-';
-		break;
-	case K_KP_PLUS:
-		key = '+';
-		break;
-	case K_KP_HOME:
-		key = '7';
-		break;
-	case K_KP_UPARROW:
-		key = '8';
-		break;
-	case K_KP_PGUP:
-		key = '9';
-		break;
-	case K_KP_LEFTARROW:
-		key = '4';
-		break;
-	case K_KP_5:
-		key = '5';
-		break;
-	case K_KP_RIGHTARROW:
-		key = '6';
-		break;
-	case K_KP_END:
-		key = '1';
-		break;
-	case K_KP_DOWNARROW:
-		key = '2';
-		break;
-	case K_KP_PGDN:
-		key = '3';
-		break;
-	case K_KP_INS:
-		key = '0';
-		break;
-	case K_KP_DEL:
-		key = '.';
-		break;
+		case K_KP_SLASH:
+		case K_KP_MINUS:
+		case K_KP_PLUS:
+		case K_KP_HOME:
+		case K_KP_UPARROW:
+		case K_KP_PGUP:
+		case K_KP_LEFTARROW:
+		case K_KP_5:
+		case K_KP_RIGHTARROW:
+		case K_KP_END:
+		case K_KP_DOWNARROW:
+		case K_KP_PGDN:
+		case K_KP_INS:
+		case K_KP_DEL:
+			return;
+			break;
+
+		default:
+			break;
 	}
 
-	if ((toupper (key) == 'V' && keydown[K_CTRL]) ||
-			(((key == K_INS) || (key == K_KP_INS)) && keydown[K_SHIFT]))
+	if (key == 'l')
+	{
+		if (keydown[K_CTRL])
+		{
+			Cbuf_AddText("clear\n");
+			return;
+		}
+	}
+
+	if ((toupper (key) == 'V' && keydown[K_CTRL]) || (((key == K_INS) || (key == K_KP_INS)) && keydown[K_SHIFT]))
 	{
 		char *cbd;
 
@@ -270,34 +258,23 @@ void Key_Console (int key)
 		return;
 	}
 
-	if (key == 'l')
-	{
-		if (keydown[K_CTRL])
-		{
-			Cbuf_AddText ("clear\n");
-			return;
-		}
-	}
-
-	if (key == K_ENTER || key == K_KP_ENTER)
+	if ((key == K_ENTER) || (key == K_KP_ENTER))
 	{
 		// backslash text are commands, else chat
-		if (key_lines[edit_line][1] == '\\' || key_lines[edit_line][1] == '/')
+		if ((key_lines[edit_line][1] == '\\') || (key_lines[edit_line][1] == '/'))
 			Cbuf_AddText (key_lines[edit_line] + 2);	// skip the >
 		else
 			Cbuf_AddText (key_lines[edit_line] + 1);	// valid command
 
 		Cbuf_AddText ("\n");
 		Com_Printf ("%s\n", key_lines[edit_line]);
-		edit_line = (edit_line + 1) & 31;
+		edit_line = (edit_line + 1) & (NUM_KEY_LINES-1);
 		history_line = edit_line;
 		key_lines[edit_line][0] = ']';
 		key_linepos = 1;
 
 		if (cls.state == ca_disconnected)
-			SCR_UpdateScreen ();	// force an update, because the command
-
-		// may take some time
+			SCR_UpdateScreen ();	// force an update, because the command may take some time
 		return;
 	}
 
@@ -316,8 +293,13 @@ void Key_Console (int key)
 		return;
 	}
 
-	if ((key == K_UPARROW) || (key == K_KP_UPARROW) ||
-			((key == 'p') && keydown[K_CTRL]))
+	if (key == K_DEL)
+	{
+		memmove(key_lines[edit_line] + key_linepos,	key_lines[edit_line] + key_linepos + 1,	sizeof(key_lines[edit_line]) - key_linepos - 1);
+		return;
+	}
+
+	if ((key == K_UPARROW) || (key == K_KP_UPARROW) || ((key == 'p') && keydown[K_CTRL]))
 	{
 		do
 		{
@@ -327,21 +309,21 @@ void Key_Console (int key)
 				&& !key_lines[history_line][1]);
 
 		if (history_line == edit_line)
-			history_line = (edit_line + 1) & 31;
+			history_line = (edit_line + 1) & (NUM_KEY_LINES-1);
 
 		strcpy (key_lines[edit_line], key_lines[history_line]);
-		key_linepos = strlen (key_lines[edit_line]);
+		key_linepos = (int)strlen(key_lines[edit_line]);
 		return;
 	}
 
-	if ((key == K_DOWNARROW) || (key == K_KP_DOWNARROW) ||
-			((key == 'n') && keydown[K_CTRL]))
+	if ((key == K_DOWNARROW) || (key == K_KP_DOWNARROW) || ((key == 'n') && keydown[K_CTRL]))
 	{
-		if (history_line == edit_line) return;
+		if (history_line == edit_line)
+			return;
 
 		do
 		{
-			history_line = (history_line + 1) & 31;
+			history_line = (history_line + 1) & (NUM_KEY_LINES-1);
 		}
 		while (history_line != edit_line
 				&& !key_lines[history_line][1]);
@@ -354,19 +336,19 @@ void Key_Console (int key)
 		else
 		{
 			strcpy (key_lines[edit_line], key_lines[history_line]);
-			key_linepos = strlen (key_lines[edit_line]);
+			key_linepos = (int)strlen(key_lines[edit_line]);
 		}
 
 		return;
 	}
 
-	if (key == K_PGUP || key == K_KP_PGUP)
+	if ((key == K_PGUP) || (key == K_KP_PGUP) || (key == K_MWHEELUP) || (key == K_MOUSE4))
 	{
 		con.display -= 2;
 		return;
 	}
 
-	if (key == K_PGDN || key == K_KP_PGDN)
+	if ((key == K_PGDN) || (key == K_KP_PGDN) || (key == K_MWHEELDOWN) || (key == K_MOUSE5))
 	{
 		con.display += 2;
 
@@ -376,28 +358,61 @@ void Key_Console (int key)
 		return;
 	}
 
-	if (key == K_HOME || key == K_KP_HOME)
+	if ((key == K_HOME) || (key == K_KP_HOME))
 	{
-		con.display = con.current - con.totallines + 10;
+		if (keydown[K_CTRL])
+		{
+			con.display = con.current - con.totallines + 10;
+		}
+		else
+		{
+			key_linepos = 1;
+		}
+
 		return;
 	}
 
-	if (key == K_END || key == K_KP_END)
+	if ((key == K_END) || (key == K_KP_END))
 	{
-		con.display = con.current;
+		if (keydown[K_CTRL])
+		{
+			con.display = con.current;
+		}
+		else
+		{
+			key_linepos = (int)strlen(key_lines[edit_line]);
+		}
+
 		return;
 	}
 
-	if (key < 32 || key > 127)
+	if ((key < 32) || (key > 127))
 		return;	// non printable
 
 	if (key_linepos < MAXCMDLINE - 1)
 	{
+		int last;
+		int length;
+
+		length = strlen(key_lines[edit_line]);
+
+		if (length >= MAXCMDLINE - 1)
+		{
+			return;
+		}
+
+		last = key_lines[edit_line][key_linepos];
+
+		memmove(key_lines[edit_line] + key_linepos + 1,
+				key_lines[edit_line] + key_linepos,
+				length - key_linepos);
+
 		key_lines[edit_line][key_linepos] = key;
 		key_linepos++;
-		key_lines[edit_line][key_linepos] = 0;
-	}
 
+		if (!last)
+			key_lines[edit_line][key_linepos] = 0;
+	}
 }
 
 //============================================================================
@@ -405,11 +420,13 @@ void Key_Console (int key)
 qboolean	chat_team;
 char		chat_buffer[MAXCMDLINE];
 int			chat_bufferlen = 0;
+int			chat_cursorpos = 0;
 
 void Key_Message (int key)
 {
+	char last;
 
-	if (key == K_ENTER || key == K_KP_ENTER)
+	if ((key == K_ENTER) || (key == K_KP_ENTER))
 	{
 		if (chat_team)
 			Cbuf_AddText ("say_team \"");
@@ -422,36 +439,93 @@ void Key_Message (int key)
 		cls.key_dest = key_game;
 		chat_bufferlen = 0;
 		chat_buffer[0] = 0;
+		chat_cursorpos = 0;
 		return;
 	}
 
 	if (key == K_ESCAPE)
 	{
 		cls.key_dest = key_game;
+		chat_cursorpos = 0;
 		chat_bufferlen = 0;
 		chat_buffer[0] = 0;
 		return;
 	}
 
-	if (key < 32 || key > 127)
-		return;	// non printable
-
 	if (key == K_BACKSPACE)
 	{
-		if (chat_bufferlen)
+		if (chat_cursorpos)
 		{
+			memmove(chat_buffer + chat_cursorpos - 1, chat_buffer + chat_cursorpos,	chat_bufferlen - chat_cursorpos + 1);
+			chat_cursorpos--;
 			chat_bufferlen--;
-			chat_buffer[chat_bufferlen] = 0;
 		}
 
 		return;
 	}
 
+	if (key == K_DEL)
+	{
+		if (chat_bufferlen && (chat_cursorpos != chat_bufferlen))
+		{
+			memmove(chat_buffer + chat_cursorpos, chat_buffer + chat_cursorpos + 1,	chat_bufferlen - chat_cursorpos + 1);
+			chat_bufferlen--;
+		}
+
+		return;
+	}
+
+	if (key == K_LEFTARROW)
+	{
+		if (chat_cursorpos > 0)
+		{
+			chat_cursorpos--;
+		}
+
+		return;
+	}
+
+	if (key == K_HOME)
+	{
+		chat_cursorpos = 0;
+		return;
+	}
+
+	if (key == K_END)
+	{
+		chat_cursorpos = chat_bufferlen;
+		return;
+	}
+
+	if (key == K_RIGHTARROW)
+	{
+		if (chat_buffer[chat_cursorpos])
+		{
+			chat_cursorpos++;
+		}
+
+		return;
+	}
+
+	if ((key < 32) || (key > 127))
+		return;	// non printable
+
 	if (chat_bufferlen == sizeof (chat_buffer) - 1)
 		return; // all full
 
-	chat_buffer[chat_bufferlen++] = key;
-	chat_buffer[chat_bufferlen] = 0;
+	memmove(chat_buffer + chat_cursorpos + 1, chat_buffer + chat_cursorpos, chat_bufferlen - chat_cursorpos + 1);
+
+	last = chat_buffer[chat_cursorpos];
+
+	chat_buffer[chat_cursorpos] = key;
+
+	chat_bufferlen++;
+	chat_cursorpos++;
+
+	if (!last)
+	{
+		chat_buffer[chat_cursorpos] = 0;
+	}
 }
 
 //============================================================================
@@ -478,7 +552,7 @@ int Key_StringToKeynum (char *str)
 
 	for (kn = keynames; kn->name; kn++)
 	{
-		if (!Q_strcasecmp (str, kn->name))
+		if (!Q_stricmp (str, kn->name))
 			return kn->keynum;
 	}
 
@@ -687,7 +761,7 @@ void Key_Init (void)
 {
 	int		i;
 
-	for (i = 0; i < 32; i++)
+	for (i = 0; i < NUM_KEY_LINES; i++)
 	{
 		key_lines[i][0] = ']';
 		key_lines[i][1] = 0;
