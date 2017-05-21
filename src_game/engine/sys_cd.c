@@ -543,23 +543,3 @@ void CDAudio_Shutdown (void)
 		Com_DPrintf ("CDAudio_Shutdown: MCI_CLOSE failed\n");
 #endif
 }
-
-
-/*
-===========
-CDAudio_Activate
-
-Called when the main window gains or loses focus.
-The window have been destroyed and recreated
-between a deactivate and an activate.
-===========
-*/
-void CDAudio_Activate (qboolean active)
-{
-#if 0
-	if (active)
-		CDAudio_Resume ();
-	else
-		CDAudio_Pause ();
-#endif
-}
