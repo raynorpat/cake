@@ -152,12 +152,12 @@ set(SYSTEM_INCLUDES
 	)	
 set(SYSTEM_SOURCES
 	sys.c
-	cd_sdl.c
-	snd_sdl.c
-	input.c
-	net.c
-	vid.c
-	gl_imp.c
+	sys_cd.c
+	sys_snd.c
+	sys_input.c
+	sys_net.c
+	sys_vid.c
+	sys_glimp.c
 	)
 source_group("system" FILES ${SYSTEM_INCLUDES})
 source_group("system" FILES ${SYSTEM_SOURCES})
