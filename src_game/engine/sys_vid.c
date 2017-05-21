@@ -231,6 +231,8 @@ void VID_CheckChanges (void)
 	{
 		cl.force_refdef = true;		// can't use a paused refdef
 		S_StopAllSounds ();
+		CDAudio_Stop ();
+		BGM_Stop ();
 	}
 
 	while (ref_modified)

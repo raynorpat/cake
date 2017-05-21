@@ -4,6 +4,7 @@ project(cake)
 # Libraries
 #
 
+# sdl
 if(NOT USE_SYSTEM_SDL2)
 	SET(SDL2_PATH ../libs/SDL2)
 endif()
@@ -17,8 +18,21 @@ else()
 	set(SDLx_LIBRARY ${SDL_LIBRARY})
 endif()
 
+# libmad
+#if(USE_SYSTEM_LIBMAD)
+	find_package(MAD)
+#endif()
+if (MAD_FOUND)
+    include_directories(${MAD_INCLUDE_DIRS})
+    set(MAD_LIBRARY ${MAD_LIBRARIES})
+else (MAD_FOUND)
+    include_directories("../libs/mad/include")
+    set(MAD_LIBRARY "" )
+endif (MAD_FOUND)
+
+# glew
 if (USE_SYSTEM_LIBGLEW)
-find_package(GLEW)
+	find_package(GLEW)
 endif(USE_SYSTEM_LIBGLEW)
 if (GLEW_FOUND)
     include_directories(${GLEW_INCLUDE_DIRS})
@@ -37,12 +51,14 @@ endif (GLEW_FOUND)
 # engine side code
 set(CLIENT_INCLUDES
 	client.h
+	cl_bgmusic.h
 	console.h
 	keys.h
 	screen.h
 	ref.h
 	)
 set(CLIENT_SOURCES
+	cl_bgmusic.c
 	cl_cin.c
 	cl_console.c
 	cl_ents.c
@@ -73,12 +89,19 @@ source_group("client\\menu" FILES ${MENU_INCLUDES})
 source_group("client\\menu" FILES ${MENU_SOURCES})
 
 set(SOUND_INCLUDES
+	snd_codec.h
+	snd_codeci.h
 	snd_loc.h
+	snd_wave.h
+	snd_mp3.h
 	)	
 set(SOUND_SOURCES
+	snd_codec.c
 	snd_dma.c
 	snd_mem.c
 	snd_mix.c
+	snd_wave.c
+	snd_mp3.c
 	)
 source_group("client\\sound" FILES ${SOUND_INCLUDES})
 source_group("client\\sound" FILES ${SOUND_SOURCES})
@@ -188,7 +211,9 @@ set(WIN32_RESOURCES
 	)
 source_group("system\\win32\\Resources" FILES ${WIN32_RESOURCES})
 
-#libs
+# libs
+
+# glew
 if (NOT GLEW_FOUND)
     set(GLEW_INCLUDES ../libs/glew/include/GL/glew.h)
     set(GLEW_SOURCES ../libs/glew/src/glew.c)
@@ -204,6 +229,17 @@ else (NOT GLEW_FOUND)
 endif (NOT GLEW_FOUND)
 source_group("libs\\glew" FILES ${GLEW_INCLUDES})
 source_group("libs\\glew" FILES ${GLEW_SOURCES})
+
+# libmad
+if (NOT MAD_FOUND)
+	file(GLOB MAD_INCLUDES ../libs/mad/include/*.h)
+	file(GLOB MAD_SOURCES ../libs/mad/src/*.c)
+else (NOT MAD_FOUND)
+    set(MAD_INCLUDES "")
+    set(MAD_SOURCES "")
+endif (NOT MAD_FOUND)
+source_group("libs\\mad" FILES ${MAD_INCLUDES})
+source_group("libs\\mad" FILES ${MAD_SOURCES})
 
 
 #
@@ -222,6 +258,7 @@ set(CAKE_INCLUDES
 			${SHARED_INCLUDES}
 
 			${GLEW_INCLUDES}
+			${MAD_INCLUDES}
 			)			
 set(CAKE_SOURCES
 			${CLIENT_SOURCES}
@@ -234,6 +271,7 @@ set(CAKE_SOURCES
 			${SHARED_SOURCES}
 			
 			${GLEW_SOURCES}
+			${MAD_SOURCES}
 			)
 	
 if(MONOLITH)

@@ -606,6 +606,9 @@ CL_ClearState
 void CL_ClearState (void)
 {
 	S_StopAllSounds ();
+	CDAudio_Stop ();
+	BGM_Stop ();
+
 	CL_ClearEffects ();
 	CL_ClearTEnts ();
 
@@ -771,6 +774,8 @@ void CL_Reconnect_f (void)
 		return;
 
 	S_StopAllSounds ();
+	CDAudio_Stop ();
+	BGM_Stop ();
 
 	if (cls.state == ca_connected)
 	{
@@ -1773,6 +1778,7 @@ void CL_Frame (int msec)
 	S_Update (cl.refdef.vieworg, cl.v_forward, cl.v_right, cl.v_up);
 
 	CDAudio_Update ();
+	BGM_Update ();
 
 	// advance local effects for next frame
 	CL_RunDLights ();
@@ -1841,6 +1847,8 @@ void CL_Init (void)
 	cls.disable_screen = true;	// don't draw yet
 
 	CDAudio_Init ();
+	BGM_Init ();
+
 	CL_InitLocal ();
 
 	Cbuf_Execute ();
@@ -1869,6 +1877,7 @@ void CL_Shutdown (void)
 
 	CL_WriteConfiguration ();
 
+	BGM_Shutdown ();
 	CDAudio_Shutdown ();
 	S_Shutdown ();
 	IN_Shutdown ();

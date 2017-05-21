@@ -645,6 +645,7 @@ void SCR_PlayCinematic (char *arg)
 
 	// make sure CD isn't playing music
 	CDAudio_Stop ();
+	BGM_Stop ();
 
 	cl.cinematicframe = 0;
 	dot = strstr (arg, ".");

@@ -21,6 +21,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
 #include "client.h"
 #include "snd_loc.h"
+#include "snd_codec.h"
 
 void S_Play (void);
 void S_SoundList (void);
@@ -151,6 +152,8 @@ void S_Init (void)
 
 		Com_Printf ("sound sampling rate: %i\n", dma.speed);
 
+		S_CodecInit();
+
 		S_StopAllSounds ();
 	}
 
@@ -169,6 +172,8 @@ void S_Shutdown (void)
 
 	if (!sound_started)
 		return;
+
+	S_CodecShutdown();
 
 	SNDDMA_Shutdown ();
 

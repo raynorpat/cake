@@ -89,6 +89,8 @@ typedef struct
 	qboolean	autosound;		// from an entity->sound, cleared each frame
 } channel_t;
 
+#define WAV_FORMAT_PCM	1
+
 typedef struct
 {
 	int			rate;
