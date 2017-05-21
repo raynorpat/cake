@@ -56,7 +56,7 @@ set(CLIENT_SOURCES
 	cl_scrn.c
 	cl_tent.c
 	cl_view.c
-	keys.c
+	cl_keys.c
 	)
 source_group("client" FILES ${CLIENT_INCLUDES})
 source_group("client" FILES ${CLIENT_SOURCES})
