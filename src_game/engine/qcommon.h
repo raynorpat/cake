@@ -31,18 +31,63 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
 #ifdef _M_IX86
 #define	CPUSTRING	"x86"
+#define ARCH		"x86"
+#elif defined ( __x86_64__ ) || defined( _M_AMD64 )
+#define CPUSTRING	"x64"
+#define ARCH		"x64"
 #endif
 
-#elif defined __linux__
+#define LIB_PREFIX ""
+#define LIB_SUFFIX ".dll"
 
+#elif defined __linux__ || defined ( __FreeBSD__ )
+
+#if defined ( __FreeBSD__ )
+#define BUILDSTRING "FreeBSD"
+#else
 #define BUILDSTRING "Linux"
+#endif
 
 #ifdef __i386__
-#define CPUSTRING "i386"
+#define ARCH		"i386"
+#define CPUSTRING	"i386"
+#elif defined ( __x86_64__ )
+#define ARCH		"x86_64"
+#define CPUSTRING	"x86_64"
+#elif defined ( __powerpc__ )
+#define ARCH		"ppc"
+#define CPUSTRING	"ppc"
 #elif defined __alpha__
-#define CPUSTRING "axp"
+#define ARCH		"alpha"
+#define CPUSTRING	"axp"
+#elif defined ( __arm__ )
+#define ARCH		 "arm"
+#define CPUSTRING	"arm"
+#elif defined ( _MIPS_ARCH )
+#define ARCH		"mips"
+#define CPUSTRING	"mips"
 #else
-#define CPUSTRING "Unknown"
+#define ARCH		""
+#define CPUSTRING	"Unknown"
+#endif
+
+#define LIB_PREFIX "lib"
+#define LIB_SUFFIX ".so"
+
+#if defined ( __APPLE__ ) && defined ( __MACH__ )
+
+#ifndef __MACOSX__
+#define __MACOSX__
+#endif
+
+// macOS has universal binaries, so no need for cpu dependency
+#define BUILDSTRING "macOS"
+#define CPUSTRING	"universal"
+#define ARCH		"mac"
+
+#define LIB_PREFIX "lib"
+#define LIB_SUFFIX ".dylib"
+
 #endif
 
 #elif defined __sun__
@@ -50,15 +95,24 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #define BUILDSTRING "Solaris"
 
 #ifdef __i386__
-#define CPUSTRING "i386"
+#define CPUSTRING	"i386"
+#define ARCH		"i386"
 #else
-#define CPUSTRING "sparc"
+#define CPUSTRING	"sparc"
+#define ARCH		"sparc"
 #endif
+
+#define LIB_PREFIX	"lib"
+#define LIB_SUFFIX	".so"
 
 #else	// !WIN32
 
 #define BUILDSTRING "NON-WIN32"
 #define	CPUSTRING	"NON-WIN32"
+#define ARCH		""
+
+#define LIB_PREFIX	"lib"
+#define LIB_SUFFIX	".so"
 
 #endif
 
