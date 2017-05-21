@@ -33,6 +33,7 @@ option(SDL2 "Use SDL2 instead of SDL1.2" ON)
 option(ONATIVE "Optimize for the host CPU" OFF)
 option(WINRT "Build for Windows RT" OFF)
 option(WINDOWS10 "Build for Windows 10" OFF)
+option(USE_SYSTEM_LIBMAD "Use the system libmad instead of the bundled one" OFF)
 option(USE_SYSTEM_LIBGLEW "Use the system libglew instead of the bundled one" OFF)
 option(USE_SYSTEM_SDL2 "Use the system SDL2 instead of the bundled one" OFF)
 
