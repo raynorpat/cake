@@ -219,6 +219,4 @@ void R_SetPalette (const unsigned char *palette);
 void R_BeginFrame (float camera_separation);
 void GLimp_EndFrame (void);
 
-void Swap_Init (void);
-
 #endif // __REF_H
