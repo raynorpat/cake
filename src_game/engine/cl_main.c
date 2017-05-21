@@ -606,7 +606,6 @@ CL_ClearState
 void CL_ClearState (void)
 {
 	S_StopAllSounds ();
-	CDAudio_Stop ();
 	BGM_Stop ();
 
 	CL_ClearEffects ();
@@ -768,13 +767,12 @@ The server is changing levels
 */
 void CL_Reconnect_f (void)
 {
-	//ZOID
-	//if we are downloading, we don't change! This so we don't suddenly stop downloading a map
+	// if we are downloading, we don't change!
+	// this is so we don't suddenly stop downloading a map
 	if (cls.download)
 		return;
 
 	S_StopAllSounds ();
-	CDAudio_Stop ();
 	BGM_Stop ();
 
 	if (cls.state == ca_connected)
@@ -1776,8 +1774,6 @@ void CL_Frame (int msec)
 
 	// update audio
 	S_Update (cl.refdef.vieworg, cl.v_forward, cl.v_right, cl.v_up);
-
-	CDAudio_Update ();
 	BGM_Update ();
 
 	// advance local effects for next frame
@@ -1846,7 +1842,6 @@ void CL_Init (void)
 
 	cls.disable_screen = true;	// don't draw yet
 
-	CDAudio_Init ();
 	BGM_Init ();
 
 	CL_InitLocal ();
@@ -1878,7 +1873,6 @@ void CL_Shutdown (void)
 	CL_WriteConfiguration ();
 
 	BGM_Shutdown ();
-	CDAudio_Shutdown ();
 	S_Shutdown ();
 	IN_Shutdown ();
 	VID_Shutdown ();

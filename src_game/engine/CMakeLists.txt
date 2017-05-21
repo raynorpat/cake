@@ -55,6 +55,7 @@ set(CLIENT_INCLUDES
 	console.h
 	keys.h
 	screen.h
+	sound.h
 	ref.h
 	)
 set(CLIENT_SOURCES
@@ -170,12 +171,9 @@ set(SYSTEM_INCLUDES
 	q2icon64.h
 	vid.h
 	vid_common.h
-	sound.h
-	cdaudio.h
 	)
 set(SYSTEM_SOURCES
 	sys.c
-	sys_cd.c
 	sys_snd.c
 	sys_input.c
 	sys_net.c

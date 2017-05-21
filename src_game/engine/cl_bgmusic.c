@@ -23,7 +23,6 @@
  */
 
 #include "client.h"
-#include "cdaudio.h"
 #include "snd_loc.h"
 #include "snd_codec.h"
 #include "cl_bgmusic.h"

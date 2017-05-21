@@ -643,8 +643,7 @@ void SCR_PlayCinematic (char *arg)
 	// empty input queue
 	In_FlushQueue();
 
-	// make sure CD isn't playing music
-	CDAudio_Stop ();
+	// make sure music isn't playing
 	BGM_Stop ();
 
 	cl.cinematicframe = 0;
