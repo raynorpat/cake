@@ -233,6 +233,7 @@ void RotatePointAroundVector (vec3_t dst, const vec3_t dir, const vec3_t point, 
 
 char *COM_SkipPath (char *pathname);
 void COM_StripExtension (char *in, char *out);
+char *COM_FileExtension (char *in);
 void COM_FileBase (char *in, char *out);
 void COM_FilePath (char *in, char *out);
 void COM_DefaultExtension (char *path, char *extension);
@@ -312,7 +313,7 @@ char	*Sys_FindNext (unsigned musthave, unsigned canthave);
 void	Sys_FindClose (void);
 
 
-// this is only here so the functions in q_shared.c and q_shwin.c can link
+// this is only here so the functions in q_shared.c can link
 void Sys_Error (char *error, ...);
 void Com_Printf (char *msg, ...);
 
