@@ -149,7 +149,7 @@ set(SYSTEM_INCLUDES
 	vid_common.h
 	sound.h
 	cdaudio.h
-	)	
+	)
 set(SYSTEM_SOURCES
 	sys.c
 	sys_cd.c
