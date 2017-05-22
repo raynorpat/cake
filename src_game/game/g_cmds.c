@@ -264,7 +264,7 @@ void Cmd_Give_f (edict_t *ent)
 		it = FindItem (name);
 		if (!it)
 		{
-			gi.cprintf (ent, PRINT_HIGH, "unknown item\n");
+			gi.cprintf (ent, PRINT_HIGH, "unknown item %s\n", name);
 			return;
 		}
 	}
