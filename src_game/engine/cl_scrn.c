@@ -61,7 +61,6 @@ cvar_t		*cl_menuscale;
 char		crosshair_pic[MAX_QPATH];
 int			crosshair_width, crosshair_height;
 
-void SCR_TimeRefresh_f (void);
 void SCR_Loading_f (void);
 
 
@@ -379,7 +378,6 @@ void SCR_Init (void)
 	cl_menuscale = Cvar_Get("cl_menuscale", "-1", CVAR_ARCHIVE);
 
 	// register our commands
-	Cmd_AddCommand ("timerefresh", SCR_TimeRefresh_f);
 	Cmd_AddCommand ("loading", SCR_Loading_f);
 	Cmd_AddCommand ("sky", SCR_Sky_f);
 
@@ -566,80 +564,7 @@ void SCR_Loading_f (void)
 	SCR_BeginLoadingPlaque ();
 }
 
-/*
-================
-SCR_TimeRefresh_f
-================
-*/
-int entitycmpfnc (const entity_t *a, const entity_t *b)
-{
-	// all other models are sorted by model then skin
-	if (a->model == b->model)
-	{
-		return ((int) a->skin - (int) b->skin);
-	}
-	else
-	{
-		return ((int) a->model - (int) b->model);
-	}
-}
-
-void SCR_TimeRefresh_f (void)
-{
-	int		i;
-	int		start, stop;
-	float	time;
-
-	if (cls.state != ca_active)
-		return;
-
-	start = Sys_Milliseconds ();
-
-	if (Cmd_Argc() == 2)
-	{
-		// run without page flipping
-		R_BeginFrame (0);
-
-		for (i = 0; i < 128; i++)
-		{
-			cl.refdef.viewangles[1] = i / 128.0 * 360.0;
-			R_RenderFrame (&cl.refdef);
-		}
-
-		GLimp_EndFrame ();
-	}
-	else
-	{
-		for (i = 0; i < 128; i++)
-		{
-			cl.refdef.viewangles[1] = i / 128.0 * 360.0;
-
-			R_BeginFrame (0);
-			R_RenderFrame (&cl.refdef);
-			GLimp_EndFrame ();
-		}
-	}
-
-	stop = Sys_Milliseconds ();
-	time = (stop - start) / 1000.0;
-	Com_Printf ("%f seconds (%f fps)\n", time, 128 / time);
-}
-
-
-/*
-==============
-SCR_TileClear
-
-Clear any parts of the tiled background that were drawn on last frame
-==============
-*/
-void SCR_TileClear (void)
-{
-}
-
-
 //===============================================================
-
 
 #define STAT_MINUS		10	// num frame for '-' stats digit
 char		*sb_nums[2][11] =

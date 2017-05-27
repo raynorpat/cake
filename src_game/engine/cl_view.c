@@ -451,13 +451,23 @@ void SCR_DrawCrosshair (void)
 /*
 ==================
 V_RenderView
-
 ==================
 */
+static int entitycmpfnc(const entity_t *a, const entity_t *b)
+{
+	// all other models are sorted by model then skin
+	if (a->model == b->model)
+	{
+		return ((int)a->skin - (int)b->skin);
+	}
+	else
+	{
+		return ((int)a->model - (int)b->model);
+	}
+}
+
 void V_RenderView (float stereo_separation)
 {
-	extern int entitycmpfnc (const entity_t *, const entity_t *);
-
 	if (cls.state != ca_active)
 		return;
 
