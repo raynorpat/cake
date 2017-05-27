@@ -74,7 +74,6 @@ void GL_TransformPoint (glmatrix *m, float *in, float *out);
 #define SHELL_BLUE_COLOR	0xF3
 
 #define SHELL_RG_COLOR		0xDC
-//#define SHELL_RB_COLOR		0x86
 #define SHELL_RB_COLOR		0x68
 #define SHELL_BG_COLOR		0x78
 

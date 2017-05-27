@@ -21,12 +21,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
 #include "client.h"
 
-
 extern	struct model_s	*cl_mod_powerscreen;
-
-//PGM
-int	vidref_val;
-//PGM
 
 /*
 =========================================================================
@@ -1359,15 +1354,8 @@ void CL_AddPacketEntities (frame_t *frame)
 			{
 				if (effects & EF_TRACKER)
 				{
-					float intensity;
-
-					intensity = 50 + (500 * (sin (cl.time / 500.0) + 1.0));
-
-					// FIXME - check out this effect in rendition
-					if (vidref_val == VIDREF_GL)
-						V_AddLight (ent.currorigin, intensity, -1.0, -1.0, -1.0);
-					else
-						V_AddLight (ent.currorigin, -1.0 * intensity, 1.0, 1.0, 1.0);
+					float intensity = 50 + (500 * (sin (cl.time / 500.0) + 1.0));
+					V_AddLight (ent.currorigin, intensity, -1.0, -1.0, -1.0);
 				}
 				else
 				{
@@ -1378,12 +1366,7 @@ void CL_AddPacketEntities (frame_t *frame)
 			else if (effects & EF_TRACKER)
 			{
 				CL_TrackerTrail (cent->lerp_origin, ent.currorigin, 0);
-
-				// FIXME - check out this effect in rendition
-				if (vidref_val == VIDREF_GL)
-					V_AddLight (ent.currorigin, 200, -1, -1, -1);
-				else
-					V_AddLight (ent.currorigin, -200, 1, 1, 1);
+				V_AddLight (ent.currorigin, 200, -1, -1, -1);
 			}
 			//ROGUE
 			//======
