@@ -161,6 +161,7 @@ const char *Default_MenuKey (menuframework_s *m, int key)
 	switch (key)
 	{
 	case K_ESCAPE:
+	case K_BBUTTON:
 		M_PopMenu ();
 		return menu_out_sound;
 	case K_KP_UPARROW:
@@ -256,6 +257,8 @@ const char *Default_MenuKey (menuframework_s *m, int key)
 
 	case K_KP_ENTER:
 	case K_ENTER:
+
+	case K_ABUTTON:
 
 		if (m)
 			Menu_SelectItem (m);
@@ -470,6 +473,7 @@ const char *M_Main_Key (int key)
 	switch (key)
 	{
 	case K_ESCAPE:
+	case K_BBUTTON:
 		M_PopMenu ();
 		break;
 
@@ -491,6 +495,7 @@ const char *M_Main_Key (int key)
 
 	case K_KP_ENTER:
 	case K_ENTER:
+	case K_ABUTTON:
 		m_entersound = true;
 
 		switch (m_main_cursor)
@@ -1038,6 +1043,7 @@ static const char *Keys_MenuKey (int key)
 	{
 	case K_KP_ENTER:
 	case K_ENTER:
+	case K_ABUTTON:
 		KeyBindingFunc (item);
 		return menu_in_sound;
 	case K_BACKSPACE:		// delete bindings
@@ -1865,6 +1871,7 @@ const char *M_Credits_Key (int key)
 	switch (key)
 	{
 	case K_ESCAPE:
+	case K_BBUTTON:
 
 		if (creditsBuffer)
 			FS_FreeFile (creditsBuffer);
@@ -4012,6 +4019,7 @@ const char *M_Quit_Key (int key)
 	switch (key)
 	{
 	case K_ESCAPE:
+	case K_BBUTTON:
 	case 'n':
 	case 'N':
 		M_PopMenu ();

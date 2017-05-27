@@ -546,6 +546,7 @@ Send Key_Event calls
 void Sys_SendKeyEvents (void)
 {
 #ifndef DEDICATED_ONLY
+	IN_Commands();
 	IN_Update();
 #endif
 

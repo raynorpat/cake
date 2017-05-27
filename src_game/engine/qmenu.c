@@ -238,6 +238,8 @@ qboolean Field_Key (menufield_s *f, int key)
 	case K_KP_ENTER:
 	case K_ENTER:
 	case K_ESCAPE:
+	case K_BBUTTON:
+	case K_ABUTTON:
 	case K_TAB:
 		return false;
 

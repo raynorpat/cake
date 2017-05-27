@@ -40,6 +40,11 @@ void IN_Shutdown(void);
 void IN_Update(void);
 
 /*
+* Emit key events for game controller buttons, including emulated buttons for analog sticks / triggers
+*/
+void IN_Commands(void);
+
+/*
 * Removes all pending events from SDLs queue.
 */
 void In_FlushQueue(void);

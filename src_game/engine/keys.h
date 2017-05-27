@@ -276,6 +276,18 @@ enum QKEYS {
 	K_EURO,
 	K_UNDO,
 
+	// SDL2 game controller keys
+	K_LTHUMB,
+	K_RTHUMB,
+	K_LSHOULDER,
+	K_RSHOULDER,
+	K_ABUTTON,
+	K_BBUTTON,
+	K_XBUTTON,
+	K_YBUTTON,
+	K_LTRIGGER,
+	K_RTRIGGER,
+
 	K_LAST
 };
 

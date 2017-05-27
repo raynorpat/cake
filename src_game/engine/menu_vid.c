@@ -226,6 +226,7 @@ const char *VID_MenuKey (int key)
 	switch (key)
 	{
 	case K_ESCAPE:
+	case K_BBUTTON:
 		ApplyChanges (0);
 		return NULL;
 	case K_KP_UPARROW:
@@ -248,6 +249,7 @@ const char *VID_MenuKey (int key)
 		break;
 	case K_KP_ENTER:
 	case K_ENTER:
+	case K_ABUTTON:
 		if (!Menu_SelectItem (&s_opengl_menu))
 			ApplyChanges (NULL);
 
