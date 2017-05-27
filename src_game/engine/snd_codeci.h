@@ -29,6 +29,7 @@
 // Codec internals
 typedef qboolean (*CODEC_INIT)(void);
 typedef void (*CODEC_SHUTDOWN)(void);
+typedef void *(*CODEC_LOAD)(char *filename, snd_info_t *info);
 typedef snd_stream_t *(*CODEC_OPEN)(char *filename);
 typedef int (*CODEC_READ)(snd_stream_t *stream, int bytes, void *buffer);
 typedef int (*CODEC_REWIND)(snd_stream_t *stream);
@@ -41,6 +42,7 @@ struct snd_codec_s
 	char *ext;				// expected extension
 	CODEC_INIT initialize;
 	CODEC_SHUTDOWN shutdown;
+	CODEC_LOAD load;
 	CODEC_OPEN codec_open;
 	CODEC_READ codec_read;
 	CODEC_REWIND codec_rewind;

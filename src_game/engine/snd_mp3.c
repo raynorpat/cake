@@ -451,6 +451,67 @@ static int S_MP3_CodecRewindStream (snd_stream_t *stream)
 	return mp3_startread(stream);
 }
 
+/*
+=====================================================================
+S_MP3_CodecLoad
+
+We handle S_MP3_CodecLoad as a special case of the streaming functions
+where we read the whole stream at once.
+======================================================================
+*/
+void *S_MP3_CodecLoad(char *filename, snd_info_t *info)
+{
+	snd_stream_t *stream;
+	byte *buffer;
+	int bytesRead;
+
+	// check if input is valid
+	if (!(filename && info))
+	{
+		return NULL;
+	}
+
+	// open the file as a stream
+	stream = S_MP3_CodecOpenStream(filename);
+	if (!stream)
+	{
+		return NULL;
+	}
+
+	// copy over the info
+	info->rate = stream->info.rate;
+	info->width = stream->info.width;
+	info->channels = stream->info.channels;
+	info->samples = stream->info.samples;
+	info->size = stream->info.size;
+	info->dataofs = stream->info.dataofs;
+	info->loopstart = -1;
+
+	// allocate a buffer
+	// this buffer must be free-ed by the caller of this function
+	buffer = Z_Malloc(info->size);
+	if (!buffer)
+	{
+		S_MP3_CodecCloseStream(stream);
+		return NULL;
+	}
+
+	// fill the buffer
+	bytesRead = S_MP3_CodecReadStream(stream, info->size, buffer);
+
+	// we don't even have read a single byte
+	if (bytesRead <= 0)
+	{
+		Z_Free(buffer);
+		S_MP3_CodecCloseStream(stream);
+		return NULL;
+	}
+
+	S_MP3_CodecCloseStream(stream);
+
+	return buffer;
+}
+
 snd_codec_t mp3_codec =
 {
 	CODECTYPE_MP3,
@@ -458,6 +519,7 @@ snd_codec_t mp3_codec =
 	".mp3",
 	S_MP3_CodecInitialize,
 	S_MP3_CodecShutdown,
+	S_MP3_CodecLoad,
 	S_MP3_CodecOpenStream,
 	S_MP3_CodecReadStream,
 	S_MP3_CodecRewindStream,

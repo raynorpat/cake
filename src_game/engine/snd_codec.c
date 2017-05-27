@@ -39,6 +39,68 @@ static snd_codec_t *codecs;
 
 /*
 =================
+S_FileExtension
+=================
+*/
+static char *S_FileExtension(const char *fni)
+{
+	char *fn = (char *)fni;
+	char *eptr = NULL;
+	while (*fn)
+	{
+		if (*fn == '.')
+			eptr = fn;
+		fn++;
+	}
+	
+	return eptr;
+}
+
+/*
+=================
+S_FindCodecForFile
+
+Select an appropriate codec for a file based on its extension
+=================
+*/
+static snd_codec_t *S_FindCodecForFile(char *filename)
+{
+	char *ext = S_FileExtension(filename);
+	snd_codec_t *codec = codecs;
+	
+	if (!ext)
+	{
+		// No extension - auto-detect
+		while (codec)
+		{
+			char fn[MAX_QPATH];
+			strncpy(fn, filename, sizeof(fn) - 4);
+			COM_DefaultExtension(fn, codec->ext);
+
+			// Check it exists
+			if (FS_LoadFile(fn, NULL) != -1)
+				return codec;
+
+			// Nope. Next!
+			codec = codec->next;
+		}
+
+		// Nothin'
+		return NULL;
+	}
+
+	while (codec)
+	{
+		if (!Q_stricmp(ext, codec->ext))
+			return codec;
+		codec = codec->next;
+	}
+
+	return NULL;
+}
+
+/*
+=================
 S_CodecRegister
 =================
 */
@@ -88,6 +150,29 @@ void S_CodecShutdown (void)
 		codec = codec->next;
 	}
 	codecs = NULL;
+}
+
+/*
++=================
+S_CodecLoad
+=================
+*/
+void *S_CodecLoad(char *filename, snd_info_t *info)
+{
+	snd_codec_t *codec;
+	char fn[MAX_QPATH];
+	
+	codec = S_FindCodecForFile(filename);
+	if (!codec)
+	{
+		Com_Printf("Unknown extension for %s\n", filename);
+		return NULL;
+	}
+	
+	strncpy(fn, filename, sizeof(fn));
+	COM_DefaultExtension(fn, codec->ext);
+	
+	return codec->load(fn, info);
 }
 
 /*

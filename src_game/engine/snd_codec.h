@@ -31,6 +31,7 @@ typedef struct snd_info_s
 	int rate;
 	int width;
 	int channels;
+	int	loopstart;
 	int samples;
 	int size;
 	int dataofs;
@@ -57,6 +58,8 @@ typedef struct snd_stream_s
 
 void S_CodecInit (void);
 void S_CodecShutdown (void);
+
+void *S_CodecLoad (char *filename, snd_info_t *info);
 
 // Callers of the following S_CodecOpenStream* functions
 // are reponsible for attaching any path to the filename

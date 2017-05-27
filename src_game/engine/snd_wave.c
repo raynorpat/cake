@@ -112,6 +112,32 @@ static int WAV_FindRIFFChunk(FILE *f, const char *chunk)
 
 /*
 =================
+S_ByteSwapRawSamples
+=================
+*/
+static void S_ByteSwapRawSamples(int samples, int width, int s_channels, const byte *data)
+{
+	int		i;
+	
+	if (width != 2) {
+		return;
+	}
+
+	if (LittleShort(256) == 256) {
+		return;
+	}
+
+	if (s_channels == 2) {
+		samples <<= 1;
+	}
+
+	for (i = 0; i < samples; i++) {
+		((short *)data)[i] = LittleShort(((short *)data)[i]);
+	}
+}
+
+/*
+=================
 WAV_ReadRIFFHeader
 =================
 */
@@ -167,6 +193,8 @@ static qboolean WAV_ReadRIFFHeader(const char *name, FILE *file, snd_info_t *inf
 		fseek(file, fmtlen, SEEK_CUR);
 	}
 
+	info->loopstart = -1;
+
 	// Scan for the data chunk
 	if ((info->size = WAV_FindRIFFChunk(file, "data")) < 0)
 	{
@@ -182,6 +210,50 @@ static qboolean WAV_ReadRIFFHeader(const char *name, FILE *file, snd_info_t *inf
 	}
 
 	return true;
+}
+
+/*
+=================
+S_WAV_CodecLoad
+=================
+*/
+void *S_WAV_CodecLoad(char *filename, snd_info_t *info)
+{
+	FILE *file;
+	void *buffer;
+	
+	// Try to open the file
+	FS_FOpenFile(filename, &file);
+	if (!file)
+	{
+		Com_Printf("Can't read sound file %s\n", filename);
+		return NULL;
+	}
+	
+	// Read the RIFF header
+	if (!WAV_ReadRIFFHeader(filename, file, info))
+	{
+		FS_FCloseFile(file);
+		Com_Printf("Can't understand wav file %s\n", filename);
+		return NULL;
+	}
+	
+	// Allocate some memory
+	buffer = Z_Malloc(info->size);
+	if (!buffer)
+	{
+		FS_FCloseFile(file);
+		Com_Printf("Out of memory reading %s\n", filename);
+		return NULL;
+	}
+	
+	// Read, byteswap
+	FS_Read(buffer, info->size, file);
+	S_ByteSwapRawSamples(info->samples, info->width, info->channels, (byte *)buffer);
+	
+	// Close and return
+	FS_FCloseFile(file);
+	return buffer;
 }
 
 /*
@@ -273,6 +345,7 @@ snd_codec_t wav_codec =
 	".wav",
 	S_WAV_CodecInitialize,
 	S_WAV_CodecShutdown,
+	S_WAV_CodecLoad,
 	S_WAV_CodecOpenStream,
 	S_WAV_CodecReadStream,
 	S_WAV_CodecRewindStream,
