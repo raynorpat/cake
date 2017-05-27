@@ -65,8 +65,7 @@ void ResampleSfx (sfx_t *sfx, int inrate, int inwidth, byte *data)
 	{
 		// fast special case
 		for (i = 0; i < outcount; i++)
-			((signed char *) sc->data) [i]
-			= (int) ((unsigned char) (data[i]) - 128);
+			((signed char *) sc->data) [i] = (int) ((unsigned char) (data[i]) - 128);
 	}
 	else
 	{
