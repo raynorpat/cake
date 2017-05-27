@@ -300,6 +300,7 @@ static void BGM_UpdateStream (void)
 	int	fileSamples;
 	int	fileBytes;
 	byte raw[16384];
+	qboolean did_rewind = false;
 
 	if (bgmstream->status != STREAM_PLAY)
 		return;
@@ -340,11 +341,19 @@ static void BGM_UpdateStream (void)
 		if (res > 0) // data: add to raw buffer
 		{
 			S_RawSamples(fileSamples, bgmstream->info.rate,	bgmstream->info.width, bgmstream->info.channels, raw);
+			did_rewind = false;
 		}
 		else if (res == 0) // EOF
 		{
 			if (bgmloop)
 			{
+				if (did_rewind)
+				{
+					Com_Printf("Stream keeps returning EOF.\n");
+					BGM_Stop();
+					return;
+				}
+
 				res = S_CodecRewindStream(bgmstream);
 				if (res != 0)
 				{
@@ -352,6 +361,8 @@ static void BGM_UpdateStream (void)
 					BGM_Stop();
 					return;
 				}
+
+				did_rewind = true;
 			}
 			else
 			{
