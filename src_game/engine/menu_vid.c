@@ -21,14 +21,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #include "qmenu.h"
 #include "vid_common.h"
 
-extern cvar_t *vid_fullscreen;
-extern cvar_t *vid_gamma;
-
-static cvar_t *gl_mode;
-static cvar_t *gl_finish;
-
-extern void M_ForceMenuOff (void);
-
 /*
 ====================================================================
 
@@ -37,30 +29,67 @@ MENU INTERACTION
 ====================================================================
 */
 
+extern void M_ForceMenuOff (void);
+
+static cvar_t *gl_mode;
+static cvar_t *fov;
+extern cvar_t *vid_gamma;
+extern cvar_t *vid_fullscreen;
+static cvar_t *gl_swapinterval;
+static cvar_t *gl_textureanisotropy;
+
 static menuframework_s	s_opengl_menu;
 
 static menulist_s		s_mode_list;
+static menulist_s 		s_aspect_list;
 static menuslider_s		s_brightness_slider;
 static menulist_s 		s_fs_box;
-static menulist_s 		s_finish_box;
-static menuaction_s		s_cancel_action;
+static menulist_s 		s_vsync_list;
+static menulist_s 		s_af_list;
 static menuaction_s		s_defaults_action;
+static menuaction_s 	s_apply_action;
 
 
-static void ScreenSizeCallback (void *s)
+static int GetCustomValue(menulist_s *list)
 {
-	menuslider_s *slider = (menuslider_s *) s;
+	static menulist_s *last;
+	static int i;
 
-	Cvar_SetValue ("viewsize", slider->curvalue * 10);
+	if (list != last)
+	{
+		last = list;
+		i = list->curvalue;
+		do
+		{
+			i++;
+		}
+		while (list->itemnames[i]);
+		i--;
+	}
+
+	return i;
 }
 
 static void BrightnessCallback (void *s)
 {
 	menuslider_s *slider = (menuslider_s *) s;
 
-	float gamma = (0.8 - (slider->curvalue / 10.0 - 0.5)) + 0.5;
-
+	float gamma = slider->curvalue / 10.0;
 	Cvar_SetValue ("vid_gamma", gamma);
+}
+
+static void AnisotropicCallback(void *s)
+{
+	menulist_s *list = (menulist_s *)s;
+
+	if (list->curvalue == 0)
+	{
+		Cvar_SetValue("gl_textureanisotropy", 0);
+	}
+	else
+	{
+		Cvar_SetValue("gl_textureanisotropy", pow(2, list->curvalue));
+	}
 }
 
 static void ResetDefaults (void *unused)
@@ -70,31 +99,96 @@ static void ResetDefaults (void *unused)
 
 static void ApplyChanges (void *unused)
 {
-	float gamma;
+	qboolean restart = false;
 
-	// invert sense so greater = brighter, and scale to a range of 0.5 to 1.3
-	gamma = (0.8 - (s_brightness_slider.curvalue / 10.0 - 0.5)) + 0.5;
+	// custom mode
+	if (s_mode_list.curvalue != GetCustomValue(&s_mode_list))
+	{
+		// Restarts automatically
+		Cvar_SetValue("gl_mode", s_mode_list.curvalue);
+	}
+	else
+	{
+		// Restarts automatically
+		Cvar_SetValue("gl_mode", -1);
+	}
 
-	Cvar_SetValue ("vid_gamma", gamma);
+	// horplus
+	if (s_aspect_list.curvalue == 0)
+	{
+		if (horplus->value != 1)
+		{
+			Cvar_SetValue("horplus", 1);
+		}
+	}
+	else
+	{
+		if (horplus->value != 0)
+		{
+			Cvar_SetValue("horplus", 0);
+		}
+	}
+
+	// fov
+	if (s_aspect_list.curvalue == 0 || s_aspect_list.curvalue == 1)
+	{
+		if (fov->value != 90)
+		{
+			// Restarts automatically
+			Cvar_SetValue("fov", 90);
+		}
+	}
+	else if (s_aspect_list.curvalue == 2)
+	{
+		if (fov->value != 86)
+		{
+			// Restarts automatically
+			Cvar_SetValue("fov", 86);
+		}
+	}
+	else if (s_aspect_list.curvalue == 3)
+	{
+		if (fov->value != 100)
+		{
+			// Restarts automatically
+			Cvar_SetValue("fov", 100);
+		}
+	}
+	else if (s_aspect_list.curvalue == 4)
+	{
+		if (fov->value != 106)
+		{
+			// Restarts automatically
+			Cvar_SetValue("fov", 106);
+		}
+	}
+
+	// Restarts automatically
 	Cvar_SetValue ("vid_fullscreen", s_fs_box.curvalue);
-	Cvar_SetValue ("gl_finish", s_finish_box.curvalue);
-	Cvar_SetValue ("gl_mode", s_mode_list.curvalue);
+
+	// vertical sync
+	if (gl_swapinterval->value != s_vsync_list.curvalue)
+	{
+		Cvar_SetValue("gl_swapinterval", s_vsync_list.curvalue);
+		restart = true;
+	}
+
+	if (restart)
+	{
+		Cbuf_AddText("vid_restart\n");
+	}
 
 	M_ForceMenuOff ();
 }
 
-static void CancelChanges (void *unused)
-{
-	extern void M_PopMenu (void);
-
-	M_PopMenu ();
-}
 
 /*
 VID_MenuInit
 */
 void VID_MenuInit (void)
 {
+	int y = 0;
+
 	static const char *resolutions[] = {
 		"[320 240   ]",
 		"[400 300   ]",
@@ -123,6 +217,17 @@ void VID_MenuInit (void)
 		"[custom    ]",
 		0
 	};
+
+	static const char *aspect_names[] = {
+		"auto",
+		"4:3",
+		"5:4",
+		"16:10",
+		"16:9",
+		"custom",
+		0
+	};
+
 	static const char *yesno_names[] =
 	{
 		"no",
@@ -130,8 +235,27 @@ void VID_MenuInit (void)
 		0
 	};
 
-	if (!gl_mode) gl_mode = Cvar_Get ("gl_mode", "3", 0);
-	if (!gl_finish) gl_finish = Cvar_Get ("gl_finish", "0", CVAR_ARCHIVE);
+	static const char *pow2_names[] = {
+		"off",
+		"2x",
+		"4x",
+		"8x",
+		"16x",
+		0
+	};
+
+	if (!gl_mode)
+		gl_mode = Cvar_Get ("gl_mode", "4", 0);
+	if (!horplus)
+		horplus = Cvar_Get("horplus", "1", CVAR_ARCHIVE);
+	if (!fov)
+		fov = Cvar_Get("fov", "90",  CVAR_USERINFO | CVAR_ARCHIVE);
+	if (!vid_gamma)
+		vid_gamma = Cvar_Get("vid_gamma", "1.2", CVAR_ARCHIVE);
+	if (!gl_swapinterval)
+		gl_swapinterval = Cvar_Get("gl_swapinterval", "1", CVAR_ARCHIVE);
+	if (!gl_textureanisotropy)
+		gl_textureanisotropy = Cvar_Get("gl_textureanisotropy", "0", CVAR_ARCHIVE);
 
 	s_mode_list.curvalue = gl_mode->value;
 
@@ -141,55 +265,110 @@ void VID_MenuInit (void)
 	s_mode_list.generic.type = MTYPE_SPINCONTROL;
 	s_mode_list.generic.name = "video mode";
 	s_mode_list.generic.x = 0;
-	s_mode_list.generic.y = 0;
+	s_mode_list.generic.y = (y = 0);
 	s_mode_list.itemnames = resolutions;
-
-	s_fs_box.generic.type = MTYPE_SPINCONTROL;
-	s_fs_box.generic.x	= 0;
-	s_fs_box.generic.y	= 10;
-	s_fs_box.generic.name	= "fullscreen";
-	s_fs_box.itemnames = yesno_names;
-	s_fs_box.curvalue = vid_fullscreen->value;
+	if (gl_mode->value >= 0)
+	{
+		s_mode_list.curvalue = gl_mode->value;
+	}
+	else
+	{
+		s_mode_list.curvalue = GetCustomValue(&s_mode_list);
+	}
 
 	s_brightness_slider.generic.type	= MTYPE_SLIDER;
-	s_brightness_slider.generic.x	= 0;
-	s_brightness_slider.generic.y	= 30;
 	s_brightness_slider.generic.name	= "brightness";
+	s_brightness_slider.generic.x	= 0;
+	s_brightness_slider.generic.y	= (y += 20);
 	s_brightness_slider.generic.callback = BrightnessCallback;
-	s_brightness_slider.minvalue = 5;
-	s_brightness_slider.maxvalue = 13;
-	s_brightness_slider.curvalue = (1.3 - vid_gamma->value + 0.5) * 10;
+	s_brightness_slider.minvalue = 1;
+	s_brightness_slider.maxvalue = 20;
+	s_brightness_slider.curvalue = vid_gamma->value * 10;
 
-	s_finish_box.generic.type = MTYPE_SPINCONTROL;
-	s_finish_box.generic.x	= 0;
-	s_finish_box.generic.y	= 40;
-	s_finish_box.generic.name	= "sync every frame";
-	s_finish_box.curvalue = gl_finish->value;
-	s_finish_box.itemnames = yesno_names;
+	s_aspect_list.generic.type = MTYPE_SPINCONTROL;
+	s_aspect_list.generic.name = "aspect ratio";
+	s_aspect_list.generic.x = 0;
+	s_aspect_list.generic.y = (y += 20);
+	s_aspect_list.itemnames = aspect_names;
+	if (horplus->value == 1)
+	{
+		s_aspect_list.curvalue = 0;
+	}
+	else if (fov->value == 90)
+	{
+		s_aspect_list.curvalue = 1;
+	}
+	else if (fov->value == 86)
+	{
+		s_aspect_list.curvalue = 2;
+	}
+	else if (fov->value == 100)
+	{
+		s_aspect_list.curvalue = 3;
+	}
+	else if (fov->value == 106)
+	{
+		s_aspect_list.curvalue = 4;
+	}
+	else
+	{
+		s_aspect_list.curvalue = GetCustomValue(&s_aspect_list);
+	}
+
+	s_fs_box.generic.type = MTYPE_SPINCONTROL;
+	s_fs_box.generic.name	= "fullscreen";
+	s_fs_box.generic.x	= 0;
+	s_fs_box.generic.y	= (y += 10);
+	s_fs_box.itemnames = yesno_names;
+	s_fs_box.curvalue = (vid_fullscreen->value != 0);
+
+	s_vsync_list.generic.type = MTYPE_SPINCONTROL;
+	s_vsync_list.generic.name = "vertical sync";
+	s_vsync_list.generic.x = 0;
+	s_vsync_list.generic.y = (y += 10);
+	s_vsync_list.itemnames = yesno_names;
+	s_vsync_list.curvalue = (gl_swapinterval->value != 0);
+
+	s_af_list.generic.type = MTYPE_SPINCONTROL;
+	s_af_list.generic.name = "aniso filtering";
+	s_af_list.generic.x = 0;
+	s_af_list.generic.y = (y += 10);
+	s_af_list.generic.callback = AnisotropicCallback;
+	s_af_list.itemnames = pow2_names;
+	s_af_list.curvalue = 0;
+	if (gl_textureanisotropy->value)
+	{
+		do
+		{
+			s_af_list.curvalue++;
+		} while (pow2_names[s_af_list.curvalue] &&
+				pow(2, s_af_list.curvalue) <= gl_textureanisotropy->value);
+		s_af_list.curvalue--;
+	}
+
 
 	s_defaults_action.generic.type = MTYPE_ACTION;
-	s_defaults_action.generic.name = "reset to defaults";
+	s_defaults_action.generic.name = "reset to default";
 	s_defaults_action.generic.x  = 0;
-	s_defaults_action.generic.y  = 60;
+	s_defaults_action.generic.y = (y += 20);
 	s_defaults_action.generic.callback = ResetDefaults;
 
-	s_cancel_action.generic.type = MTYPE_ACTION;
-	s_cancel_action.generic.name = "cancel";
-	s_cancel_action.generic.x  = 0;
-	s_cancel_action.generic.y  = 70;
-	s_cancel_action.generic.callback = CancelChanges;
+	s_apply_action.generic.type = MTYPE_ACTION;
+	s_apply_action.generic.name = "apply";
+	s_apply_action.generic.x = 0;
+	s_apply_action.generic.y = (y += 10);
+	s_apply_action.generic.callback = ApplyChanges;
 
 	Menu_AddItem (&s_opengl_menu, (void *) &s_mode_list);
-	Menu_AddItem (&s_opengl_menu, (void *) &s_fs_box);
-
 	Menu_AddItem (&s_opengl_menu, (void *) &s_brightness_slider);
-	Menu_AddItem (&s_opengl_menu, (void *) &s_finish_box);
-
+	Menu_AddItem (&s_opengl_menu, (void *) &s_aspect_list);
+	Menu_AddItem (&s_opengl_menu, (void *) &s_fs_box);
+	Menu_AddItem (&s_opengl_menu, (void *) &s_vsync_list);
+	Menu_AddItem (&s_opengl_menu, (void *) &s_af_list);
 	Menu_AddItem (&s_opengl_menu, (void *) &s_defaults_action);
-	Menu_AddItem (&s_opengl_menu, (void *) &s_cancel_action);
+	Menu_AddItem (&s_opengl_menu, (void *) &s_apply_action);
 
 	Menu_Center (&s_opengl_menu);
-
 	s_opengl_menu.x -= 8;
 }
 
@@ -221,42 +400,40 @@ VID_MenuKey
 */
 const char *VID_MenuKey (int key)
 {
+	menuframework_s *m = &s_opengl_menu;
 	static const char *sound = "misc/menu1.wav";
 
 	switch (key)
 	{
 	case K_ESCAPE:
 	case K_BBUTTON:
-		ApplyChanges (0);
+		M_PopMenu();
 		return NULL;
 	case K_KP_UPARROW:
 	case K_UPARROW:
-		s_opengl_menu.cursor--;
-		Menu_AdjustCursor (&s_opengl_menu, -1);
+		m->cursor--;
+		Menu_AdjustCursor(m, -1);
 		break;
 	case K_KP_DOWNARROW:
 	case K_DOWNARROW:
-		s_opengl_menu.cursor++;
-		Menu_AdjustCursor (&s_opengl_menu, 1);
+		m->cursor++;
+		Menu_AdjustCursor(m, 1);
 		break;
 	case K_KP_LEFTARROW:
 	case K_LEFTARROW:
-		Menu_SlideItem (&s_opengl_menu, -1);
+		Menu_SlideItem(m, -1);
 		break;
 	case K_KP_RIGHTARROW:
 	case K_RIGHTARROW:
-		Menu_SlideItem (&s_opengl_menu, 1);
+		Menu_SlideItem(m, 1);
 		break;
 	case K_KP_ENTER:
 	case K_ENTER:
 	case K_ABUTTON:
-		if (!Menu_SelectItem (&s_opengl_menu))
-			ApplyChanges (NULL);
-
+		Menu_SelectItem(m);
 		break;
 	}
 
 	return sound;
 }
-
 

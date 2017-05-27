@@ -56,7 +56,6 @@ const char * (*m_keyfunc) (int key);
 
 #define	MAX_MENU_DEPTH	8
 
-
 typedef struct
 {
 	void	(*draw) (void);
@@ -75,45 +74,10 @@ static void M_Banner (char *name)
 	Draw_PicScaled(viddef.width / 2 - (w * scale) / 2, viddef.height / 2 - (110 * scale), name, scale);
 }
 
-void M_PushMenu (void (*draw) (void), const char * (*key) (int k))
-{
-	int		i;
-
-	if (Cvar_VariableValue ("maxclients") == 1
-			&& Com_ServerState ())
-		Cvar_Set ("paused", "1");
-
-	// if this menu is already present, drop back to that level
-	// to avoid stacking menus by hotkeys
-	for (i = 0; i < m_menudepth; i++)
-		if (m_layers[i].draw == draw &&
-				m_layers[i].key == key)
-		{
-			m_menudepth = i;
-		}
-
-	if (i == m_menudepth)
-	{
-		if (m_menudepth >= MAX_MENU_DEPTH)
-			Com_Error (ERR_FATAL, "M_PushMenu: MAX_MENU_DEPTH");
-
-		m_layers[m_menudepth].draw = m_drawfunc;
-		m_layers[m_menudepth].key = m_keyfunc;
-		m_menudepth++;
-	}
-
-	m_drawfunc = draw;
-	m_keyfunc = key;
-
-	m_entersound = true;
-
-	cls.key_dest = key_menu;
-}
-
 void M_ForceMenuOff (void)
 {
-	m_drawfunc = 0;
-	m_keyfunc = 0;
+	m_drawfunc = NULL;
+	m_keyfunc = NULL;
 	cls.key_dest = key_game;
 	m_menudepth = 0;
 	Key_ClearStates ();
@@ -136,6 +100,75 @@ void M_PopMenu (void)
 		M_ForceMenuOff ();
 }
 
+/*
+ * This crappy function maintaines a stack of opened menus.
+ * The steps in this horrible mess are:
+ *
+ * 1. But the game into pause if a menu is opened
+ *
+ * 2. If the requested menu is already open, close it.
+ *
+ * 3. If the requested menu is already open but not
+ *    on top, close all menus above it and the menu
+ *    itself. This is necessary since an instance of
+ *    the reqeuested menu is in flight and will be
+ *    displayed.
+ *
+ * 4. Save the previous menu on top (which was in flight)
+ *    to the stack and make the requested menu the menu in
+ *    flight.
+ */
+static void M_PushMenu (void (*draw) (void), const char * (*key) (int k))
+{
+	int		i;
+    int alreadyPresent = 0;
+
+	if ((Cvar_VariableValue ("maxclients") == 1)
+			&& Com_ServerState ())
+		Cvar_Set ("paused", "1");
+
+    /* if this menu is already open (and on top),
+       close it => toggling behaviour */
+    if ((m_drawfunc == draw) && (m_keyfunc == key))
+    {
+        M_PopMenu();
+        return;
+    }
+
+	// if this menu is already present, drop back to that level
+	// to avoid stacking menus by hotkeys
+	for (i = 0; i < m_menudepth; i++)
+	{
+		if ((m_layers[i].draw == draw) && (m_layers[i].key == key))
+		{
+            alreadyPresent = 1;
+            break;
+		}
+	}
+
+	// menu was already opened further down the stack
+    while (alreadyPresent && i <= m_menudepth)
+    {
+        M_PopMenu(); // decrements m_menudepth
+    }
+
+	if (m_menudepth >= MAX_MENU_DEPTH)
+    {
+        Com_Printf("Too many open menus!\n");
+        return;
+    }
+
+	m_layers[m_menudepth].draw = m_drawfunc;
+	m_layers[m_menudepth].key = m_keyfunc;
+	m_menudepth++;
+
+	m_drawfunc = draw;
+	m_keyfunc = key;
+
+	m_entersound = true;
+
+	cls.key_dest = key_menu;
+}
 
 const char *Default_MenuKey (menuframework_s *m, int key)
 {
@@ -266,8 +299,6 @@ const char *Default_MenuKey (menuframework_s *m, int key)
 	return sound;
 }
 
-//=============================================================================
-
 /*
 ================
 M_DrawCharacter
@@ -283,27 +314,26 @@ void M_DrawCharacter (int cx, int cy, int num)
 	Draw_CharScaled(cx + ((int)(viddef.width - 320 * scale) >> 1), cy + ((int)(viddef.height - 240 * scale) >> 1), num, scale);
 }
 
-void M_Print (int cx, int cy, char *str)
+void M_Print (int x, int y, char *str)
 {
+    int cx, cy;
 	float scale = SCR_GetMenuScale();
 
+    cx = x;
+    cy = y;
 	while (*str)
 	{
-		M_DrawCharacter (cx * scale, cy * scale, (*str) + 128);
-		str++;
-		cx += 8;
-	}
-}
-
-void M_PrintWhite (int cx, int cy, char *str)
-{
-	float scale = SCR_GetMenuScale();
-
-	while (*str)
-	{
-		M_DrawCharacter (cx * scale, cy * scale, *str);
-		str++;
-		cx += 8;
+        if (*str == '\n')
+        {
+            cx = x;
+            cy += 8;
+        }
+        else
+        {
+			M_DrawCharacter (cx * scale, cy * scale, (*str) + 128);
+			cx += 8;
+		}
+        str++;
 	}
 }
 
@@ -313,7 +343,6 @@ void M_DrawPic (int x, int y, char *pic)
 
 	Draw_PicScaled((x + ((viddef.width - 320) >> 1)) * scale, (y + ((viddef.height - 240) >> 1)) * scale, pic, scale);
 }
-
 
 /*
 =============
@@ -399,6 +428,59 @@ void M_DrawTextBox (int x, int y, int width, int lines)
     M_DrawCharacter(cx * scale, cy * scale + 8 * scale, 9);
 }
 
+static char *m_popup_string;
+static int m_popup_endtime;
+
+void M_Popup(void)
+{
+    int x, y, width, lines;
+    int n;
+    char *str;
+
+    if (!m_popup_string)
+    {
+        return;
+    }
+
+    if (m_popup_endtime && m_popup_endtime < cls.realtime)
+    {
+        m_popup_string = NULL;
+        return;
+    }
+
+    width = lines = n = 0;
+    for (str = m_popup_string; *str; str++)
+    {
+        if (*str == '\n')
+        {
+            lines++;
+            n = 0;
+        }
+        else
+        {
+            n++;
+            if (n > width)
+            {
+                width = n;
+            }
+        }
+    }
+    if (n)
+    {
+        lines++;
+    }
+
+    if (width)
+    {
+        width += 2;
+
+        x = (320 - (width + 2) * 8) / 2;
+        y = (240 - (lines + 2) * 8) / 3;
+
+        M_DrawTextBox(x, y, width, lines);
+        M_Print(x + 16, y + 8, m_popup_string);
+    }
+}
 
 /*
 =======================================================================
@@ -407,8 +489,8 @@ MAIN MENU
 
 =======================================================================
 */
-#define	MAIN_ITEMS	5
 
+#define	MAIN_ITEMS	5
 
 void M_Main_Draw (void)
 {
@@ -460,7 +542,6 @@ void M_Main_Draw (void)
 
 	Draw_PicScaled ((xoffset - 30 - w) * scale, (ystart + h + 5) * scale, "m_main_logo", scale);
 }
-
 
 const char *M_Main_Key (int key)
 {
@@ -521,7 +602,6 @@ const char *M_Main_Key (int key)
 	return NULL;
 }
 
-
 void M_Menu_Main_f (void)
 {
 	M_PushMenu (M_Main_Draw, M_Main_Key);
@@ -534,6 +614,7 @@ MULTIPLAYER MENU
 
 =======================================================================
 */
+
 static menuframework_s	s_multiplayer_menu;
 static menuaction_s		s_join_network_server_action;
 static menuaction_s		s_start_network_server_action;
@@ -617,6 +698,7 @@ KEYS MENU
 
 =======================================================================
 */
+
 char *bindnames[][2] =
 {
 	{"+attack", 		"attack"},
@@ -642,38 +724,15 @@ char *bindnames[][2] =
 	{"invdrop",			"drop item"},
 	{"invprev",			"prev item"},
 	{"invnext",			"next item"},
-	{"cmd help", 		"help computer"},
-	{ 0, 0 }
+	{"cmd help", 		"help computer"}
 };
+#define NUM_BINDNAMES (sizeof bindnames / sizeof bindnames[0])
 
 int				keys_cursor;
 static int		bind_grab;
 
 static menuframework_s	s_keys_menu;
-static menuaction_s		s_keys_attack_action;
-static menuaction_s		s_keys_next_weapon_action;
-static menuaction_s		s_keys_previous_weapon_action;
-static menuaction_s		s_keys_walk_forward_action;
-static menuaction_s		s_keys_backpedal_action;
-static menuaction_s		s_keys_turn_left_action;
-static menuaction_s		s_keys_turn_right_action;
-static menuaction_s		s_keys_run_action;
-static menuaction_s		s_keys_step_left_action;
-static menuaction_s		s_keys_step_right_action;
-static menuaction_s		s_keys_sidestep_action;
-static menuaction_s		s_keys_look_up_action;
-static menuaction_s		s_keys_look_down_action;
-static menuaction_s		s_keys_center_view_action;
-static menuaction_s		s_keys_mouse_look_action;
-static menuaction_s		s_keys_keyboard_look_action;
-static menuaction_s		s_keys_move_up_action;
-static menuaction_s		s_keys_move_down_action;
-static menuaction_s		s_keys_inventory_action;
-static menuaction_s		s_keys_inv_use_action;
-static menuaction_s		s_keys_inv_drop_action;
-static menuaction_s		s_keys_inv_prev_action;
-static menuaction_s		s_keys_inv_next_action;
-static menuaction_s		s_keys_help_computer_action;
+static menuaction_s s_keys_actions[NUM_BINDNAMES];
 
 static void M_UnbindCommand (char *command)
 {
@@ -782,231 +841,26 @@ static void KeyBindingFunc (void *self)
 
 static void Keys_MenuInit (void)
 {
-	int y = 0;
-	int i = 0;
+    int i;
 
-	s_keys_menu.x = viddef.width * 0.50;
+    s_keys_menu.x = (int)(viddef.width * 0.50f);
 	s_keys_menu.nitems = 0;
 	s_keys_menu.cursordraw = KeyCursorDrawFunc;
 
-	s_keys_attack_action.generic.type	= MTYPE_ACTION;
-	s_keys_attack_action.generic.flags = QMF_GRAYED;
-	s_keys_attack_action.generic.x		= 0;
-	s_keys_attack_action.generic.y		= y;
-	s_keys_attack_action.generic.ownerdraw = DrawKeyBindingFunc;
-	s_keys_attack_action.generic.localdata[0] = i;
-	s_keys_attack_action.generic.name	= bindnames[s_keys_attack_action.generic.localdata[0]][1];
+    for (i = 0; i < NUM_BINDNAMES; i++)
+    {
+        s_keys_actions[i].generic.type = MTYPE_ACTION;
+        s_keys_actions[i].generic.flags = QMF_GRAYED;
+        s_keys_actions[i].generic.x = 0;
+        s_keys_actions[i].generic.y = (i * 9);
+        s_keys_actions[i].generic.ownerdraw = DrawKeyBindingFunc;
+        s_keys_actions[i].generic.localdata[0] = i;
+        s_keys_actions[i].generic.name = bindnames[s_keys_actions[i].generic.localdata[0]][1];
 
-	s_keys_next_weapon_action.generic.type = MTYPE_ACTION;
-	s_keys_next_weapon_action.generic.flags = QMF_GRAYED;
-	s_keys_next_weapon_action.generic.x = 0;
-	s_keys_next_weapon_action.generic.y = y += 9;
-	s_keys_next_weapon_action.generic.ownerdraw = DrawKeyBindingFunc;
-	s_keys_next_weapon_action.generic.localdata[0] = ++i;
-	s_keys_next_weapon_action.generic.name = bindnames[s_keys_next_weapon_action.generic.localdata[0]][1];
-	
-	s_keys_previous_weapon_action.generic.type = MTYPE_ACTION;
-	s_keys_previous_weapon_action.generic.flags = QMF_GRAYED;
-	s_keys_previous_weapon_action.generic.x = 0;
-	s_keys_previous_weapon_action.generic.y = y += 9;
-	s_keys_previous_weapon_action.generic.ownerdraw = DrawKeyBindingFunc;
-	s_keys_previous_weapon_action.generic.localdata[0] = ++i;
-	s_keys_previous_weapon_action.generic.name = bindnames[s_keys_previous_weapon_action.generic.localdata[0]][1];
+        Menu_AddItem(&s_keys_menu, (void *)&s_keys_actions[i]);
+    }
 
-	s_keys_walk_forward_action.generic.type	= MTYPE_ACTION;
-	s_keys_walk_forward_action.generic.flags = QMF_GRAYED;
-	s_keys_walk_forward_action.generic.x		= 0;
-	s_keys_walk_forward_action.generic.y		= y += 9;
-	s_keys_walk_forward_action.generic.ownerdraw = DrawKeyBindingFunc;
-	s_keys_walk_forward_action.generic.localdata[0] = ++i;
-	s_keys_walk_forward_action.generic.name	= bindnames[s_keys_walk_forward_action.generic.localdata[0]][1];
-
-	s_keys_backpedal_action.generic.type	= MTYPE_ACTION;
-	s_keys_backpedal_action.generic.flags = QMF_GRAYED;
-	s_keys_backpedal_action.generic.x		= 0;
-	s_keys_backpedal_action.generic.y		= y += 9;
-	s_keys_backpedal_action.generic.ownerdraw = DrawKeyBindingFunc;
-	s_keys_backpedal_action.generic.localdata[0] = ++i;
-	s_keys_backpedal_action.generic.name	= bindnames[s_keys_backpedal_action.generic.localdata[0]][1];
-
-	s_keys_turn_left_action.generic.type	= MTYPE_ACTION;
-	s_keys_turn_left_action.generic.flags = QMF_GRAYED;
-	s_keys_turn_left_action.generic.x		= 0;
-	s_keys_turn_left_action.generic.y		= y += 9;
-	s_keys_turn_left_action.generic.ownerdraw = DrawKeyBindingFunc;
-	s_keys_turn_left_action.generic.localdata[0] = ++i;
-	s_keys_turn_left_action.generic.name	= bindnames[s_keys_turn_left_action.generic.localdata[0]][1];
-
-	s_keys_turn_right_action.generic.type	= MTYPE_ACTION;
-	s_keys_turn_right_action.generic.flags = QMF_GRAYED;
-	s_keys_turn_right_action.generic.x		= 0;
-	s_keys_turn_right_action.generic.y		= y += 9;
-	s_keys_turn_right_action.generic.ownerdraw = DrawKeyBindingFunc;
-	s_keys_turn_right_action.generic.localdata[0] = ++i;
-	s_keys_turn_right_action.generic.name	= bindnames[s_keys_turn_right_action.generic.localdata[0]][1];
-
-	s_keys_run_action.generic.type	= MTYPE_ACTION;
-	s_keys_run_action.generic.flags = QMF_GRAYED;
-	s_keys_run_action.generic.x		= 0;
-	s_keys_run_action.generic.y		= y += 9;
-	s_keys_run_action.generic.ownerdraw = DrawKeyBindingFunc;
-	s_keys_run_action.generic.localdata[0] = ++i;
-	s_keys_run_action.generic.name	= bindnames[s_keys_run_action.generic.localdata[0]][1];
-
-	s_keys_step_left_action.generic.type	= MTYPE_ACTION;
-	s_keys_step_left_action.generic.flags = QMF_GRAYED;
-	s_keys_step_left_action.generic.x		= 0;
-	s_keys_step_left_action.generic.y		= y += 9;
-	s_keys_step_left_action.generic.ownerdraw = DrawKeyBindingFunc;
-	s_keys_step_left_action.generic.localdata[0] = ++i;
-	s_keys_step_left_action.generic.name	= bindnames[s_keys_step_left_action.generic.localdata[0]][1];
-
-	s_keys_step_right_action.generic.type	= MTYPE_ACTION;
-	s_keys_step_right_action.generic.flags = QMF_GRAYED;
-	s_keys_step_right_action.generic.x		= 0;
-	s_keys_step_right_action.generic.y		= y += 9;
-	s_keys_step_right_action.generic.ownerdraw = DrawKeyBindingFunc;
-	s_keys_step_right_action.generic.localdata[0] = ++i;
-	s_keys_step_right_action.generic.name	= bindnames[s_keys_step_right_action.generic.localdata[0]][1];
-
-	s_keys_sidestep_action.generic.type	= MTYPE_ACTION;
-	s_keys_sidestep_action.generic.flags = QMF_GRAYED;
-	s_keys_sidestep_action.generic.x		= 0;
-	s_keys_sidestep_action.generic.y		= y += 9;
-	s_keys_sidestep_action.generic.ownerdraw = DrawKeyBindingFunc;
-	s_keys_sidestep_action.generic.localdata[0] = ++i;
-	s_keys_sidestep_action.generic.name	= bindnames[s_keys_sidestep_action.generic.localdata[0]][1];
-
-	s_keys_look_up_action.generic.type	= MTYPE_ACTION;
-	s_keys_look_up_action.generic.flags = QMF_GRAYED;
-	s_keys_look_up_action.generic.x		= 0;
-	s_keys_look_up_action.generic.y		= y += 9;
-	s_keys_look_up_action.generic.ownerdraw = DrawKeyBindingFunc;
-	s_keys_look_up_action.generic.localdata[0] = ++i;
-	s_keys_look_up_action.generic.name	= bindnames[s_keys_look_up_action.generic.localdata[0]][1];
-
-	s_keys_look_down_action.generic.type	= MTYPE_ACTION;
-	s_keys_look_down_action.generic.flags = QMF_GRAYED;
-	s_keys_look_down_action.generic.x		= 0;
-	s_keys_look_down_action.generic.y		= y += 9;
-	s_keys_look_down_action.generic.ownerdraw = DrawKeyBindingFunc;
-	s_keys_look_down_action.generic.localdata[0] = ++i;
-	s_keys_look_down_action.generic.name	= bindnames[s_keys_look_down_action.generic.localdata[0]][1];
-
-	s_keys_center_view_action.generic.type	= MTYPE_ACTION;
-	s_keys_center_view_action.generic.flags = QMF_GRAYED;
-	s_keys_center_view_action.generic.x		= 0;
-	s_keys_center_view_action.generic.y		= y += 9;
-	s_keys_center_view_action.generic.ownerdraw = DrawKeyBindingFunc;
-	s_keys_center_view_action.generic.localdata[0] = ++i;
-	s_keys_center_view_action.generic.name	= bindnames[s_keys_center_view_action.generic.localdata[0]][1];
-
-	s_keys_mouse_look_action.generic.type	= MTYPE_ACTION;
-	s_keys_mouse_look_action.generic.flags = QMF_GRAYED;
-	s_keys_mouse_look_action.generic.x		= 0;
-	s_keys_mouse_look_action.generic.y		= y += 9;
-	s_keys_mouse_look_action.generic.ownerdraw = DrawKeyBindingFunc;
-	s_keys_mouse_look_action.generic.localdata[0] = ++i;
-	s_keys_mouse_look_action.generic.name	= bindnames[s_keys_mouse_look_action.generic.localdata[0]][1];
-
-	s_keys_keyboard_look_action.generic.type	= MTYPE_ACTION;
-	s_keys_keyboard_look_action.generic.flags = QMF_GRAYED;
-	s_keys_keyboard_look_action.generic.x		= 0;
-	s_keys_keyboard_look_action.generic.y		= y += 9;
-	s_keys_keyboard_look_action.generic.ownerdraw = DrawKeyBindingFunc;
-	s_keys_keyboard_look_action.generic.localdata[0] = ++i;
-	s_keys_keyboard_look_action.generic.name	= bindnames[s_keys_keyboard_look_action.generic.localdata[0]][1];
-
-	s_keys_move_up_action.generic.type	= MTYPE_ACTION;
-	s_keys_move_up_action.generic.flags = QMF_GRAYED;
-	s_keys_move_up_action.generic.x		= 0;
-	s_keys_move_up_action.generic.y		= y += 9;
-	s_keys_move_up_action.generic.ownerdraw = DrawKeyBindingFunc;
-	s_keys_move_up_action.generic.localdata[0] = ++i;
-	s_keys_move_up_action.generic.name	= bindnames[s_keys_move_up_action.generic.localdata[0]][1];
-
-	s_keys_move_down_action.generic.type	= MTYPE_ACTION;
-	s_keys_move_down_action.generic.flags = QMF_GRAYED;
-	s_keys_move_down_action.generic.x		= 0;
-	s_keys_move_down_action.generic.y		= y += 9;
-	s_keys_move_down_action.generic.ownerdraw = DrawKeyBindingFunc;
-	s_keys_move_down_action.generic.localdata[0] = ++i;
-	s_keys_move_down_action.generic.name	= bindnames[s_keys_move_down_action.generic.localdata[0]][1];
-
-	s_keys_inventory_action.generic.type	= MTYPE_ACTION;
-	s_keys_inventory_action.generic.flags = QMF_GRAYED;
-	s_keys_inventory_action.generic.x		= 0;
-	s_keys_inventory_action.generic.y		= y += 9;
-	s_keys_inventory_action.generic.ownerdraw = DrawKeyBindingFunc;
-	s_keys_inventory_action.generic.localdata[0] = ++i;
-	s_keys_inventory_action.generic.name	= bindnames[s_keys_inventory_action.generic.localdata[0]][1];
-
-	s_keys_inv_use_action.generic.type	= MTYPE_ACTION;
-	s_keys_inv_use_action.generic.flags = QMF_GRAYED;
-	s_keys_inv_use_action.generic.x		= 0;
-	s_keys_inv_use_action.generic.y		= y += 9;
-	s_keys_inv_use_action.generic.ownerdraw = DrawKeyBindingFunc;
-	s_keys_inv_use_action.generic.localdata[0] = ++i;
-	s_keys_inv_use_action.generic.name	= bindnames[s_keys_inv_use_action.generic.localdata[0]][1];
-
-	s_keys_inv_drop_action.generic.type	= MTYPE_ACTION;
-	s_keys_inv_drop_action.generic.flags = QMF_GRAYED;
-	s_keys_inv_drop_action.generic.x		= 0;
-	s_keys_inv_drop_action.generic.y		= y += 9;
-	s_keys_inv_drop_action.generic.ownerdraw = DrawKeyBindingFunc;
-	s_keys_inv_drop_action.generic.localdata[0] = ++i;
-	s_keys_inv_drop_action.generic.name	= bindnames[s_keys_inv_drop_action.generic.localdata[0]][1];
-
-	s_keys_inv_prev_action.generic.type	= MTYPE_ACTION;
-	s_keys_inv_prev_action.generic.flags = QMF_GRAYED;
-	s_keys_inv_prev_action.generic.x		= 0;
-	s_keys_inv_prev_action.generic.y		= y += 9;
-	s_keys_inv_prev_action.generic.ownerdraw = DrawKeyBindingFunc;
-	s_keys_inv_prev_action.generic.localdata[0] = ++i;
-	s_keys_inv_prev_action.generic.name	= bindnames[s_keys_inv_prev_action.generic.localdata[0]][1];
-
-	s_keys_inv_next_action.generic.type	= MTYPE_ACTION;
-	s_keys_inv_next_action.generic.flags = QMF_GRAYED;
-	s_keys_inv_next_action.generic.x		= 0;
-	s_keys_inv_next_action.generic.y		= y += 9;
-	s_keys_inv_next_action.generic.ownerdraw = DrawKeyBindingFunc;
-	s_keys_inv_next_action.generic.localdata[0] = ++i;
-	s_keys_inv_next_action.generic.name	= bindnames[s_keys_inv_next_action.generic.localdata[0]][1];
-
-	s_keys_help_computer_action.generic.type	= MTYPE_ACTION;
-	s_keys_help_computer_action.generic.flags = QMF_GRAYED;
-	s_keys_help_computer_action.generic.x		= 0;
-	s_keys_help_computer_action.generic.y		= y += 9;
-	s_keys_help_computer_action.generic.ownerdraw = DrawKeyBindingFunc;
-	s_keys_help_computer_action.generic.localdata[0] = ++i;
-	s_keys_help_computer_action.generic.name	= bindnames[s_keys_help_computer_action.generic.localdata[0]][1];
-
-	Menu_AddItem (&s_keys_menu, (void *) &s_keys_attack_action);
-	Menu_AddItem (&s_keys_menu, (void *) &s_keys_next_weapon_action);
-	Menu_AddItem (&s_keys_menu, (void *) &s_keys_previous_weapon_action);
-	Menu_AddItem (&s_keys_menu, (void *) &s_keys_walk_forward_action);
-	Menu_AddItem (&s_keys_menu, (void *) &s_keys_backpedal_action);
-	Menu_AddItem (&s_keys_menu, (void *) &s_keys_turn_left_action);
-	Menu_AddItem (&s_keys_menu, (void *) &s_keys_turn_right_action);
-	Menu_AddItem (&s_keys_menu, (void *) &s_keys_run_action);
-	Menu_AddItem (&s_keys_menu, (void *) &s_keys_step_left_action);
-	Menu_AddItem (&s_keys_menu, (void *) &s_keys_step_right_action);
-	Menu_AddItem (&s_keys_menu, (void *) &s_keys_sidestep_action);
-	Menu_AddItem (&s_keys_menu, (void *) &s_keys_look_up_action);
-	Menu_AddItem (&s_keys_menu, (void *) &s_keys_look_down_action);
-	Menu_AddItem (&s_keys_menu, (void *) &s_keys_center_view_action);
-	Menu_AddItem (&s_keys_menu, (void *) &s_keys_mouse_look_action);
-	Menu_AddItem (&s_keys_menu, (void *) &s_keys_keyboard_look_action);
-	Menu_AddItem (&s_keys_menu, (void *) &s_keys_move_up_action);
-	Menu_AddItem (&s_keys_menu, (void *) &s_keys_move_down_action);
-	Menu_AddItem (&s_keys_menu, (void *) &s_keys_inventory_action);
-	Menu_AddItem (&s_keys_menu, (void *) &s_keys_inv_use_action);
-	Menu_AddItem (&s_keys_menu, (void *) &s_keys_inv_drop_action);
-	Menu_AddItem (&s_keys_menu, (void *) &s_keys_inv_prev_action);
-	Menu_AddItem (&s_keys_menu, (void *) &s_keys_inv_next_action);
-	Menu_AddItem (&s_keys_menu, (void *) &s_keys_help_computer_action);
-
-	Menu_SetStatusBar (&s_keys_menu, "enter to change, backspace to clear");
+	Menu_SetStatusBar (&s_keys_menu, "ENTER to change, BACKSPACE to clear");
 	Menu_Center (&s_keys_menu);
 }
 
@@ -1030,7 +884,7 @@ static const char *Keys_MenuKey (int key)
 			Cbuf_InsertText (cmd);
 		}
 
-		Menu_SetStatusBar (&s_keys_menu, "enter to change, backspace to clear");
+		Menu_SetStatusBar (&s_keys_menu, "ENTER to change, BACKSPACE to clear");
 		bind_grab = false;
 		return menu_out_sound;
 	}
@@ -1058,7 +912,6 @@ void M_Menu_Keys_f (void)
 	M_PushMenu (Keys_MenuDraw, Keys_MenuKey);
 }
 
-
 /*
 =======================================================================
 
@@ -1066,6 +919,7 @@ CONTROLS MENU
 
 =======================================================================
 */
+
 extern cvar_t *joy_enable;
 
 static menuframework_s	s_options_menu;
@@ -1073,7 +927,6 @@ static menuaction_s		s_options_defaults_action;
 static menuaction_s		s_options_customize_options_action;
 static menuslider_s		s_options_sensitivity_slider;
 static menulist_s		s_options_freelook_box;
-static menulist_s		s_options_noalttab_box;
 static menulist_s		s_options_alwaysrun_box;
 static menulist_s		s_options_invertmouse_box;
 static menulist_s		s_options_lookspring_box;
@@ -1081,9 +934,7 @@ static menulist_s		s_options_lookstrafe_box;
 static menulist_s		s_options_crosshair_box;
 static menuslider_s		s_options_sfxvolume_slider;
 static menulist_s		s_options_joystick_box;
-static menulist_s		s_options_cdvolume_box;
 static menulist_s		s_options_quality_list;
-static menulist_s		s_options_compatibility_list;
 static menulist_s		s_options_console_action;
 
 static void CrosshairFunc (void *unused)
@@ -1128,8 +979,9 @@ static float ClampCvar (float min, float max, float value)
 static void ControlsSetMenuItemValues (void)
 {
 	s_options_sfxvolume_slider.curvalue		= Cvar_VariableValue ("s_volume") * 10;
-	s_options_cdvolume_box.curvalue 		= !Cvar_VariableValue ("cd_nocd");
+
 	s_options_quality_list.curvalue			= !Cvar_VariableValue ("s_loadas8bit");
+
 	s_options_sensitivity_slider.curvalue	= (sensitivity->value) * 2;
 
 	Cvar_SetValue ("cl_run", ClampCvar (0, 1, cl_run->value));
@@ -1181,11 +1033,6 @@ static void UpdateVolumeFunc (void *unused)
 	Cvar_SetValue ("s_volume", s_options_sfxvolume_slider.curvalue / 10);
 }
 
-static void UpdateCDVolumeFunc (void *unused)
-{
-	Cvar_SetValue ("cd_nocd", !s_options_cdvolume_box.curvalue);
-}
-
 static void ConsoleFunc (void *unused)
 {
 	// the proper way to do this is probably to have ToggleConsole_f accept a parameter
@@ -1213,7 +1060,7 @@ static void ConsoleFunc (void *unused)
 
 static void UpdateSoundQualityFunc (void *unused)
 {
-	if (s_options_quality_list.curvalue)
+	if (s_options_quality_list.curvalue == 0)
 	{
 		Cvar_SetValue ("s_khz", 22);
 		Cvar_SetValue ("s_loadas8bit", false);
@@ -1224,12 +1071,11 @@ static void UpdateSoundQualityFunc (void *unused)
 		Cvar_SetValue ("s_loadas8bit", true);
 	}
 
-	Cvar_SetValue ("s_primary", s_options_compatibility_list.curvalue);
-
-	M_DrawTextBox (8, 120 - 48, 36, 3);
-	M_Print (16 + 16, 120 - 48 + 8, "Restarting the sound system. This");
-	M_Print (16 + 16, 120 - 48 + 16, "could take up to a minute, so");
-	M_Print (16 + 16, 120 - 48 + 24, "please be patient.");
+    m_popup_string = "Restarting the sound system. This\n"
+                     "could take up to a minute, so\n"
+                     "please be patient.";
+    m_popup_endtime = cls.realtime + 2000;
+    M_Popup();
 
 	// the text box won't show up unless we do a buffer swap
 	GLimp_EndFrame ();
@@ -1239,20 +1085,9 @@ static void UpdateSoundQualityFunc (void *unused)
 
 void Options_MenuInit (void)
 {
-	static const char *cd_music_items[] =
-	{
-		"disabled",
-		"enabled",
-		0
-	};
 	static const char *quality_items[] =
 	{
-		"low", "high", 0
-	};
-
-	static const char *compatibility_items[] =
-	{
-		"max compatibility", "max performance", 0
+		"normal", "high", 0
 	};
 
 	static const char *yesno_names[] =
@@ -1287,33 +1122,17 @@ void Options_MenuInit (void)
 	s_options_sfxvolume_slider.maxvalue		= 10;
 	s_options_sfxvolume_slider.curvalue		= Cvar_VariableValue ("s_volume") * 10;
 
-	s_options_cdvolume_box.generic.type	= MTYPE_SPINCONTROL;
-	s_options_cdvolume_box.generic.x		= 0;
-	s_options_cdvolume_box.generic.y		= 10;
-	s_options_cdvolume_box.generic.name	= "CD music";
-	s_options_cdvolume_box.generic.callback	= UpdateCDVolumeFunc;
-	s_options_cdvolume_box.itemnames		= cd_music_items;
-	s_options_cdvolume_box.curvalue 		= !Cvar_VariableValue ("cd_nocd");
-
 	s_options_quality_list.generic.type	= MTYPE_SPINCONTROL;
 	s_options_quality_list.generic.x		= 0;
-	s_options_quality_list.generic.y		= 20;;
+	s_options_quality_list.generic.y		= 10;
 	s_options_quality_list.generic.name		= "sound quality";
 	s_options_quality_list.generic.callback = UpdateSoundQualityFunc;
 	s_options_quality_list.itemnames		= quality_items;
 	s_options_quality_list.curvalue			= !Cvar_VariableValue ("s_loadas8bit");
 
-	s_options_compatibility_list.generic.type	= MTYPE_SPINCONTROL;
-	s_options_compatibility_list.generic.x		= 0;
-	s_options_compatibility_list.generic.y		= 30;
-	s_options_compatibility_list.generic.name	= "sound compatibility";
-	s_options_compatibility_list.generic.callback = UpdateSoundQualityFunc;
-	s_options_compatibility_list.itemnames		= compatibility_items;
-	s_options_compatibility_list.curvalue		= Cvar_VariableValue ("s_primary");
-
 	s_options_sensitivity_slider.generic.type	= MTYPE_SLIDER;
 	s_options_sensitivity_slider.generic.x		= 0;
-	s_options_sensitivity_slider.generic.y		= 50;
+	s_options_sensitivity_slider.generic.y		= 30;
 	s_options_sensitivity_slider.generic.name	= "mouse speed";
 	s_options_sensitivity_slider.generic.callback = MouseSpeedFunc;
 	s_options_sensitivity_slider.minvalue		= 2;
@@ -1321,77 +1140,75 @@ void Options_MenuInit (void)
 
 	s_options_alwaysrun_box.generic.type = MTYPE_SPINCONTROL;
 	s_options_alwaysrun_box.generic.x	= 0;
-	s_options_alwaysrun_box.generic.y	= 60;
+	s_options_alwaysrun_box.generic.y	= 40;
 	s_options_alwaysrun_box.generic.name	= "always run";
 	s_options_alwaysrun_box.generic.callback = AlwaysRunFunc;
 	s_options_alwaysrun_box.itemnames = yesno_names;
 
 	s_options_invertmouse_box.generic.type = MTYPE_SPINCONTROL;
 	s_options_invertmouse_box.generic.x	= 0;
-	s_options_invertmouse_box.generic.y	= 70;
+	s_options_invertmouse_box.generic.y	= 50;
 	s_options_invertmouse_box.generic.name	= "invert mouse";
 	s_options_invertmouse_box.generic.callback = InvertMouseFunc;
 	s_options_invertmouse_box.itemnames = yesno_names;
 
 	s_options_lookspring_box.generic.type = MTYPE_SPINCONTROL;
 	s_options_lookspring_box.generic.x	= 0;
-	s_options_lookspring_box.generic.y	= 80;
+	s_options_lookspring_box.generic.y	= 60;
 	s_options_lookspring_box.generic.name	= "lookspring";
 	s_options_lookspring_box.generic.callback = LookspringFunc;
 	s_options_lookspring_box.itemnames = yesno_names;
 
 	s_options_lookstrafe_box.generic.type = MTYPE_SPINCONTROL;
 	s_options_lookstrafe_box.generic.x	= 0;
-	s_options_lookstrafe_box.generic.y	= 90;
+	s_options_lookstrafe_box.generic.y	= 70;
 	s_options_lookstrafe_box.generic.name	= "lookstrafe";
 	s_options_lookstrafe_box.generic.callback = LookstrafeFunc;
 	s_options_lookstrafe_box.itemnames = yesno_names;
 
 	s_options_freelook_box.generic.type = MTYPE_SPINCONTROL;
 	s_options_freelook_box.generic.x	= 0;
-	s_options_freelook_box.generic.y	= 100;
+	s_options_freelook_box.generic.y	= 80;
 	s_options_freelook_box.generic.name	= "free look";
 	s_options_freelook_box.generic.callback = FreeLookFunc;
 	s_options_freelook_box.itemnames = yesno_names;
 
 	s_options_crosshair_box.generic.type = MTYPE_SPINCONTROL;
 	s_options_crosshair_box.generic.x	= 0;
-	s_options_crosshair_box.generic.y	= 110;
+	s_options_crosshair_box.generic.y	= 90;
 	s_options_crosshair_box.generic.name	= "crosshair";
 	s_options_crosshair_box.generic.callback = CrosshairFunc;
 	s_options_crosshair_box.itemnames = crosshair_names;
 
 	s_options_joystick_box.generic.type = MTYPE_SPINCONTROL;
 	s_options_joystick_box.generic.x	= 0;
-	s_options_joystick_box.generic.y	= 120;
+	s_options_joystick_box.generic.y	= 100;
 	s_options_joystick_box.generic.name	= "use controller";
 	s_options_joystick_box.generic.callback = JoystickFunc;
 	s_options_joystick_box.itemnames = yesno_names;
 
 	s_options_customize_options_action.generic.type	= MTYPE_ACTION;
 	s_options_customize_options_action.generic.x		= 0;
-	s_options_customize_options_action.generic.y		= 140;
+	s_options_customize_options_action.generic.y		= 120;
 	s_options_customize_options_action.generic.name	= "customize controls";
 	s_options_customize_options_action.generic.callback = CustomizeControlsFunc;
 
 	s_options_defaults_action.generic.type	= MTYPE_ACTION;
 	s_options_defaults_action.generic.x		= 0;
-	s_options_defaults_action.generic.y		= 150;
+	s_options_defaults_action.generic.y		= 140;
 	s_options_defaults_action.generic.name	= "reset defaults";
 	s_options_defaults_action.generic.callback = ControlsResetDefaultsFunc;
 
 	s_options_console_action.generic.type	= MTYPE_ACTION;
 	s_options_console_action.generic.x		= 0;
-	s_options_console_action.generic.y		= 160;
+	s_options_console_action.generic.y		= 150;
 	s_options_console_action.generic.name	= "go to console";
 	s_options_console_action.generic.callback = ConsoleFunc;
 
 	ControlsSetMenuItemValues ();
 
 	Menu_AddItem (&s_options_menu, (void *) &s_options_sfxvolume_slider);
-	Menu_AddItem (&s_options_menu, (void *) &s_options_cdvolume_box);
 	Menu_AddItem (&s_options_menu, (void *) &s_options_quality_list);
-	Menu_AddItem (&s_options_menu, (void *) &s_options_compatibility_list);
 	Menu_AddItem (&s_options_menu, (void *) &s_options_sensitivity_slider);
 	Menu_AddItem (&s_options_menu, (void *) &s_options_alwaysrun_box);
 	Menu_AddItem (&s_options_menu, (void *) &s_options_invertmouse_box);
@@ -1410,10 +1227,16 @@ void Options_MenuDraw (void)
 	M_Banner ("m_banner_options");
 	Menu_AdjustCursor (&s_options_menu, 1);
 	Menu_Draw (&s_options_menu);
+    M_Popup();
 }
 
 const char *Options_MenuKey (int key)
 {
+    if (m_popup_string)
+    {
+        m_popup_string = NULL;
+        return NULL;
+    }
 	return Default_MenuKey (&s_options_menu, key);
 }
 
@@ -1444,6 +1267,7 @@ END GAME MENU
 
 =============================================================================
 */
+
 static int credits_start_time;
 static const char **credits;
 static char *creditsIndex[256];
@@ -1794,7 +1618,6 @@ static const char *roguecredits[] =
 	0
 };
 
-
 void M_Credits_MenuDraw (void)
 {
 	int i, y;
@@ -1852,7 +1675,6 @@ const char *M_Credits_Key (int key)
 	}
 
 	return menu_out_sound;
-
 }
 
 extern int Developer_searchpath (int who);
@@ -1912,7 +1734,6 @@ void M_Menu_Credits_f (void)
 		{
 			credits = idcredits;
 		}
-
 	}
 
 	credits_start_time = cls.realtime;
@@ -2187,7 +2008,6 @@ void M_Menu_LoadGame_f (void)
 	M_PushMenu (LoadGame_MenuDraw, LoadGame_MenuKey);
 }
 
-
 /*
 =============================================================================
 
@@ -2195,6 +2015,7 @@ SAVEGAME MENU
 
 =============================================================================
 */
+
 static menuframework_s	s_savegame_menu;
 static menuaction_s		s_savegame_actions[MAX_SAVEGAMES];
 
@@ -2264,7 +2085,6 @@ void M_Menu_SaveGame_f (void)
 	Create_Savestrings ();
 }
 
-
 /*
 =============================================================================
 
@@ -2272,6 +2092,7 @@ JOIN SERVER MENU
 
 =============================================================================
 */
+
 #define MAX_LOCAL_SERVERS 8
 
 static menuframework_s	s_joinserver_menu;
@@ -2283,14 +2104,16 @@ static menuaction_s		s_joinserver_server_actions[MAX_LOCAL_SERVERS];
 int		m_num_servers;
 #define	NO_SERVER_STRING	"<no server>"
 
-// user readable information
-static char local_server_names[MAX_LOCAL_SERVERS][80];
-
 // network address
 static netadr_t local_server_netadr[MAX_LOCAL_SERVERS];
 
+// user readable information
+static char local_server_names[MAX_LOCAL_SERVERS][80];
+static char local_server_netadr_strings[MAX_LOCAL_SERVERS][80];
+
 void M_AddToServerList (netadr_t adr, char *info)
 {
+	char *s;
 	int		i;
 
 	if (m_num_servers == MAX_LOCAL_SERVERS)
@@ -2299,13 +2122,16 @@ void M_AddToServerList (netadr_t adr, char *info)
 	while (*info == ' ')
 		info++;
 
+	s = NET_AdrToString(adr);
+
 	// ignore if duplicated
 	for (i = 0; i < m_num_servers; i++)
-		if (!strcmp (info, local_server_names[i]))
+		if (!strcmp(local_server_names[i], info) && !strcmp(local_server_netadr_strings[i], s))
 			return;
 
 	local_server_netadr[m_num_servers] = adr;
-	strncpy (local_server_names[m_num_servers], info, sizeof (local_server_names[0]) - 1);
+	Q_strlcpy(local_server_names[m_num_servers], info, sizeof(local_server_names[m_num_servers]));
+	Q_strlcpy(local_server_netadr_strings[m_num_servers], s, sizeof(local_server_netadr_strings[m_num_servers]));
 	m_num_servers++;
 }
 
@@ -2315,7 +2141,7 @@ void JoinServerFunc (void *self)
 	char	buffer[128];
 	int		index;
 
-	index = (menuaction_s *) self - s_joinserver_server_actions;
+	index = (int)((menuaction_s *) self - s_joinserver_server_actions);
 
 	if (Q_stricmp (local_server_names[index], NO_SERVER_STRING) == 0)
 		return;
@@ -2333,10 +2159,6 @@ void AddressBookFunc (void *self)
 	M_Menu_AddressBook_f ();
 }
 
-void NullCursorDraw (void *self)
-{
-}
-
 void SearchLocalGames (void)
 {
 	int		i;
@@ -2344,12 +2166,16 @@ void SearchLocalGames (void)
 	m_num_servers = 0;
 
 	for (i = 0; i < MAX_LOCAL_SERVERS; i++)
+    {
 		strcpy (local_server_names[i], NO_SERVER_STRING);
+        local_server_netadr_strings[i][0] = '\0';
+    }
 
-	M_DrawTextBox (8, 120 - 48, 36, 3);
-	M_Print (16 + 16, 120 - 48 + 8, "Searching for local servers, this");
-	M_Print (16 + 16, 120 - 48 + 16, "could take up to a minute, so");
-	M_Print (16 + 16, 120 - 48 + 24, "please be patient.");
+    m_popup_string = "Searching for local servers. This\n"
+                     "could take up to a minute, so\n"
+                     "please be patient.";
+    m_popup_endtime = cls.realtime + 2000;
+    M_Popup();
 
 	// the text box won't show up unless we do a buffer swap
 	GLimp_EndFrame ();
@@ -2394,13 +2220,12 @@ void JoinServer_MenuInit (void)
 	for (i = 0; i < MAX_LOCAL_SERVERS; i++)
 	{
 		s_joinserver_server_actions[i].generic.type	= MTYPE_ACTION;
-		strcpy (local_server_names[i], NO_SERVER_STRING);
 		s_joinserver_server_actions[i].generic.name	= local_server_names[i];
 		s_joinserver_server_actions[i].generic.flags	= QMF_LEFT_JUSTIFY;
 		s_joinserver_server_actions[i].generic.x		= 0;
 		s_joinserver_server_actions[i].generic.y		= 40 + i * 10;
 		s_joinserver_server_actions[i].generic.callback = JoinServerFunc;
-		s_joinserver_server_actions[i].generic.statusbar = "press ENTER to connect";
+        s_joinserver_server_actions[i].generic.statusbar = local_server_netadr_strings[i];
 	}
 
 	Menu_AddItem (&s_joinserver_menu, &s_joinserver_address_book_action);
@@ -2419,11 +2244,16 @@ void JoinServer_MenuDraw (void)
 {
 	M_Banner ("m_banner_join_server");
 	Menu_Draw (&s_joinserver_menu);
+    M_Popup();
 }
-
 
 const char *JoinServer_MenuKey (int key)
 {
+    if (m_popup_string)
+    {
+        m_popup_string = NULL;
+        return NULL;
+    }
 	return Default_MenuKey (&s_joinserver_menu, key);
 }
 
@@ -2433,7 +2263,6 @@ void M_Menu_JoinServer_f (void)
 	M_PushMenu (JoinServer_MenuDraw, JoinServer_MenuKey);
 }
 
-
 /*
 =============================================================================
 
@@ -2441,9 +2270,10 @@ START SERVER MENU
 
 =============================================================================
 */
+
 static menuframework_s s_startserver_menu;
-static char **mapnames;
-static int	 nummaps;
+static char **mapnames = NULL;
+static int nummaps = 0;
 
 static menuaction_s	s_startserver_start_action;
 static menuaction_s	s_startserver_dmoptions_action;
@@ -2456,93 +2286,65 @@ static menulist_s	s_rules_box;
 
 void DMOptionsFunc (void *self)
 {
-	if (s_rules_box.curvalue == 1)
-		return;
-
 	M_Menu_DMOptions_f ();
 }
 
 void RulesChangeFunc (void *self)
 {
-	// DM
+	// Deathmatch
 	if (s_rules_box.curvalue == 0)
 	{
 		s_maxclients_field.generic.statusbar = NULL;
 		s_startserver_dmoptions_action.generic.statusbar = NULL;
 	}
-	else if (s_rules_box.curvalue == 1)		// coop				// PGM
-	{
-		s_maxclients_field.generic.statusbar = "4 maximum for cooperative";
-
-		if (atoi (s_maxclients_field.buffer) > 4)
-			strcpy (s_maxclients_field.buffer, "4");
-
-		s_startserver_dmoptions_action.generic.statusbar = "N/A for cooperative";
-	}
-	//=====
-	//PGM
-	// ROGUE GAMES
+	// PGM Ground Zero game modes
 	else if (Developer_searchpath (2) == 2)
 	{
-		if (s_rules_box.curvalue == 2)			// tag
+		// tag
+		if (s_rules_box.curvalue == 2)		
 		{
 			s_maxclients_field.generic.statusbar = NULL;
 			s_startserver_dmoptions_action.generic.statusbar = NULL;
 		}
-
-		/*
-				else if(s_rules_box.curvalue == 3)		// deathball
-				{
-					s_maxclients_field.generic.statusbar = NULL;
-					s_startserver_dmoptions_action.generic.statusbar = NULL;
-				}
-		*/
 	}
-
 	//PGM
-	//=====
 }
 
 void StartServerActionFunc (void *self)
 {
 	char	startmap[1024];
-	int		timelimit;
-	int		fraglimit;
-	int		maxclients;
+    float timelimit;
+    float fraglimit;
+    float maxclients;
 	char	*spot;
 
 	strcpy (startmap, strchr (mapnames[s_startmap_list.curvalue], '\n') + 1);
 
-	maxclients = atoi (s_maxclients_field.buffer);
-	timelimit	= atoi (s_timelimit_field.buffer);
-	fraglimit	= atoi (s_fraglimit_field.buffer);
+    maxclients = (float)strtod(s_maxclients_field.buffer, (char **)NULL);
+    timelimit = (float)strtod(s_timelimit_field.buffer, (char **)NULL);
+    fraglimit = (float)strtod(s_fraglimit_field.buffer, (char **)NULL);
 
 	Cvar_SetValue ("maxclients", ClampCvar (0, maxclients, maxclients));
 	Cvar_SetValue ("timelimit", ClampCvar (0, timelimit, timelimit));
 	Cvar_SetValue ("fraglimit", ClampCvar (0, fraglimit, fraglimit));
 	Cvar_Set ("hostname", s_hostname_field.buffer);
-	//	Cvar_SetValue ("deathmatch", !s_rules_box.curvalue );
-	//	Cvar_SetValue ("coop", s_rules_box.curvalue );
 
 	//PGM
 	if ((s_rules_box.curvalue < 2) || (Developer_searchpath (2) != 2))
 	{
-		Cvar_SetValue ("deathmatch", !s_rules_box.curvalue);
-		Cvar_SetValue ("coop", s_rules_box.curvalue);
-		Cvar_SetValue ("gamerules", 0);
+        Cvar_SetValue("deathmatch", (float)!s_rules_box.curvalue);
+        Cvar_SetValue("coop", (float)s_rules_box.curvalue);
 	}
 	else
 	{
-		Cvar_SetValue ("deathmatch", 1);	// deathmatch is always true for rogue games, right?
-		Cvar_SetValue ("coop", 0);			// FIXME - this might need to depend on which game we're running
-		Cvar_SetValue ("gamerules", s_rules_box.curvalue);
+        Cvar_SetValue("deathmatch", 1); // deathmatch is always true for rogue games
+        Cvar_SetValue("coop", 0); // This works for at least the main game and both addons
 	}
-
 	//PGM
 
 	spot = NULL;
 
-	if (s_rules_box.curvalue == 1)		// PGM
+	if (s_rules_box.curvalue == 1)
 	{
 		if (Q_stricmp (startmap, "bunk1") == 0)
 			spot = "start";
@@ -2585,18 +2387,15 @@ void StartServer_MenuInit (void)
 		"cooperative",
 		0
 	};
-	//=======
 	//PGM
 	static const char *dm_coop_names_rogue[] =
 	{
 		"deathmatch",
 		"cooperative",
 		"tag",
-		//		"deathball",
 		0
 	};
 	//PGM
-	//=======
 	char *buffer;
 	char mapsname[1024];
 	char *s;
@@ -2605,84 +2404,89 @@ void StartServer_MenuInit (void)
 	FILE *fp;
 	float scale = SCR_GetMenuScale();
 
-	// load the list of map names
-	Com_sprintf (mapsname, sizeof (mapsname), "%s/maps.lst", FS_Gamedir());
-
-	if ((fp = fopen (mapsname, "rb")) == 0)
-	{
-		if ((length = FS_LoadFile ("maps.lst", (void **) &buffer)) == -1)
-			Com_Error (ERR_DROP, "couldn't find maps.lst\n");
-	}
-	else
-	{
-		fseek (fp, 0, SEEK_END);
-		length = ftell (fp);
-		fseek (fp, 0, SEEK_SET);
-		buffer = malloc (length);
-		fread (buffer, length, 1, fp);
-	}
-
-	s = buffer;
-
-	i = 0;
-
-	while (i < length)
-	{
-		if (s[i] == '\r')
-			nummaps++;
-
-		i++;
-	}
-
-	if (nummaps == 0)
-		Com_Error (ERR_DROP, "no maps in maps.lst\n");
-
-	mapnames = malloc (sizeof (char *) * (nummaps + 1));
-	memset (mapnames, 0, sizeof (char *) * (nummaps + 1));
-
-	s = buffer;
-
-	for (i = 0; i < nummaps; i++)
-	{
-		char shortname[MAX_TOKEN_CHARS];
-		char longname[MAX_TOKEN_CHARS];
-		char scratch[200];
-		int		j, l;
-
-		strcpy (shortname, COM_Parse (&s));
-		l = strlen (shortname);
-
-		for (j = 0; j < l; j++)
-			shortname[j] = toupper (shortname[j]);
-
-		strcpy (longname, COM_Parse (&s));
-		Com_sprintf (scratch, sizeof (scratch), "%s\n%s", longname, shortname);
-
-		mapnames[i] = malloc (strlen (scratch) + 1);
-		strcpy (mapnames[i], scratch);
-	}
-
-	mapnames[nummaps] = 0;
-
-	if (fp != 0)
-	{
-		fp = 0;
-		free (buffer);
-	}
-	else
-	{
-		FS_FreeFile (buffer);
-	}
+    // initialize list of maps once, reuse it afterwards (=> it isn't freed)
+    if (mapnames == NULL)
+    {
+		// load the list of map names
+		Com_sprintf (mapsname, sizeof (mapsname), "%s/maps.lst", FS_Gamedir());
+	
+		if ((fp = fopen (mapsname, "rb")) == 0)
+		{
+			if ((length = FS_LoadFile ("maps.lst", (void **) &buffer)) == -1)
+				Com_Error (ERR_DROP, "couldn't find maps.lst\n");
+		}
+		else
+		{
+			fseek (fp, 0, SEEK_END);
+			length = ftell (fp);
+			fseek (fp, 0, SEEK_SET);
+			buffer = malloc (length);
+			fread (buffer, length, 1, fp);
+		}
+	
+		s = buffer;
+	
+		i = 0;
+	
+		while (i < length)
+		{
+			if (s[i] == '\r')
+				nummaps++;
+	
+			i++;
+		}
+	
+		if (nummaps == 0)
+			Com_Error (ERR_DROP, "no maps in maps.lst\n");
+	
+		mapnames = malloc (sizeof (char *) * (nummaps + 1));
+		memset (mapnames, 0, sizeof (char *) * (nummaps + 1));
+	
+		s = buffer;
+	
+		for (i = 0; i < nummaps; i++)
+		{
+			char shortname[MAX_TOKEN_CHARS];
+			char longname[MAX_TOKEN_CHARS];
+			char scratch[200];
+			int		j, l;
+	
+			strcpy (shortname, COM_Parse (&s));
+			l = strlen (shortname);
+	
+			for (j = 0; j < l; j++)
+				shortname[j] = toupper (shortname[j]);
+	
+			strcpy (longname, COM_Parse (&s));
+			Com_sprintf (scratch, sizeof (scratch), "%s\n%s", longname, shortname);
+	
+			mapnames[i] = malloc (strlen (scratch) + 1);
+			strcpy (mapnames[i], scratch);
+		}
+	
+		mapnames[nummaps] = 0;
+	
+		if (fp != 0)
+		{
+			fclose(fp);
+			fp = 0;
+			free (buffer);
+		}
+		else
+		{
+			FS_FreeFile (buffer);
+		}
+    }
 
 	// initialize the menu stuff
-	s_startserver_menu.x = viddef.width * 0.50;
+	s_startserver_menu.x = (int)(viddef.width * 0.50f);
 	s_startserver_menu.nitems = 0;
 
 	s_startmap_list.generic.type = MTYPE_SPINCONTROL;
 	s_startmap_list.generic.x	= 0;
 	s_startmap_list.generic.y	= 0;
 	s_startmap_list.generic.name	= "initial map";
-	s_startmap_list.itemnames = mapnames;
+    s_startmap_list.itemnames = (const char **)mapnames;
 
 	s_rules_box.generic.type = MTYPE_SPINCONTROL;
 	s_rules_box.generic.x	= 0;
@@ -2694,7 +2498,6 @@ void StartServer_MenuInit (void)
 		s_rules_box.itemnames = dm_coop_names_rogue;
 	else
 		s_rules_box.itemnames = dm_coop_names;
-
 	//PGM
 
 	if (Cvar_VariableValue ("coop"))
@@ -2789,22 +2592,6 @@ void StartServer_MenuDraw (void)
 
 const char *StartServer_MenuKey (int key)
 {
-	if (key == K_ESCAPE)
-	{
-		if (mapnames)
-		{
-			int i;
-
-			for (i = 0; i < nummaps; i++)
-				free (mapnames[i]);
-
-			free (mapnames);
-		}
-
-		mapnames = 0;
-		nummaps = 0;
-	}
-
 	return Default_MenuKey (&s_startserver_menu, key);
 }
 
@@ -2821,6 +2608,7 @@ DMOPTIONS BOOK MENU
 
 =============================================================================
 */
+
 static char dmoptions_statusbar[128];
 
 static menuframework_s s_dmoptions_menu;
@@ -2956,8 +2744,6 @@ static void DMFlagCallback (void *self)
 	{
 		bit = DF_QUAD_DROP;
 	}
-
-	//=======
 	//ROGUE
 	else if (Developer_searchpath (2) == 2)
 	{
@@ -2978,9 +2764,7 @@ static void DMFlagCallback (void *self)
 			bit = DF_NO_SPHERES;
 		}
 	}
-
 	//ROGUE
-	//=======
 
 	if (f)
 	{
@@ -2991,10 +2775,9 @@ static void DMFlagCallback (void *self)
 	}
 
 setvalue:
-	Cvar_SetValue ("dmflags", flags);
+	Cvar_SetValue ("dmflags", (float)flags);
 
 	Com_sprintf (dmoptions_statusbar, sizeof (dmoptions_statusbar), "dmflags = %d", flags);
-
 }
 
 void DMOptions_MenuInit (void)
@@ -3132,7 +2915,6 @@ void DMOptions_MenuInit (void)
 	s_friendlyfire_box.itemnames = yes_no_names;
 	s_friendlyfire_box.curvalue = (dmflags & DF_NO_FRIENDLY_FIRE) == 0;
 
-	//============
 	//ROGUE
 	if (Developer_searchpath (2) == 2)
 	{
@@ -3167,11 +2949,8 @@ void DMOptions_MenuInit (void)
 		s_no_spheres_box.generic.callback = DMFlagCallback;
 		s_no_spheres_box.itemnames = yes_no_names;
 		s_no_spheres_box.curvalue = (dmflags & DF_NO_SPHERES) != 0;
-
 	}
-
 	//ROGUE
-	//============
 
 	Menu_AddItem (&s_dmoptions_menu, &s_falls_box);
 	Menu_AddItem (&s_dmoptions_menu, &s_weapons_stay_box);
@@ -3189,7 +2968,6 @@ void DMOptions_MenuInit (void)
 	Menu_AddItem (&s_dmoptions_menu, &s_quad_drop_box);
 	Menu_AddItem (&s_dmoptions_menu, &s_friendlyfire_box);
 
-	//=======
 	//ROGUE
 	if (Developer_searchpath (2) == 2)
 	{
@@ -3198,9 +2976,7 @@ void DMOptions_MenuInit (void)
 		Menu_AddItem (&s_dmoptions_menu, &s_stack_double_box);
 		Menu_AddItem (&s_dmoptions_menu, &s_no_spheres_box);
 	}
-
 	//ROGUE
-	//=======
 
 	Menu_Center (&s_dmoptions_menu);
 
@@ -3232,6 +3008,7 @@ DOWNLOADOPTIONS BOOK MENU
 
 =============================================================================
 */
+
 static menuframework_s s_downloadoptions_menu;
 
 static menuseparator_s	s_download_title;
@@ -3249,22 +3026,18 @@ static void DownloadCallback (void *self)
 	{
 		Cvar_SetValue ("allow_download", f->curvalue);
 	}
-
 	else if (f == &s_allow_download_maps_box)
 	{
 		Cvar_SetValue ("allow_download_maps", f->curvalue);
 	}
-
 	else if (f == &s_allow_download_models_box)
 	{
 		Cvar_SetValue ("allow_download_models", f->curvalue);
 	}
-
 	else if (f == &s_allow_download_players_box)
 	{
 		Cvar_SetValue ("allow_download_players", f->curvalue);
 	}
-
 	else if (f == &s_allow_download_sounds_box)
 	{
 		Cvar_SetValue ("allow_download_sounds", f->curvalue);
@@ -3357,6 +3130,7 @@ void M_Menu_DownloadOptions_f (void)
 	DownloadOptions_MenuInit ();
 	M_PushMenu (DownloadOptions_MenuDraw, DownloadOptions_MenuKey);
 }
+
 /*
 =============================================================================
 
@@ -3364,6 +3138,7 @@ ADDRESS BOOK MENU
 
 =============================================================================
 */
+
 #define NUM_ADDRESSBOOK_ENTRIES 9
 
 static menuframework_s	s_addressbook_menu;
@@ -3439,6 +3214,7 @@ PLAYER CONFIG MENU
 
 =============================================================================
 */
+
 static menuframework_s	s_player_config_menu;
 static menufield_s		s_player_name_field;
 static menulist_s		s_player_model_box;
@@ -3478,13 +3254,13 @@ void DownloadOptionsFunc (void *self)
 
 static void HandednessCallback (void *unused)
 {
-	Cvar_SetValue ("hand", s_player_handedness_box.curvalue);
+	Cvar_SetValue ("hand", (float)s_player_handedness_box.curvalue);
 }
 
 static void RateCallback (void *unused)
 {
 	if (s_player_rate_box.curvalue != sizeof (rate_tbl) / sizeof (*rate_tbl) - 1)
-		Cvar_SetValue ("rate", rate_tbl[s_player_rate_box.curvalue]);
+		Cvar_SetValue ("rate", (float)rate_tbl[s_player_rate_box.curvalue]);
 }
 
 static void ModelCallback (void *unused)
@@ -3694,7 +3470,6 @@ static int pmicmpfnc (const void *_a, const void *_b)
 qboolean PlayerConfig_MenuInit (void)
 {
 	extern cvar_t *name;
-	extern cvar_t *team;
 	extern cvar_t *skin;
 	char currentdirectory[1024];
 	char currentskin[1024];
@@ -3712,9 +3487,6 @@ qboolean PlayerConfig_MenuInit (void)
 
 	if (s_numplayermodels == 0)
 		return false;
-
-	if (hand->value < 0 || hand->value > 2)
-		Cvar_SetValue ("hand", 0);
 
 	strcpy (currentdirectory, skin->string);
 
@@ -3811,7 +3583,7 @@ qboolean PlayerConfig_MenuInit (void)
 	s_player_handedness_box.generic.name	= 0;
 	s_player_handedness_box.generic.cursor_offset = -48;
 	s_player_handedness_box.generic.callback = HandednessCallback;
-	s_player_handedness_box.curvalue = Cvar_VariableValue ("hand");
+    s_player_handedness_box.curvalue = ClampCvar(0, 2, hand->value);
 	s_player_handedness_box.itemnames = handedness;
 
 	for (i = 0; i < sizeof (rate_tbl) / sizeof (*rate_tbl) - 1; i++)
@@ -3881,7 +3653,6 @@ void PlayerConfig_MenuDraw (void)
 	if (s_pmi[s_player_model_box.curvalue].skindisplaynames)
 	{
 		static int yaw;
-		int maxframe = 29;
 		entity_t entity;
 
 		memset (&entity, 0, sizeof (entity));
@@ -3960,7 +3731,6 @@ const char *PlayerConfig_MenuKey (int key)
 	return Default_MenuKey (&s_player_config_menu, key);
 }
 
-
 void M_Menu_PlayerConfig_f (void)
 {
 	if (!PlayerConfig_MenuInit())
@@ -4006,7 +3776,6 @@ const char *M_Quit_Key (int key)
 	return NULL;
 }
 
-
 void M_Quit_Draw (void)
 {
 	int w, h;
@@ -4016,17 +3785,13 @@ void M_Quit_Draw (void)
 	Draw_PicScaled((viddef.width - w * scale) / 2, (viddef.height - h * scale) / 2, "quit", scale);
 }
 
-
 void M_Menu_Quit_f (void)
 {
 	M_PushMenu (M_Quit_Draw, M_Quit_Key);
 }
 
-
-
 //=============================================================================
 /* Menu Subsystem */
-
 
 /*
 =================
@@ -4053,7 +3818,6 @@ void M_Init (void)
 	Cmd_AddCommand ("menu_quit", M_Menu_Quit_f);
 }
 
-
 /*
 =================
 M_Draw
@@ -4067,7 +3831,8 @@ void M_Draw (void)
 	// dim everything behind it down
 	if (cl.cinematictime > 0)
 		Draw_Fill (0, 0, viddef.width, viddef.height, 0);
-	else Draw_FadeScreen ();
+	else
+		Draw_FadeScreen ();
 
 	m_drawfunc ();
 
@@ -4080,7 +3845,6 @@ void M_Draw (void)
 		m_entersound = false;
 	}
 }
-
 
 /*
 =================
@@ -4095,5 +3859,4 @@ void M_Keydown (int key)
 		if ((s = m_keyfunc (key)) != 0)
 			S_StartLocalSound ((char *) s);
 }
-
 

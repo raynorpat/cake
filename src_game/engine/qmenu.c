@@ -26,12 +26,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 static void	 Action_DoEnter (menuaction_s *a);
 static void	 Action_Draw (menuaction_s *a);
 static void Menu_DrawStatusBar (const char *string);
-static void	 Menulist_DoEnter (menulist_s *l);
 static void	 MenuList_Draw (menulist_s *l);
 static void	 Separator_Draw (menuseparator_s *s);
 static void	 Slider_DoSlide (menuslider_s *s, int dir);
 static void	 Slider_Draw (menuslider_s *s);
-static void	 SpinControl_DoEnter (menulist_s *s);
 static void	 SpinControl_Draw (menulist_s *s);
 static void	 SpinControl_DoSlide (menulist_s *s, int dir);
 
@@ -42,9 +40,6 @@ extern viddef_t viddef;
 
 #define VID_WIDTH viddef.width
 #define VID_HEIGHT viddef.height
-
-#define Draw_Char Draw_Char
-#define Draw_Fill Draw_Fill
 
 void Action_DoEnter (menuaction_s *a)
 {
@@ -88,14 +83,19 @@ qboolean Field_DoEnter (menufield_s *f)
 
 void Field_Draw (menufield_s *f)
 {
-	int i;
+	int i, n;
 	char tempbuffer[128] = "";
 	float scale = SCR_GetMenuScale();
 
 	if (f->generic.name)
 		Menu_DrawStringR2LDark (f->generic.x + f->generic.parent->x + LCOLUMN_OFFSET * scale, f->generic.y + f->generic.parent->y, f->generic.name);
 
-	strncpy (tempbuffer, f->buffer + f->visible_offset, f->visible_length);
+	n = f->visible_length + 1;
+	if (n > sizeof(tempbuffer))
+	{
+		n = sizeof(tempbuffer);
+	}
+	Q_strlcpy (tempbuffer, f->buffer + f->visible_offset, n);
 
 	Draw_CharScaled (f->generic.x + f->generic.parent->x + 16 * scale, f->generic.y + (f->generic.parent->y - 4) * scale, 18, scale);
 	Draw_CharScaled (f->generic.x + f->generic.parent->x + 16 * scale, f->generic.y + (f->generic.parent->y + 4) * scale, 24, scale);
@@ -501,10 +501,8 @@ qboolean Menu_SelectItem (menuframework_s *s)
 			Action_DoEnter ((menuaction_s *) item);
 			return true;
 		case MTYPE_LIST:
-			//			Menulist_DoEnter(( menulist_s * ) item );
 			return false;
 		case MTYPE_SPINCONTROL:
-			//			SpinControl_DoEnter(( menulist_s * ) item );
 			return false;
 		}
 	}
@@ -559,18 +557,6 @@ int Menu_TallySlots (menuframework_s *menu)
 	}
 
 	return total;
-}
-
-void Menulist_DoEnter (menulist_s *l)
-{
-	int start;
-
-	start = l->generic.y / 10 + 1;
-
-	l->curvalue = l->generic.parent->cursor - start;
-
-	if (l->generic.callback)
-		l->generic.callback (l);
 }
 
 void MenuList_Draw (menulist_s *l)
@@ -639,17 +625,6 @@ void Slider_Draw (menuslider_s *s)
 
 	Draw_CharScaled ((RCOLUMN_OFFSET * scale + s->generic.x + i * 8 + s->generic.parent->x + 8), (s->generic.y + s->generic.parent->y) * scale, 130, scale);
 	Draw_CharScaled (((int)(8 + RCOLUMN_OFFSET * scale + s->generic.parent->x + s->generic.x + (SLIDER_RANGE * scale - 1) * 8 * s->range)), (s->generic.y + s->generic.parent->y) * scale, 131, scale);
-}
-
-void SpinControl_DoEnter (menulist_s *s)
-{
-	s->curvalue++;
-
-	if (s->itemnames[s->curvalue] == 0)
-		s->curvalue = 0;
-
-	if (s->generic.callback)
-		s->generic.callback (s);
 }
 
 void SpinControl_DoSlide (menulist_s *s, int dir)
