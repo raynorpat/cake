@@ -17,10 +17,7 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
 */
-#include <ctype.h>
-#ifdef _WIN32
-#include <io.h>
-#endif
+
 #include "client.h"
 #include "qmenu.h"
 
@@ -49,8 +46,7 @@ void M_Menu_Options_f (void);
 void M_Menu_Keys_f (void);
 void M_Menu_Quit_f (void);
 
-qboolean	m_entersound;		// play after drawing a frame, so caching
-// won't disrupt the sound
+qboolean	m_entersound;		// play after drawing a frame, so caching won't disrupt the sound
 
 void	(*m_drawfunc) (void);
 const char * (*m_keyfunc) (int key);
@@ -1070,8 +1066,7 @@ CONTROLS MENU
 
 =======================================================================
 */
-//static cvar_t *win_noalttab;
-//extern cvar_t *in_joystick;
+extern cvar_t *joy_enable;
 
 static menuframework_s	s_options_menu;
 static menuaction_s		s_options_defaults_action;
@@ -1096,12 +1091,10 @@ static void CrosshairFunc (void *unused)
 	Cvar_SetValue ("crosshair", s_options_crosshair_box.curvalue);
 }
 
-/*
 static void JoystickFunc (void *unused)
 {
-	Cvar_SetValue ("in_joystick", s_options_joystick_box.curvalue);
+	Cvar_SetValue ("joy_enable", s_options_joystick_box.curvalue);
 }
-*/
 
 static void CustomizeControlsFunc (void *unused)
 {
@@ -1122,13 +1115,6 @@ static void MouseSpeedFunc (void *unused)
 {
 	Cvar_SetValue ("sensitivity", s_options_sensitivity_slider.curvalue / 2.0F);
 }
-
-/*
-static void NoAltTabFunc (void *unused)
-{
-	Cvar_SetValue ("win_noalttab", s_options_noalttab_box.curvalue);
-}
-*/
 
 static float ClampCvar (float min, float max, float value)
 {
@@ -1163,12 +1149,8 @@ static void ControlsSetMenuItemValues (void)
 	Cvar_SetValue ("crosshair", ClampCvar (0, 3, crosshair->value));
 	s_options_crosshair_box.curvalue		= crosshair->value;
 
-	/*
-	Cvar_SetValue ("in_joystick", ClampCvar (0, 1, in_joystick->value));
-	s_options_joystick_box.curvalue		= in_joystick->value;
-
-	s_options_noalttab_box.curvalue			= win_noalttab->value;
-	*/
+	Cvar_SetValue ("joy_enable", ClampCvar (0, 1, joy_enable->value));
+	s_options_joystick_box.curvalue		= joy_enable->value;
 }
 
 static void ControlsResetDefaultsFunc (void *unused)
@@ -1291,8 +1273,6 @@ void Options_MenuInit (void)
 
 	float scale = SCR_GetMenuScale();
 
-//	win_noalttab = Cvar_Get ("win_noalttab", "0", CVAR_ARCHIVE);
-
 	// configure controls menu and menu items
 	s_options_menu.x = viddef.width / 2;
 	s_options_menu.y = viddef.height / (2 * scale) - 58;
@@ -1380,22 +1360,13 @@ void Options_MenuInit (void)
 	s_options_crosshair_box.generic.name	= "crosshair";
 	s_options_crosshair_box.generic.callback = CrosshairFunc;
 	s_options_crosshair_box.itemnames = crosshair_names;
-	/*
-		s_options_noalttab_box.generic.type = MTYPE_SPINCONTROL;
-		s_options_noalttab_box.generic.x	= 0;
-		s_options_noalttab_box.generic.y	= 110;
-		s_options_noalttab_box.generic.name	= "disable alt-tab";
-		s_options_noalttab_box.generic.callback = NoAltTabFunc;
-		s_options_noalttab_box.itemnames = yesno_names;
-	*/
-	/*
+
 	s_options_joystick_box.generic.type = MTYPE_SPINCONTROL;
 	s_options_joystick_box.generic.x	= 0;
 	s_options_joystick_box.generic.y	= 120;
-	s_options_joystick_box.generic.name	= "use joystick";
+	s_options_joystick_box.generic.name	= "use controller";
 	s_options_joystick_box.generic.callback = JoystickFunc;
 	s_options_joystick_box.itemnames = yesno_names;
-	*/
 
 	s_options_customize_options_action.generic.type	= MTYPE_ACTION;
 	s_options_customize_options_action.generic.x		= 0;
@@ -1428,7 +1399,7 @@ void Options_MenuInit (void)
 	Menu_AddItem (&s_options_menu, (void *) &s_options_lookstrafe_box);
 	Menu_AddItem (&s_options_menu, (void *) &s_options_freelook_box);
 	Menu_AddItem (&s_options_menu, (void *) &s_options_crosshair_box);
-	//Menu_AddItem (&s_options_menu, (void *) &s_options_joystick_box);
+	Menu_AddItem (&s_options_menu, (void *) &s_options_joystick_box);
 	Menu_AddItem (&s_options_menu, (void *) &s_options_customize_options_action);
 	Menu_AddItem (&s_options_menu, (void *) &s_options_defaults_action);
 	Menu_AddItem (&s_options_menu, (void *) &s_options_console_action);
@@ -2644,13 +2615,9 @@ void StartServer_MenuInit (void)
 	}
 	else
 	{
-#ifdef _WIN32
-		length = filelength (fileno (fp));
-#else
 		fseek (fp, 0, SEEK_END);
 		length = ftell (fp);
 		fseek (fp, 0, SEEK_SET);
-#endif
 		buffer = malloc (length);
 		fread (buffer, length, 1, fp);
 	}
@@ -3438,7 +3405,7 @@ void AddressBook_MenuInit (void)
 
 const char *AddressBook_MenuKey (int key)
 {
-	if (key == K_ESCAPE)
+	if ((key == K_ESCAPE) || (key == K_BBUTTON))
 	{
 		int index;
 		char buffer[20];
@@ -3960,7 +3927,7 @@ const char *PlayerConfig_MenuKey (int key)
 {
 	int i;
 
-	if (key == K_ESCAPE)
+	if ((key == K_ESCAPE) || (key == K_BBUTTON))
 	{
 		char scratch[1024];
 
@@ -4027,6 +3994,7 @@ const char *M_Quit_Key (int key)
 
 	case 'Y':
 	case 'y':
+	case K_ABUTTON:
 		cls.key_dest = key_console;
 		CL_Quit_f ();
 		break;
