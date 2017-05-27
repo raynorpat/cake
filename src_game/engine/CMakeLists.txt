@@ -30,6 +30,18 @@ else (MAD_FOUND)
     set(MAD_LIBRARY "" )
 endif (MAD_FOUND)
 
+# libmodplug
+#if(USE_SYSTEM_LIBMODPLUG)
+	find_package(MODPLUG)
+#endif()
+if (MODPLUG_FOUND)
+    include_directories(${MODPLUG_INCLUDE_DIRS})
+    set(MODPLUG_LIBRARY ${MODPLUG_LIBRARIES})
+else (MODPLUG_FOUND)
+    include_directories("../libs/modplug")
+    set(MODPLUG_LIBRARY "" )
+endif (MODPLUG_FOUND)
+
 # glew
 if (USE_SYSTEM_LIBGLEW)
 	find_package(GLEW)
@@ -239,6 +251,18 @@ endif (NOT MAD_FOUND)
 source_group("libs\\mad" FILES ${MAD_INCLUDES})
 source_group("libs\\mad" FILES ${MAD_SOURCES})
 
+# libmodplug
+if (NOT MODPLUG_FOUND)
+	file(GLOB MODPLUG_INCLUDES ../libs/modplug/src/*.h)
+	file(GLOB MODPLUG_SOURCES ../libs/modplug/src/*.cpp)
+	add_definitions(-DMODPLUG_STATIC)
+else (NOT MODPLUG_FOUND)
+    set(MODPLUG_INCLUDES "")
+    set(MODPLUG_SOURCES "")
+endif (NOT MODPLUG_FOUND)
+source_group("libs\\modplug" FILES ${MODPLUG_INCLUDES})
+source_group("libs\\modplug" FILES ${MODPLUG_SOURCES})
+
 
 #
 # Engine Executable
@@ -257,6 +281,7 @@ set(CAKE_INCLUDES
 
 			${GLEW_INCLUDES}
 			${MAD_INCLUDES}
+			${MODPLUG_INCLUDES}
 			)			
 set(CAKE_SOURCES
 			${CLIENT_SOURCES}
@@ -270,6 +295,7 @@ set(CAKE_SOURCES
 			
 			${GLEW_SOURCES}
 			${MAD_SOURCES}
+			${MODPLUG_SOURCES}
 			)
 	
 if(MONOLITH)

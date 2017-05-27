@@ -31,6 +31,7 @@ option(MONOLITH "Embed game logic into main executable" OFF)
 option(SDL2 "Use SDL2 instead of SDL1.2" ON)	
 option(ONATIVE "Optimize for the host CPU" OFF)
 option(USE_SYSTEM_LIBMAD "Use the system libmad instead of the bundled one" OFF)
+option(USE_SYSTEM_LIBMODPLUG "Use the system libmodplug instead of the bundled one" OFF)
 option(USE_SYSTEM_LIBGLEW "Use the system libglew instead of the bundled one" OFF)
 option(USE_SYSTEM_SDL2 "Use the system SDL2 instead of the bundled one" OFF)
 
