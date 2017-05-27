@@ -485,7 +485,6 @@ void R_SetLightLevel (void)
 			r_lightlevel->value = 150 * shadelight[1];
 		else r_lightlevel->value = 150 * shadelight[2];
 	}
-
 }
 
 /*

@@ -168,6 +168,8 @@ typedef struct
 void VID_Error (int err_level, char *fmt, ...);
 void VID_Printf (int print_level, char *fmt, ...);
 
+void VID_WriteScreenshot (int width, int height, int comp, const void* data);
+
 cvar_t *Cvar_Get (char *var_name, char *var_value, int flags);
 cvar_t *Cvar_Set (char *var_name, char *value);
 void Cvar_SetValue (char *var_name, float value);

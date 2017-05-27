@@ -26,6 +26,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
 #include "SDL.h"
 
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+#include "stb_image_write.h"
+
 // Console variables that we need to access from this module
 cvar_t		*vid_gamma;
 cvar_t		*vid_fullscreen;
@@ -249,6 +252,116 @@ void VID_CheckChanges (void)
 		}
 
 		cls.disable_screen = false;
+	}
+}
+
+// called with image data of width*height pixel which comp bytes per pixel (must be 3 or 4 for RGB or RGBA)
+// expects the pixels data to be row-wise, starting at top left
+void VID_WriteScreenshot(int width, int height, int comp, const void* data)
+{
+	char picname[80];
+	char checkname[MAX_OSPATH];
+	int i, success = 0;
+	static char* supportedFormats[] = { "tga", "png", "jpg" };
+	static const int numFormats = sizeof(supportedFormats) / sizeof(supportedFormats[0]);
+	int format = 0; // 0=tga 1=png 2=jpg
+	int quality = 85;
+	int argc = Cmd_Argc();
+	const char* gameDir = FS_Gamedir();
+	
+	// create the scrnshots directory if it doesn't exist
+	Com_sprintf(checkname, sizeof(checkname), "%s/scrnshot", gameDir);
+	Sys_Mkdir(checkname);
+
+	// check if we have any args
+	if (argc > 1)
+	{
+		char* maybeFormat = Cmd_Argv(1);
+		
+		for (i = 0; i<numFormats; ++i)
+		{
+			if (Q_stricmp(maybeFormat, supportedFormats[i]) == 0)
+			{
+				format = i;
+				break;
+			}
+		}
+		if (i == numFormats)
+		{
+			Com_Printf("the (optional) second argument to 'screenshot' is the format, one of \"tga\", \"png\", \"jpg\"\n");
+			return;
+		}
+		
+		if (argc > 2)
+		{
+			const char* q = Cmd_Argv(2);
+			int qualityStrLen = strlen(q);
+			for (i = 0; i<qualityStrLen; ++i)
+			{
+				if (q[i] < '0' || q[i] > '9')
+				{
+					Com_Printf("the (optional!) third argument to 'screenshot' is jpg quality, a number between 1 and 100\n");
+					Com_Printf("  or png compression level, between 0 and 10!\n");
+					return;
+				}
+			}
+			quality = atoi(q);
+			if (format == 1) // png
+			{
+				if (quality < 0)  quality = 0;
+				else if (quality > 10)  quality = 10;
+			}
+			else if (format == 2) // jpg
+			{
+				if (quality < 1)  quality = 1;
+				else if (quality > 100)  quality = 100;
+			}
+		}
+	}
+
+	// find a file name to save it to
+	for (i = 0; i <= 9999; i++)
+	{
+		FILE *f;
+		Com_sprintf(checkname, sizeof(checkname), "%s/scrnshot/q2_%04d.%s", gameDir, i, supportedFormats[format]);
+		f = fopen(checkname, "rb");
+		
+		if (!f)
+		{
+			Com_sprintf(picname, sizeof(picname), "q2_%04d.%s", i, supportedFormats[format]);
+			break; // file doesn't exist
+		}
+		
+		fclose(f);
+	}
+	
+	if (i == 10000)
+	{
+		Com_Printf("SCR_ScreenShot_f: Couldn't create a file\n");
+		return;
+	}
+	
+	switch (format) // 0=tga 1=png 2=jpg
+	{
+		case 0:
+			success = stbi_write_tga(checkname, width, height, comp, data);
+			break;
+		case 1:
+			stbi_png_level = (quality <= 10) ? quality : 7;
+			success = stbi_write_png(checkname, width, height, comp, data, 0);
+			break;
+		case 2:
+			success = stbi_write_jpg(checkname, width, height, comp, data, quality);
+			break;
+	}
+	
+	if (success)
+	{
+		Com_Printf("Wrote %s\n", picname);
+	}
+	else
+	{
+		Com_Printf("SCR_ScreenShot_f: Couldn't write %s\n", picname);
 	}
 }
 

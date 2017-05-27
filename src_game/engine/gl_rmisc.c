@@ -18,7 +18,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
 */
 // r_misc.c
-
+#include <malloc.h>
 #include "gl_local.h"
 
 
@@ -335,60 +335,38 @@ GL_ScreenShot_f
 */
 void GL_ScreenShot_f (void)
 {
-	byte		*buffer;
-	char		picname[80];
-	char		checkname[MAX_OSPATH];
-	int			i, c;
-	FILE		*f;
+	int w = vid.width, h = vid.height;
+	byte *buffer = malloc(w*h * 3);
 
-	// create the scrnshots directory if it doesn't exist
-	Com_sprintf (checkname, sizeof (checkname), "%s/scrnshot", FS_Gamedir());
-	Sys_Mkdir (checkname);
-
-	//
-	// find a file name to save it to
-	//
-	strcpy (picname, "quake00.tga");
-
-	for (i = 0; i <= 99; i++)
+	if (!buffer)
 	{
-		picname[5] = i / 10 + '0';
-		picname[6] = i % 10 + '0';
-		Com_sprintf (checkname, sizeof (checkname), "%s/scrnshot/%s", FS_Gamedir(), picname);
-		f = fopen (checkname, "rb");
-
-		if (!f)
-			break;	// file doesn't exist
-
-		fclose (f);
-	}
-
-	if (i == 100)
-	{
-		VID_Printf (PRINT_ALL, "SCR_ScreenShot_f: Couldn't create a file\n");
+		VID_Printf(PRINT_ALL, "GL_ScreenShot_f: Couldn't malloc %d bytes\n", w*h * 3);
 		return;
 	}
 
+	glPixelStorei(GL_PACK_ALIGNMENT, 1);
+	glReadPixels(0, 0, w, h, GL_RGB, GL_UNSIGNED_BYTE, buffer);
 
-	buffer = malloc (vid.width * vid.height * 3 + 18);
-	memset (buffer, 0, 18);
-	buffer[2] = 2;		// uncompressed type
-	buffer[12] = vid.width & 255;
-	buffer[13] = vid.width >> 8;
-	buffer[14] = vid.height & 255;
-	buffer[15] = vid.height >> 8;
-	buffer[16] = 24;	// pixel size
+	// the pixels are now row-wise left to right, bottom to top,
+	// but we need them row-wise left to right, top to bottom.
+	// so swap bottom rows with top rows
+	{
+		size_t bytesPerRow = 3 * w;
+		byte *rowBuffer = (byte *)alloca(sizeof(byte) * bytesPerRow);
+		byte *curRowL = buffer; // first byte of first row
+		byte *curRowH = buffer + bytesPerRow*(h - 1); // first byte of last row
+		while (curRowL < curRowH)
+		{
+			memcpy(rowBuffer, curRowL, bytesPerRow);
+			memcpy(curRowL, curRowH, bytesPerRow);
+			memcpy(curRowH, rowBuffer, bytesPerRow);
+			
+			curRowL += bytesPerRow;
+			curRowH -= bytesPerRow;
+		}
+	}
 
-	glReadPixels (0, 0, vid.width, vid.height, GL_BGR, GL_UNSIGNED_BYTE, buffer + 18);
-
-	c = 18 + vid.width * vid.height * 3;
-
-	f = fopen (checkname, "wb");
-	fwrite (buffer, 1, c, f);
-	fclose (f);
-
-	free (buffer);
-	VID_Printf (PRINT_ALL, "Wrote %s\n", picname);
+	VID_WriteScreenshot(w, h, 3, buffer);
 }
 
 /*
