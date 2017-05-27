@@ -72,3 +72,5 @@ baseq2/sound
 baseq2/sprites
 baseq2/textures
 baseq2/video/idlog.cin
+*.lst
+*.bak
