@@ -32,6 +32,8 @@ void ParticleVS ()
 
 
 #ifdef FRAGMENTSHADER
+uniform float gamma;
+
 out vec4 fragColor;
 
 void ParticleFS ()
@@ -39,7 +41,7 @@ void ParticleFS ()
 	vec4 color = iocolor;
 	color.a = (1.0 - dot (offsets.st, offsets.st)) * 1.5;
 
-	fragColor = color * iocolor.a;
+	fragColor = pow(color, vec4(gamma)) * iocolor.a;
 }
 #endif
 

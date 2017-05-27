@@ -26,6 +26,7 @@ uniform sampler2D diffuse;
 uniform sampler2D gradient;
 uniform vec4 surfcolor;
 uniform vec2 rescale;
+uniform float gamma;
 
 out vec4 fragColor;
 
@@ -35,7 +36,7 @@ void WaterWarpFS ()
 	vec4 distort2 = texture (gradient, texcoords[1].xy);
 	vec2 warpcoords = texcoords[0].xy + (distort1.ba + distort2.ab);
 
-	fragColor = mix (texture (diffuse, warpcoords * rescale), surfcolor, surfcolor.a);
+	fragColor = pow(mix (texture (diffuse, warpcoords * rescale), surfcolor, surfcolor.a), vec4(gamma));
 }
 #endif
 

@@ -17,11 +17,13 @@ void UntexturedVS ()
 
 
 #ifdef FRAGMENTSHADER
+uniform float gamma;
+
 out vec4 fragColor;
 
 void UntexturedFS ()
 {
-	fragColor = iocolor;
+	fragColor = pow(iocolor, vec4(gamma));
 }
 #endif
 

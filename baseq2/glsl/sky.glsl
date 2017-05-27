@@ -18,13 +18,14 @@ void SkyVS ()
 
 #ifdef FRAGMENTSHADER
 uniform samplerCube skydiffuse;
+uniform float gamma;
 
 out vec4 fragColor;
 
 void SkyFS ()
 {
 	//fragColor = texture (skydiffuse, texcoords.xzy);
-	fragColor = texture (skydiffuse, texcoords.xyz);
+	fragColor = pow(texture (skydiffuse, texcoords.xyz), vec4(gamma));
 }
 #endif
 

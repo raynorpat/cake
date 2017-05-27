@@ -28,7 +28,7 @@ GLuint r_warpgradient;
 GLuint gl_underwaterprog = 0;
 GLuint u_uwwarpparams = 0;
 GLuint u_uwsurfcolor = 0;
-
+GLuint u_uwgamma = 0;
 
 float r_warpmaxs;
 float r_warpmaxt;
@@ -133,6 +133,7 @@ void RUnderwater_CreatePrograms (void)
 
 	u_uwwarpparams = glGetUniformLocation (gl_underwaterprog, "warpparams");
 	u_uwsurfcolor = glGetUniformLocation (gl_underwaterprog, "surfcolor");
+	u_uwgamma = glGetUniformLocation (gl_underwaterprog, "gamma");
 
 	glProgramUniform1i (gl_underwaterprog, glGetUniformLocation (gl_underwaterprog, "diffuse"), 0);
 	glProgramUniform1i (gl_underwaterprog, glGetUniformLocation (gl_underwaterprog, "gradient"), 1);
@@ -183,7 +184,10 @@ void RWarp_DoWaterWarp (void)
 
 	if (v_blend[3] && gl_polyblend->value)
 		glProgramUniform4f (gl_underwaterprog, u_uwsurfcolor, v_blend[0], v_blend[1], v_blend[2], v_blend[3] * gl_polyblend->value);
-	else glProgramUniform4f (gl_underwaterprog, u_uwsurfcolor, 0, 0, 0, 0);
+	else
+		glProgramUniform4f (gl_underwaterprog, u_uwsurfcolor, 0, 0, 0, 0);
+
+	glProgramUniform1f (gl_underwaterprog, u_uwgamma, vid_gamma->value);
 
 	GL_Enable (0);
 	GL_BindTexture (GL_TEXTURE0, GL_TEXTURE_2D, r_drawclampsampler, r_waterwarptexture);

@@ -377,7 +377,6 @@ void GL_Strings_f (void)
 	VID_Printf (PRINT_ALL, "GL_VENDOR: %s\n", gl_config.vendor_string);
 	VID_Printf (PRINT_ALL, "GL_RENDERER: %s\n", gl_config.renderer_string);
 	VID_Printf (PRINT_ALL, "GL_VERSION: %s\n", gl_config.version_string);
-	// VID_Printf (PRINT_ALL, "GL_EXTENSIONS: %s\n", gl_config.extensions_string);
 }
 
 /*
@@ -414,6 +413,9 @@ void GL_SetDefaultState (void)
 	glDepthFunc (GL_LEQUAL);
 
 	glDepthRange (gldepthmin, gldepthmax);
+
+	// enable sRGB framebuffer for proper gamma correction
+	glEnable (GL_FRAMEBUFFER_SRGB);
 }
 
 

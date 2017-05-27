@@ -103,6 +103,7 @@ void RMesh_CreatePrograms (void)
 
 	glUniformBlockBinding (gl_meshprog, glGetUniformBlockIndex (gl_meshprog, "MeshUniforms"), gl_meshubobinding);
 
+	glProgramUniform1f (gl_meshprog, glGetUniformLocation (gl_meshprog, "gamma"), vid_gamma->value);
 	glProgramUniform1i (gl_meshprog, glGetUniformLocation (gl_meshprog, "diffuse"), 0);
 	glProgramUniform3fv (gl_meshprog, glGetUniformLocation (gl_meshprog, "lightnormal"), 162, (float *) r_avertexnormals);
 

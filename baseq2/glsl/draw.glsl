@@ -22,12 +22,13 @@ void DrawVS ()
 #ifdef FRAGMENTSHADER
 uniform sampler2D diffuse;
 uniform float texturecolormix;
+uniform float gamma;
 
 out vec4 fragColor;
 
 void DrawFS ()
 {
-	fragColor = mix (texture (diffuse, texcoords.st), iocolor, texturecolormix);
+	fragColor = pow( mix (texture (diffuse, texcoords.st), iocolor, texturecolormix), vec4(gamma) );
 }
 #endif
 

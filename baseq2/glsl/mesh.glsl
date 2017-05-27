@@ -42,6 +42,7 @@ void MeshVS ()
 
 #ifdef FRAGMENTSHADER
 uniform sampler2D diffuse;
+uniform float gamma;
 
 out vec4 fragColor;
 
@@ -51,7 +52,7 @@ void MeshFS ()
 	float shadedot = dot (normalize (normals), shadevector);
 	vec4 finalColor = diff * (max (shadedot + 1.0, (shadedot * 0.2954545) + 1.0) * shadelight);
 
-	fragColor = mix (finalColor, shadelight, meshshellmix);
+	fragColor = pow(mix (finalColor, shadelight, meshshellmix), vec4(gamma));
 }
 #endif
 

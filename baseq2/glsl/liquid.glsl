@@ -23,12 +23,13 @@ void LiquidVS ()
 #ifdef FRAGMENTSHADER
 uniform sampler2D diffuse;
 uniform float surfalpha;
+uniform float gamma;
 
 out vec4 fragColor;
 
 void LiquidFS ()
 {
-	fragColor = vec4 (texture (diffuse, ((texcoords[0].xy + sin (texcoords[1].yx) * warpparams.w) * 0.015625) + (scroll * texcoords[0].z)).rgb, surfalpha);
+	fragColor = pow( vec4 (texture (diffuse, ((texcoords[0].xy + sin (texcoords[1].yx) * warpparams.w) * 0.015625) + (scroll * texcoords[0].z)).rgb, surfalpha), vec4(gamma) );
 }
 #endif
 

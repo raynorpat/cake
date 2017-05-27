@@ -60,7 +60,7 @@ GLuint gl_beamprog = 0;
 GLuint u_beammatrix = 0;
 GLuint u_beamcolour = 0;
 GLuint u_beamscaling = 0;
-
+GLuint u_beamgamma = 0;
 
 GLuint r_beamvbo = 0;
 GLuint r_beamvao = 0;
@@ -79,6 +79,7 @@ void RBeam_CreatePrograms (void)
 	u_beammatrix = glGetUniformLocation (gl_beamprog, "localMatrix");
 	u_beamcolour = glGetUniformLocation (gl_beamprog, "color");
 	u_beamscaling = glGetUniformLocation (gl_beamprog, "scale");
+	u_beamgamma = glGetUniformLocation (gl_beamprog, "gamma");
 
 	glGenVertexArrays (1, &r_beamvao);
 	glEnableVertexArrayAttribEXT (r_beamvao, 0);
@@ -125,6 +126,8 @@ void R_DrawBeam (entity_t *e)
 		((byte *) &d_8to24table_rgba[e->skinnum & 0xff])[1] / 255.0f,
 		((byte *) &d_8to24table_rgba[e->skinnum & 0xff])[2] / 255.0f,
 		e->alpha);
+
+	glProgramUniform1f (gl_beamprog, u_beamgamma, vid_gamma->value);
 
 	// and now we can draw
 	GL_Enable (BLEND_BIT | DEPTHTEST_BIT | (gl_cull->value ? CULLFACE_BIT : 0));

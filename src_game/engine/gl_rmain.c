@@ -36,8 +36,8 @@ model_t		*r_worldmodel;
 
 float		gldepthmin, gldepthmax;
 
-glconfig_t gl_config;
-glstate_t gl_state;
+glconfig_t	gl_config;
+glstate_t	gl_state;
 
 image_t		*r_notexture;		// use for bad textures
 
@@ -541,7 +541,7 @@ void R_Register (void)
 	gl_swapinterval = Cvar_Get ("gl_swapinterval", "1", CVAR_ARCHIVE);
 
 	vid_fullscreen = Cvar_Get ("vid_fullscreen", "0", CVAR_ARCHIVE);
-	vid_gamma = Cvar_Get ("vid_gamma", "1.2", CVAR_ARCHIVE);
+	vid_gamma = Cvar_Get ("vid_gamma", "1.6", CVAR_ARCHIVE);
 	r_lightscale = Cvar_Get ("r_lightscale", "1.0", CVAR_ARCHIVE);
 
 	Cmd_AddCommand ("imagelist", GL_ImageList_f);
@@ -566,8 +566,8 @@ static int SetMode_impl(int *pwidth, int *pheight, int mode, qboolean fullscreen
 {
 	VID_Printf(PRINT_ALL, "setting mode %d:", mode);
 
-	/* mode -1 is not in the vid mode table - so we keep the values in pwidth
-	and pheight and don't even try to look up the mode info */
+	// mode -1 is not in the vid mode table - so we keep the values in pwidth
+	// and pheight and don't even try to look up the mode info
 	if ((mode != -1) && !VID_GetModeInfo(pwidth, pheight, mode))
 	{
 		VID_Printf(PRINT_ALL, " invalid mode\n");
@@ -754,6 +754,7 @@ qboolean R_Init (void)
 	RMain_CheckExtension ("GL_ARB_vertex_array_object ");
 	RMain_CheckExtension ("GL_ARB_texture_non_power_of_two ");
 	RMain_CheckExtension ("GL_ARB_framebuffer_object ");
+	RMain_CheckExtension ("GL_ARB_framebuffer_sRGB ");
 	RMain_CheckExtension ("GL_ARB_instanced_arrays ");
 	RMain_CheckExtension ("GL_ARB_base_instance ");
 	RMain_CheckExtension ("GL_ARB_map_buffer_range ");

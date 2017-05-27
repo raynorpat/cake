@@ -28,7 +28,6 @@ GLuint u_warpparams = 0;
 GLuint u_warpalpha = 0;
 GLuint u_warpscroll = 0;
 
-
 void RWarp_CreatePrograms (void)
 {
 	gl_warpsurfprog = GL_CreateShaderFromName ("glsl/liquid.glsl", "LiquidVS", "LiquidFS");
@@ -39,6 +38,7 @@ void RWarp_CreatePrograms (void)
 	u_warpscroll = glGetUniformLocation (gl_warpsurfprog, "scroll");
 
 	glProgramUniform1i (gl_warpsurfprog, glGetUniformLocation (gl_warpsurfprog, "diffuse"), 0);
+	glProgramUniform1f (gl_warpsurfprog, glGetUniformLocation (gl_warpsurfprog, "gamma"), vid_gamma->value);
 }
 
 

@@ -28,13 +28,14 @@ void SpriteVS ()
 #ifdef FRAGMENTSHADER
 uniform sampler2D diffuse;
 uniform vec4 colour;
+uniform float gamma;
 
 out vec4 fragColor;
 
 
 void SpriteFS ()
 {
-	fragColor = texture (diffuse, texcoords.st) * colour;
+	fragColor = pow(texture (diffuse, texcoords.st) * colour, vec4(gamma));
 }
 #endif
 

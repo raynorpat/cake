@@ -28,15 +28,17 @@ uniform sampler2D diffuse;
 uniform sampler2DArray lightmap;
 uniform float surfalpha;
 uniform mat4 colormatrix;
+uniform float gamma;
 
 out vec4 fragColor;
-
 
 void LightmappedFS ()
 {
 	vec4 lmap = texture2DArray (lightmap, texcoords[1].xyz);
 	vec4 final = texture (diffuse, texcoords[0].st) * (colormatrix * (lmap / lmap.a));
 
+	final = pow(final, vec4(gamma));
+	
 	fragColor = vec4 (final.rgb, surfalpha);
 }
 #endif

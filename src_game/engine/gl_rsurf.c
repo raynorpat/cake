@@ -84,6 +84,7 @@ void RSurf_CreatePrograms (void)
 
 	glProgramUniform1i (gl_lightmappedsurfprog, glGetUniformLocation (gl_lightmappedsurfprog, "diffuse"), 0);
 	glProgramUniform1i (gl_lightmappedsurfprog, glGetUniformLocation (gl_lightmappedsurfprog, "lightmap"), 2);
+	glProgramUniform1f (gl_lightmappedsurfprog, glGetUniformLocation (gl_lightmappedsurfprog, "gamma"), vid_gamma->value);
 
 	u_brushlocalMatrix = glGetUniformLocation (gl_lightmappedsurfprog, "localMatrix");
 	u_brushcolormatrix = glGetUniformLocation (gl_lightmappedsurfprog, "colormatrix");

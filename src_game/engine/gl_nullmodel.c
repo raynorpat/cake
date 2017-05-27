@@ -37,7 +37,7 @@ GLuint gl_nullprog = 0;
 GLuint u_nullmatrix = 0;
 GLuint u_nullcolour = 0;
 GLuint u_nullscaling = 0;
-
+GLuint u_nullgamma = 0;
 
 GLuint r_nullvbo = 0;
 GLuint r_nullvao = 0;
@@ -56,6 +56,7 @@ void RNull_CreatePrograms (void)
 	u_nullmatrix = glGetUniformLocation (gl_nullprog, "localMatrix");
 	u_nullcolour = glGetUniformLocation (gl_nullprog, "color");
 	u_nullscaling = glGetUniformLocation (gl_nullprog, "scale");
+	u_nullgamma = glGetUniformLocation (gl_nullprog, "gamma");
 
 	glGenVertexArrays (1, &r_nullvao);
 	glEnableVertexArrayAttribEXT (r_nullvao, 0);
@@ -86,6 +87,7 @@ void R_DrawNullModel (entity_t *e)
 	glProgramUniformMatrix4fv (gl_nullprog, u_nullmatrix, 1, GL_FALSE, e->matrix.m[0]);
 	glProgramUniform4f (gl_nullprog, u_nullcolour, shadelight[0], shadelight[1], shadelight[2], e->alpha);
 	glProgramUniform3f (gl_nullprog, u_nullscaling, 1, 1, 1);
+	glProgramUniform1f (gl_nullprog, u_nullgamma, vid_gamma->value);
 
 	GL_UseProgram (gl_nullprog);
 	GL_BindVertexArray (r_nullvao);
