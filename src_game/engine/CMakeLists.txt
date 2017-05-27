@@ -49,6 +49,8 @@ else (GLEW_FOUND)
     add_definitions(-DGLEW_STATIC)
 endif (GLEW_FOUND)
 
+# stb headers
+include_directories("../libs/stb")
 
 #
 # Source groups
