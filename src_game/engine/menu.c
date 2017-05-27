@@ -1907,15 +1907,20 @@ LOADGAME MENU
 =============================================================================
 */
 
-#define	MAX_SAVEGAMES	15
+#define MAX_SAVESLOTS 16
+#define MAX_SAVEPAGES 2
 
-static menuframework_s	s_savegame_menu;
+static char m_savestrings[MAX_SAVESLOTS][32];
+static qboolean m_savevalid[MAX_SAVESLOTS];
+
+static int m_loadsave_page;
+static char m_loadsave_statusbar[32];
 
 static menuframework_s	s_loadgame_menu;
-static menuaction_s		s_loadgame_actions[MAX_SAVEGAMES];
+static menuaction_s s_loadgame_actions[MAX_SAVESLOTS];
 
-char		m_savestrings[MAX_SAVEGAMES][32];
-qboolean	m_savevalid[MAX_SAVEGAMES];
+static menuframework_s s_savegame_menu;
+static menuaction_s s_savegame_actions[MAX_SAVESLOTS];
 
 void Create_Savestrings (void)
 {
@@ -1923,14 +1928,14 @@ void Create_Savestrings (void)
 	FILE	*f;
 	char	name[MAX_OSPATH];
 
-	for (i = 0; i < MAX_SAVEGAMES; i++)
+	for (i = 0; i < MAX_SAVESLOTS; i++)
 	{
-		Com_sprintf (name, sizeof (name), "%s/save/save%i/server.ssv", FS_Gamedir(), i);
+		Com_sprintf (name, sizeof (name), "%s/save/save%i/server.ssv", FS_Gamedir(), m_loadsave_page * MAX_SAVESLOTS + i);
 		f = fopen (name, "rb");
 
 		if (!f)
 		{
-			strcpy (m_savestrings[i], "<EMPTY>");
+			strcpy (m_savestrings[i], "<empty>");
 			m_savevalid[i] = false;
 		}
 		else
@@ -1942,13 +1947,45 @@ void Create_Savestrings (void)
 	}
 }
 
+void LoadSave_AdjustPage(int dir)
+{
+	int i;
+	char *str;
+
+	m_loadsave_page += dir;
+	
+	if (m_loadsave_page >= MAX_SAVEPAGES)
+	{
+		m_loadsave_page = 0;
+	}
+	else if (m_loadsave_page < 0)
+	{
+		m_loadsave_page = MAX_SAVEPAGES - 1;
+	}
+	
+	strcpy(m_loadsave_statusbar, "pages: ");
+
+	for (i = 0; i < MAX_SAVEPAGES; i++)
+	{
+		str = va("%c%d%c",
+			i == m_loadsave_page ? '[' : ' ',
+			i + 1,
+			i == m_loadsave_page ? ']' : ' ');
+
+		if (strlen(m_loadsave_statusbar) + strlen(str) >= sizeof(m_loadsave_statusbar))
+		{
+			break;
+		}
+		
+		strcat(m_loadsave_statusbar, str);
+	}
+}
+
 void LoadGameCallback (void *self)
 {
 	menuaction_s *a = (menuaction_s *) self;
 
-	if (m_savevalid[ a->generic.localdata[0] ])
-		Cbuf_AddText (va ("load save%i\n", a->generic.localdata[0]));
-
+	Cbuf_AddText(va("load save%i\n", a->generic.localdata[0]));
 	M_ForceMenuOff ();
 }
 
@@ -1963,47 +2000,82 @@ void LoadGame_MenuInit (void)
 
 	Create_Savestrings ();
 
-	for (i = 0; i < MAX_SAVEGAMES; i++)
+	for (i = 0; i < MAX_SAVESLOTS; i++)
 	{
-		s_loadgame_actions[i].generic.name			= m_savestrings[i];
-		s_loadgame_actions[i].generic.flags			= QMF_LEFT_JUSTIFY;
-		s_loadgame_actions[i].generic.localdata[0]	= i;
-		s_loadgame_actions[i].generic.callback		= LoadGameCallback;
+		s_loadgame_actions[i].generic.type = MTYPE_ACTION;
+		s_loadgame_actions[i].generic.name = m_savestrings[i];
 
 		s_loadgame_actions[i].generic.x = 0;
-		s_loadgame_actions[i].generic.y = (i) * 10;
 
-		if (i > 0)	// separate from autosave
-			s_loadgame_actions[i].generic.y += 10;
-
-		s_loadgame_actions[i].generic.type = MTYPE_ACTION;
+		s_loadgame_actions[i].generic.y = i * 10;
+		s_loadgame_actions[i].generic.localdata[0] = i + m_loadsave_page * MAX_SAVESLOTS;
+		s_loadgame_actions[i].generic.flags = QMF_LEFT_JUSTIFY;
+		if (!m_savevalid[i])
+		{
+			s_loadgame_actions[i].generic.callback = NULL;
+		}
+		else
+		{
+			s_loadgame_actions[i].generic.callback = LoadGameCallback;
+		}
 
 		Menu_AddItem (&s_loadgame_menu, &s_loadgame_actions[i]);
 	}
+
+	Menu_SetStatusBar (&s_loadgame_menu, m_loadsave_statusbar);
 }
 
 void LoadGame_MenuDraw (void)
 {
 	M_Banner ("m_banner_load_game");
-	//	Menu_AdjustCursor( &s_loadgame_menu, 1 );
+	Menu_AdjustCursor (&s_loadgame_menu, 1);
 	Menu_Draw (&s_loadgame_menu);
 }
 
 const char *LoadGame_MenuKey (int key)
 {
-	if (key == K_ESCAPE || key == K_ENTER)
-	{
-		s_savegame_menu.cursor = s_loadgame_menu.cursor - 1;
+	static menuframework_s *m = &s_loadgame_menu;
 
-		if (s_savegame_menu.cursor < 0)
-			s_savegame_menu.cursor = 0;
+	switch (key)
+	{
+		case K_KP_UPARROW:
+		case K_UPARROW:
+			if (m->cursor == 0)
+			{
+				LoadSave_AdjustPage(-1);
+				LoadGame_MenuInit();
+			}
+			break;
+		case K_TAB:
+		case K_KP_DOWNARROW:
+		case K_DOWNARROW:
+			if (m->cursor == m->nitems - 1)
+			{
+				LoadSave_AdjustPage(1);
+				LoadGame_MenuInit();
+			}
+			break;
+		case K_KP_LEFTARROW:
+		case K_LEFTARROW:
+			LoadSave_AdjustPage(-1);
+			LoadGame_MenuInit();
+			return menu_move_sound;
+		case K_KP_RIGHTARROW:
+		case K_RIGHTARROW:
+			LoadSave_AdjustPage(1);
+			LoadGame_MenuInit();
+			return menu_move_sound;
+		default:
+			s_savegame_menu.cursor = s_loadgame_menu.cursor;
+			break;
 	}
 
-	return Default_MenuKey (&s_loadgame_menu, key);
+	return Default_MenuKey (m, key);
 }
 
 void M_Menu_LoadGame_f (void)
 {
+	LoadSave_AdjustPage(0);
 	LoadGame_MenuInit ();
 	M_PushMenu (LoadGame_MenuDraw, LoadGame_MenuKey);
 }
@@ -2016,14 +2088,21 @@ SAVEGAME MENU
 =============================================================================
 */
 
-static menuframework_s	s_savegame_menu;
-static menuaction_s		s_savegame_actions[MAX_SAVEGAMES];
-
 void SaveGameCallback (void *self)
 {
 	menuaction_s *a = (menuaction_s *) self;
 
-	Cbuf_AddText (va ("save save%i\n", a->generic.localdata[0]));
+	if (a->generic.localdata[0] == 0)
+	{
+		m_popup_string = "This slot is reserved for\n"
+						 "autosaving, so please select\n"
+						 "another one.";
+		m_popup_endtime = cls.realtime + 2000;
+		M_Popup();
+		return;
+	}
+
+	Cbuf_AddText (va("save save%i\n", a->generic.localdata[0]));
 	M_ForceMenuOff ();
 }
 
@@ -2032,6 +2111,7 @@ void SaveGame_MenuDraw (void)
 	M_Banner ("m_banner_save_game");
 	Menu_AdjustCursor (&s_savegame_menu, 1);
 	Menu_Draw (&s_savegame_menu);
+	M_Popup();
 }
 
 void SaveGame_MenuInit (void)
@@ -2046,33 +2126,67 @@ void SaveGame_MenuInit (void)
 	Create_Savestrings ();
 
 	// don't include the autosave slot
-	for (i = 0; i < MAX_SAVEGAMES - 1; i++)
+	for (i = 0; i < MAX_SAVESLOTS; i++)
 	{
-		s_savegame_actions[i].generic.name = m_savestrings[i+1];
-		s_savegame_actions[i].generic.localdata[0] = i + 1;
+		s_savegame_actions[i].generic.type = MTYPE_ACTION;
+		s_savegame_actions[i].generic.name = m_savestrings[i];
+		s_savegame_actions[i].generic.x = 0;
+		s_savegame_actions[i].generic.y = i * 10;
+		s_savegame_actions[i].generic.localdata[0] = i + m_loadsave_page * MAX_SAVESLOTS;
 		s_savegame_actions[i].generic.flags = QMF_LEFT_JUSTIFY;
 		s_savegame_actions[i].generic.callback = SaveGameCallback;
 
-		s_savegame_actions[i].generic.x = 0;
-		s_savegame_actions[i].generic.y = (i) * 10;
-
-		s_savegame_actions[i].generic.type = MTYPE_ACTION;
-
 		Menu_AddItem (&s_savegame_menu, &s_savegame_actions[i]);
 	}
+
+	Menu_SetStatusBar(&s_savegame_menu, m_loadsave_statusbar);
 }
 
 const char *SaveGame_MenuKey (int key)
 {
-	if (key == K_ENTER || key == K_ESCAPE)
-	{
-		s_loadgame_menu.cursor = s_savegame_menu.cursor - 1;
+	static menuframework_s *m = &s_savegame_menu;
 
-		if (s_loadgame_menu.cursor < 0)
-			s_loadgame_menu.cursor = 0;
+	if (m_popup_string)
+	{
+		m_popup_string = NULL;
+		return NULL;
 	}
 
-	return Default_MenuKey (&s_savegame_menu, key);
+	switch (key)
+	{
+		case K_KP_UPARROW:
+		case K_UPARROW:
+			if (m->cursor == 0)
+			{
+				LoadSave_AdjustPage(-1);
+				SaveGame_MenuInit();
+			}
+			break;
+		case K_TAB:
+		case K_KP_DOWNARROW:
+		case K_DOWNARROW:
+			if (m->cursor == m->nitems - 1)
+			{
+				LoadSave_AdjustPage(1);
+				SaveGame_MenuInit();
+			}
+			break;
+		case K_KP_LEFTARROW:
+		case K_LEFTARROW:
+			LoadSave_AdjustPage(-1);
+			SaveGame_MenuInit();
+			return menu_move_sound;
+		case K_KP_RIGHTARROW:
+		case K_RIGHTARROW:
+			LoadSave_AdjustPage(1);
+			SaveGame_MenuInit();
+			return menu_move_sound;
+		default:
+			s_loadgame_menu.cursor = s_savegame_menu.cursor;
+			break;
+	}
+
+	return Default_MenuKey (m, key);
 }
 
 void M_Menu_SaveGame_f (void)
@@ -2080,9 +2194,9 @@ void M_Menu_SaveGame_f (void)
 	if (!Com_ServerState())
 		return;		// not playing a game
 
+	LoadSave_AdjustPage(0);
 	SaveGame_MenuInit ();
 	M_PushMenu (SaveGame_MenuDraw, SaveGame_MenuKey);
-	Create_Savestrings ();
 }
 
 /*
@@ -3735,7 +3849,7 @@ void M_Menu_PlayerConfig_f (void)
 {
 	if (!PlayerConfig_MenuInit())
 	{
-		Menu_SetStatusBar (&s_multiplayer_menu, "No valid player models found");
+		Menu_SetStatusBar (&s_multiplayer_menu, "no valid player models found");
 		return;
 	}
 
