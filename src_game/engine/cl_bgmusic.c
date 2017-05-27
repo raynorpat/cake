@@ -44,6 +44,10 @@ static music_handler_t *music_handlers = NULL;
 static music_handler_t wanted_handlers[] =
 {
 	{ CODECTYPE_MP3,  -1,  ".mp3", MUSIC_DIRNAME, NULL },
+	{ CODECTYPE_MOD,  -1,  ".s3m", MUSIC_DIRNAME, NULL },
+	{ CODECTYPE_MOD,  -1,  ".xm",  MUSIC_DIRNAME, NULL },
+	{ CODECTYPE_MOD,  -1,  ".it",  MUSIC_DIRNAME, NULL },
+	{ CODECTYPE_MOD,  -1,  ".mod", MUSIC_DIRNAME, NULL },
 	{ CODECTYPE_WAV,  -1,  ".wav", MUSIC_DIRNAME, NULL },
 	{ CODECTYPE_NONE, -1,  NULL,   NULL,  NULL }
 };
