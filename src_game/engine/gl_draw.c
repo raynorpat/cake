@@ -28,9 +28,6 @@ int r_lastrawrows = -1;
 GLuint r_rawtexture = 0;
 image_t *draw_chars;
 
-extern	qboolean	scrap_check_dirty;
-void Scrap_Upload (void);
-
 GLuint gl_drawprog = 0;
 GLuint u_drawtexturecolormix = 0;
 
@@ -366,12 +363,6 @@ void Draw_StretchPic (int x, int y, int w, int h, char *pic)
 		return;
 	}
 
-	if (scrap_check_dirty)
-	{
-		Draw_End2D ();
-		Scrap_Upload ();
-	}
-
 	Draw_TexturedRect (gl->texnum, r_drawclampsampler, x, y, w, h, gl->sl, gl->tl, gl->sh, gl->th);
 }
 
@@ -392,9 +383,6 @@ void Draw_PicScaled (int x, int y, char *pic, float scale)
 		VID_Printf(PRINT_ALL, "Can't find pic: %s\n", pic);
 		return;
 	}
-
-	if (scrap_check_dirty)
-		Scrap_Upload();
 
 	GLfloat w = gl->width * scale;
 	GLfloat h = gl->height * scale;

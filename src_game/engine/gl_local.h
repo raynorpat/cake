@@ -142,8 +142,7 @@ typedef struct image_s
 	int		registration_sequence;		// 0 = free
 	struct msurface_s	*texturechain;	// for sort-by-texture world drawing
 	int		texnum;						// gl texture binding
-	float	sl, tl, sh, th;				// 0,0 - 1,1 unless part of the scrap
-	qboolean	scrap;
+	float	sl, tl, sh, th;				// 0,0 - 1,1
 	qboolean	mipmap;
 } image_t;
 
@@ -354,10 +353,6 @@ typedef struct
 
 	GLenum srcblend;
 	GLenum dstblend;
-
-	unsigned char originalRedGammaTable[256];
-	unsigned char originalGreenGammaTable[256];
-	unsigned char originalBlueGammaTable[256];
 } glstate_t;
 
 extern glconfig_t gl_config;

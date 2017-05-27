@@ -158,11 +158,8 @@ void RImage_CreateSamplers (void)
 image_t		gltextures[MAX_GLTEXTURES];
 int			numgltextures;
 
-static unsigned char gammatable[256];
-
-int		gl_filter_min = GL_LINEAR_MIPMAP_LINEAR;
-int		gl_filter_max = GL_LINEAR;
-
+int			gl_filter_min = GL_LINEAR_MIPMAP_LINEAR;
+int			gl_filter_max = GL_LINEAR;
 
 void GL_BindTexture (GLenum tmu, GLenum target, GLuint sampler, GLuint texnum)
 {
@@ -290,127 +287,6 @@ void GL_ImageList_f (void)
 	VID_Printf (PRINT_ALL, "Total texel count (not counting mipmaps): %i\n", texels);
 }
 
-
-/*
-=============================================================================
-
- scrap allocation
-
- Allocate all the little status bar obejcts into a single texture
- to crutch up inefficient hardware / drivers
-
-=============================================================================
-*/
-
-#define	MAX_SCRAPS		8
-#define	BLOCK_WIDTH		256
-#define	BLOCK_HEIGHT	256
-
-typedef struct scrapblock_s
-{
-	int allocated[BLOCK_WIDTH];
-	byte texels[BLOCK_WIDTH * BLOCK_HEIGHT];
-	GLuint texnum;
-	qboolean dirty;
-} scrapblock_t;
-
-
-scrapblock_t scrapBlocks[MAX_SCRAPS];
-qboolean	scrap_check_dirty;
-
-// returns a texture number and the position inside it
-int Scrap_AllocBlock (int w, int h, int *x, int *y)
-{
-	int		i, j;
-	int		best, best2;
-	int		texnum;
-
-	for (texnum = 0; texnum < MAX_SCRAPS; texnum++)
-	{
-		best = BLOCK_HEIGHT;
-
-		for (i = 0; i < BLOCK_WIDTH - w; i++)
-		{
-			best2 = 0;
-
-			for (j = 0; j < w; j++)
-			{
-				if (scrapBlocks[texnum].allocated[i + j] >= best)
-					break;
-
-				if (scrapBlocks[texnum].allocated[i + j] > best2)
-					best2 = scrapBlocks[texnum].allocated[i + j];
-			}
-
-			if (j == w)
-			{
-				// this is a valid spot
-				*x = i;
-				*y = best = best2;
-			}
-		}
-
-		if (best + h > BLOCK_HEIGHT)
-			continue;
-
-		for (i = 0; i < w; i++)
-			scrapBlocks[texnum].allocated[*x + i] = best + h;
-
-		return texnum;
-	}
-
-	return -1;
-}
-
-int	scrap_uploads;
-
-
-void Scrap_Init (void)
-{
-	int i;
-
-	for (i = 0; i < MAX_SCRAPS; i++)
-	{
-		glDeleteTextures (1, &scrapBlocks[i].texnum);
-		glGenTextures (1, &scrapBlocks[i].texnum);
-		glTextureStorage2DEXT (scrapBlocks[i].texnum, GL_TEXTURE_2D, 1, GL_RGBA8, BLOCK_WIDTH, BLOCK_HEIGHT);
-
-		// scrap is always dirty at the start
-		scrapBlocks[i].dirty = true;
-	}
-
-	// scrap is always dirty at the start
-	scrap_check_dirty = true;
-}
-
-
-void Scrap_Upload (void)
-{
-	int i;
-
-	for (i = 0; i < MAX_SCRAPS; i++)
-	{
-		if (scrapBlocks[i].dirty)
-		{
-			GL_Image8To32 (scrapBlocks[i].texels, (unsigned *) Scratch_Alloc (), BLOCK_WIDTH * BLOCK_HEIGHT, d_8to24table_bgra);
-
-			glTextureSubImage2DEXT (
-				scrapBlocks[i].texnum,
-				GL_TEXTURE_2D,
-				0, 0, 0,
-				BLOCK_WIDTH, BLOCK_HEIGHT,
-				GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV,
-				Scratch_Alloc ());
-
-			scrapBlocks[i].dirty = false;
-			scrap_uploads++;
-		}
-	}
-
-	scrap_check_dirty = false;
-}
-
-
 void GL_CheckError (char *str)
 {
 	GLenum err = glGetError ();
@@ -482,7 +358,8 @@ GLuint GL_LoadCubeMap (cubeface_t *faces)
 
 		if (allowStorage)
 			glTextureSubImage2DEXT (texnum, GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, 0, 0, size, size, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, faces[i].data);
-		else glTextureImage2DEXT (texnum, GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGBA8, size, size, 0, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, faces[i].data);
+		else
+			glTextureImage2DEXT (texnum, GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGBA8, size, size, 0, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, faces[i].data);
 	}
 
 	// don't leak
@@ -1037,7 +914,8 @@ GLuint GL_UploadTexture (byte *data, int width, int height, qboolean mipmap, int
 		trans = (unsigned *) Img_Alloc (width * height * 4);
 		GL_Image8To32 (data, trans, width * height, d_8to24table_bgra);
 	}
-	else trans = (unsigned *) data;
+	else
+		trans = (unsigned *) data;
 
 	// it's assumed that our hardware can handle Q2 texture sizes
 	upload_width = width;
@@ -1056,7 +934,8 @@ GLuint GL_UploadTexture (byte *data, int width, int height, qboolean mipmap, int
 			GL_ResampleTexture (trans, width, height, mipdata, width >> 1, height >> 1);
 			trans = mipdata;
 		}
-		else GL_MipMap ((byte *) trans, width, height);
+		else
+			GL_MipMap ((byte *) trans, width, height);
 
 		if ((width = (width >> 1)) < 1) width = 1;
 		if ((height = (height >> 1)) < 1) height = 1;
@@ -1113,53 +992,17 @@ image_t *GL_LoadPic (char *name, byte *pic, int width, int height, imagetype_t t
 	if (type == it_skin && bits == 8)
 		R_FloodFillSkin (pic, width, height);
 
-	// load little pics into the scrap
-	if (image->type == it_pic && bits == 8 && image->width < 64 && image->height < 64)
-	{
-		int		x, y;
-		int		i, j, k;
-		int		texnum;
+	image->mipmap = (image->type != it_pic && image->type != it_sky);
 
-		texnum = Scrap_AllocBlock (image->width, image->height, &x, &y);
+	image->texnum = GL_UploadTexture (pic, width, height, image->mipmap, bits);
 
-		if (texnum == -1) goto nonscrap;
-		if (texnum >= MAX_SCRAPS) goto nonscrap;
+	image->upload_width = upload_width;		// after power of 2 and scales
+	image->upload_height = upload_height;
 
-		scrapBlocks[texnum].dirty = true;
-		scrap_check_dirty = true;
-
-		// copy the texels into the scrap block
-		k = 0;
-
-		for (i = 0; i < image->height; i++)
-			for (j = 0; j < image->width; j++, k++)
-				scrapBlocks[texnum].texels[(y + i) * BLOCK_WIDTH + x + j] = pic[k];
-
-		image->texnum = scrapBlocks[texnum].texnum;
-		image->scrap = true;
-		image->mipmap = false;
-
-		image->sl = (float) x / (float) BLOCK_WIDTH;
-		image->sh = (float) (x + image->width) / (float) BLOCK_WIDTH;
-		image->tl = (float) y / (float) BLOCK_HEIGHT;
-		image->th = (float) (y + image->height) / (float) BLOCK_HEIGHT;
-	}
-	else
-	{
-nonscrap:
-		image->scrap = false;
-		image->mipmap = (image->type != it_pic && image->type != it_sky);
-
-		image->texnum = GL_UploadTexture (pic, width, height, image->mipmap, bits);
-
-		image->upload_width = upload_width;		// after power of 2 and scales
-		image->upload_height = upload_height;
-
-		image->sl = 0;
-		image->sh = 1;
-		image->tl = 0;
-		image->th = 1;
-	}
+	image->sl = 0;
+	image->sh = 1;
+	image->tl = 0;
+	image->th = 1;
 
 	return image;
 }
@@ -1354,34 +1197,9 @@ GL_InitImages
 void GL_InitImages (void)
 {
 	int		i;
-	float	g = vid_gamma->value;
-
-	Scrap_Init ();
-
+	
 	registration_sequence = 1;
 	Draw_GetPalette ();
-
-	for (i = 0; i < 256; i++)
-	{
-		if (g == 1)
-		{
-			gammatable[i] = i;
-		}
-		else
-		{
-			float inf;
-
-			inf = 255 * pow ((i + 0.5) / 255.5, g) + 0.5;
-
-			if (inf < 0)
-				inf = 0;
-
-			if (inf > 255)
-				inf = 255;
-
-			gammatable[i] = inf;
-		}
-	}
 }
 
 /*
