@@ -175,7 +175,6 @@ source_group("server" FILES ${SERVER_INCLUDES})
 source_group("server" FILES ${SERVER_SOURCES})
 	
 set(SYSTEM_INCLUDES
-	resource.h
 	q2icon64.h
 	vid.h
 	vid_common.h
@@ -212,8 +211,8 @@ source_group("game" FILES ${GAME_SOURCES})
 
 # windows resources
 set(WIN32_RESOURCES
-	q2.ico
-	q2.rc
+	win32/q2.ico
+	win32/q2.rc
 	)
 source_group("system\\win32\\Resources" FILES ${WIN32_RESOURCES})
 

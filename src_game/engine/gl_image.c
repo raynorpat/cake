@@ -1346,12 +1346,6 @@ int Draw_GetPalette (void)
 	return 0;
 }
 
-
-void R_LoadResourceTextures (void)
-{
-}
-
-
 /*
 ===============
 GL_InitImages
@@ -1361,8 +1355,6 @@ void GL_InitImages (void)
 {
 	int		i;
 	float	g = vid_gamma->value;
-
-	R_LoadResourceTextures ();
 
 	Scrap_Init ();
 

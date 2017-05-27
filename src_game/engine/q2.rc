@@ -1,5 +1,0 @@
-#include "resource.h"
-#include <windows.h>
-
-// standard resources
-IDI_ICON1			ICON  DISCARDABLE   "q2.ico"
