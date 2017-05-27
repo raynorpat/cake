@@ -28,8 +28,6 @@ int		snd_scaletable[32][256];
 int 	*snd_p, snd_linear_count, snd_vol;
 short	*snd_out;
 
-void S_WriteLinearBlastStereo16 (void);
-
 #if !(defined __linux__ && defined __i386__)
 #if	!id386
 
@@ -141,7 +139,6 @@ void S_TransferStereo16 (unsigned long *pbuf, int endtime)
 /*
 ===================
 S_TransferPaintBuffer
-
 ===================
 */
 void S_TransferPaintBuffer (int endtime)
@@ -523,4 +520,3 @@ void S_PaintChannelFrom16 (channel_t *ch, sfxcache_t *sc, int count, int offset)
 
 	ch->pos += count;
 }
-

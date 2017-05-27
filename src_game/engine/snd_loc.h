@@ -19,7 +19,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 */
 // snd_loc.h -- private sound functions
 
-// !!! if this is changed, the asm code must change !!!
 typedef struct
 {
 	int			left;
@@ -71,7 +70,6 @@ typedef struct
 	byte		*buffer;
 } dma_t;
 
-// !!! if this is changed, the asm code must change !!!
 typedef struct
 {
 	sfx_t		*sfx;			// sfx number
@@ -88,19 +86,6 @@ typedef struct
 	qboolean	fixed_origin;	// use origin instead of fetching entnum's origin
 	qboolean	autosound;		// from an entity->sound, cleared each frame
 } channel_t;
-
-#define WAV_FORMAT_PCM	1
-
-typedef struct
-{
-	int			rate;
-	int			width;
-	int			channels;
-	int			loopstart;
-	int			samples;
-	int			dataofs;		// chunk starts this many bytes from file start
-} wavinfo_t;
-
 
 /*
 ====================================================================
@@ -148,8 +133,6 @@ extern cvar_t	*s_show;
 extern cvar_t	*s_mixahead;
 extern cvar_t	*s_testsound;
 extern cvar_t	*s_primary;
-
-wavinfo_t GetWavinfo (char *name, byte *wav, int wavlength);
 
 void S_InitScaletable (void);
 
