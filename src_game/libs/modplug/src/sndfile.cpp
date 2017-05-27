@@ -6,8 +6,8 @@
 */
 
 #include <math.h> //for GCCFIX
-#include "libmodplug/stdafx.h"
-#include "libmodplug/sndfile.h"
+#include "stdafx.h"
+#include "sndfile.h"
 
 #define MMCMP_SUPPORT
 
@@ -1657,8 +1657,7 @@ void CSoundFile::AdjustSampleLoop(MODINSTRUMENT *pIns)
 DWORD CSoundFile::TransposeToFrequency(int transp, int ftune)
 //-----------------------------------------------------------
 {
-
-#ifdef MSC_VER
+#ifdef _MSC_VER
 	const float _fbase = 8363;
 	const float _factor = 1.0f/(12.0f*128.0f);
 	int result;
@@ -1698,8 +1697,7 @@ DWORD CSoundFile::TransposeToFrequency(int transp, int ftune)
 int CSoundFile::FrequencyToTranspose(DWORD freq)
 //----------------------------------------------
 {
-
-#ifdef MSC_VER
+#ifdef _MSC_VER
 	const float _f1_8363 = 1.0f / 8363.0f;
 	const float _factor = 128 * 12;
 	LONG result;

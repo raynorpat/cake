@@ -8,6 +8,10 @@
 #include "stdafx.h"
 #include "sndfile.h"
 
+#ifdef _MSC_VER
+#pragma warning(disable : 4244)
+#endif
+
 BOOL PP20_Unpack(LPCBYTE *ppMemFile, LPDWORD pdwMemLength);
 
 #pragma pack(1)

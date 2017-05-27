@@ -13,8 +13,9 @@
 
 #ifndef NO_FILTER
 
-#ifdef MSC_VER
+#ifdef _MSC_VER
 #define _ASM_MATH
+#pragma warning(disable : 4244)
 #endif
 
 #ifdef _ASM_MATH
