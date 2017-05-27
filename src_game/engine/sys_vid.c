@@ -240,6 +240,7 @@ void VID_CheckChanges (void)
 		ref_modified = false;
 		vid_fullscreen->modified = true;
 		cl.refresh_prepped = false;
+		cl.cinematicpalette_active = false;
 		cls.disable_screen = true;
 
 		if (!VID_LoadRefresh ())
