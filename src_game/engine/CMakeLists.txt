@@ -19,9 +19,7 @@ else()
 endif()
 
 # libmad
-#if(USE_SYSTEM_LIBMAD)
-	find_package(MAD)
-#endif()
+find_package(MAD)
 if (MAD_FOUND)
     include_directories(${MAD_INCLUDE_DIRS})
     set(MAD_LIBRARY ${MAD_LIBRARIES})
@@ -31,21 +29,17 @@ else (MAD_FOUND)
 endif (MAD_FOUND)
 
 # libmodplug
-#if(USE_SYSTEM_LIBMODPLUG)
-	find_package(MODPLUG)
-#endif()
+find_package(MODPLUG)
 if (MODPLUG_FOUND)
     include_directories(${MODPLUG_INCLUDE_DIRS})
     set(MODPLUG_LIBRARY ${MODPLUG_LIBRARIES})
 else (MODPLUG_FOUND)
-    include_directories("../libs/modplug")
+    include_directories("../libs/modplug/src")
     set(MODPLUG_LIBRARY "" )
 endif (MODPLUG_FOUND)
 
 # glew
-if (USE_SYSTEM_LIBGLEW)
-	find_package(GLEW)
-endif(USE_SYSTEM_LIBGLEW)
+find_package(GLEW)
 if (GLEW_FOUND)
     include_directories(${GLEW_INCLUDE_DIRS})
     set(GLEW_LIBRARY ${GLEW_LIBRARIES})
@@ -107,6 +101,7 @@ set(SOUND_INCLUDES
 	snd_loc.h
 	snd_wave.h
 	snd_mp3.h
+	snd_modplug.h
 	)	
 set(SOUND_SOURCES
 	snd_codec.c
@@ -115,6 +110,7 @@ set(SOUND_SOURCES
 	snd_mix.c
 	snd_wave.c
 	snd_mp3.c
+	snd_modplug.c
 	)
 source_group("client\\sound" FILES ${SOUND_INCLUDES})
 source_group("client\\sound" FILES ${SOUND_SOURCES})

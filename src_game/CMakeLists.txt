@@ -30,6 +30,7 @@ set(Q_GAME_DIR baseq2)
 option(MONOLITH "Embed game logic into main executable" OFF)
 option(SDL2 "Use SDL2 instead of SDL1.2" ON)	
 option(ONATIVE "Optimize for the host CPU" OFF)
+
 option(USE_SYSTEM_LIBMAD "Use the system libmad instead of the bundled one" OFF)
 option(USE_SYSTEM_LIBMODPLUG "Use the system libmodplug instead of the bundled one" OFF)
 option(USE_SYSTEM_LIBGLEW "Use the system libglew instead of the bundled one" OFF)
@@ -38,10 +39,23 @@ option(USE_SYSTEM_SDL2 "Use the system SDL2 instead of the bundled one" OFF)
 set(CPU_OPTIMIZATION "-mmmx -msse -msse2" CACHE STRING "Which CPU specific optimitations should be used beside the compiler's default?")
 option(USE_INTRINSICS "Compile using intrinsics (e.g mmx, sse, msse2)" ON)
 
-
 #
 # Compiler settings
 #
+
+# Options settings
+if (USE_SYSTEM_LIBMAD)
+	add_definitions(-DUSE_SYSTEM_LIBMAD)
+endif()
+if (USE_SYSTEM_LIBMODPLUG)
+	add_definitions(-DUSE_SYSTEM_LIBMODPLUG)
+endif()
+if (USE_SYSTEM_LIBGLEW)
+	add_definitions(-DUSE_SYSTEM_LIBGLEW)
+endif()
+if (USE_SYSTEM_SDL2)
+	add_definitions(-DUSE_SYSTEM_SDL2)
+endif()
 
 # Windows specific settings
 if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")

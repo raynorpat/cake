@@ -29,11 +29,12 @@
 
 #define USE_CODEC_WAVE
 #define USE_CODEC_MP3
+#define USE_CODEC_MODPLUG
 
 // headers for individual codecs
 #include "snd_wave.h"
 #include "snd_mp3.h"
-
+#include "snd_modplug.h"
 
 static snd_codec_t *codecs;
 
@@ -126,6 +127,9 @@ void S_CodecInit (void)
 #endif
 #ifdef USE_CODEC_MP3
 	S_CodecRegister(&mp3_codec);
+#endif
+#ifdef USE_CODEC_MODPLUG
+	S_CodecRegister(&modplug_codec);
 #endif
 
 	codec = codecs;
