@@ -1,7 +1,6 @@
 cmake_minimum_required(VERSION 2.8)
 set(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake)
 
-message(STATUS "CMAKE_HOME_DIRECTORY: " ${CMAKE_HOME_DIRECTORY})
 message(STATUS "CMAKE_SYSTEM: " ${CMAKE_SYSTEM})
 message(STATUS "CMAKE_SYSTEM_NAME: " ${CMAKE_SYSTEM_NAME})
 message(STATUS "CMAKE_SYSTEM_VERSION: " ${CMAKE_SYSTEM_VERSION})
@@ -31,8 +30,6 @@ set(Q_GAME_DIR baseq2)
 option(MONOLITH "Embed game logic into main executable" OFF)
 option(SDL2 "Use SDL2 instead of SDL1.2" ON)	
 option(ONATIVE "Optimize for the host CPU" OFF)
-option(WINRT "Build for Windows RT" OFF)
-option(WINDOWS10 "Build for Windows 10" OFF)
 option(USE_SYSTEM_LIBMAD "Use the system libmad instead of the bundled one" OFF)
 option(USE_SYSTEM_LIBGLEW "Use the system libglew instead of the bundled one" OFF)
 option(USE_SYSTEM_SDL2 "Use the system SDL2 instead of the bundled one" OFF)
@@ -134,8 +131,9 @@ elseif(MSVC)
 					-D_CRT_SECURE_NO_WARNINGS
 					-DUSE_EXCEPTIONS)
 
-	## Check for Version ##
-    if( WINRT OR WINDOWS10 ) # Windows RT
+	if( ${CMAKE_SYSTEM_VERSION} EQUAL 6.2 OR ${CMAKE_SYSTEM_VERSION} EQUAL 6.3 ) # Windows 8 or 8.1
+		add_definitions(-DUSE_WINRT)
+    elseif( ${CMAKE_SYSTEM_VERSION} EQUAL 10 ) # Windows 10
 		add_definitions(-DUSE_WINRT)
     endif()
     if (USE_INTRINSICS)
