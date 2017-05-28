@@ -78,9 +78,6 @@ void RUnderwater_CreatePrograms (void)
 	// attach the texture to FBO color attachment point
 	glFramebufferTexture2D (GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, r_waterwarptexture, 0);
 
-	// fixme
-	//if (glw_state.pfd.cStencilBits)
-	//	;
 	// attach the renderbuffer to depth attachment point
 	glFramebufferRenderbuffer (GL_DRAW_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, rboId);
 
