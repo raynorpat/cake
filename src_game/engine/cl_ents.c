@@ -1403,7 +1403,6 @@ void CL_AddPacketEntities (frame_t *frame)
 }
 
 
-
 /*
 ==============
 CL_AddViewWeapon
@@ -1416,10 +1415,6 @@ void CL_AddViewWeapon (player_state_t *ps, player_state_t *ops)
 
 	// allow the gun to be completely removed
 	if (!cl_gun->value)
-		return;
-
-	// don't draw gun if in wide angle view
-	if (ps->fov > 90)
 		return;
 
 	memset (&gun, 0, sizeof (gun));
@@ -1441,6 +1436,15 @@ void CL_AddViewWeapon (player_state_t *ps, player_state_t *ops)
 						ps->gunangles[i], cl.lerpfrac);
 	}
 
+    // adjust for high fov
+    if (ps->fov > 90)
+	{
+        vec_t ofs = (90 - ps->fov) * 0.2f;
+        VectorMA(gun.currorigin, ofs, cl.v_forward, gun.currorigin);
+    }
+
+	VectorCopy (gun.currorigin, gun.lastorigin); // don't lerp at all
+
 	if (gun_frame)
 	{
 		gun.currframe = gun_frame;	// development tool
@@ -1451,14 +1455,18 @@ void CL_AddViewWeapon (player_state_t *ps, player_state_t *ops)
 		gun.currframe = ps->gunframe;
 
 		if (gun.currframe == 0)
+		{
 			gun.lastframe = 0;	// just changed weapons, don't lerp from old
+		}
 		else
+		{
 			gun.lastframe = ops->gunframe;
+			gun.backlerp = 1.0 - cl.lerpfrac;
+		}
 	}
 
 	gun.flags = RF_MINLIGHT | RF_DEPTHHACK | RF_WEAPONMODEL;
-	gun.backlerp = 1.0 - cl.lerpfrac;
-	VectorCopy (gun.currorigin, gun.lastorigin);	// don't lerp at all
+
 	V_AddEntity (&gun);
 }
 
