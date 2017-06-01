@@ -23,7 +23,7 @@ out vec4 fragColor;
 
 void UntexturedFS ()
 {
-	fragColor = pow(iocolor, vec4(gamma));
+	fragColor = iocolor;
 }
 #endif
 

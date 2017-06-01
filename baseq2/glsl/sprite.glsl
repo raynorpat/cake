@@ -35,7 +35,7 @@ out vec4 fragColor;
 
 void SpriteFS ()
 {
-	fragColor = pow(texture (diffuse, texcoords.st) * colour, vec4(gamma));
+	fragColor = texture (diffuse, texcoords.st) * colour;
 }
 #endif
 

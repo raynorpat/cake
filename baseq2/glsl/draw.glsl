@@ -28,7 +28,7 @@ out vec4 fragColor;
 
 void DrawFS ()
 {
-	fragColor = pow( mix (texture (diffuse, texcoords.st), iocolor, texturecolormix), vec4(gamma) );
+	fragColor = mix (texture (diffuse, texcoords.st), iocolor, texturecolormix);
 }
 #endif
 

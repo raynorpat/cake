@@ -142,6 +142,7 @@ set(RENDERER_INCLUDES
 set(RENDERER_SOURCES
 	gl_beam.c
 	gl_draw.c
+	gl_framebuffer.c
 	gl_image.c
 	gl_light.c
 	gl_mesh.c

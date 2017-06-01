@@ -469,7 +469,8 @@ void Draw_PolyBlend (void)
 			polyblend.rgba[i] = 255;
 		else if (v_blend[i] < 0)
 			polyblend.rgba[i] = 0;
-		else polyblend.rgba[i] = v_blend[i] * 255;
+		else
+			polyblend.rgba[i] = v_blend[i] * 255;
 	}
 
 	Draw_ColouredRect (0, 0, vid.width, vid.height, polyblend.c);

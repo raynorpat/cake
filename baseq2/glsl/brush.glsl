@@ -37,7 +37,7 @@ void LightmappedFS ()
 	vec4 lmap = texture2DArray (lightmap, texcoords[1].xyz);
 	vec4 final = texture (diffuse, texcoords[0].st) * (colormatrix * (lmap / lmap.a));
 
-	final = pow(final, vec4(gamma));
+	//final = pow(final, vec4(gamma));
 	
 	fragColor = vec4 (final.rgb, surfalpha);
 }

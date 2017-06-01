@@ -430,7 +430,7 @@ void R_RenderView (refdef_t *fd)
 	{
 		R_MarkLeaves ();	// done here so we know if we're in water
 
-		RWarp_BeginWaterWarp ();
+		RPostProcess_Begin ();
 
 		R_Clear ();
 
@@ -443,7 +443,7 @@ void R_RenderView (refdef_t *fd)
 
 		R_DrawParticles ();
 
-		RWarp_DoWaterWarp ();
+		RPostProcess_FinishToScreen();
 
 		Draw_PolyBlend();
 	}
@@ -548,6 +548,7 @@ void R_Register (void)
 	Cmd_AddCommand ("screenshot", GL_ScreenShot_f);
 	Cmd_AddCommand ("modellist", Mod_Modellist_f);
 	Cmd_AddCommand ("gl_strings", GL_Strings_f);
+	Cmd_AddCommand ("fbolist", R_FBOList_f);
 }
 
 // the following is only used in the next to functions,
@@ -779,7 +780,7 @@ qboolean R_Init (void)
 	// create all of our vertex/fragment programs
 	RSurf_CreatePrograms ();
 	RWarp_CreatePrograms ();
-	RUnderwater_CreatePrograms ();
+	RPostProcess_CreatePrograms();
 	RSky_CreatePrograms ();
 	RDraw_CreatePrograms ();
 	RMesh_CreatePrograms ();
@@ -787,6 +788,9 @@ qboolean R_Init (void)
 	RBeam_CreatePrograms ();
 	RNull_CreatePrograms ();
 	RPart_CreatePrograms ();
+
+	// create framebuffer objects
+	R_InitFBOs();
 
 	// create our ubo for shared stuff
 	glGenBuffers (1, &gl_sharedubo);
@@ -819,6 +823,8 @@ void R_Shutdown (void)
 	Mod_FreeAll ();
 
 	GL_ShutdownImages ();
+
+	R_ShutdownFBOs ();
 
 	// shut down OS specific OpenGL stuff like contexts, etc.
 	GLimp_Shutdown (true);

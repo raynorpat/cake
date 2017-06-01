@@ -25,7 +25,7 @@ out vec4 fragColor;
 void SkyFS ()
 {
 	//fragColor = texture (skydiffuse, texcoords.xzy);
-	fragColor = pow(texture (skydiffuse, texcoords.xyz), vec4(gamma));
+	fragColor = texture (skydiffuse, texcoords.xyz);
 }
 #endif
 

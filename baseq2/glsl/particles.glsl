@@ -41,7 +41,7 @@ void ParticleFS ()
 	vec4 color = iocolor;
 	color.a = (1.0 - dot (offsets.st, offsets.st)) * 1.5;
 
-	fragColor = pow(color, vec4(gamma)) * iocolor.a;
+	fragColor = color * iocolor.a;
 }
 #endif
 

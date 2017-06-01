@@ -1196,8 +1196,6 @@ GL_InitImages
 */
 void GL_InitImages (void)
 {
-	int		i;
-	
 	registration_sequence = 1;
 	Draw_GetPalette ();
 }

@@ -74,7 +74,6 @@ void GL_UseProgramWithUBOs (GLuint progid, ubodef_t *ubodef, int numubos);
 
 void RSurf_CreatePrograms (void);
 void RWarp_CreatePrograms (void);
-void RUnderwater_CreatePrograms (void);
 void RSky_CreatePrograms (void);
 void RDraw_CreatePrograms (void);
 void RMesh_CreatePrograms (void);
@@ -82,8 +81,10 @@ void RBeam_CreatePrograms (void);
 void RNull_CreatePrograms (void);
 void Sprite_CreatePrograms (void);
 void RPart_CreatePrograms (void);
-void RWarp_BeginWaterWarp (void);
-void RWarp_DoWaterWarp (void);
+
+void RPostProcess_CreatePrograms(void);
+void RPostProcess_Begin (void);
+void RPostProcess_FinishToScreen (void);
 
 void R_DrawSurfaceChain (struct msurface_s *chain, int numindexes);
 
@@ -146,8 +147,47 @@ typedef struct image_s
 	qboolean	mipmap;
 } image_t;
 
-
 #define		MAX_GLTEXTURES	1024
+
+//===================================================================
+
+typedef struct FBO_s
+{
+	char            name[MAX_QPATH];
+
+	int             index;
+
+	GLuint          frameBuffer;
+
+	GLuint          colorBuffers[16];
+	int             colorFormat;
+	GLuint          depthBuffer;
+	int             depthFormat;
+	GLuint          stencilBuffer;
+	int             stencilFormat;
+
+	int             width;
+	int             height;
+} FBO_t;
+
+#define	MAX_FBOS			64
+
+#define	MAX_BLOOM_BUFFERS	2
+
+void R_FBOList_f(void);
+
+void R_InitFBOs(void);
+void R_ShutdownFBOs(void);
+
+qboolean R_CheckFBO(const FBO_t * fbo);
+
+void R_BindNullFBO(void);
+void R_BindFBO(FBO_t * fbo);
+
+extern FBO_t *hdrRenderFBO;
+extern FBO_t *hdrDownscale64;
+extern FBO_t *brightpassRenderFBO;
+extern FBO_t *bloomRenderFBO[MAX_BLOOM_BUFFERS];
 
 //===================================================================
 
@@ -175,6 +215,10 @@ typedef struct
 
 extern	image_t		gltextures[MAX_GLTEXTURES];
 extern	int			numgltextures;
+
+extern FBO_t		*fbos[MAX_FBOS];
+extern int			numFBOs;
+
 
 
 extern	image_t		*r_notexture;
@@ -248,7 +292,7 @@ extern GLuint r_modelsampler;
 
 void RImage_CreateSamplers (void);
 
-void GL_BindTexture (GLuint tmu, GLenum target, GLuint sampler, GLuint texnum);
+void GL_BindTexture (GLenum tmu, GLenum target, GLuint sampler, GLuint texnum);
 
 void R_LightPoint (vec3_t p, vec3_t color);
 void R_PushDlights (mnode_t *headnode, glmatrix *transform);
@@ -344,6 +388,8 @@ typedef struct
 	int   prev_mode;
 
 	GLuint	lightmap_textures;
+
+	FBO_t	*currentFBO;
 
 	GLuint	currentsamplers[32];
 	GLuint	currenttextures[32];

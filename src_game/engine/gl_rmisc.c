@@ -416,6 +416,8 @@ void GL_SetDefaultState (void)
 
 	// enable sRGB framebuffer for proper gamma correction
 	glEnable (GL_FRAMEBUFFER_SRGB);
+
+	R_BindNullFBO();
 }
 
 
