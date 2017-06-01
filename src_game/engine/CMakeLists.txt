@@ -149,12 +149,12 @@ set(RENDERER_SOURCES
 	gl_model.c
 	gl_nullmodel.c
 	gl_part.c
+	gl_postprocess.c	
 	gl_rmain.c
 	gl_rmisc.c
 	gl_rsurf.c
 	gl_sky.c
 	gl_sprite.c
-	gl_underwater.c
 	gl_warp.c
 	)
 source_group("client\\renderer" FILES ${RENDERER_INCLUDES})
