@@ -22,6 +22,8 @@ uniform vec2 rescale;
 
 uniform int compositeMode;
 uniform vec2 texScale;
+uniform vec4 hdrParam;
+uniform vec4 brightParam;
 
 out vec4 fragColor;
 
@@ -57,37 +59,63 @@ void CompositeFS ()
 			fragColor = vec4( 0.0, 0.0, 0.0, 1.0 );
 			return;
 		}
+
+		float hdrKey = hdrParam.x;
+		float hdrAverageLuminance = hdrParam.y;
+		float hdrMaxLuminance = hdrParam.z;
+
+		// calculate the relative luminance
+		float Yr = ( hdrKey * Y ) / hdrAverageLuminance;
+
+		float Ymax = hdrMaxLuminance;
+
+		// tonemap using aces filmic tonemapping curve
+		float avgLuminance = max( hdrAverageLuminance, 0.001 );
+		float linearExposure = ( hdrKey / avgLuminance );
+		float exposure = log2( max( linearExposure, 0.0001 ) );
+
+		vec3 exposedColor = exp2( exposure ) * color.rgb;
+
+		color.rgb = ACESFilm( exposedColor );
+
+		// adjust contrast
+		float hdrContrastThreshold = brightParam.x;
+		float hdrContrastOffset = brightParam.y;
 		
-		float hdrKey = 0.015;
-		float hdrAverageLuminance = 0.005;
-		float hdrMaxLuminance = 1;
+		float T = max( Yr - hdrContrastThreshold, 0.0 );		
+		float B = T > 0.0 ? T / ( hdrContrastOffset + T ) : T;
+
+		// clamp to 0, 1
+		color.rgb *= clamp( B, 0.0, 1.0 );
+	}
+	// tonemap
+	else if(compositeMode == 2)
+	{
+		color = texture (diffuse, st);
+		
+		// get the luminance of the current pixel
+		float Y = dot( vec4(0.2125, 0.7154, 0.0721, 0.0), color );
+		
+		float hdrKey = hdrParam.x;
+		float hdrAverageLuminance = hdrParam.y;
+		float hdrMaxLuminance = hdrParam.z;
 		
 		// calculate the relative luminance
 		float Yr = ( hdrKey * Y ) / hdrAverageLuminance;
 
 		float Ymax = hdrMaxLuminance;
-		
+
+		// tonemap using aces filmic tonemapping curve
 		float avgLuminance = max( hdrAverageLuminance, 0.001 );
 		float linearExposure = ( hdrKey / avgLuminance );
 		float exposure = log2( max( linearExposure, 0.0001 ) );
 		
-		//exposure = -2.0;
 		vec3 exposedColor = exp2( exposure ) * color.rgb;
-		
+
 		color.rgb = ACESFilm( exposedColor );
-		
-		// adjust contrast
-		const float hdrContrastThreshold = 2;
-		const float hdrContrastOffset = 3;
-		
-		float T = max( Yr - hdrContrastThreshold, 0.0 );		
-		float B = T > 0.0 ? T / ( hdrContrastOffset + T ) : T;
-		
-		// clamp to 0, 1
-		//color.rgb *= clamp( B, 0.0, 1.0 );
 	}
 	// hdr chromatic glare
-	else if(compositeMode == 2)
+	else if(compositeMode == 3)
 	{
 		const float gaussFact[9] = float[9](0.13298076, 0.12579441, 0.10648267, 0.08065691, 0.05467002, 0.03315905, 0.01799699, 0.00874063, 0.00379866);
 		
@@ -106,7 +134,6 @@ void CompositeFS ()
 		);
 	
 		vec3 sumColor = vec3( 0.0 );
-		vec3 sumSpectrum = vec3( 0.0 );
 
 		const int tap = 4;
 		const int samples = 9;
@@ -114,20 +141,22 @@ void CompositeFS ()
 		float scale = 13.0; // bloom width
 		const float weightScale = 2.3; // bloom strength
 	
+		// x axis blur
 		for( int i = 0; i < samples; i++ )
 		{
 			vec3 so = chromaticOffsets[ i ];
 			vec4 color = texture( diffuse, st + vec2( float( i ), 0 ) * texScale );
-				
+
 			float weight = gaussFact[ i ];
 			sumColor += color.rgb * ( so.rgb * weight * weightScale );
 		}	
 
+		// y axis blur
 		for( int i = 1; i < samples; i++ )
 		{
 			vec3 so = chromaticOffsets[ i ];
 			vec4 color = texture( diffuse, st + vec2( float( -i ), 0 ) * texScale );
-				
+
 			float weight = gaussFact[ i ];
 			sumColor += color.rgb * ( so.rgb * weight * weightScale );
 		}

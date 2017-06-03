@@ -530,6 +530,7 @@ void GLimp_BeginFrame (float camera_separation)
 {
 }
 
+
 /*
 GLimp_EndFrame
 
@@ -544,13 +545,4 @@ void GLimp_EndFrame (void)
 	GL_UseProgram (0);
 
 	SDL_GL_SwapWindow(window);
-}
-
-void GL_Clear (GLbitfield mask)
-{
-	// because depth/stencil are interleaved, if we're clearing depth we must also clear stencil
-	if (mask & GL_DEPTH_BUFFER_BIT)
-		mask |= GL_STENCIL_BUFFER_BIT;
-
-	glClear (mask);
 }

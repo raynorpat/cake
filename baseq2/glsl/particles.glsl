@@ -32,15 +32,20 @@ void ParticleVS ()
 
 
 #ifdef FRAGMENTSHADER
-uniform float gamma;
-
 out vec4 fragColor;
 
 void ParticleFS ()
 {
-	vec4 color = iocolor;
+	vec4 color = iocolor * 2;
+	
+	// makes the standard square texture a circle
 	color.a = (1.0 - dot (offsets.st, offsets.st)) * 1.5;
+	
+	// discard the black alpha
+	if( abs(color.a) <= 0.66 )
+		discard;
 
+	// multiply the circle by the particle color alpha for fading out
 	fragColor = color * iocolor.a;
 }
 #endif

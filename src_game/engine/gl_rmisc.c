@@ -69,6 +69,16 @@ void GL_Enable (int bits)
 }
 
 
+void GL_Clear(GLbitfield mask)
+{
+	// because depth/stencil are interleaved, if we're clearing depth we must also clear stencil
+	if (mask & GL_DEPTH_BUFFER_BIT)
+		mask |= GL_STENCIL_BUFFER_BIT;
+
+	glClear(mask);
+}
+
+
 void GL_GetShaderInfoLog (GLuint s, char *src, qboolean isprog)
 {
 	static char infolog[4096] = {0};
@@ -245,8 +255,8 @@ void R_InitParticleTexture (void)
 		for (y = 0; y < 8; y++)
 		{
 			data[y][x][0] = dottexture[x&3][y&3] * 255;
-			data[y][x][1] = 0; // dottexture[x&3][y&3]*255;
-			data[y][x][2] = 0; //dottexture[x&3][y&3]*255;
+			data[y][x][1] = 0;
+			data[y][x][2] = 0;
 			data[y][x][3] = 255;
 		}
 	}
@@ -415,7 +425,7 @@ void GL_SetDefaultState (void)
 	glDepthRange (gldepthmin, gldepthmax);
 
 	// enable sRGB framebuffer for proper gamma correction
-	glEnable (GL_FRAMEBUFFER_SRGB);
+	//glEnable (GL_FRAMEBUFFER_SRGB);
 
 	R_BindNullFBO();
 }

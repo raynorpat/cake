@@ -225,7 +225,6 @@ void R_InitFBOs(void)
 
 	R_CheckFBO(hdrRenderFBO);
 
-#if 0
 	// HDR DOWNSCALE
 
 	hdrDownscale64 = R_CreateFBO("_hdrDownscale64", 64, 64);
@@ -236,7 +235,6 @@ void R_InitFBOs(void)
 	R_AttachFBOTexture2D(GL_TEXTURE_2D, r_currentRenderHDRImage64, 0);
 
 	R_CheckFBO(hdrDownscale64);
-#endif
 
 	// BRIGHTPASS
 

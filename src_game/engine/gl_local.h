@@ -82,6 +82,7 @@ void RNull_CreatePrograms (void);
 void Sprite_CreatePrograms (void);
 void RPart_CreatePrograms (void);
 
+void RPostProcess_Init(void);
 void RPostProcess_CreatePrograms(void);
 void RPostProcess_Begin (void);
 void RPostProcess_FinishToScreen (void);
@@ -195,6 +196,7 @@ extern FBO_t *bloomRenderFBO[MAX_BLOOM_BUFFERS];
 
 void GL_SetDefaultState (void);
 void GL_UpdateSwapInterval (void);
+void GL_Clear (GLbitfield mask);
 
 extern	float	gldepthmin, gldepthmax;
 
@@ -205,11 +207,9 @@ typedef struct
 	float	r, g, b;
 } glvert_t;
 
-
 #define	MAX_LBM_HEIGHT		480
 
 #define BACKFACE_EPSILON	0.01
-
 
 //====================================================
 
@@ -219,14 +219,11 @@ extern	int			numgltextures;
 extern FBO_t		*fbos[MAX_FBOS];
 extern int			numFBOs;
 
-
-
 extern	image_t		*r_notexture;
 extern	int			r_visframecount;
 extern	int			r_framecount;
 extern	cplane_t	frustum[4];
 extern	int			c_brush_polys, c_alias_polys;
-
 
 extern	int			gl_filter_min, gl_filter_max;
 
@@ -326,18 +323,6 @@ void R_DrawParticles (void);
 void R_DrawSkyChain (msurface_t *surf);
 void R_MarkLights (dlight_t *light, int bit, mnode_t *node);
 
-#if 0
-short LittleShort (short l);
-short BigShort (short l);
-int	LittleLong (int l);
-float LittleFloat (float f);
-
-char	*va (char *format, ...);
-// does a varargs printf into a temp buffer
-#endif
-
-void COM_StripExtension (char *in, char *out);
-
 void Draw_GetPicSize (int *w, int *h, char *name);
 void Draw_Pic (int x, int y, char *name);
 void Draw_PicScaled (int x, int y, char *name, float scale);
@@ -366,7 +351,6 @@ image_t *GL_LoadPic (char *name, byte *pic, int width, int height, imagetype_t t
 image_t	*GL_FindImage (char *name, imagetype_t type);
 void GL_TextureMode (char *string, int anisotropy);
 void GL_ImageList_f (void);
-
 
 void GL_InitImages (void);
 void GL_ShutdownImages (void);
