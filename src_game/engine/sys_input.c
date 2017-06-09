@@ -825,6 +825,7 @@ static void IN_JoyMove(usercmd_t *cmd)
 #if SDL_VERSION_ATLEAST(2, 0, 0)
 	joyaxis_t moveRaw, moveDeadzone, moveEased;
 	joyaxis_t lookRaw, lookDeadzone, lookEased;
+	float speed, aspeed;
 
 	if (!joy_enable->value)
 		return;
@@ -850,11 +851,17 @@ static void IN_JoyMove(usercmd_t *cmd)
 	moveEased = IN_ApplyMoveEasing(moveDeadzone);
 	lookEased = IN_ApplyLookEasing(lookDeadzone, joy_exponent->value);
 
-	cmd->sidemove += moveEased.x;
-	cmd->forwardmove -= moveEased.y;
+	if ((in_speed.state & 1) ^ (int)cl_run->value)
+		speed = 2;
+	else
+		speed = 1;
+	aspeed = speed * cls.frametime;
 
-	cl.viewangles[YAW] -= lookEased.x * joy_sensitivity_yaw->value;
-	cl.viewangles[PITCH] += lookEased.y * joy_sensitivity_pitch->value * (joy_invert->value ? -1.0 : 1.0);
+	cmd->sidemove += moveEased.x * speed * cl_sidespeed->value;
+	cmd->forwardmove -= moveEased.y * speed * cl_forwardspeed->value;
+
+	cl.viewangles[YAW] -= lookEased.x * joy_sensitivity_yaw->value * aspeed * cl_yawspeed->value;
+	cl.viewangles[PITCH] += lookEased.y * joy_sensitivity_pitch->value * (joy_invert->value ? -1.0 : 1.0) * aspeed * cl_pitchspeed->value;;
 #endif
 }
 
@@ -993,8 +1000,8 @@ void IN_Init(void)
 
 	joy_deadzone = Cvar_Get("joy_deadzone", "0.175", CVAR_ARCHIVE);
 	joy_deadzone_trigger = Cvar_Get("joy_deadzone_trigger", "0.001", CVAR_ARCHIVE);
-	joy_sensitivity_yaw = Cvar_Get("joy_sensitivity_yaw", "300", CVAR_ARCHIVE);
-	joy_sensitivity_pitch = Cvar_Get("joy_sensitivity_pitch", "150", CVAR_ARCHIVE);
+	joy_sensitivity_yaw = Cvar_Get("joy_sensitivity_yaw", "2", CVAR_ARCHIVE);
+	joy_sensitivity_pitch = Cvar_Get("joy_sensitivity_pitch", "2", CVAR_ARCHIVE);
 	joy_invert = Cvar_Get("joy_invert", "0", CVAR_ARCHIVE);
 	joy_exponent = Cvar_Get("joy_exponent", "3", CVAR_ARCHIVE);
 	joy_swapmovelook = Cvar_Get("joy_swapmovelook", "0", CVAR_ARCHIVE);
