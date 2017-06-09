@@ -268,8 +268,6 @@ void CL_PrepRefresh (void)
 		strcpy (name, cl.configstrings[CS_MODELS+i]);
 		name[37] = 0;	// never go beyond one line
 
-		//Sys_SendKeyEvents ();	// pump message loop
-
 		if (name[0] == '#')
 		{
 			// special player weapon model
@@ -293,7 +291,6 @@ void CL_PrepRefresh (void)
 	for (i = 1; i < MAX_IMAGES && cl.configstrings[CS_IMAGES+i][0]; i++)
 	{
 		cl.image_precache[i] = Draw_FindPic (cl.configstrings[CS_IMAGES+i]);
-		// Sys_SendKeyEvents ();	// pump message loop
 	}
 
 	for (i = 0; i < MAX_CLIENTS; i++)
@@ -301,7 +298,6 @@ void CL_PrepRefresh (void)
 		if (!cl.configstrings[CS_PLAYERSKINS+i][0])
 			continue;
 
-		//Sys_SendKeyEvents ();	// pump message loop
 		CL_ParseClientinfo (i);
 	}
 
@@ -320,7 +316,6 @@ void CL_PrepRefresh (void)
 
 	// force a screen update now
 	SCR_UpdateScreen ();
-	Sys_SendKeyEvents ();
 
 	cl.refresh_prepped = true;
 	cl.force_refdef = true;	// make sure we have a valid refdef

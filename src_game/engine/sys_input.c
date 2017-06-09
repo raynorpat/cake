@@ -675,7 +675,7 @@ static void IN_JoyKeyEvent(qboolean wasdown, qboolean isdown, int key, double *t
 		if (isdown)
 		{
 			*timer = currenttime + 0.5;
-			Key_Event(key, true, false);
+			Key_Event(key, isdown, false);
 		}
 	}
 }
@@ -708,9 +708,8 @@ void IN_Commands(void)
 		qboolean oldstate = joy_buttonstate.buttondown[i];
 
 		joy_buttonstate.buttondown[i] = newstate;
-
-		// NOTE: This can cause a reentrant call of IN_Commands, via SCR_ModalMessage when confirming a new game.
-		IN_JoyKeyEvent(oldstate, newstate, IN_KeyForControllerButton((SDL_GameControllerButton)i), &joy_buttontimer[i]);
+		if(newstate)
+			IN_JoyKeyEvent(oldstate, newstate, IN_KeyForControllerButton((SDL_GameControllerButton)i), &joy_buttontimer[i]);
 	}
 
 	for (i = 0; i < SDL_CONTROLLER_AXIS_MAX; i++)

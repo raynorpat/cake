@@ -886,7 +886,6 @@ void CL_Skins_f (void)
 
 		Com_Printf ("client %i: %s\n", i, cl.configstrings[CS_PLAYERSKINS+i]);
 		SCR_UpdateScreen ();
-		Sys_SendKeyEvents ();	// pump message loop
 		CL_ParseClientinfo (i);
 	}
 }

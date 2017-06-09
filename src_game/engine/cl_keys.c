@@ -895,6 +895,9 @@ void Key_Event (int key, qboolean down, qboolean special)
 	cvar_t *fullscreen;
 	unsigned int time = Sys_Milliseconds();
 
+	if (key < 0 || key >= K_LAST)
+		return;
+
 	// Track if key is down
 	keydown[key] = down;
 
