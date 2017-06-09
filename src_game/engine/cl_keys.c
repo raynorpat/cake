@@ -149,6 +149,17 @@ keyname_t keynames[] =
 
 	{ "SEMICOLON", ';' }, // because a raw semicolon seperates commands
 
+	{ "LTHUMB", K_LTHUMB },
+	{ "RTHUMB", K_RTHUMB },
+	{ "LSHOULDER", K_LSHOULDER },
+	{ "RSHOULDER", K_RSHOULDER },
+	{ "ABUTTON", K_ABUTTON },
+	{ "BBUTTON", K_BBUTTON },
+	{ "XBUTTON", K_XBUTTON },
+	{ "YBUTTON", K_YBUTTON },
+	{ "LTRIGGER", K_LTRIGGER },
+	{ "RTRIGGER", K_RTRIGGER },
+
 	{ NULL, 0 }
 };
 
