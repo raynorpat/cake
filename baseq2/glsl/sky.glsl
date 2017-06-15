@@ -18,7 +18,6 @@ void SkyVS ()
 
 #ifdef FRAGMENTSHADER
 uniform samplerCube skydiffuse;
-uniform float gamma;
 
 out vec4 fragColor;
 

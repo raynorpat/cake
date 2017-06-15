@@ -243,7 +243,8 @@ void R_LightPoint (vec3_t p, vec3_t color)
 
 	if ((r = RecursiveLightPoint (r_worldmodel->nodes, p, end, pointcolor)) == -1)
 		VectorCopy (vec3_origin, color);
-	else VectorCopy (pointcolor, color);
+	else
+		VectorCopy (pointcolor, color);
 
 	// add dynamic lights
 	light = 0;

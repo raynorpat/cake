@@ -42,7 +42,6 @@ void MeshVS ()
 
 #ifdef FRAGMENTSHADER
 uniform sampler2D diffuse;
-uniform float gamma;
 
 out vec4 fragColor;
 

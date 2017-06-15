@@ -30,7 +30,6 @@ image_t *draw_chars;
 
 GLuint gl_drawprog = 0;
 GLuint u_drawtexturecolormix = 0;
-GLuint u_drawgamma = 0;
 
 #define MAX_DRAW_QUADS	2048
 
@@ -107,7 +106,6 @@ void RDraw_CreatePrograms (void)
 	glProgramUniform1i (gl_drawprog, glGetUniformLocation (gl_drawprog, "diffuse"), 0);
 
 	u_drawtexturecolormix = glGetUniformLocation (gl_drawprog, "texturecolormix");
-	u_drawgamma = glGetUniformLocation (gl_drawprog, "gamma");
 
 	glGenVertexArrays (1, &gl_drawvao);
 
@@ -196,8 +194,6 @@ void Draw_GenericRect (GLuint texture, GLuint sampler, float texturecolormix, fl
 	drawvert_t *dv = NULL;
 
 	Draw_Begin2D ();
-
-	glProgramUniform1f (gl_drawprog, u_drawgamma, vid_gamma->value);
 
 	if (texturecolormix != gl_drawstate.texturecolormix)
 	{

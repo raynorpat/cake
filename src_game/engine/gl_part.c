@@ -26,7 +26,6 @@ GLuint gl_particleprog = 0;
 GLuint gl_particlevbo = 0;
 GLuint gl_particlevao = 0;
 GLuint gl_particleubobinding = 0;
-GLuint gl_particlegamma = 0;
 
 int r_firstparticle = 0;
 
@@ -52,8 +51,6 @@ void RPart_CreatePrograms (void)
 	GL_BindVertexArray (gl_particlevao);
 	glVertexAttribDivisor (0, 1);
 	glVertexAttribDivisor (1, 1);
-
-	gl_particlegamma = glGetUniformLocation(gl_particleprog, "gamma");
 }
 
 
@@ -89,8 +86,6 @@ void R_DrawParticles (void)
 	GL_UseProgramWithUBOs (gl_particleprog, &ubodef, 1);
 	GL_Enable ((BLEND_BIT | DEPTHTEST_BIT) | (gl_cull->value ? CULLFACE_BIT : 0));
 	GL_BindVertexArray (gl_particlevao);
-
-	glProgramUniform1f(gl_particleprog, gl_particlegamma, vid_gamma->value);
 
 	glDrawArraysInstancedBaseInstance (GL_TRIANGLE_FAN, 0, 4, r_newrefdef.num_particles, r_firstparticle);
 

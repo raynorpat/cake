@@ -26,7 +26,6 @@ float r_skytime = 0;
 GLuint gl_skycubeprog = 0;
 GLuint u_skylocalMatrix = 0;
 GLuint u_skytexturematrix = 0;
-GLuint u_skygamma = 0;
 
 void RSky_CreatePrograms (void)
 {
@@ -34,7 +33,6 @@ void RSky_CreatePrograms (void)
 
 	u_skylocalMatrix = glGetUniformLocation (gl_skycubeprog, "localMatrix");
 	u_skytexturematrix = glGetUniformLocation (gl_skycubeprog, "skymatrix");
-	u_skygamma = glGetUniformLocation (gl_skycubeprog, "gamma");
 
 	glProgramUniform1i (gl_skycubeprog, glGetUniformLocation (gl_skycubeprog, "skydiffuse"), 0);
 }
@@ -115,7 +113,5 @@ void RSky_BeginFrame (void)
 	GL_TranslateMatrix (&skymatrix, -r_origin[0], -r_origin[1], -r_origin[2]);
 
 	glProgramUniformMatrix4fv (gl_skycubeprog, u_skytexturematrix, 1, GL_FALSE, skymatrix.m[0]);
-
-	glProgramUniform1f (gl_skycubeprog, u_skygamma, vid_gamma->value);
 }
 

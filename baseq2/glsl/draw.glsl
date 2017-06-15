@@ -1,5 +1,4 @@
 
-
 INOUTTYPE vec4 texcoords;
 INOUTTYPE vec4 iocolor;
 
@@ -22,7 +21,6 @@ void DrawVS ()
 #ifdef FRAGMENTSHADER
 uniform sampler2D diffuse;
 uniform float texturecolormix;
-uniform float gamma;
 
 out vec4 fragColor;
 

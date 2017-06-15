@@ -26,7 +26,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 GLuint gl_spriteprog = 0;
 GLuint u_spritecolour = 0;
 GLuint u_spriteorigin = 0;
-GLuint u_spritegamma = 0;
+
 GLuint gl_spriteubobinding = 0;
 
 
@@ -43,7 +43,7 @@ void Sprite_CreatePrograms (void)
 
 	u_spritecolour = glGetUniformLocation (gl_spriteprog, "colour");
 	u_spriteorigin = glGetUniformLocation (gl_spriteprog, "entOrigin");
-	u_spritegamma = glGetUniformLocation (gl_spriteprog, "gamma");
+
 	glProgramUniform1i (gl_spriteprog, glGetUniformLocation (gl_spriteprog, "diffuse"), 0);
 	glUniformBlockBinding (gl_spriteprog, glGetUniformBlockIndex (gl_spriteprog, "GlobalUniforms"), gl_spriteubobinding);
 }
@@ -73,7 +73,6 @@ void R_DrawSpriteModel (entity_t *e)
 
 	glProgramUniform3fv (gl_spriteprog, u_spriteorigin, 1, e->currorigin);
 	glProgramUniform4f (gl_spriteprog, u_spritecolour, 1, 1, 1, ((e->flags & RF_TRANSLUCENT) && e->alpha < 1.0f) ? e->alpha : 1);
-	glProgramUniform1f (gl_spriteprog, u_spritegamma, vid_gamma->value);
 
 	GL_Enable (BLEND_BIT | DEPTHTEST_BIT | (gl_cull->value ? CULLFACE_BIT : 0));
 	GL_BindTexture (GL_TEXTURE0, GL_TEXTURE_2D, r_modelsampler, mod->skins[e->currframe]->texnum);

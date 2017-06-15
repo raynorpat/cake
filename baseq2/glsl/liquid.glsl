@@ -23,7 +23,6 @@ void LiquidVS ()
 #ifdef FRAGMENTSHADER
 uniform sampler2D diffuse;
 uniform float surfalpha;
-uniform float gamma;
 
 out vec4 fragColor;
 

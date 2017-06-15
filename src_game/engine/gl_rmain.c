@@ -544,7 +544,8 @@ void R_Register (void)
 	vid_gamma = Cvar_Get ("vid_gamma", "1.6", CVAR_ARCHIVE);
 	r_lightscale = Cvar_Get ("r_lightscale", "1.0", CVAR_ARCHIVE);
 
-	RPostProcess_Init ();
+
+	RPostProcess_Init();
 
 	Cmd_AddCommand ("imagelist", GL_ImageList_f);
 	Cmd_AddCommand ("screenshot", GL_ScreenShot_f);

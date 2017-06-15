@@ -38,7 +38,6 @@ void RWarp_CreatePrograms (void)
 	u_warpscroll = glGetUniformLocation (gl_warpsurfprog, "scroll");
 
 	glProgramUniform1i (gl_warpsurfprog, glGetUniformLocation (gl_warpsurfprog, "diffuse"), 0);
-	glProgramUniform1f (gl_warpsurfprog, glGetUniformLocation (gl_warpsurfprog, "gamma"), vid_gamma->value);
 }
 
 

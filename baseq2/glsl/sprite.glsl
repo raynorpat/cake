@@ -28,7 +28,6 @@ void SpriteVS ()
 #ifdef FRAGMENTSHADER
 uniform sampler2D diffuse;
 uniform vec4 colour;
-uniform float gamma;
 
 out vec4 fragColor;
 
