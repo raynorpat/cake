@@ -1,3 +1,4 @@
+
 // common
 INOUTTYPE vec4 texcoords;
 
@@ -27,7 +28,6 @@ uniform vec4 brightParam;
 
 out vec4 fragColor;
 
-vec3 saturate( vec3 v ) { return clamp( v, 0.0, 1.0 ); }
 // https://knarkowicz.wordpress.com/2016/01/06/aces-filmic-tone-mapping-curve/
 vec3 ACESFilm( vec3 x )
 {
@@ -53,27 +53,27 @@ void CompositeFS ()
 		color = texture (diffuse, st);
 
 		// get the luminance of the current pixel
-		float Y = dot( vec4(0.2125, 0.7154, 0.0721, 0.0), color );
+		float Y = dot( LUMINANCE_VECTOR, color );
 		if(Y < 0.1)
 		{
-			fragColor = vec4( 0.0, 0.0, 0.0, 1.0 );
+			discard;
 			return;
 		}
 
 		float hdrKey = hdrParam.x;
 		float hdrAverageLuminance = hdrParam.y;
 		float hdrMaxLuminance = hdrParam.z;
-
+		
 		// calculate the relative luminance
 		float Yr = ( hdrKey * Y ) / hdrAverageLuminance;
-
 		float Ymax = hdrMaxLuminance;
 
-		// tonemap using aces filmic tonemapping curve
+		// use geometric mean to figure out color based on exposure
 		float avgLuminance = max( hdrAverageLuminance, 0.001 );
 		float linearExposure = ( hdrKey / avgLuminance );
 		float exposure = log2( max( linearExposure, 0.0001 ) );
 
+		// tonemap using ACES filmic tonemapping curve
 		vec3 exposedColor = exp2( exposure ) * color.rgb;
 
 		color.rgb = ACESFilm( exposedColor );
@@ -85,7 +85,7 @@ void CompositeFS ()
 		float T = max( Yr - hdrContrastThreshold, 0.0 );		
 		float B = T > 0.0 ? T / ( hdrContrastOffset + T ) : T;
 
-		// clamp to 0, 1
+		// clamp to 0...1
 		color.rgb *= clamp( B, 0.0, 1.0 );
 	}
 	// tonemap
@@ -94,18 +94,17 @@ void CompositeFS ()
 		color = texture (diffuse, st);
 		
 		// get the luminance of the current pixel
-		float Y = dot( vec4(0.2125, 0.7154, 0.0721, 0.0), color );
+		float Y = dot( LUMINANCE_VECTOR, color );
 		
 		float hdrKey = hdrParam.x;
 		float hdrAverageLuminance = hdrParam.y;
 		float hdrMaxLuminance = hdrParam.z;
-		
+
 		// calculate the relative luminance
 		float Yr = ( hdrKey * Y ) / hdrAverageLuminance;
-
 		float Ymax = hdrMaxLuminance;
 
-		// tonemap using aces filmic tonemapping curve
+		// use geometric mean to figure out color based on exposure
 		float avgLuminance = max( hdrAverageLuminance, 0.001 );
 		float linearExposure = ( hdrKey / avgLuminance );
 		float exposure = log2( max( linearExposure, 0.0001 ) );
@@ -114,23 +113,21 @@ void CompositeFS ()
 
 		color.rgb = ACESFilm( exposedColor );
 	}
-	// hdr chromatic glare
+	// horizontal hdr chromatic glare
 	else if(compositeMode == 3)
 	{
 		const float gaussFact[9] = float[9](0.13298076, 0.12579441, 0.10648267, 0.08065691, 0.05467002, 0.03315905, 0.01799699, 0.00874063, 0.00379866);
 		
 		const vec3 chromaticOffsets[9] = vec3[](
-			vec3(0.5, 0.5, 0.5), // w
+			vec3(0.5, 0.5, 0.5), // w 
 			vec3(0.8, 0.3, 0.3),
-		//	vec3(1.0, 0.2, 0.2), // r
+			vec3(0.2, 0.2, 0.2), // r
 			vec3(0.5, 0.2, 0.8),
 			vec3(0.2, 0.2, 1.0), // b
 			vec3(0.2, 0.3, 0.9),
-			vec3(0.2, 0.9, 0.2), // g
-			vec3(0.3, 0.5, 0.3),
+			vec3(0.2, 1.0, 0.2), // g
 			vec3(0.3, 0.5, 0.3),
 			vec3(0.3, 0.5, 0.3)
-			//vec3(0.3, 0.5, 0.3)
 		);
 	
 		vec3 sumColor = vec3( 0.0 );
@@ -138,24 +135,22 @@ void CompositeFS ()
 		const int tap = 4;
 		const int samples = 9;
 		
-		float scale = 13.0; // bloom width
+		float scale = 11.0; // bloom width
 		const float weightScale = 2.3; // bloom strength
+		
+		#define so mix( chromaticOffsets[ i ], vec3(0.5, 0.5, 0.5), 0.5 )
 	
-		// x axis blur
 		for( int i = 0; i < samples; i++ )
 		{
-			vec3 so = chromaticOffsets[ i ];
-			vec4 color = texture( diffuse, st + vec2( float( i ), 0 ) * texScale );
+			vec4 color = texture( diffuse, st + vec2( float( i ), 0 ) * texScale * scale);
 
 			float weight = gaussFact[ i ];
 			sumColor += color.rgb * ( so.rgb * weight * weightScale );
 		}	
 
-		// y axis blur
 		for( int i = 1; i < samples; i++ )
 		{
-			vec3 so = chromaticOffsets[ i ];
-			vec4 color = texture( diffuse, st + vec2( float( -i ), 0 ) * texScale );
+			vec4 color = texture( diffuse, st + vec2( float( -i ), 0 ) * texScale * scale );
 
 			float weight = gaussFact[ i ];
 			sumColor += color.rgb * ( so.rgb * weight * weightScale );
@@ -163,7 +158,7 @@ void CompositeFS ()
 	
 		fragColor = vec4( sumColor, 1.0 );
 		return;
-	}	
+	}
 	
 	// convert from linear RGB to sRGB
 	float gamma = 1.0 / 2.2;

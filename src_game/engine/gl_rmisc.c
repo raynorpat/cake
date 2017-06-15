@@ -101,7 +101,7 @@ void GL_GetShaderInfoLog (GLuint s, char *src, qboolean isprog)
 qboolean GL_CompileShader (GLuint sh, char *src, GLenum shadertype, char *entrypoint)
 {
 	char *glslversion = "#version 330 core\n\n";
-	char *glslstrings[4];
+	char *glslstrings[5];
 	char entrydefine[256] = {0};
 	char shaderdefine[256] = {0};
 	int result = 0;
@@ -110,8 +110,10 @@ qboolean GL_CompileShader (GLuint sh, char *src, GLenum shadertype, char *entryp
 
 	glGetError ();
 
+	// define entry point
 	if (entrypoint) sprintf (entrydefine, "#define %s main\n", entrypoint);
 
+	// define shader type
 	switch (shadertype)
 	{
 	case GL_VERTEX_SHADER:
@@ -125,12 +127,27 @@ qboolean GL_CompileShader (GLuint sh, char *src, GLenum shadertype, char *entryp
 	default: return false;
 	}
 
+	// load up common.glsl
+	char *commonbuf = NULL;
+	int commonlen = FS_LoadFile("glsl/common.glsl", (void **)&commonbuf);
+	char *commonsrc;
+	if (!commonlen)
+		commonsrc = NULL;
+
+	// common.glsl doesn't have a trailing 0, so we need to copy it off
+	commonsrc = malloc(commonlen + 1);
+	memcpy(commonsrc, commonbuf, commonlen);
+	commonsrc[commonlen] = 0;
+
+	// put everything together
 	glslstrings[0] = glslversion;
 	glslstrings[1] = entrydefine;
 	glslstrings[2] = shaderdefine;
-	glslstrings[3] = src;
+	glslstrings[3] = commonsrc;
+	glslstrings[4] = src;
 
-	glShaderSource (sh, 4, glslstrings, NULL);
+	// compile into shader program
+	glShaderSource (sh, 5, glslstrings, NULL);
 	glCompileShader (sh);
 	glGetShaderiv (sh, GL_COMPILE_STATUS, &result);
 
