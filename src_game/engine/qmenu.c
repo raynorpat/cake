@@ -23,15 +23,15 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #include "client.h"
 #include "qmenu.h"
 
-static void	 Action_DoEnter (menuaction_s *a);
-static void	 Action_Draw (menuaction_s *a);
+static void	Action_DoEnter (menuaction_s *a);
+static void	Action_Draw (menuaction_s *a);
 static void Menu_DrawStatusBar (const char *string);
-static void	 MenuList_Draw (menulist_s *l);
-static void	 Separator_Draw (menuseparator_s *s);
-static void	 Slider_DoSlide (menuslider_s *s, int dir);
-static void	 Slider_Draw (menuslider_s *s);
-static void	 SpinControl_Draw (menulist_s *s);
-static void	 SpinControl_DoSlide (menulist_s *s, int dir);
+static void	MenuList_Draw (menulist_s *l);
+static void	Separator_Draw (menuseparator_s *s);
+static void	Slider_DoSlide (menuslider_s *s, int dir);
+static void	Slider_Draw (menuslider_s *s);
+static void	SpinControl_Draw (menulist_s *s);
+static void	SpinControl_DoSlide (menulist_s *s, int dir);
 
 #define RCOLUMN_OFFSET 16
 #define LCOLUMN_OFFSET -16
