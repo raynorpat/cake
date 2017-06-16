@@ -75,14 +75,16 @@ void CompositeFS ()
 
 		// tonemap using ACES filmic tonemapping curve
 		vec3 exposedColor = exp2( exposure ) * color.rgb;
-
-		color.rgb = ACESFilm( exposedColor );
+		vec3 curr = ACESFilm( exposedColor );		
+		vec3 whiteScale = 1.0 / ACESFilm( vec3( Ymax ) );
+		
+		color.rgb = curr * whiteScale;
 
 		// adjust contrast
 		float hdrContrastThreshold = brightParam.x;
 		float hdrContrastOffset = brightParam.y;
-		
-		float T = max( Yr - hdrContrastThreshold, 0.0 );		
+
+		float T = max( ( Yr * ( 1.0 + Yr / ( Ymax * Ymax * 2.0 ) ) ) - hdrContrastThreshold, 0.0 );
 		float B = T > 0.0 ? T / ( hdrContrastOffset + T ) : T;
 
 		// clamp to 0...1
@@ -108,10 +110,13 @@ void CompositeFS ()
 		float avgLuminance = max( hdrAverageLuminance, 0.001 );
 		float linearExposure = ( hdrKey / avgLuminance );
 		float exposure = log2( max( linearExposure, 0.0001 ) );
-		
-		vec3 exposedColor = exp2( exposure ) * color.rgb;
 
-		color.rgb = ACESFilm( exposedColor );
+		// tonemap using ACES filmic tonemapping curve		
+		vec3 exposedColor = exp2( exposure ) * color.rgb;
+		vec3 curr = ACESFilm( exposedColor );
+		vec3 whiteScale = 1.0 / ACESFilm( vec3( Ymax ) );
+
+		color.rgb = curr * whiteScale;
 	}
 	// horizontal hdr chromatic glare
 	else if(compositeMode == 3)

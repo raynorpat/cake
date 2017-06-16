@@ -1,4 +1,4 @@
-/*
+﻿/*
 Copyright (C) 1997-2001 Id Software, Inc.
 
 This program is free software; you can redistribute it and/or
@@ -18,7 +18,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
 */
 // gl_postprocess.c -- screen polygons and effects
-
+#include <float.h>
 #include "gl_local.h"
 
 GLuint gl_compositeprog = 0;
@@ -54,13 +54,14 @@ GLuint r_currentDepthRenderImage;
 
 cvar_t *r_hdrAutoExposure;
 cvar_t *r_hdrKey;
-cvar_t *r_hdrKey;
 cvar_t *r_hdrMinLuminance;
 cvar_t *r_hdrMaxLuminance;
+cvar_t *r_hdrClampLuminance;
 cvar_t *r_exposure;
-cvar_t *r_hdrContrastDynamicThreshold;
-cvar_t *r_hdrContrastStaticThreshold;
+cvar_t *r_hdrContrastThreshold;
 cvar_t *r_hdrContrastOffset;
+cvar_t *r_debugHdrAdaptation;
+cvar_t *r_debugHdrHistogram;
 
 void RPostProcess_CreatePrograms(void)
 {
@@ -198,16 +199,17 @@ void RPostProcess_CreatePrograms(void)
 
 void RPostProcess_Init(void)
 {
-	r_hdrAutoExposure = Cvar_Get("r_hdrAutoExposure", "1", 0);
-	r_hdrKey = Cvar_Get("r_hdrKey", "0.018", 0);
-	r_hdrMinLuminance = Cvar_Get("r_hdrMinLuminance", "0.005", 0);
+	r_hdrAutoExposure = Cvar_Get("r_hdrAutoExposure", "0", 0);
+	r_hdrKey = Cvar_Get("r_hdrKey", "0.2", 0);
+	r_hdrMinLuminance = Cvar_Get("r_hdrMinLuminance", "0.18", 0);
 	r_hdrMaxLuminance = Cvar_Get("r_hdrMaxLuminance", "300", 0);
-	r_exposure = Cvar_Get("r_exposure", "0.5", 0);
-	r_hdrContrastDynamicThreshold = Cvar_Get("r_hdrContrastDynamicThreshold", "0.4", 0);
-	r_hdrContrastStaticThreshold = Cvar_Get("r_hdrContrastStaticThreshold", "0.3", 0);
+	r_hdrClampLuminance = Cvar_Get("r_hdrClampLuminance", "1", 0);
+	r_exposure = Cvar_Get("r_exposure", "1.0", 0);
+	r_hdrContrastThreshold = Cvar_Get("r_hdrContrastThreshold", "0.4", 0);
 	r_hdrContrastOffset = Cvar_Get("r_hdrContrastOffset", "100", 0);
+	r_debugHdrAdaptation = Cvar_Get("r_debugHdrAdaptation", "0", 0);
+	r_debugHdrHistogram = Cvar_Get("r_debugHdrHistogram", "0", 0);
 }
-
 
 qboolean r_dopostprocessing = false;
 qboolean r_dowaterwarppost = false;
@@ -239,24 +241,31 @@ void RPostProcess_Begin(void)
 	GL_Clear(GL_COLOR_BUFFER_BIT);
 }
 
+#define HISTOGRAM_SIZE 256
+float rp_histogramValues[HISTOGRAM_SIZE];
 
 float rp_hdrKey = 0;
 float rp_hdrAverageLuminance = 0;
 float rp_hdrMaxLuminance = 0;
 float rp_hdrTime = 0;
 
+static float weight(float val)
+{
+	if(val <= 0.5)
+		return val * 2.0;
+	else
+		return (1.0 - val) * 2.0;
+}
+
 static void RPostProcess_CalculateAdaptation(void)
 {
-	int				i;
 	static float	image[64 * 64 * 4];
 	float           curTime;
 	float			deltaTime;
 	float           luminance;
 	float			avgLuminance;
 	float			maxLuminance;
-	double			sum;
 	const vec3_t    LUMINANCE_SRGB = { 0.2125f, 0.7154f, 0.0721f }; // be careful wether this should be linear RGB or sRGB
-	vec4_t			color;
 	float			newAdaptation;
 	float			newMaximum;
 
@@ -275,44 +284,98 @@ static void RPostProcess_CalculateAdaptation(void)
 		R_BindFBO(hdrDownscale64);
 
 		// read back the contents
-		//	glFinish();
 		glReadPixels(0, 0, 64, 64, GL_RGBA, GL_FLOAT, image);
 
-		sum = 0.0f;
+#if 0
+		vec4_t color;
+		double sum = 0.0f;
 		maxLuminance = 0.0f;
-		for (i = 0; i < (64 * 64); i += 4)
+		for (int i = 0; i < (64 * 64); i += 4)
 		{
 			color[0] = image[i * 4 + 0];
 			color[1] = image[i * 4 + 1];
 			color[2] = image[i * 4 + 2];
 			color[3] = image[i * 4 + 3];
 
-			luminance = (color[0] * LUMINANCE_SRGB[0] + color[1] * LUMINANCE_SRGB[1] + color[2] * LUMINANCE_SRGB[2]) + 0.0001f;
+			luminance = weight( DotProduct(color, LUMINANCE_SRGB) );
 			if (luminance > maxLuminance)
-			{
 				maxLuminance = luminance;
-			}
 
-			float logLuminance = log(luminance + 1);
-			if( logLuminance > 0 )
-			{
-				sum += luminance;
-			}
+			sum += log(luminance) + 1e-6;
 		}
-		avgLuminance = sum / (64.0f * 64.0f);
-
-		// the user's adapted luminance level is simulated by closing the gap between
-		// adapted luminance and current luminance by 2% every frame, based on a
-		// 30 fps rate. This is not an accurate model of human adaptation, which can
-		// take longer than half an hour.
-		if (rp_hdrTime > curTime)
+		sum /= (64.0f * 64.0f);
+		avgLuminance = exp(sum);
+#else
+		// find min max
+		float min = FLT_MAX;
+		float max = -FLT_MAX;
+		int size = 64 * 64;
+		for (int i = 0; i < size; ++i)
 		{
-			rp_hdrTime = curTime;
+			vec3_t color;
+			color[0] = image[4 * i + 0];
+			color[1] = image[4 * i + 1];
+			color[2] = image[4 * i + 2];
+
+			// grab weighted luminance values
+			luminance = weight(DotProduct(color, LUMINANCE_SRGB));
+
+			// set min and max luminance values
+			if (luminance < min)
+				min = luminance;
+			if (luminance > max)
+				max = luminance;
+
+			image[4 * i + 0] = luminance; // write back for later use
 		}
 
-		deltaTime = curTime - rp_hdrTime;
+		// clear the histogram
+		memset(rp_histogramValues, 0, HISTOGRAM_SIZE * sizeof(float));
 
-		//if(r_hdrMaxLuminance->value)
+		// build the histogram
+		float hmin = 0.0f;
+		float hmax = 5.0f;
+		float diff = hmax - hmin;
+		float step = diff / HISTOGRAM_SIZE;
+		float increment = 1.0f / (float)size;
+		for (int i = 0; i < size; ++i)
+		{
+			float l = image[4 * i + 0];
+			int bin = (l - hmin) / step;
+			if (bin < 0)
+				bin = 0;
+			if (bin >= HISTOGRAM_SIZE)
+				bin = HISTOGRAM_SIZE - 1;
+			rp_histogramValues[bin] += increment;
+		}
+
+		// capture average log luminance value and max luminance value from bin
+		float binmax = 0.0f;
+		float avgLogLum = 0.0f;
+		for (int i = 0; i<HISTOGRAM_SIZE; ++i)
+		{
+			float v = rp_histogramValues[i];
+
+			// set max luminance value
+			if (v > binmax)
+				binmax = v;
+	
+			// add log luminance and add 1e-6, so we don't get any odd rounding issues
+			avgLogLum += log(luminance) + 1e-6;
+		}
+		avgLogLum /= (float)size;
+		avgLuminance = exp(avgLogLum);
+
+		maxLuminance = binmax;
+
+		if (r_debugHdrHistogram->value)
+		{
+			VID_Printf(PRINT_ALL, "Darkest pixel = %5.3f, Brightest pixel = %5.3f\n", min, max);
+			VID_Printf(PRINT_ALL, " %i%% of pixels, UpperBound = %1.3f\n", (int)(100.0 * binmax), hmax);
+		}
+#endif
+		// clamp average and max luminance values
+		if (r_hdrClampLuminance->value)
 		{
 			rp_hdrAverageLuminance = clamp(r_hdrMinLuminance->value, r_hdrMaxLuminance->value, rp_hdrAverageLuminance);
 			avgLuminance = clamp(r_hdrMinLuminance->value, r_hdrMaxLuminance->value, avgLuminance);
@@ -321,38 +384,40 @@ static void RPostProcess_CalculateAdaptation(void)
 			maxLuminance = clamp(r_hdrMinLuminance->value, r_hdrMaxLuminance->value, maxLuminance);
 		}
 
+		// the adapted luminance level is simulated by closing the gap between
+		// adapted luminance and current luminance by 2% every frame, based on a
+		// 30 fps rate. This is not an accurate model of human adaptation, which can
+		// take longer than half an hour.
+		if (rp_hdrTime > curTime)
+			rp_hdrTime = curTime;
+		deltaTime = curTime - rp_hdrTime;
+
 		newAdaptation = rp_hdrAverageLuminance + (avgLuminance - rp_hdrAverageLuminance) * (1.0f - powf(0.98f, 30.0f * deltaTime));
 		newMaximum = rp_hdrMaxLuminance + (maxLuminance - rp_hdrMaxLuminance) * (1.0f - powf(0.98f, 30.0f * deltaTime));
-
 		if (!IsNAN(newAdaptation) && !IsNAN(newMaximum))
 		{
-#if 1
 			rp_hdrAverageLuminance = newAdaptation;
 			rp_hdrMaxLuminance = newMaximum;
-#else
-			rp_hdrAverageLuminance = avgLuminance;
-			rp_hdrMaxLuminance = maxLuminance;
-#endif
 		}
 
 		rp_hdrTime = curTime;
 
 		// calculate HDR image key
-#if 0
-		// this never worked :/
 		if (r_hdrAutoExposure->value)
 		{
 			// calculation from: Perceptual Effects in Real-time Tone Mapping - Krawczyk et al.
 			rp_hdrKey = 1.03 - (2.0 / (2.0 + (rp_hdrAverageLuminance + 1.0f)));
 		}
 		else
-#endif
 		{
 			rp_hdrKey = r_hdrKey->value;
 		}
 	}
 
-	//VID_Printf(PRINT_ALL, "HDR luminance avg = %f, max = %f, key = %f\n", rp_hdrAverageLuminance, rp_hdrMaxLuminance, rp_hdrKey);
+	if (r_debugHdrAdaptation->value)
+	{
+		VID_Printf(PRINT_ALL, "HDR luminance avg = %f, max = %f, key = %f\n", rp_hdrAverageLuminance, rp_hdrMaxLuminance, rp_hdrKey);
+	}
 }
 
 static void RPostProcess_DoTonemap(void)
@@ -391,7 +456,7 @@ static void RPostProcess_DoTonemap(void)
 	glProgramUniform4f(gl_compositeprog, u_compositeHDRParam, hdrParam[0], hdrParam[1], hdrParam[2], hdrParam[3]);
 
 	GL_BindTexture(GL_TEXTURE0, GL_TEXTURE_2D, r_drawclampsampler, r_currentRenderHDRImage);
-
+	
 	GL_BindVertexArray(r_postvao);
 	glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
 }
@@ -416,14 +481,8 @@ static void RPostProcess_DoBloom(void)
 	hdrParam[2] = rp_hdrMaxLuminance;
 	hdrParam[3] = 1.0f;
 	glProgramUniform4f(gl_compositeprog, u_compositeHDRParam, hdrParam[0], hdrParam[1], hdrParam[2], hdrParam[3]);
-	if (r_hdrAutoExposure->value)
-	{
-		brightParam[0] = r_hdrContrastDynamicThreshold->value;
-	}
-	else
-	{
-		brightParam[0] = r_hdrContrastStaticThreshold->value;
-	}
+
+	brightParam[0] = r_hdrContrastThreshold->value;
 	brightParam[1] = r_hdrContrastOffset->value;
 	brightParam[2] = 0;
 	brightParam[3] = 0;
@@ -441,6 +500,7 @@ static void RPostProcess_DoBloom(void)
 
 	// hdr chromatic glare
 	GL_BindTexture(GL_TEXTURE0, GL_TEXTURE_2D, r_drawclampsampler, r_brightPassRenderImage);
+
 	for (i = 0; i < 8; i++)
 	{
 		texScale[0] = 1.0f / bloomRenderFBO[flip]->width;
