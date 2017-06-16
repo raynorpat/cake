@@ -4,6 +4,12 @@
 float saturate( float v ) { return clamp( v, 0.0, 1.0 ); }
 vec3 saturate( vec3 v ) { return clamp( v, 0.0, 1.0 ); }
 
+float log10( in float n )
+{
+	const float logBase10 = 1.0 / log2( 10.0 );
+	return log2( n ) * logBase10;
+}
+
 const vec4 LUMINANCE_VECTOR = vec4(0.2125, 0.7154, 0.0721, 0.0);
 
 // https://en.wikipedia.org/wiki/SRGB
