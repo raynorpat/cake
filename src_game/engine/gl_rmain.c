@@ -95,7 +95,6 @@ cvar_t	*gl_showtris;
 cvar_t	*gl_finish;
 cvar_t	*gl_clear;
 cvar_t	*gl_cull;
-cvar_t	*gl_polyblend;
 cvar_t	*gl_swapinterval;
 cvar_t	*gl_texturemode;
 cvar_t	*gl_textureanisotropy;
@@ -444,8 +443,6 @@ void R_RenderView (refdef_t *fd)
 		R_DrawParticles ();
 
 		RPostProcess_FinishToScreen();
-
-		Draw_PolyBlend();
 	}
 	else
 	{
@@ -531,7 +528,6 @@ void R_Register (void)
 	gl_finish = Cvar_Get ("gl_finish", "0", CVAR_ARCHIVE);
 	gl_clear = Cvar_Get ("gl_clear", "0", 0);
 	gl_cull = Cvar_Get ("gl_cull", "1", 0);
-	gl_polyblend = Cvar_Get ("gl_polyblend", "1", 0);
 	gl_monolightmap = Cvar_Get ("gl_monolightmap", "0", 0);
 	gl_texturemode = Cvar_Get ("gl_texturemode", "GL_NEAREST_MIPMAP_LINEAR", CVAR_ARCHIVE);
 	gl_textureanisotropy = Cvar_Get ("gl_textureanisotropy", "1", CVAR_ARCHIVE);

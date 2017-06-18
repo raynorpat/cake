@@ -431,7 +431,6 @@ void Draw_Fill (int x, int y, int w, int h, int c)
 	Draw_ColouredRect (x, y, w, h, d_8to24table_rgba[c & 255]);
 }
 
-
 //=============================================================================
 
 /*
@@ -444,37 +443,6 @@ void Draw_FadeScreen (void)
 {
 	Draw_ColouredRect (0, 0, vid.width, vid.height, 0xcc000000);
 }
-
-
-void Draw_PolyBlend (void)
-{
-	union
-	{
-		unsigned c;
-		byte rgba[4];
-	} polyblend;
-
-	int i;
-
-	if (!gl_polyblend->value) return;
-	if (!v_blend[3]) return;
-
-	for (i = 0; i < 4; i++)
-	{
-		if (v_blend[i] > 1)
-			polyblend.rgba[i] = 255;
-		else if (v_blend[i] < 0)
-			polyblend.rgba[i] = 0;
-		else
-			polyblend.rgba[i] = v_blend[i] * 255;
-	}
-
-	Draw_ColouredRect (0, 0, vid.width, vid.height, polyblend.c);
-
-	// hack
-	Draw_End2D ();
-}
-
 
 //====================================================================
 

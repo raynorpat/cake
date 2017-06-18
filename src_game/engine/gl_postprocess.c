@@ -527,8 +527,8 @@ static void RPostProcess_DoBloom(void)
 	R_BindNullFBO();
 
 	// then we can do a final post-process pass
-	if (v_blend[3] && gl_polyblend->value)
-		glProgramUniform4f(gl_postprog, u_postsurfcolor, v_blend[0], v_blend[1], v_blend[2], v_blend[3] * gl_polyblend->value);
+	if (v_blend[3])
+		glProgramUniform4f(gl_postprog, u_postsurfcolor, v_blend[0], v_blend[1], v_blend[2], v_blend[3] * 0.5);
 	else
 		glProgramUniform4f(gl_postprog, u_postsurfcolor, 0, 0, 0, 0);
 

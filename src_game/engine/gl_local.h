@@ -262,7 +262,6 @@ extern	cvar_t	*gl_showtris;
 extern	cvar_t	*gl_finish;
 extern	cvar_t	*gl_clear;
 extern	cvar_t	*gl_cull;
-extern	cvar_t	*gl_polyblend;
 extern	cvar_t	*gl_swapinterval;
 extern	cvar_t	*gl_texturemode;
 extern	cvar_t	*gl_textureanisotropy;
@@ -333,7 +332,6 @@ void Draw_TileClear (int x, int y, int w, int h, char *name);
 void Draw_Fill (int x, int y, int w, int h, int c);
 void Draw_FadeScreen (void);
 void Draw_StretchRaw (int x, int y, int w, int h, int cols, int rows, byte *data);
-void Draw_PolyBlend (void);
 void Draw_Begin2D (void);
 void Draw_End2D (void);
 
