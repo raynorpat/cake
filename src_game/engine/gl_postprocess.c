@@ -18,20 +18,28 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
 */
 // gl_postprocess.c -- screen polygons and effects
-#include <float.h>
 #include "gl_local.h"
+
+GLuint gl_ssaoprog = 0;
+GLuint u_ssaoTexScale = 0;
+GLuint u_ssaoZFar = 0;
 
 GLuint gl_compositeprog = 0;
 GLuint u_compositeTexScale = 0;
 GLuint u_compositeMode = 0;
-GLuint u_compositeHDRParam = 0;
 GLuint u_compositeBrightParam = 0;
 
 GLuint gl_postprog = 0;
 GLuint u_postsurfcolor = 0;
+GLuint u_postExposure = 0;
+GLuint u_postBlurAmount = 0;
 GLuint u_postTexScale = 0;
 GLuint u_postwaterwarpparam = 0;
 GLuint u_postwaterwarp = 0;
+
+GLuint gl_calcLumProg = 0;
+GLuint gl_calcAdaptiveLumProg = 0;
+GLuint u_deltaTime = 0;
 
 float r_warpmaxs;
 float r_warpmaxt;
@@ -52,17 +60,17 @@ GLuint r_currentRenderHDRImage64;
 GLuint r_currentRenderHDRImage;
 GLuint r_currentDepthRenderImage;
 GLuint r_currentAORenderImage;
+GLuint m_lum[2];
+GLuint m_lumCurrent;
 
-cvar_t *r_hdrAutoExposure;
-cvar_t *r_hdrKey;
-cvar_t *r_hdrMinLuminance;
-cvar_t *r_hdrMaxLuminance;
-cvar_t *r_hdrClampLuminance;
-cvar_t *r_exposure;
 cvar_t *r_hdrContrastThreshold;
-cvar_t *r_hdrContrastOffset;
-cvar_t *r_debugHdrAdaptation;
-cvar_t *r_debugHdrHistogram;
+cvar_t *r_hdrContrastScale;
+cvar_t *r_hdrExposureCompensation;
+cvar_t *r_hdrExposureAdjust;
+cvar_t *r_hdrBlurAmount;
+cvar_t *r_ssao;
+
+float rp_hdrTime;
 
 void RPostProcess_CreatePrograms(void)
 {
@@ -73,6 +81,11 @@ void RPostProcess_CreatePrograms(void)
 	// create shaders
 	gl_compositeprog = GL_CreateShaderFromName("glsl/composite.glsl", "CompositeVS", "CompositeFS");
 	gl_postprog = GL_CreateShaderFromName("glsl/post.glsl", "PostVS", "PostFS");
+	gl_ssaoprog = GL_CreateShaderFromName("glsl/ssao.glsl", "SSAOVS", "SSAOFS");
+
+	// create compute shaders
+	gl_calcLumProg = GL_CreateComputeShaderFromName("glsl/calcLum.cs");
+	gl_calcAdaptiveLumProg = GL_CreateComputeShaderFromName("glsl/calcAdaptiveLum.cs");
 
 	// create texture for underwater warp gradient
 	LoadTGAFile("env/warpgradient.tga", &data, &width, &height);
@@ -140,10 +153,40 @@ void RPostProcess_CreatePrograms(void)
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 	glBindTexture(GL_TEXTURE_2D, 0);
 
+	glDeleteTextures(1, &m_lum[0]);
+	glGenTextures(1, &m_lum[0]);
+	glBindTexture(GL_TEXTURE_2D, m_lum[0]);
+	glTexStorage2D(GL_TEXTURE_2D, 1, GL_RGBA16F, 1, 1);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glBindTexture(GL_TEXTURE_2D, 0);
+
+	glDeleteTextures(1, &m_lum[1]);
+	glGenTextures(1, &m_lum[1]);
+	glBindTexture(GL_TEXTURE_2D, m_lum[1]);
+	glTexStorage2D(GL_TEXTURE_2D, 1, GL_RGBA16F, 1, 1);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glBindTexture(GL_TEXTURE_2D, 0);
+
+	glDeleteTextures(1, &m_lumCurrent);
+	glGenTextures(1, &m_lumCurrent);
+	glBindTexture(GL_TEXTURE_2D, m_lumCurrent);
+	glTexStorage2D(GL_TEXTURE_2D, 1, GL_RGBA16F, 1, 1);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glBindTexture(GL_TEXTURE_2D, 0);
+
 	glDeleteTextures(1, &r_brightPassRenderImage);
 	glGenTextures(1, &r_brightPassRenderImage);
 	glBindTexture(GL_TEXTURE_2D, r_brightPassRenderImage);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, vid.width * 0.25f, vid.height * 0.25f, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, vid.width * 0.25f, vid.height * 0.25f, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -189,13 +232,19 @@ void RPostProcess_CreatePrograms(void)
 	// set up shader uniforms
 	u_compositeMode = glGetUniformLocation(gl_compositeprog, "compositeMode");
 	u_compositeTexScale = glGetUniformLocation(gl_compositeprog, "texScale");
-	u_compositeHDRParam = glGetUniformLocation(gl_compositeprog, "hdrParam");
 	u_compositeBrightParam = glGetUniformLocation(gl_compositeprog, "brightParam");
 
 	u_postsurfcolor = glGetUniformLocation (gl_postprog, "surfcolor");
+	u_postBlurAmount = glGetUniformLocation (gl_postprog, "blurAmount");
+	u_postExposure = glGetUniformLocation (gl_postprog, "exposure");
 	u_postTexScale = glGetUniformLocation (gl_postprog, "texScale");
 	u_postwaterwarpparam = glGetUniformLocation (gl_postprog, "waterwarpParam");
 	u_postwaterwarp = glGetUniformLocation (gl_postprog, "waterwarppost");
+
+	u_ssaoZFar = glGetUniformLocation (gl_ssaoprog, "zFar");
+	u_ssaoTexScale = glGetUniformLocation (gl_ssaoprog, "texScale");
+
+	u_deltaTime = glGetUniformLocation (gl_calcAdaptiveLumProg, "deltaTime");
 
 	glProgramUniform1i (gl_compositeprog, glGetUniformLocation (gl_compositeprog, "diffuse"), 0);
 	glProgramUniform2f (gl_compositeprog, glGetUniformLocation (gl_compositeprog, "rescale"), 1.0 / r_warpmaxs, 1.0 / r_warpmaxt);
@@ -204,22 +253,30 @@ void RPostProcess_CreatePrograms(void)
 	glProgramUniform1i (gl_postprog, glGetUniformLocation (gl_postprog, "diffuse"), 0);
 	glProgramUniform1i (gl_postprog, glGetUniformLocation (gl_postprog, "precomposite"), 1);
 	glProgramUniform1i (gl_postprog, glGetUniformLocation (gl_postprog, "warpgradient"), 2);
+	glProgramUniform1i (gl_postprog, glGetUniformLocation (gl_postprog, "lumTex"), 3);
+	glProgramUniform1i (gl_postprog, glGetUniformLocation (gl_postprog, "AOTex"), 4);
 	glProgramUniform2f (gl_postprog, glGetUniformLocation (gl_postprog, "rescale"), 1.0 / r_warpmaxs, 1.0 / r_warpmaxt);
 	glProgramUniformMatrix4fv (gl_postprog, glGetUniformLocation (gl_postprog, "orthomatrix"), 1, GL_FALSE, r_drawmatrix.m[0]);
+
+	glProgramUniform1i (gl_ssaoprog, glGetUniformLocation (gl_ssaoprog, "depthmap"), 0);
+	glProgramUniformMatrix4fv (gl_ssaoprog, glGetUniformLocation (gl_ssaoprog, "orthomatrix"), 1, GL_FALSE, r_drawmatrix.m[0]);
+
+	glProgramUniform1i (gl_calcLumProg, glGetUniformLocation (gl_calcLumProg, "inputImage"), 0);
+	glProgramUniform1i (gl_calcLumProg, glGetUniformLocation (gl_calcLumProg, "outputImage"), 1);
+
+	glProgramUniform1i (gl_calcAdaptiveLumProg, glGetUniformLocation (gl_calcAdaptiveLumProg, "currentImage"), 0);
+	glProgramUniform1i (gl_calcAdaptiveLumProg, glGetUniformLocation (gl_calcAdaptiveLumProg, "image0"), 1);
+	glProgramUniform1i (gl_calcAdaptiveLumProg, glGetUniformLocation (gl_calcAdaptiveLumProg, "image1"), 2);
 }
 
 void RPostProcess_Init(void)
 {
-	r_hdrAutoExposure = Cvar_Get("r_hdrAutoExposure", "0", 0);
-	r_hdrKey = Cvar_Get("r_hdrKey", "0.2", 0);
-	r_hdrMinLuminance = Cvar_Get("r_hdrMinLuminance", "0.18", 0);
-	r_hdrMaxLuminance = Cvar_Get("r_hdrMaxLuminance", "300", 0);
-	r_hdrClampLuminance = Cvar_Get("r_hdrClampLuminance", "1", 0);
-	r_exposure = Cvar_Get("r_exposure", "1.0", 0);
-	r_hdrContrastThreshold = Cvar_Get("r_hdrContrastThreshold", "0.4", 0);
-	r_hdrContrastOffset = Cvar_Get("r_hdrContrastOffset", "100", 0);
-	r_debugHdrAdaptation = Cvar_Get("r_debugHdrAdaptation", "0", 0);
-	r_debugHdrHistogram = Cvar_Get("r_debugHdrHistogram", "0", 0);
+	r_hdrContrastThreshold = Cvar_Get("r_hdrContrastThreshold", "1.0", 0);
+	r_hdrContrastScale = Cvar_Get("r_hdrContrastScale", "300", 0);
+	r_hdrExposureCompensation = Cvar_Get("r_hdrExposureCompensation", "3.0", 0);
+	r_hdrExposureAdjust = Cvar_Get("r_hdrExposureAdjust", "1.4", 0);
+	r_hdrBlurAmount = Cvar_Get("r_hdrBlurAmount", "0.33", 0);
+	r_ssao = Cvar_Get("r_ssao", "1", 0);
 }
 
 qboolean r_dopostprocessing = false;
@@ -252,231 +309,38 @@ void RPostProcess_Begin(void)
 	GL_Clear(GL_COLOR_BUFFER_BIT);
 }
 
-#define HISTOGRAM_SIZE 256
-float rp_histogramValues[HISTOGRAM_SIZE];
-
-float rp_hdrKey = 0;
-float rp_hdrAverageLuminance = 0;
-float rp_hdrMaxLuminance = 0;
-float rp_hdrTime = 0;
-
-static float weight(float val)
+void RPostProcess_ComputeShader_CalculateLuminance(void)
 {
-	if(val <= 0.5)
-		return val * 2.0;
-	else
-		return (1.0 - val) * 2.0;
+	GL_UseProgram (gl_calcLumProg);
+	glBindImageTexture (0, r_currentRenderHDRImage64, 0, GL_FALSE, 0, GL_READ_ONLY, GL_RGBA16F);
+	glBindImageTexture (1, m_lumCurrent, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA16F);
+	glDispatchCompute (1, 1, 1);
+	//glMemoryBarrier (GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);  
+
+	GL_UseProgram (gl_calcAdaptiveLumProg);
+	glBindImageTexture (0, m_lumCurrent, 0, GL_FALSE, 0, GL_READ_ONLY, GL_RGBA16F);
+	glBindImageTexture (1, m_lum[0], 0, GL_FALSE, 0, GL_READ_ONLY, GL_RGBA16F);
+	glBindImageTexture (2, m_lum[1], 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA16F);
+
+	// simulates 60fps
+	glUniform1f (u_deltaTime, 1 / 60.0f);
+	glDispatchCompute (1, 1, 1);
+	glMemoryBarrier (GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
 }
 
-static void RPostProcess_CalculateAdaptation(void)
+static void RPostProcess_Downscale(void)
 {
-	static float	image[64 * 64 * 4];
-	float           curTime;
-	float			deltaTime;
-	float           luminance;
-	float			avgLuminance;
-	float			maxLuminance;
-	const vec3_t    LUMINANCE_SRGB = { 0.2125f, 0.7154f, 0.0721f }; // be careful wether this should be linear RGB or sRGB
-	float			newAdaptation;
-	float			newMaximum;
-
-	if (!r_hdrAutoExposure->value)
-	{
-		// no dynamic exposure
-		rp_hdrKey = r_hdrKey->value;
-		rp_hdrAverageLuminance = r_hdrMinLuminance->value;
-		rp_hdrMaxLuminance = 1;
-	}
-	else
-	{
-		curTime = Sys_Milliseconds() / 1000.0f;
-
-		// calculate the average scene luminance
-		R_BindFBO(hdrDownscale64);
-
-		// read back the contents
-		glReadPixels(0, 0, 64, 64, GL_RGBA, GL_FLOAT, image);
-
-#if 0
-		vec4_t color;
-		double sum = 0.0f;
-		maxLuminance = 0.0f;
-		for (int i = 0; i < (64 * 64); i += 4)
-		{
-			color[0] = image[i * 4 + 0];
-			color[1] = image[i * 4 + 1];
-			color[2] = image[i * 4 + 2];
-			color[3] = image[i * 4 + 3];
-
-			luminance = weight( DotProduct(color, LUMINANCE_SRGB) );
-			if (luminance > maxLuminance)
-				maxLuminance = luminance;
-
-			sum += log(luminance) + 1e-6;
-		}
-		sum /= (64.0f * 64.0f);
-		avgLuminance = exp(sum);
-#else
-		// find min max
-		float min = FLT_MAX;
-		float max = -FLT_MAX;
-		int size = 64 * 64;
-		for (int i = 0; i < size; ++i)
-		{
-			vec3_t color;
-			color[0] = image[4 * i + 0];
-			color[1] = image[4 * i + 1];
-			color[2] = image[4 * i + 2];
-
-			// grab weighted luminance values
-			luminance = weight(DotProduct(color, LUMINANCE_SRGB));
-
-			// set min and max luminance values
-			if (luminance < min)
-				min = luminance;
-			if (luminance > max)
-				max = luminance;
-
-			image[4 * i + 0] = luminance; // write back for later use
-		}
-
-		// clear the histogram
-		memset(rp_histogramValues, 0, HISTOGRAM_SIZE * sizeof(float));
-
-		// build the histogram
-		float hmin = 0.0f;
-		float hmax = 5.0f;
-		float diff = hmax - hmin;
-		float step = diff / HISTOGRAM_SIZE;
-		float increment = 1.0f / (float)size;
-		for (int i = 0; i < size; ++i)
-		{
-			float l = image[4 * i + 0];
-			int bin = (l - hmin) / step;
-			if (bin < 0)
-				bin = 0;
-			if (bin >= HISTOGRAM_SIZE)
-				bin = HISTOGRAM_SIZE - 1;
-			rp_histogramValues[bin] += increment;
-		}
-
-		// capture average log luminance value and max luminance value from bin
-		float binmax = 0.0f;
-		float avgLogLum = 0.0f;
-		for (int i = 0; i<HISTOGRAM_SIZE; ++i)
-		{
-			float v = rp_histogramValues[i];
-
-			// set max luminance value
-			if (v > binmax)
-				binmax = v;
-	
-			// add log luminance and add 1e-6, so we don't get any odd rounding issues
-			avgLogLum += log(luminance) + 1e-6;
-		}
-		avgLogLum /= (float)size;
-		avgLuminance = exp(avgLogLum);
-
-		maxLuminance = binmax;
-
-		if (r_debugHdrHistogram->value)
-		{
-			VID_Printf(PRINT_ALL, "Darkest pixel = %5.3f, Brightest pixel = %5.3f\n", min, max);
-			VID_Printf(PRINT_ALL, " %i%% of pixels, UpperBound = %1.3f\n", (int)(100.0 * binmax), hmax);
-		}
-#endif
-		// clamp average and max luminance values
-		if (r_hdrClampLuminance->value)
-		{
-			rp_hdrAverageLuminance = clamp(r_hdrMinLuminance->value, r_hdrMaxLuminance->value, rp_hdrAverageLuminance);
-			avgLuminance = clamp(r_hdrMinLuminance->value, r_hdrMaxLuminance->value, avgLuminance);
-
-			rp_hdrMaxLuminance = clamp(r_hdrMinLuminance->value, r_hdrMaxLuminance->value, rp_hdrMaxLuminance);
-			maxLuminance = clamp(r_hdrMinLuminance->value, r_hdrMaxLuminance->value, maxLuminance);
-		}
-
-		// the adapted luminance level is simulated by closing the gap between
-		// adapted luminance and current luminance by 2% every frame, based on a
-		// 30 fps rate. This is not an accurate model of human adaptation, which can
-		// take longer than half an hour.
-		if (rp_hdrTime > curTime)
-			rp_hdrTime = curTime;
-		deltaTime = curTime - rp_hdrTime;
-
-		newAdaptation = rp_hdrAverageLuminance + (avgLuminance - rp_hdrAverageLuminance) * (1.0f - powf(0.98f, 30.0f * deltaTime));
-		newMaximum = rp_hdrMaxLuminance + (maxLuminance - rp_hdrMaxLuminance) * (1.0f - powf(0.98f, 30.0f * deltaTime));
-		if (!IsNAN(newAdaptation) && !IsNAN(newMaximum))
-		{
-			rp_hdrAverageLuminance = newAdaptation;
-			rp_hdrMaxLuminance = newMaximum;
-		}
-
-		rp_hdrTime = curTime;
-
-		// calculate HDR image key
-		if (r_hdrAutoExposure->value)
-		{
-			// calculation from: Perceptual Effects in Real-time Tone Mapping - Krawczyk et al.
-			rp_hdrKey = 1.03 - (2.0 / (2.0 + (rp_hdrAverageLuminance + 1.0f)));
-		}
-		else
-		{
-			rp_hdrKey = r_hdrKey->value;
-		}
-	}
-
-	if (r_debugHdrAdaptation->value)
-	{
-		VID_Printf(PRINT_ALL, "HDR luminance avg = %f, max = %f, key = %f\n", rp_hdrAverageLuminance, rp_hdrMaxLuminance, rp_hdrKey);
-	}
+	// blit current hdr framebuffer into downscaled 64x64 texture
+	// so we can do automatic exposure adaptation
+	glBindFramebuffer(GL_READ_FRAMEBUFFER_EXT, hdrRenderFBO->frameBuffer);
+	glBindFramebuffer(GL_DRAW_FRAMEBUFFER_EXT, hdrDownscale64->frameBuffer);
+	glBlitFramebuffer(0, 0, vid.width, vid.height, 0, 0, 64, 64, GL_COLOR_BUFFER_BIT, GL_LINEAR);
 }
 
-static void RPostProcess_DoTonemap(void)
+static void RPostProcess_DownscaleBrightpass(void)
 {
-	int flip = 0;
 	vec2_t texScale;
-	vec4_t hdrParam;
-
-	R_BindNullFBO();
-
-	GL_Enable(BLEND_BIT);
-
-	texScale[0] = 1.0f / vid.width;
-	texScale[1] = 1.0f / vid.height;
-
-	GL_UseProgram(gl_compositeprog);
-
-	if (r_hdrAutoExposure->value)
-	{
-		float exposureOffset = lerp(-0.01f, 0.02f, clamp(0.0, 1.0, r_exposure->value));
-		hdrParam[0] = rp_hdrKey + exposureOffset;
-		hdrParam[1] = rp_hdrAverageLuminance;
-		hdrParam[2] = rp_hdrMaxLuminance;
-		hdrParam[3] = exposureOffset;
-	}
-	else
-	{
-		float exposureOffset = lerp(-0.01f, 0.01f, clamp(0.0, 1.0, r_exposure->value));
-		hdrParam[0] = 0.015f + exposureOffset;
-		hdrParam[1] = 0.005f;
-		hdrParam[2] = 1;
-		hdrParam[3] = 1;
-	}
-	glProgramUniform1i(gl_compositeprog, u_compositeMode, 2);
-	glProgramUniform2f(gl_compositeprog, u_compositeTexScale, texScale[0], texScale[1]);
-	glProgramUniform4f(gl_compositeprog, u_compositeHDRParam, hdrParam[0], hdrParam[1], hdrParam[2], hdrParam[3]);
-
-	GL_BindTexture(GL_TEXTURE0, GL_TEXTURE_2D, r_drawclampsampler, r_currentRenderHDRImage);
-	
-	GL_BindVertexArray(r_postvao);
-	glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
-}
-
-static void RPostProcess_DoBloom(void)
-{
-	int i, flip = 0;
-	vec2_t texScale;
-	vec4_t hdrParam, brightParam, waterwarpParam;
+	vec4_t brightParam;
 
 	// set screen scale
 	texScale[0] = 1.0f / vid.width;
@@ -484,17 +348,11 @@ static void RPostProcess_DoBloom(void)
 
 	GL_Enable(BLEND_BIT);
 
-	// do downscaled brightpass and tonemap
+	// do downscaled brightpass
 	GL_UseProgram(gl_compositeprog);
 
-	hdrParam[0] = rp_hdrKey;
-	hdrParam[1] = rp_hdrAverageLuminance;
-	hdrParam[2] = rp_hdrMaxLuminance;
-	hdrParam[3] = 1.0f;
-	glProgramUniform4f(gl_compositeprog, u_compositeHDRParam, hdrParam[0], hdrParam[1], hdrParam[2], hdrParam[3]);
-
 	brightParam[0] = r_hdrContrastThreshold->value;
-	brightParam[1] = r_hdrContrastOffset->value;
+	brightParam[1] = r_hdrContrastScale->value;
 	brightParam[2] = 0;
 	brightParam[3] = 0;
 	glProgramUniform4f(gl_compositeprog, u_compositeBrightParam, brightParam[0], brightParam[1], brightParam[2], brightParam[3]);
@@ -508,31 +366,48 @@ static void RPostProcess_DoBloom(void)
 
 	GL_BindVertexArray(r_postvao);
 	glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+}
 
-	// hdr chromatic glare
+static void RPostProcess_DoBloomAndTonemap(void)
+{
+	int i, j, flip = 0;
+	vec2_t texScale;
+	vec4_t waterwarpParam;
+
+	// set screen scale
+	texScale[0] = 1.0f / vid.width;
+	texScale[1] = 1.0f / vid.height;
+
+	// seperable blur passes
 	GL_BindTexture(GL_TEXTURE0, GL_TEXTURE_2D, r_drawclampsampler, r_brightPassRenderImage);
 
-	for (i = 0; i < 8; i++)
+	for (i = 0; i < 2; i++)
 	{
-		texScale[0] = 1.0f / bloomRenderFBO[flip]->width;
-		texScale[1] = 1.0f / bloomRenderFBO[flip]->height;
+		for (j = 0; j < 8; j++)
+		{
+			texScale[0] = 1.0f / bloomRenderFBO[flip]->width;
+			texScale[1] = 1.0f / bloomRenderFBO[flip]->height;
 
-		R_BindFBO(bloomRenderFBO[flip]);
+			R_BindFBO(bloomRenderFBO[flip]);
 
-		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-		GL_Clear(GL_COLOR_BUFFER_BIT);
+			glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+			GL_Clear(GL_COLOR_BUFFER_BIT);
 
-		GL_Enable(BLEND_BIT);
+			GL_Enable(BLEND_BIT);
 
-		GL_UseProgram(gl_compositeprog);
-		glProgramUniform1i(gl_compositeprog, u_compositeMode, 3);
-		glProgramUniform2f(gl_compositeprog, u_compositeTexScale, texScale[0], texScale[1]);
+			GL_UseProgram(gl_compositeprog);
+			if (i == 0)
+				glProgramUniform1i(gl_compositeprog, u_compositeMode, 2);
+			else
+				glProgramUniform1i(gl_compositeprog, u_compositeMode, 3);
+			glProgramUniform2f(gl_compositeprog, u_compositeTexScale, texScale[0], texScale[1]);
 
-		GL_BindVertexArray(r_postvao);
-		glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+			GL_BindVertexArray(r_postvao);
+			glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
 
-		GL_BindTexture(GL_TEXTURE0, GL_TEXTURE_2D, r_drawclampsampler, r_bloomRenderImage[flip]);
-		flip ^= 1;
+			GL_BindTexture(GL_TEXTURE0, GL_TEXTURE_2D, r_drawclampsampler, r_bloomRenderImage[flip]);
+			flip ^= 1;
+		}
 	}
 
 	R_BindNullFBO();
@@ -546,6 +421,11 @@ static void RPostProcess_DoBloom(void)
 	texScale[0] = 1.0f / vid.width;
 	texScale[1] = 1.0f / vid.height;
 	glProgramUniform2f(gl_postprog, u_postTexScale, texScale[0], texScale[1]);
+	glProgramUniform1f(gl_postprog, u_postBlurAmount, r_hdrBlurAmount->value);
+
+	// adaptive exposure adjustment in log space
+	float newExp = r_hdrExposureCompensation->value * log(r_hdrExposureAdjust->value + 0.0001f);
+	glProgramUniform1f(gl_postprog, u_postExposure, newExp);
 
 	waterwarpParam[0] = r_newrefdef.time * (128.0 / M_PI);
 	waterwarpParam[1] = 2.0f;
@@ -564,10 +444,60 @@ static void RPostProcess_DoBloom(void)
 	GL_Enable(BLEND_BIT);
 	GL_BindTexture(GL_TEXTURE1, GL_TEXTURE_2D, r_drawclampsampler, r_currentRenderHDRImage);
 	GL_BindTexture(GL_TEXTURE2, GL_TEXTURE_2D, r_drawwrapsampler, r_warpGradientImage);
+	GL_BindTexture(GL_TEXTURE3, GL_TEXTURE_2D, r_drawwrapsampler, m_lum[1]);
+	GL_BindTexture(GL_TEXTURE4, GL_TEXTURE_2D, r_drawwrapsampler, r_currentAORenderImage);
 	GL_BindVertexArray(r_postvao);
 	GL_UseProgram(gl_postprog);
 
 	glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+}
+
+ void RPostProcess_SSAO(void)
+{
+	vec2_t texScale;
+	vec3_t zFarParam;
+
+	if (!r_ssao->value)
+		return;
+
+	// blit current framebuffer into ambient occlusion buffer
+	glBindFramebuffer(GL_READ_FRAMEBUFFER_EXT, hdrRenderFBO->frameBuffer);
+	glBindFramebuffer(GL_DRAW_FRAMEBUFFER_EXT, AORenderFBO->frameBuffer);
+	glBlitFramebuffer(0, 0, vid.width, vid.height, 0, 0, vid.width, vid.height, GL_COLOR_BUFFER_BIT, GL_LINEAR);
+
+	// bind ambient occlusion buffer and clear to white
+	R_BindFBO(AORenderFBO);
+	glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+	glClear(GL_COLOR_BUFFER_BIT);
+
+	// set screen scale
+	texScale[0] = 1.0f / vid.width;
+	texScale[1] = 1.0f / vid.height;
+
+	GL_Enable(!DEPTHTEST_BIT | !CULLFACE_BIT);
+	glEnable(GL_BLEND);
+	GL_BlendFunc(GL_DST_COLOR, GL_ZERO); // multiplicative blend
+
+	GL_UseProgram(gl_ssaoprog);
+
+	zFarParam[0] = 2.0f * tanf(DEG2RAD(r_newrefdef.fov_x * 0.5f)) / vid.width;
+	zFarParam[1] = 2.0f * tanf(DEG2RAD(r_newrefdef.fov_y * 0.5f)) / vid.height;
+	zFarParam[2] = 4096;
+	glProgramUniform3f(gl_ssaoprog, u_ssaoZFar, zFarParam[0], zFarParam[1], zFarParam[2]);
+	glProgramUniform2f(gl_ssaoprog, u_ssaoTexScale, texScale[0], texScale[1]);
+
+	GL_BindTexture(GL_TEXTURE0, GL_TEXTURE_2D, r_drawclampsampler, r_currentDepthRenderImage);
+
+	GL_BindVertexArray(r_postvao);
+	glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+
+	// TODO... blurring the AO
+
+	// reset blend mode
+	glDisable(GL_BLEND);
+	GL_BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+	R_BindNullFBO();
 }
 
 void RPostProcess_FinishToScreen(void)
@@ -577,31 +507,33 @@ void RPostProcess_FinishToScreen(void)
 	if (!hdrRenderFBO) return;
 	if (!r_dopostprocessing) return;
 
-	R_BindNullFBO();
+	R_BindNullFBO ();
 
-	// TODO
-	// SSAO?
+	// perform screenspace ambient occlusion
+	RPostProcess_SSAO();
 
-	// blit current hdr framebuffer into downscaled 64x64 texture
-	// so we can do automatic exposure adaptation
-	glBindFramebuffer(GL_READ_FRAMEBUFFER_EXT, hdrRenderFBO->frameBuffer);
-	glBindFramebuffer(GL_DRAW_FRAMEBUFFER_EXT, hdrDownscale64->frameBuffer);
-	glBlitFramebuffer(0, 0, vid.width, vid.height, 0, 0, 64, 64, GL_COLOR_BUFFER_BIT, GL_LINEAR);
+	// downscale to 64x64
+	RPostProcess_Downscale ();
 
-	// grab our eye adaptation levels
-	RPostProcess_CalculateAdaptation ();
+	// calculate eye adaptation by compute shader
+	RPostProcess_ComputeShader_CalculateLuminance ();
 
-	// convert back from HDR to LDR range by tonemapping
-	RPostProcess_DoTonemap ();
+	// downscale with bright pass
+	RPostProcess_DownscaleBrightpass ();
 
-	// composite into bloom
-	RPostProcess_DoBloom ();
+	// perform bloom and tonemap
+	RPostProcess_DoBloomAndTonemap ();
 
 	// TODO
 	// MOTION BLUR?
 	// DOF?
 	// FXAA?
 
-	// disable polyblend because we get it for free here
+	// exchange lunimance texture for next frame
+	GLuint temp = m_lum[0];
+	m_lum[0] = m_lum[1];
+	m_lum[1] = temp;
+
+	// reset blending color for next frame
 	v_blend[3] = 0;
 }

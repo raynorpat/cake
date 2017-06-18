@@ -10,6 +10,8 @@ float log10( in float n )
 	return log2( n ) * logBase10;
 }
 
+
+const float pi = 3.14159265;
 const vec4 LUMINANCE_VECTOR = vec4(0.2125, 0.7154, 0.0721, 0.0);
 
 // https://en.wikipedia.org/wiki/SRGB
