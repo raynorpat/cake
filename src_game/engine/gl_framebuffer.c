@@ -28,6 +28,7 @@ FBO_t		*hdrRenderFBO;
 FBO_t		*hdrDownscale64;
 FBO_t		*brightpassRenderFBO;
 FBO_t		*bloomRenderFBO[MAX_BLOOM_BUFFERS];
+FBO_t		*AORenderFBO;
 
 /*
 ============
@@ -206,6 +207,7 @@ extern GLuint r_bloomRenderImage[MAX_BLOOM_BUFFERS];
 extern GLuint r_currentRenderHDRImage64;
 extern GLuint r_currentRenderHDRImage;
 extern GLuint r_currentDepthRenderImage;
+extern GLuint r_currentAORenderImage;
 
 void R_InitFBOs(void)
 {
@@ -260,6 +262,17 @@ void R_InitFBOs(void)
 
 		R_CheckFBO(bloomRenderFBO[i]);
 	}
+
+	// AMBIENT OCCLUSION
+
+	AORenderFBO = R_CreateFBO("_AORender", vid.width, vid.height);
+	R_BindFBO(AORenderFBO);
+
+	R_CreateFBOColorBuffer(AORenderFBO, GL_RGBA8, 0);
+
+	R_AttachFBOTexture2D(GL_TEXTURE_2D, r_currentAORenderImage, 0);
+
+	R_CheckFBO(AORenderFBO);
 
 	// do an unbind to clear state
 	R_BindNullFBO();

@@ -51,6 +51,7 @@ GLuint r_bloomRenderImage[MAX_BLOOM_BUFFERS];
 GLuint r_currentRenderHDRImage64;
 GLuint r_currentRenderHDRImage;
 GLuint r_currentDepthRenderImage;
+GLuint r_currentAORenderImage;
 
 cvar_t *r_hdrAutoExposure;
 cvar_t *r_hdrKey;
@@ -103,6 +104,16 @@ void RPostProcess_CreatePrograms(void)
 	glGenTextures(1, &r_currentDepthRenderImage);
 	glBindTexture(GL_TEXTURE_2D, r_currentDepthRenderImage);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, vid.width, vid.height, 0, GL_DEPTH_COMPONENT, GL_UNSIGNED_BYTE, 0);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glBindTexture(GL_TEXTURE_2D, 0);
+
+	glDeleteTextures(1, &r_currentAORenderImage);
+	glGenTextures(1, &r_currentAORenderImage);
+	glBindTexture(GL_TEXTURE_2D, r_currentAORenderImage);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, vid.width, vid.height, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);

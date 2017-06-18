@@ -189,6 +189,7 @@ extern FBO_t *hdrRenderFBO;
 extern FBO_t *hdrDownscale64;
 extern FBO_t *brightpassRenderFBO;
 extern FBO_t *bloomRenderFBO[MAX_BLOOM_BUFFERS];
+extern FBO_t *AORenderFBO;
 
 //===================================================================
 
