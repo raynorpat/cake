@@ -61,6 +61,7 @@ void Sprite_MakeVertexBuffers (struct model_s *mod);
 #define BUFFER_NO_OVERWRITE (GL_MAP_WRITE_BIT | GL_MAP_UNSYNCHRONIZED_BIT | GL_MAP_INVALIDATE_RANGE_BIT)
 
 GLuint GL_CreateShaderFromName (char *name, char *vsentry, char *fsentry);
+GLuint GL_CreateComputeShaderFromName (char *name);
 
 typedef struct ubodef_s
 {

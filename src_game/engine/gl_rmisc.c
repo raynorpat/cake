@@ -217,6 +217,63 @@ GLuint GL_CreateShaderFromName(char *name, char *vsentry, char *fsentry)
 	}
 }
 
+GLuint GL_CreateComputeShaderFromName(char *name)
+{
+	GLuint progid = 0;
+	char *resbuf = NULL;
+	int reslen = FS_LoadFile(name, (void **)&resbuf);
+	char *ressrc;
+	GLuint cs;
+	int result = 0;
+
+	if (!reslen)
+		return 0;
+
+	// the file doesn't have a trailing 0, so we need to copy it off
+	ressrc = malloc(reslen + 1);
+	memcpy(ressrc, resbuf, reslen);
+	ressrc[reslen] = 0;
+
+	cs = glCreateShader(GL_COMPUTE_SHADER);
+
+	glGetError();
+
+	// this crap really should have been built-in to GLSL...
+	glShaderSource(cs, 1, &(ressrc), 0);
+	glCompileShader(cs);
+	GLint compiled = 0;
+	glGetShaderiv(cs, GL_COMPILE_STATUS, &compiled);
+	if (!compiled)
+		return 0;
+
+	progid = glCreateProgram();
+
+	glAttachShader(progid, cs);
+
+	glLinkProgram(progid);
+	glGetProgramiv(progid, GL_LINK_STATUS, &result);
+
+	// the shader are compiled, attached and linked so this just marks them for deletion
+	glDeleteShader(cs);
+
+	GL_GetShaderInfoLog(progid, "", true);
+
+	free(ressrc);
+	FS_FreeFile(resbuf);
+
+	if (result != GL_TRUE)
+	{
+		return 0;
+	}
+	else
+	{
+		// make it active for any further work we may be doing
+		glUseProgram(progid);
+		gl_state.currentprogram = progid;
+
+		return progid;
+	}
+}
 
 void GL_UseProgram (GLuint progid)
 {
