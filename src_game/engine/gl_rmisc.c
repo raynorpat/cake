@@ -204,7 +204,9 @@ GLuint GL_CreateShaderFromName(char *name, char *vsentry, char *fsentry)
 	FS_FreeFile(resbuf);
 
 	if (result != GL_TRUE)
+	{
 		return 0;
+	}
 	else
 	{
 		// make it active for any further work we may be doing
@@ -433,7 +435,7 @@ void GL_SetDefaultState (void)
 	glDepthRange (gldepthmin, gldepthmax);
 
 	// enable sRGB framebuffer for proper gamma correction
-	//glEnable (GL_FRAMEBUFFER_SRGB);
+	glEnable (GL_FRAMEBUFFER_SRGB);
 
 	R_BindNullFBO();
 }

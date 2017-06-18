@@ -134,6 +134,9 @@ void PostFS ()
 	FilmgrainPass( color );
 #endif
 
+	// gamma correct
+	color.rgb = srgbToLinear(color.rgb);	
+
 	// mix scene with possible modulation (eg item pickups, getting shot, etc)
 	fragColor = mix(color, surfcolor, surfcolor.a);
 }

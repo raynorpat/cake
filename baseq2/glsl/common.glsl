@@ -13,7 +13,7 @@ float log10( in float n )
 const vec4 LUMINANCE_VECTOR = vec4(0.2125, 0.7154, 0.0721, 0.0);
 
 // https://en.wikipedia.org/wiki/SRGB
-vec3 srgb_to_linear(vec3 srgb)
+vec3 srgbToLinear(vec3 srgb)
 {
     float a = 0.055;
     float b = 0.04045;
@@ -25,7 +25,7 @@ vec3 srgb_to_linear(vec3 srgb)
         srgb.b > b ? linear_hi.b : linear_lo.b);
 }
 
-vec3 linear_to_srgb(vec3 linear)
+vec3 linearToSrgb(vec3 linear)
 {
     float a = 0.055;
     float b = 0.0031308;
