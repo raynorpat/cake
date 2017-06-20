@@ -24,6 +24,9 @@ GLuint gl_ssaoprog = 0;
 GLuint u_ssaoTexScale = 0;
 GLuint u_ssaoZFar = 0;
 
+GLuint gl_fxaaprog = 0;
+GLuint u_fxaaTexScale = 0;
+
 GLuint gl_compositeprog = 0;
 GLuint u_compositeTexScale = 0;
 GLuint u_compositeMode = 0;
@@ -58,6 +61,7 @@ GLuint r_brightPassRenderImage;
 GLuint r_bloomRenderImage[MAX_BLOOM_BUFFERS];
 GLuint r_currentRenderHDRImage64;
 GLuint r_currentRenderHDRImage;
+GLuint r_currentRenderImage;
 GLuint r_currentDepthRenderImage;
 GLuint r_currentAORenderImage;
 GLuint m_lum[2];
@@ -69,6 +73,7 @@ cvar_t *r_hdrExposureCompensation;
 cvar_t *r_hdrExposureAdjust;
 cvar_t *r_hdrBlurAmount;
 cvar_t *r_ssao;
+cvar_t *r_fxaa;
 
 float rp_hdrTime;
 
@@ -82,6 +87,7 @@ void RPostProcess_CreatePrograms(void)
 	gl_compositeprog = GL_CreateShaderFromName("glsl/composite.glsl", "CompositeVS", "CompositeFS");
 	gl_postprog = GL_CreateShaderFromName("glsl/post.glsl", "PostVS", "PostFS");
 	gl_ssaoprog = GL_CreateShaderFromName("glsl/ssao.glsl", "SSAOVS", "SSAOFS");
+	gl_fxaaprog = GL_CreateShaderFromName("glsl/fxaa.glsl", "FXAAVS", "FXAAFS");
 
 	// create compute shaders
 	gl_calcLumProg = GL_CreateComputeShaderFromName("glsl/calcLum.cs");
@@ -126,6 +132,16 @@ void RPostProcess_CreatePrograms(void)
 	glDeleteTextures(1, &r_currentAORenderImage);
 	glGenTextures(1, &r_currentAORenderImage);
 	glBindTexture(GL_TEXTURE_2D, r_currentAORenderImage);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, vid.width, vid.height, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glBindTexture(GL_TEXTURE_2D, 0);
+
+	glDeleteTextures(1, &r_currentRenderImage);
+	glGenTextures(1, &r_currentRenderImage);
+	glBindTexture(GL_TEXTURE_2D, r_currentRenderImage);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, vid.width, vid.height, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
@@ -244,6 +260,8 @@ void RPostProcess_CreatePrograms(void)
 	u_ssaoZFar = glGetUniformLocation (gl_ssaoprog, "zFar");
 	u_ssaoTexScale = glGetUniformLocation (gl_ssaoprog, "texScale");
 
+	u_fxaaTexScale = glGetUniformLocation (gl_fxaaprog, "texScale");
+
 	u_deltaTime = glGetUniformLocation (gl_calcAdaptiveLumProg, "deltaTime");
 
 	glProgramUniform1i (gl_compositeprog, glGetUniformLocation (gl_compositeprog, "diffuse"), 0);
@@ -261,6 +279,9 @@ void RPostProcess_CreatePrograms(void)
 	glProgramUniform1i (gl_ssaoprog, glGetUniformLocation (gl_ssaoprog, "depthmap"), 0);
 	glProgramUniformMatrix4fv (gl_ssaoprog, glGetUniformLocation (gl_ssaoprog, "orthomatrix"), 1, GL_FALSE, r_drawmatrix.m[0]);
 
+	glProgramUniform1i (gl_fxaaprog, glGetUniformLocation (gl_fxaaprog, "diffuse"), 0);
+	glProgramUniformMatrix4fv (gl_fxaaprog, glGetUniformLocation (gl_fxaaprog, "orthomatrix"), 1, GL_FALSE, r_drawmatrix.m[0]);
+
 	glProgramUniform1i (gl_calcLumProg, glGetUniformLocation (gl_calcLumProg, "inputImage"), 0);
 	glProgramUniform1i (gl_calcLumProg, glGetUniformLocation (gl_calcLumProg, "outputImage"), 1);
 
@@ -277,6 +298,7 @@ void RPostProcess_Init(void)
 	r_hdrExposureAdjust = Cvar_Get("r_hdrExposureAdjust", "1.4", 0);
 	r_hdrBlurAmount = Cvar_Get("r_hdrBlurAmount", "0.33", 0);
 	r_ssao = Cvar_Get("r_ssao", "1", 0);
+	r_fxaa = Cvar_Get("r_fxaa", "1", 0);
 }
 
 qboolean r_dopostprocessing = false;
@@ -452,10 +474,12 @@ static void RPostProcess_DoBloomAndTonemap(void)
 	glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
 }
 
- void RPostProcess_SSAO(void)
+void RPostProcess_SSAO(void)
 {
 	vec2_t texScale;
 	vec3_t zFarParam;
+
+	// TODO: check for GLEW_ARB_texture_gather
 
 	if (!r_ssao->value)
 		return;
@@ -491,13 +515,43 @@ static void RPostProcess_DoBloomAndTonemap(void)
 	GL_BindVertexArray(r_postvao);
 	glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
 
-	// TODO... blurring the AO
-
 	// reset blend mode
 	glDisable(GL_BLEND);
 	GL_BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 	R_BindNullFBO();
+}
+
+void RPostProcess_FXAA(void)
+{
+	vec2_t texScale;
+
+	// TODO: check for GLEW_ARB_gpu_shader5
+
+	if (!r_fxaa->value)
+		return;
+
+	// set screen scale
+	texScale[0] = 1.0f / vid.width;
+	texScale[1] = 1.0f / vid.height;
+	
+	GL_Enable(!DEPTHTEST_BIT | !CULLFACE_BIT);
+	glEnable(GL_BLEND);
+	GL_BlendFunc(GL_DST_COLOR, GL_ONE); // multiplicative blend
+
+	GL_UseProgram(gl_fxaaprog);
+
+	glProgramUniform2f(gl_fxaaprog, u_ssaoTexScale, texScale[0], texScale[1]);
+
+	GL_BindTexture(GL_TEXTURE0, GL_TEXTURE_2D, r_drawclampsampler, r_currentRenderImage);
+	glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, vid.width, vid.height);
+
+	GL_BindVertexArray(r_postvao);
+	glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+
+	// reset blend mode
+	glDisable(GL_BLEND);
+	GL_BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 }
 
 void RPostProcess_FinishToScreen(void)
@@ -510,7 +564,7 @@ void RPostProcess_FinishToScreen(void)
 	R_BindNullFBO ();
 
 	// perform screenspace ambient occlusion
-	RPostProcess_SSAO();
+	RPostProcess_SSAO ();
 
 	// downscale to 64x64
 	RPostProcess_Downscale ();
@@ -524,10 +578,12 @@ void RPostProcess_FinishToScreen(void)
 	// perform bloom and tonemap
 	RPostProcess_DoBloomAndTonemap ();
 
+	// perform FXAA pass
+	RPostProcess_FXAA ();
+
 	// TODO
 	// MOTION BLUR?
 	// DOF?
-	// FXAA?
 
 	// exchange lunimance texture for next frame
 	GLuint temp = m_lum[0];
