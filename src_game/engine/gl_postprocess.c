@@ -75,8 +75,6 @@ cvar_t *r_hdrBlurAmount;
 cvar_t *r_ssao;
 cvar_t *r_fxaa;
 
-float rp_hdrTime;
-
 void RPostProcess_CreatePrograms(void)
 {
 	wwvert_t wwverts[4];
@@ -479,9 +477,7 @@ void RPostProcess_SSAO(void)
 	vec2_t texScale;
 	vec3_t zFarParam;
 
-	// TODO: check for GLEW_ARB_texture_gather
-
-	if (!r_ssao->value)
+	if (!r_ssao->value || !GLEW_ARB_texture_gather)
 		return;
 
 	// blit current framebuffer into ambient occlusion buffer
@@ -526,9 +522,7 @@ void RPostProcess_FXAA(void)
 {
 	vec2_t texScale;
 
-	// TODO: check for GLEW_ARB_gpu_shader5
-
-	if (!r_fxaa->value)
+	if (!r_fxaa->value || !GLEW_ARB_gpu_shader5)
 		return;
 
 	// set screen scale
@@ -580,10 +574,6 @@ void RPostProcess_FinishToScreen(void)
 
 	// perform FXAA pass
 	RPostProcess_FXAA ();
-
-	// TODO
-	// MOTION BLUR?
-	// DOF?
 
 	// exchange lunimance texture for next frame
 	GLuint temp = m_lum[0];
