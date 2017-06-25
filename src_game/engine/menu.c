@@ -3869,6 +3869,52 @@ QUIT MENU
 =======================================================================
 */
 
+int msgNumber;
+
+char *quitMessage[] =
+{
+	/* .........1.........2.... */
+	"  Are you gonna quit    ",
+	"  this game just like   ",
+	"   everything else?     ",
+	"                        ",
+
+	" Milord, methinks that  ",
+	"   thou art a lowly     ",
+	" quitter. Is this true? ",
+	"                        ",
+
+	" Do I need to bust your ",
+	"  face open for trying  ",
+	"        to quit?        ",
+	"                        ",
+
+	" Man, I oughta smack you",
+	"   for trying to quit!  ",
+	"     Press Y to get     ",
+	"      smacked out.      ",
+
+	" Press Y to quit like a ",
+	"   big loser in life.   ",
+	"  Press N to stay proud ",
+	"    and successful!     ",
+
+	"   If you press Y to    ",
+	"  quit, I will summon   ",
+	"  Satan all over your   ",
+	"      hard drive!       ",
+
+	"  Um, Asmodeus dislikes ",
+	" his children trying to ",
+	" quit. Press Y to return",
+	"   to your Tinkertoys.  ",
+
+	"  If you quit now, I'll ",
+	"  throw a blanket-party ",
+	"   for you next time!   ",
+	"                        "
+};
+
 const char *M_Quit_Key (int key)
 {
 	switch (key)
@@ -3897,15 +3943,17 @@ const char *M_Quit_Key (int key)
 
 void M_Quit_Draw (void)
 {
-	int w, h;
-	float scale = SCR_GetMenuScale();
-
-	Draw_GetPicSize (&w, &h, "quit");
-	Draw_PicScaled((viddef.width - w * scale) / 2, (viddef.height - h * scale) / 2, "quit", scale);
+	M_DrawTextBox(56, 76, 24, 4);
+	M_Print(64, 84, quitMessage[msgNumber * 4 + 0]);
+	M_Print(64, 92, quitMessage[msgNumber * 4 + 1]);
+	M_Print(64, 100, quitMessage[msgNumber * 4 + 2]);
+	M_Print(64, 108, quitMessage[msgNumber * 4 + 3]);
 }
 
 void M_Menu_Quit_f (void)
 {
+	msgNumber = rand() & 7;
+
 	M_PushMenu (M_Quit_Draw, M_Quit_Key);
 }
 
@@ -3975,7 +4023,9 @@ void M_Keydown (int key)
 	const char *s;
 
 	if (m_keyfunc)
-		if ((s = m_keyfunc (key)) != 0)
-			S_StartLocalSound ((char *) s);
+	{
+		if ((s = m_keyfunc(key)) != 0)
+			S_StartLocalSound((char *)s);
+	}
 }
 
