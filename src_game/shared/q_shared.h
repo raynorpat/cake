@@ -19,6 +19,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 */
 
 // q_shared.h -- included first by ALL program modules
+#ifndef _Q_SHARED_
+#define _Q_SHARED_
+
 
 #ifdef _WIN32
 // unknown pragmas are SUPPOSED to be ignored, but....
@@ -28,7 +31,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
 #pragma warning(disable : 4018)   // signed/unsigned mismatch
 #pragma warning(disable : 4305)		// truncation from const double to float
-
 #endif
 
 #include <assert.h>
@@ -144,6 +146,7 @@ MATHLIB
 typedef float vec_t;
 typedef vec_t vec2_t[2];
 typedef vec_t vec3_t[3];
+typedef vec_t vec4_t[4];
 typedef vec_t vec5_t[5];
 
 typedef	int	fixed4_t;
@@ -159,6 +162,8 @@ struct cplane_s;
 extern vec3_t vec3_origin;
 
 #define	nanmask (255<<23)
+
+#define DEG2RAD( a ) ( a * M_PI ) / 180.0F
 
 #define	IS_NAN(x) (((*(int *)&x)&nanmask)==nanmask)
 
@@ -230,6 +235,8 @@ void ProjectPointOnPlane (vec3_t dst, const vec3_t p, const vec3_t normal);
 void PerpendicularVector (vec3_t dst, const vec3_t src);
 void RotatePointAroundVector (vec3_t dst, const vec3_t dir, const vec3_t point, float degrees);
 
+float lerp(const float from, const float to, float f);
+float clamp(float minf, float maxf, float value);
 
 //=============================================
 
@@ -1185,3 +1192,5 @@ typedef struct
 
 	short		stats[MAX_STATS];		// fast status bar updates
 } player_state_t;
+
+#endif

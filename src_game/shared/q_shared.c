@@ -19,8 +19,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 */
 #include "q_shared.h"
 
-#define DEG2RAD( a ) ( a * M_PI ) / 180.0F
-
 vec3_t vec3_origin = {0, 0, 0};
 
 //============================================================================
@@ -244,6 +242,15 @@ void R_ConcatTransforms (float in1[3][4], float in2[3][4], float out[3][4])
 
 //============================================================================
 
+float lerp(const float from, const float to, float f)
+{
+	return from + ((to - from) * f);
+}
+
+float clamp(float minf, float maxf, float value)
+{
+	return max(minf, min(maxf, value));
+}
 
 float Q_fabs (float f)
 {
@@ -813,8 +820,6 @@ int Q_log (int val)
 
 	return answer;
 }
-
-
 
 //====================================================================================
 
