@@ -681,16 +681,18 @@ void IN_ControllerCommands(void)
 
 	int16_t triggerThreshold = ClampCvar(0.04, 0.96, gamepad_trigger_threshold->value) * 255.0f;
 
+	// let the user know that a controller was disconnected
 	if (currentController && SDL_GameControllerGetAttached(currentController) != SDL_TRUE)
 	{
 		char buffer[128];
 		SDL_memset(buffer, 0, sizeof(buffer));
 		SDL_snprintf(buffer, sizeof(buffer), "%s disconnected", SDL_GameControllerName(currentController));
-		SCR_CenterPrint(buffer);
+		Com_Printf(buffer);
 
 		currentController = NULL;
 	}
 
+	// let the user know that a controller was connected
 	if (!currentController)
 	{
 		int32_t j;
@@ -705,7 +707,7 @@ void IN_ControllerCommands(void)
 					char buffer[128];
 					SDL_memset(buffer, 0, sizeof(buffer));
 					SDL_snprintf(buffer, sizeof(buffer), "%s connected", SDL_GameControllerName(currentController));
-					SCR_CenterPrint(buffer);
+					Com_Printf(buffer);
 					break;
 				}
 			}
@@ -715,6 +717,7 @@ void IN_ControllerCommands(void)
 		SDL_memset(newButtonState, 0, sizeof(newButtonState));
 	}
 
+	// grab controller axis and button
 	if (currentController)
 	{
 		SDL_GameControllerUpdate();
@@ -730,6 +733,7 @@ void IN_ControllerCommands(void)
 		}
 	}
 
+	// special menu test for sticks and dpad
 	if (cls.key_dest == key_menu)
 	{
 		vec3_t oldStick, newStick;
@@ -776,7 +780,7 @@ void IN_ControllerCommands(void)
 	}
 	else
 	{
-		// dpad
+		// regular dpad button events for in-game
 		uint32_t j;
 		for (j = SDL_CONTROLLER_BUTTON_DPAD_UP; j <= SDL_CONTROLLER_BUTTON_DPAD_RIGHT; j++)
 		{
@@ -818,6 +822,7 @@ void IN_ControllerCommands(void)
 	}
 	else
 	{
+		// gamepad stick in-game
 		for (i = SDL_CONTROLLER_BUTTON_LEFTSTICK; i <= SDL_CONTROLLER_BUTTON_RIGHTSTICK; i++)
 		{
 			int32_t j = i - SDL_CONTROLLER_BUTTON_LEFTSTICK;
