@@ -238,7 +238,6 @@ void GL_DrawAliasFrameLerp (entity_t *e, dmdl_t *hdr, float backlerp)
 	}
 }
 
-
 /*
 R_CullAliasModel
 */
@@ -557,6 +556,11 @@ void R_DrawAliasModel (entity_t *e)
 
 	if (e->flags & RF_DEPTHHACK)
 		glDepthRange (gldepthmin, gldepthmax);
+
+	if (gl_shadows->value && !(e->flags & (RF_TRANSLUCENT | RF_WEAPONMODEL | RF_NOSHADOW)))
+	{
+		//TODO shadows
+	}
 }
 
 
