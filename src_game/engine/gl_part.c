@@ -91,5 +91,3 @@ void R_DrawParticles (void)
 
 	r_firstparticle += r_newrefdef.num_particles;
 }
-
-
