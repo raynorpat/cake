@@ -149,16 +149,22 @@ keyname_t keynames[] =
 
 	{ "SEMICOLON", ';' }, // because a raw semicolon seperates commands
 
-	{ "LTHUMB", K_LTHUMB },
-	{ "RTHUMB", K_RTHUMB },
-	{ "LSHOULDER", K_LSHOULDER },
-	{ "RSHOULDER", K_RSHOULDER },
-	{ "ABUTTON", K_ABUTTON },
-	{ "BBUTTON", K_BBUTTON },
-	{ "XBUTTON", K_XBUTTON },
-	{ "YBUTTON", K_YBUTTON },
-	{ "LTRIGGER", K_LTRIGGER },
-	{ "RTRIGGER", K_RTRIGGER },
+	{ "GAMEPAD_UP", K_GAMEPAD_UP },
+	{ "GAMEPAD_DOWN", K_GAMEPAD_DOWN },
+	{ "GAMEPAD_LEFT", K_GAMEPAD_LEFT },
+	{ "GAMEPAD_RIGHT", K_GAMEPAD_RIGHT },
+	{ "GAMEPAD_START", K_GAMEPAD_START },
+	{ "GAMEPAD_BACK", K_GAMEPAD_BACK },
+	{ "GAMEPAD_LSTICK", K_GAMEPAD_LEFT_STICK },
+	{ "GAMEPAD_RSTICK", K_GAMEPAD_RIGHT_STICK },
+	{ "GAMEPAD_LB", K_GAMEPAD_LS },
+	{ "GAMEPAD_RB", K_GAMEPAD_RS },
+	{ "GAMEPAD_A", K_GAMEPAD_A },
+	{ "GAMEPAD_B", K_GAMEPAD_B },
+	{ "GAMEPAD_X", K_GAMEPAD_X },
+	{ "GAMEPAD_Y", K_GAMEPAD_Y },
+	{ "GAMEPAD_LT", K_GAMEPAD_LT },
+	{ "GAMEPAD_RT", K_GAMEPAD_RT },
 
 	{ NULL, 0 }
 };
@@ -668,7 +674,6 @@ void Key_Unbindall_f (void)
 // ugly hack, set in Cmd_ExecuteString() when config.cfg is executed (=> default.cfg is done)
 extern qboolean doneWithDefaultCfg;
 
-
 /*
 ===================
 Key_Bind_f
@@ -820,6 +825,7 @@ void Key_Init (void)
 	consolekeys['^'] = false;
 
 	menubound[K_ESCAPE] = true;
+	menubound[K_GAMEPAD_START] = true;
 
 	for (i = 0; i < 12; i++)
 		menubound[K_F1 + i] = true;
@@ -898,10 +904,10 @@ void Key_Event (int key, qboolean down, qboolean special)
 	if (key < 0 || key >= K_LAST)
 		return;
 
-	// Track if key is down
+	// track if key is down
 	keydown[key] = down;
 
-	// Ignore most autorepeats
+	// ignore most autorepeats
 	if (down)
 	{
 		key_repeats[key]++;
@@ -912,6 +918,7 @@ void Key_Event (int key, qboolean down, qboolean special)
 			(key != K_KP_PGUP) &&
 			(key != K_PGDN) &&
 			(key != K_KP_PGDN) &&
+			!(key >= K_GAMEPAD_LSTICK_UP && key <= K_GAMEPAD_RIGHT) &&
 			(key_repeats[key] > 1))
 		{
 			return;
@@ -922,7 +929,7 @@ void Key_Event (int key, qboolean down, qboolean special)
 		key_repeats[key] = 0;
 	}
 
-	// Fullscreen switch through Alt + Return
+	// fullscreen switch through Alt + Return
 	if (down && keydown[K_ALT] && key == K_ENTER)
 	{
 		fullscreen = Cvar_Get("vid_fullscreen", "0", CVAR_ARCHIVE);
@@ -941,19 +948,13 @@ void Key_Event (int key, qboolean down, qboolean special)
 		return;
 	}
 
-	// Toogle console though Shift + Escape
+	// toggle console though Shift + Escape
 	if (down && keydown[K_SHIFT] && key == K_ESCAPE)
 	{
 		Con_ToggleConsole_f();
 		return;
 	}
 	
-	// Key is unbound
-	if ((key >= 200) && !keybindings[key] && (cls.key_dest != key_console))
-	{
-		Com_Printf("%s is unbound, hit F4 to set.\n", Key_KeynumToString(key));
-	}
-
 	// any key during the attract mode will bring up the menu
 	if (cl.attractloop && (cls.key_dest != key_menu) && !((key >= K_F1) && (key <= K_F12)))
 		key = K_ESCAPE;
@@ -961,7 +962,7 @@ void Key_Event (int key, qboolean down, qboolean special)
 	// menu key is hardcoded, so the user can never unbind it
 	if (!cls.disable_screen)
 	{
-		if (key == K_ESCAPE)
+		if ((key == K_ESCAPE) || (key == K_GAMEPAD_START))
 		{
 			if (!down)
 				return;
@@ -991,6 +992,12 @@ void Key_Event (int key, qboolean down, qboolean special)
 
 			return;
 		}
+	}
+
+	// key is unbound
+	if ((key >= 200) && !keybindings[key] && (cls.key_dest != key_console))
+	{
+		Com_Printf("%s is unbound, hit F4 to set.\n", Key_KeynumToString(key));
 	}
 
 	// track if any key is down for BUTTON_ANY
@@ -1051,15 +1058,12 @@ void Key_Event (int key, qboolean down, qboolean special)
 		return;
 	}
 
+	// other systems only care about key down events
 	if (!down)
-		return;		// other systems only care about key down events
-
-	// Everything that's not a special char
-	// is processed by Char_Event().
-	if (!special)
-	{
 		return;
-	}
+	// everything that's not a special char is processed by Char_Event().
+	if (!special)
+		return;
 	
 	switch (cls.key_dest)
 	{

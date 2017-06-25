@@ -406,30 +406,45 @@ const char *VID_MenuKey (int key)
 	switch (key)
 	{
 	case K_ESCAPE:
-	case K_BBUTTON:
+	case K_GAMEPAD_B:
+	case K_GAMEPAD_BACK:
 		M_PopMenu();
 		return NULL;
+
+	case K_GAMEPAD_UP:
+	case K_GAMEPAD_LSTICK_UP:
+	case K_GAMEPAD_RSTICK_UP:
 	case K_KP_UPARROW:
 	case K_UPARROW:
 		m->cursor--;
 		Menu_AdjustCursor(m, -1);
 		break;
+
+	case K_GAMEPAD_DOWN:
+	case K_GAMEPAD_LSTICK_DOWN:
+	case K_GAMEPAD_RSTICK_DOWN:
 	case K_KP_DOWNARROW:
 	case K_DOWNARROW:
 		m->cursor++;
 		Menu_AdjustCursor(m, 1);
 		break;
+
+	case K_GAMEPAD_LEFT:
+	case K_GAMEPAD_LSTICK_LEFT:
+	case K_GAMEPAD_RSTICK_LEFT:
 	case K_KP_LEFTARROW:
 	case K_LEFTARROW:
 		Menu_SlideItem(m, -1);
 		break;
+
 	case K_KP_RIGHTARROW:
 	case K_RIGHTARROW:
 		Menu_SlideItem(m, 1);
 		break;
+
 	case K_KP_ENTER:
 	case K_ENTER:
-	case K_ABUTTON:
+	case K_GAMEPAD_A:
 		Menu_SelectItem(m);
 		break;
 	}

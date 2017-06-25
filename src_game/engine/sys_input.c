@@ -48,30 +48,45 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #endif
 
 #if SDL_VERSION_ATLEAST(2, 0, 0)
-static SDL_JoystickID joy_active_instaceid = -1;
-static SDL_GameController *joy_active_controller = NULL;
-
-typedef struct joyaxis_s
+enum _GamepadStickModes
 {
-	float x;
-	float y;
-} joyaxis_t;
+	Gamepad_StickDefault = 0, Gamepad_StickSwap
+};
 
-typedef struct joy_buttonstate_s
-{
-	qboolean buttondown[SDL_CONTROLLER_BUTTON_MAX];
-} joybuttonstate_t;
+typedef enum _GamepadDirection {
+	Gamepad_None,
+	Gamepad_Up,
+	Gamepad_Down,
+	Gamepad_Left,
+	Gamepad_Right
+} dir_t;
 
-typedef struct axisstate_s
-{
-	float axisvalue[SDL_CONTROLLER_AXIS_MAX]; // normalized to +-1
-} joyaxisstate_t;
 
-static joybuttonstate_t joy_buttonstate;
-static joyaxisstate_t joy_axisstate;
+static cvar_t *autosensitivity;
+static cvar_t *gamepad_usernum;
+static cvar_t *gamepad_stick_mode;
+static cvar_t *gamepad_trigger_threshold;
+static cvar_t *gamepad_pitch_sensitivity;
+static cvar_t *gamepad_yaw_sensitivity;
+static cvar_t *gamepad_stick_toggle;
 
-static double joy_buttontimer[SDL_CONTROLLER_BUTTON_MAX];
-static double joy_emulatedkeytimer[10];
+static SDL_GameController *currentController;
+
+static struct {
+	int32_t repeatCount;
+	int32_t lastSendTime;
+}  gamepad_repeatstatus[K_GAMEPAD_RIGHT - K_GAMEPAD_LSTICK_UP + 1];
+
+static int16_t oldAxisState[SDL_CONTROLLER_AXIS_MAX];
+static uint8_t oldButtonState[SDL_CONTROLLER_BUTTON_MAX];
+
+static qboolean gamepad_sticktoggle[2];
+
+#define INITIAL_REPEAT_DELAY 220
+#define REPEAT_DELAY 160
+
+#define RIGHT_THUMB_DEADZONE 8689
+#define LEFT_THUMB_DEADZONE 7849
 #endif
 
 #define MOUSE_MAX 3000
@@ -97,15 +112,7 @@ cvar_t *m_yaw;
 cvar_t *sensitivity;
 static cvar_t *windowed_mouse;
 
-// SDL2 Game Controller cvars
-cvar_t *joy_deadzone;
-cvar_t *joy_deadzone_trigger;
-cvar_t *joy_sensitivity_yaw;
-cvar_t *joy_sensitivity_pitch;
-cvar_t *joy_invert;
-cvar_t *joy_exponent;
-cvar_t *joy_swapmovelook;
-cvar_t *joy_enable;
+cvar_t *in_controller;
 
 extern void GLimp_GrabInput(qboolean grab);
 
@@ -459,44 +466,6 @@ void IN_Update(void)
 #endif
 			break;
 
-#if SDL_VERSION_ATLEAST(2, 0, 0)
-		case SDL_CONTROLLERDEVICEADDED:
-			if (joy_active_instaceid == -1)
-			{
-				joy_active_controller = SDL_GameControllerOpen(event.cdevice.which);
-				if (joy_active_controller == NULL)
-				{
-					Com_DPrintf("Couldn't open game controller\n");
-				}
-				else
-				{
-					SDL_Joystick *joy;
-					joy = SDL_GameControllerGetJoystick(joy_active_controller);
-					joy_active_instaceid = SDL_JoystickInstanceID(joy);
-				}
-			}
-			else
-			{
-				Com_DPrintf("Ignoring SDL_CONTROLLERDEVICEADDED\n");
-			}
-			break;
-		case SDL_CONTROLLERDEVICEREMOVED:
-			if (joy_active_instaceid != -1 && event.cdevice.which == joy_active_instaceid)
-			{
-				SDL_GameControllerClose(joy_active_controller);
-				joy_active_controller = NULL;
-				joy_active_instaceid = -1;
-			}
-			else
-			{
-				Com_DPrintf("Ignoring SDL_CONTROLLERDEVICEREMOVED\n");
-			}
-			break;
-		case SDL_CONTROLLERDEVICEREMAPPED:
-			Com_DPrintf("Ignoring SDL_CONTROLLERDEVICEREMAPPED\n");
-			break;
-#endif
-
 		case SDL_QUIT:
 			Com_Quit();
 
@@ -531,153 +500,401 @@ void In_FlushQueue(void)
 /* ------------------------------------------------------------------ */
 
 #if SDL_VERSION_ATLEAST(2, 0, 0)
-/*
-================
-IN_AxisMagnitude
-Returns the vector length of the given joystick axis
-================
-*/
-static vec_t IN_AxisMagnitude(joyaxis_t axis)
+static float ClampCvar(float min, float max, float value)
 {
-	vec_t magnitude = sqrtf((axis.x * axis.x) + (axis.y * axis.y));
-	return magnitude;
+	if (value < min) return min;
+	if (value > max) return max;
+	return value;
 }
 
-/*
-================
-IN_ApplyLookEasing
-assumes axis values are in [-1, 1] and the vector magnitude has been clamped at 1.
-Raises the axis values to the given exponent, keeping signs.
-================
-*/
-static joyaxis_t IN_ApplyLookEasing(joyaxis_t axis, float exponent)
+void IN_ControllerInit(void)
 {
-	joyaxis_t result = { 0 };
-	vec_t eased_magnitude;
-	vec_t magnitude = IN_AxisMagnitude(axis);
+	int32_t i;
+	int32_t size;
+	char *name[] = { "gamecontrollerdb.txt", "controllers.cfg", 0 };
+	char *p = NULL;
 
-	if (magnitude == 0)
-		return result;
+	// abort controller startup if user requests no support
+	in_controller = Cvar_Get("in_controller", "1", CVAR_NOSET);
+	if (!in_controller->value)
+		return;
 
-	eased_magnitude = powf(magnitude, exponent);
-
-	result.x = axis.x * (eased_magnitude / magnitude);
-	result.y = axis.y * (eased_magnitude / magnitude);
-	return result;
-}
-
-/*
-================
-IN_ApplyMoveEasing
-clamps coordinates to a square with coordinates +/- sqrt(2)/2, then scales them to +/- 1.
-This wastes a bit of stick range, but gives the diagonals coordinates of (+/-1,+/-1),
-so holding the stick on a diagonal gives the same speed boost as holding the forward and strafe keyboard keys.
-================
-*/
-static joyaxis_t IN_ApplyMoveEasing(joyaxis_t axis)
-{
-	joyaxis_t result = { 0 };
-	const float v = sqrtf(2.0f) / 2.0f;
-
-	result.x = max(-v, min(v, axis.x));
-	result.y = max(-v, min(v, axis.y));
-
-	result.x /= v;
-	result.y /= v;
-
-	return result;
-}
-
-/*
-================
-IN_ApplyDeadzone
-in: raw joystick axis values converted to floats in +-1
-out: applies a circular deadzone and clamps the magnitude at 1
-(my 360 controller is slightly non-circular and the stick travels further on the diagonals)
-deadzone is expected to satisfy 0 < deadzone < 1
-from https://github.com/jeremiah-sypult/Quakespasm-Rift
-and adapted from http://www.third-helix.com/2013/04/12/doing-thumbstick-dead-zones-right.html
-================
-*/
-static joyaxis_t IN_ApplyDeadzone(joyaxis_t axis, float deadzone)
-{
-	joyaxis_t result = { 0 };
-	vec_t magnitude = IN_AxisMagnitude(axis);
-
-	if (magnitude > deadzone) {
-		const vec_t new_magnitude = min(1.0, (magnitude - deadzone) / (1.0 - deadzone));
-		const vec_t scale = new_magnitude / magnitude;
-		result.x = axis.x * scale;
-		result.y = axis.y * scale;
+	if (SDL_WasInit(SDL_INIT_EVERYTHING) == 0) {
+		if (SDL_Init(SDL_INIT_JOYSTICK | SDL_INIT_GAMECONTROLLER) < 0) {
+			Com_Printf("Couldn't init SDL gamepad: %s\n", SDL_GetError());
+			return;
+		}
+	} else if (SDL_WasInit(SDL_INIT_JOYSTICK | SDL_INIT_GAMECONTROLLER) == 0) {
+		if (SDL_InitSubSystem(SDL_INIT_JOYSTICK | SDL_INIT_GAMECONTROLLER) < 0) {
+			Com_Printf("Couldn't init SDL gamepad: %s\n", SDL_GetError());
+			return;
+		}
 	}
 
-	return result;
-}
-
-/*
-================
-IN_KeyForControllerButton
-================
-*/
-static int IN_KeyForControllerButton(SDL_GameControllerButton button)
-{
-	switch (button)
+	SDL_GameControllerEventState(SDL_IGNORE);
+	
+	// load additional controller bindings
+	// this will attempt to load them from 'controllers.cfg' and 'gamecontrollerdb.txt'
+	// by default, this will ship with a copy of 'controllers.cfg' in the vrquake2.pk3 file
+	// to add new bindings, the user will have to add a copy of the gamecontrollerdb.txt to the baseq2 dir
+	// see https://github.com/gabomdq/SDL_GameControllerDB for info
+	for (i = 0; name[i] != NULL; i++)
 	{
-	case SDL_CONTROLLER_BUTTON_A: return K_ABUTTON;
-	case SDL_CONTROLLER_BUTTON_B: return K_BBUTTON;
-	case SDL_CONTROLLER_BUTTON_X: return K_XBUTTON;
-	case SDL_CONTROLLER_BUTTON_Y: return K_YBUTTON;
-	case SDL_CONTROLLER_BUTTON_BACK: return K_TAB;
-	case SDL_CONTROLLER_BUTTON_START: return K_ESCAPE;
-	case SDL_CONTROLLER_BUTTON_LEFTSTICK: return K_LTHUMB;
-	case SDL_CONTROLLER_BUTTON_RIGHTSTICK: return K_RTHUMB;
-	case SDL_CONTROLLER_BUTTON_LEFTSHOULDER: return K_LSHOULDER;
-	case SDL_CONTROLLER_BUTTON_RIGHTSHOULDER: return K_RSHOULDER;
-	case SDL_CONTROLLER_BUTTON_DPAD_UP: return K_UPARROW;
-	case SDL_CONTROLLER_BUTTON_DPAD_DOWN: return K_DOWNARROW;
-	case SDL_CONTROLLER_BUTTON_DPAD_LEFT: return K_LEFTARROW;
-	case SDL_CONTROLLER_BUTTON_DPAD_RIGHT: return K_RIGHTARROW;
-	default: return 0;
-	}
-}
+		void *buffer = NULL;
+		SDL_RWops *rw;
+		p = name[i];
+		Com_Printf("Loading controller mappings from '%s':\n", p);
+		size = FS_LoadFile(p, &buffer);
 
-/*
-================
-IN_JoyKeyEvent
-Sends a Key_Event if a unpressed -> pressed or pressed -> unpressed transition occurred,
-and generates key repeats if the button is held down.
-Adapted from DarkPlaces by lordhavoc
-================
-*/
-static void IN_JoyKeyEvent(qboolean wasdown, qboolean isdown, int key, double *timer)
-{
-	// we can't use `realtime` for key repeats because it is not monotomic
-	const double currenttime = Sys_Milliseconds();
-
-	if (wasdown)
-	{
-		if (isdown)
+		if (buffer)
 		{
-			if (currenttime >= *timer)
+			int results;
+			rw = SDL_RWFromMem(buffer, size);
+			results = SDL_GameControllerAddMappingsFromRW(rw, 1);
+			if (results >= 0)
 			{
-				*timer = currenttime + 0.1;
-				Key_Event(key, true, false);
+				Com_Printf("...loaded %d additional mappings\n", results);
+			}
+			else
+			{
+				Com_Printf("...error: %s\n", SDL_GetError());
+			}
+			free(buffer);
+		}
+	}
+
+	autosensitivity = Cvar_Get("autosensitivity", "1", CVAR_ARCHIVE);
+	gamepad_yaw_sensitivity = Cvar_Get("gamepad_yaw_sensitivity", "1.75", CVAR_ARCHIVE);
+	gamepad_pitch_sensitivity = Cvar_Get("gamepad_pitch_sensitivity", "1.75", CVAR_ARCHIVE);
+	gamepad_trigger_threshold = Cvar_Get("gamepad_trigger_threshold", "0.12", CVAR_ARCHIVE);
+	gamepad_stick_toggle = Cvar_Get("gamepad_stick_toggle", "0", CVAR_ARCHIVE);
+	gamepad_stick_mode = Cvar_Get("gamepad_stick_mode", "0", CVAR_ARCHIVE);
+	gamepad_usernum = Cvar_Get("gamepad_usernum", "0", CVAR_ARCHIVE);
+
+	for (i = 0; i < SDL_NumJoysticks(); i++)
+	{
+		if (SDL_IsGameController(i))
+			Com_Printf("Found game controller %i named '%s'!\n", i, SDL_GameControllerNameForIndex(i));
+	}
+}
+
+void Gamepad_ParseThumbStick(float LX, float LY, float deadzone, vec3_t out)
+{
+	float mag = sqrt(LX*LX + LY*LY); // determine how far the controller is pushed
+
+	// determine the direction the controller is pushed
+	if (mag > 0)
+	{
+		out[0] = LX / mag;
+		out[1] = -LY / mag;
+	}
+	else
+	{
+		out[0] = 0;
+		out[1] = 0;
+	}
+
+	// check if the controller is outside a circular dead zone
+	if (mag > deadzone)
+	{
+		// clamp the magnitude at its expected maximum value
+		if (mag > 32767)
+			mag = 32767;
+
+		// adjust magnitude relative to the end of the dead zone
+		mag -= deadzone;
+
+		// optionally normalize the magnitude with respect to its expected range
+		// giving a magnitude value of 0.0 to 1.0
+		out[2] = mag / (32767 - deadzone);
+	}
+	else
+	{
+		// if the controller is in the deadzone zero out the magnitude
+		out[2] = 0.0;
+	}
+}
+
+void Gamepad_ParseDirection(vec3_t dir, dir_t *out)
+{
+	float x = dir[0] * dir[2];
+	float y = dir[1] * dir[2];
+	const float sq1over2 = sqrt(0.5);
+	if (dir[2] == 0.0f)
+		*out = Gamepad_None;
+	else if (x > sq1over2)
+		*out = Gamepad_Right;
+	else if (x < -sq1over2)
+		*out = Gamepad_Left;
+	else if (y > sq1over2)
+		*out = Gamepad_Up;
+	else if (y < -sq1over2)
+		*out = Gamepad_Down;
+	else
+		*out = Gamepad_None;
+	return;
+}
+
+void Gamepad_HandleRepeat(keynum_t key)
+{
+	int32_t index = key - K_GAMEPAD_LSTICK_UP;
+	int32_t delay = 0;
+	qboolean send = false;
+
+	if (index < 0 || index >(K_GAMEPAD_RIGHT - K_GAMEPAD_LSTICK_UP))
+		return;
+
+	if (gamepad_repeatstatus[index].repeatCount == 0)
+		delay = INITIAL_REPEAT_DELAY;
+	else
+		delay = REPEAT_DELAY;
+
+	if (cl.time > gamepad_repeatstatus[index].lastSendTime + delay || cl.time < gamepad_repeatstatus[index].lastSendTime)
+		send = true;
+
+	if (send)
+	{
+		gamepad_repeatstatus[index].lastSendTime = cl.time;
+		gamepad_repeatstatus[index].repeatCount++;
+		Key_Event(key, true, true);
+	}
+}
+
+void Gamepad_SendKeyup(keynum_t key)
+{
+	int32_t index = key - K_GAMEPAD_LSTICK_UP;
+
+	if (index < 0 || index >(K_GAMEPAD_RIGHT - K_GAMEPAD_LSTICK_UP))
+		return;
+	gamepad_repeatstatus[index].lastSendTime = 0;
+	gamepad_repeatstatus[index].repeatCount = 0;
+
+	Key_Event(key, false, true);
+}
+
+void IN_ControllerCommands(void)
+{
+	int16_t newAxisState[SDL_CONTROLLER_AXIS_MAX];
+	uint8_t newButtonState[SDL_CONTROLLER_BUTTON_MAX];
+
+	uint32_t i = 0;
+
+	int16_t triggerThreshold = ClampCvar(0.04, 0.96, gamepad_trigger_threshold->value) * 255.0f;
+
+	if (currentController && SDL_GameControllerGetAttached(currentController) != SDL_TRUE)
+	{
+		char buffer[128];
+		SDL_memset(buffer, 0, sizeof(buffer));
+		SDL_snprintf(buffer, sizeof(buffer), "%s disconnected", SDL_GameControllerName(currentController));
+		SCR_CenterPrint(buffer);
+
+		currentController = NULL;
+	}
+
+	if (!currentController)
+	{
+		int32_t j;
+
+		for (j = 0; j < SDL_NumJoysticks(); j++)
+		{
+			if (SDL_IsGameController(j))
+			{
+				currentController = SDL_GameControllerOpen(j);
+				if (currentController)
+				{
+					char buffer[128];
+					SDL_memset(buffer, 0, sizeof(buffer));
+					SDL_snprintf(buffer, sizeof(buffer), "%s connected", SDL_GameControllerName(currentController));
+					SCR_CenterPrint(buffer);
+					break;
+				}
 			}
 		}
-		else
+
+		SDL_memset(newAxisState, 0, sizeof(newAxisState));
+		SDL_memset(newButtonState, 0, sizeof(newButtonState));
+	}
+
+	if (currentController)
+	{
+		SDL_GameControllerUpdate();
+
+		for (i = 0; i < SDL_CONTROLLER_AXIS_MAX; i++)
 		{
-			*timer = 0;
-			Key_Event(key, false, false);
+			newAxisState[i] = SDL_GameControllerGetAxis(currentController, (SDL_GameControllerAxis)i);
+		}
+
+		for (i = 0; i < SDL_CONTROLLER_BUTTON_MAX; i++)
+		{
+			newButtonState[i] = SDL_GameControllerGetButton(currentController, (SDL_GameControllerButton)i);
+		}
+	}
+
+	if (cls.key_dest == key_menu)
+	{
+		vec3_t oldStick, newStick;
+		dir_t oldDir, newDir;
+		uint32_t j = 0;
+		Gamepad_ParseThumbStick(newAxisState[SDL_CONTROLLER_AXIS_LEFTX], newAxisState[SDL_CONTROLLER_AXIS_LEFTY], LEFT_THUMB_DEADZONE, newStick);
+		Gamepad_ParseThumbStick(oldAxisState[SDL_CONTROLLER_AXIS_LEFTX], oldAxisState[SDL_CONTROLLER_AXIS_LEFTY], LEFT_THUMB_DEADZONE, oldStick);
+
+		Gamepad_ParseDirection(newStick, &newDir);
+		Gamepad_ParseDirection(oldStick, &oldDir);
+
+		for (j = 0; j < 4; j++)
+		{
+			if (newDir == Gamepad_Up + j)
+				Gamepad_HandleRepeat((keynum_t)(K_GAMEPAD_LSTICK_UP + j));
+			if (newDir != Gamepad_Up + j && oldDir == Gamepad_Up + j)
+				Gamepad_SendKeyup((keynum_t)(K_GAMEPAD_LSTICK_UP + j));
+		}
+
+		Gamepad_ParseThumbStick(newAxisState[SDL_CONTROLLER_AXIS_RIGHTX], newAxisState[SDL_CONTROLLER_AXIS_RIGHTY], RIGHT_THUMB_DEADZONE, newStick);
+		Gamepad_ParseThumbStick(oldAxisState[SDL_CONTROLLER_AXIS_RIGHTX], oldAxisState[SDL_CONTROLLER_AXIS_RIGHTY], RIGHT_THUMB_DEADZONE, oldStick);
+		
+		Gamepad_ParseDirection(newStick, &newDir);
+		Gamepad_ParseDirection(oldStick, &oldDir);
+
+		for (j = 0; j < 4; j++)
+		{
+			if (newDir == Gamepad_Up + j)
+				Gamepad_HandleRepeat((keynum_t)(K_GAMEPAD_RSTICK_UP + j));
+			if (newDir != Gamepad_Up + j && oldDir == Gamepad_Up + j)
+				Gamepad_SendKeyup((keynum_t)(K_GAMEPAD_RSTICK_UP + j));
+		}
+
+		for (j = SDL_CONTROLLER_BUTTON_DPAD_UP; j <= SDL_CONTROLLER_BUTTON_DPAD_RIGHT; j++)
+		{
+			uint32_t k = j - SDL_CONTROLLER_BUTTON_DPAD_UP;
+
+			if (newButtonState[j])
+				Gamepad_HandleRepeat((keynum_t)(K_GAMEPAD_UP + k));
+
+			if (!(newButtonState[j]) && (oldButtonState[j]))
+				Gamepad_SendKeyup((keynum_t)(K_GAMEPAD_UP + k));
 		}
 	}
 	else
 	{
-		if (isdown)
+		// dpad
+		uint32_t j;
+		for (j = SDL_CONTROLLER_BUTTON_DPAD_UP; j <= SDL_CONTROLLER_BUTTON_DPAD_RIGHT; j++)
 		{
-			*timer = currenttime + 0.5;
-			Key_Event(key, isdown, false);
+			uint32_t k = j - SDL_CONTROLLER_BUTTON_DPAD_UP;
+
+			if ((newButtonState[j]) && (!oldButtonState[j]))
+				Key_Event(K_GAMEPAD_UP + k, true, true);
+			if (!(newButtonState[j]) && (oldButtonState[j]))
+				Key_Event(K_GAMEPAD_UP + k, false, true);
 		}
 	}
+	
+	// gamepad buttons
+	for (i = SDL_CONTROLLER_BUTTON_A; i <= SDL_CONTROLLER_BUTTON_START; i++)
+	{
+		int32_t j = i - SDL_CONTROLLER_BUTTON_A;
+
+		if ((newButtonState[i]) && (!oldButtonState[i]))
+			Key_Event(K_GAMEPAD_A + j, true, true);
+		if (!(newButtonState[i]) && (oldButtonState[i]))
+			Key_Event(K_GAMEPAD_A + j, false, true);
+	}
+
+	// gamepad stick
+	if (!gamepad_stick_toggle->value || cls.key_dest == key_menu)
+	{
+		SDL_memset(gamepad_sticktoggle, 0, sizeof(gamepad_sticktoggle));
+
+		for (i = SDL_CONTROLLER_BUTTON_LEFTSTICK; i <= SDL_CONTROLLER_BUTTON_RIGHTSTICK; i++)
+		{
+			int32_t j = i - SDL_CONTROLLER_BUTTON_LEFTSTICK;
+
+			if ((newButtonState[i]) && (!oldButtonState[i]))
+				Key_Event(K_GAMEPAD_LEFT_STICK + j, true, true);
+			if (!(newButtonState[i]) && (oldButtonState[i]))
+				Key_Event(K_GAMEPAD_LEFT_STICK + j, false, true);
+		}
+
+	}
+	else
+	{
+		for (i = SDL_CONTROLLER_BUTTON_LEFTSTICK; i <= SDL_CONTROLLER_BUTTON_RIGHTSTICK; i++)
+		{
+			int32_t j = i - SDL_CONTROLLER_BUTTON_LEFTSTICK;
+			if ((newButtonState[i]) && (!oldButtonState[i]))
+			{
+				gamepad_sticktoggle[j] = !gamepad_sticktoggle[j];
+				Key_Event(K_GAMEPAD_LEFT_STICK + j, gamepad_sticktoggle[j], true);
+			}
+		}
+	}
+	
+	// left shoulder
+	for (i = SDL_CONTROLLER_BUTTON_LEFTSHOULDER; i <= SDL_CONTROLLER_BUTTON_RIGHTSHOULDER; i++)
+	{
+		int32_t j = i - SDL_CONTROLLER_BUTTON_LEFTSHOULDER;
+
+		if ((newButtonState[i]) && (!oldButtonState[i]))
+			Key_Event(K_GAMEPAD_LS + j, true, true);
+		if (!(newButtonState[i]) && (oldButtonState[i]))
+			Key_Event(K_GAMEPAD_LS + j, false, true);
+	}
+
+	// left trigger
+	for (i = SDL_CONTROLLER_AXIS_TRIGGERLEFT; i <= SDL_CONTROLLER_AXIS_TRIGGERRIGHT; i++)
+	{
+		int32_t j = i - SDL_CONTROLLER_AXIS_TRIGGERLEFT;
+
+		if ((newAxisState[i] >= triggerThreshold) && (oldAxisState[i] < triggerThreshold))
+			Key_Event(K_GAMEPAD_LT + j, true, true);
+		if ((newAxisState[i] < triggerThreshold) && (oldAxisState[i] >= triggerThreshold))
+			Key_Event(K_GAMEPAD_LT + j, false, true);
+	}
+
+	SDL_memcpy(oldButtonState, newButtonState, sizeof(oldButtonState));
+	SDL_memcpy(oldAxisState, newAxisState, sizeof(oldAxisState));
+}
+
+void IN_ControllerMove(usercmd_t *cmd)
+{
+	vec3_t leftPos, rightPos;
+	vec_t *view, *move;
+	float speed, aspeed;
+
+	float pitchInvert = (m_pitch->value < 0.0) ? -1 : 1;
+
+	if (cls.key_dest == key_menu)
+		return;
+
+	if ((in_speed.state & 1) ^ (int32_t)cl_run->value)
+		speed = 2;
+	else
+		speed = 1;
+
+	aspeed = cls.frametime;
+	if (autosensitivity->value)
+		aspeed *= (cl.refdef.fov_x / 90.0);
+
+	switch ((int32_t)gamepad_stick_mode->value)
+	{
+	case Gamepad_StickSwap:
+		view = leftPos;
+		move = rightPos;
+		break;
+	case Gamepad_StickDefault:
+	default:
+		view = rightPos;
+		move = leftPos;
+		break;
+	}
+	Gamepad_ParseThumbStick(oldAxisState[SDL_CONTROLLER_AXIS_RIGHTX], oldAxisState[SDL_CONTROLLER_AXIS_RIGHTY], RIGHT_THUMB_DEADZONE, rightPos);
+	Gamepad_ParseThumbStick(oldAxisState[SDL_CONTROLLER_AXIS_LEFTX], oldAxisState[SDL_CONTROLLER_AXIS_LEFTY], LEFT_THUMB_DEADZONE, leftPos);
+
+	cmd->forwardmove += move[1] * move[2] * speed * cl_forwardspeed->value;
+	cmd->sidemove += move[0] * move[2] * speed *  cl_sidespeed->value;
+
+	cl.viewangles[PITCH] -= (view[1] * view[2] * pitchInvert * gamepad_pitch_sensitivity->value) * aspeed * cl_pitchspeed->value;
+	cl.viewangles[YAW] -= (view[0] * view[2] * gamepad_yaw_sensitivity->value) * aspeed * cl_yawspeed->value;
 }
 #endif
 
@@ -691,50 +908,7 @@ Emit key events for game controller buttons, including emulated buttons for anal
 void IN_Commands(void)
 {
 #if SDL_VERSION_ATLEAST(2, 0, 0)
-	joyaxisstate_t newaxisstate;
-	int i;
-	const float stickthreshold = 0.9;
-	const float triggerthreshold = joy_deadzone_trigger->value;
-
-	if (!joy_enable->value)
-		return;
-	if (!joy_active_controller)
-		return;
-
-	// emit key events for controller buttons
-	for (i = 0; i < SDL_CONTROLLER_BUTTON_MAX; i++)
-	{
-		qboolean newstate = SDL_GameControllerGetButton(joy_active_controller, (SDL_GameControllerButton)i);
-		qboolean oldstate = joy_buttonstate.buttondown[i];
-
-		joy_buttonstate.buttondown[i] = newstate;
-		if(newstate)
-			IN_JoyKeyEvent(oldstate, newstate, IN_KeyForControllerButton((SDL_GameControllerButton)i), &joy_buttontimer[i]);
-	}
-
-	for (i = 0; i < SDL_CONTROLLER_AXIS_MAX; i++)
-	{
-		newaxisstate.axisvalue[i] = SDL_GameControllerGetAxis(joy_active_controller, (SDL_GameControllerAxis)i) / 32768.0f;
-	}
-
-	// emit emulated arrow keys so the analog sticks can be used in the menu
-	if (cls.key_dest != key_game)
-	{
-		IN_JoyKeyEvent(joy_axisstate.axisvalue[SDL_CONTROLLER_AXIS_LEFTX] < -stickthreshold, newaxisstate.axisvalue[SDL_CONTROLLER_AXIS_LEFTX] < -stickthreshold, K_LEFTARROW, &joy_emulatedkeytimer[0]);
-		IN_JoyKeyEvent(joy_axisstate.axisvalue[SDL_CONTROLLER_AXIS_LEFTX] > stickthreshold, newaxisstate.axisvalue[SDL_CONTROLLER_AXIS_LEFTX] > stickthreshold, K_RIGHTARROW, &joy_emulatedkeytimer[1]);
-		IN_JoyKeyEvent(joy_axisstate.axisvalue[SDL_CONTROLLER_AXIS_LEFTY] < -stickthreshold, newaxisstate.axisvalue[SDL_CONTROLLER_AXIS_LEFTY] < -stickthreshold, K_UPARROW, &joy_emulatedkeytimer[2]);
-		IN_JoyKeyEvent(joy_axisstate.axisvalue[SDL_CONTROLLER_AXIS_LEFTY] > stickthreshold, newaxisstate.axisvalue[SDL_CONTROLLER_AXIS_LEFTY] > stickthreshold, K_DOWNARROW, &joy_emulatedkeytimer[3]);
-		IN_JoyKeyEvent(joy_axisstate.axisvalue[SDL_CONTROLLER_AXIS_RIGHTX] < -stickthreshold, newaxisstate.axisvalue[SDL_CONTROLLER_AXIS_RIGHTX] < -stickthreshold, K_LEFTARROW, &joy_emulatedkeytimer[4]);
-		IN_JoyKeyEvent(joy_axisstate.axisvalue[SDL_CONTROLLER_AXIS_RIGHTX] > stickthreshold, newaxisstate.axisvalue[SDL_CONTROLLER_AXIS_RIGHTX] > stickthreshold, K_RIGHTARROW, &joy_emulatedkeytimer[5]);
-		IN_JoyKeyEvent(joy_axisstate.axisvalue[SDL_CONTROLLER_AXIS_RIGHTY] < -stickthreshold, newaxisstate.axisvalue[SDL_CONTROLLER_AXIS_RIGHTY] < -stickthreshold, K_UPARROW, &joy_emulatedkeytimer[6]);
-		IN_JoyKeyEvent(joy_axisstate.axisvalue[SDL_CONTROLLER_AXIS_RIGHTY] > stickthreshold, newaxisstate.axisvalue[SDL_CONTROLLER_AXIS_RIGHTY] > stickthreshold, K_DOWNARROW, &joy_emulatedkeytimer[7]);
-	}
-
-	// emit emulated keys for the analog triggers
-	IN_JoyKeyEvent(joy_axisstate.axisvalue[SDL_CONTROLLER_AXIS_TRIGGERLEFT] > triggerthreshold, newaxisstate.axisvalue[SDL_CONTROLLER_AXIS_TRIGGERLEFT] > triggerthreshold, K_LTRIGGER, &joy_emulatedkeytimer[8]);
-	IN_JoyKeyEvent(joy_axisstate.axisvalue[SDL_CONTROLLER_AXIS_TRIGGERRIGHT] > triggerthreshold, newaxisstate.axisvalue[SDL_CONTROLLER_AXIS_TRIGGERRIGHT] > triggerthreshold, K_RTRIGGER, &joy_emulatedkeytimer[9]);
-
-	joy_axisstate = newaxisstate;
+	IN_ControllerCommands ();
 #endif
 }
 
@@ -796,7 +970,7 @@ static void IN_MouseMove(usercmd_t *cmd)
 			}
 		}
 
-		/* add mouse X/Y movement to cmd */
+		// add mouse X/Y movement to cmd
 		if ((in_strafe.state & 1) || (lookstrafe->value && mlooking))
 		{
 			cmd->sidemove += m_side->value * mouse_x;
@@ -819,55 +993,13 @@ static void IN_MouseMove(usercmd_t *cmd)
 	}
 }
 
-static void IN_JoyMove(usercmd_t *cmd)
-{
-#if SDL_VERSION_ATLEAST(2, 0, 0)
-	joyaxis_t moveRaw, moveDeadzone, moveEased;
-	joyaxis_t lookRaw, lookDeadzone, lookEased;
-	float speed, aspeed;
-
-	if (!joy_enable->value)
-		return;
-
-	if (!joy_active_controller)
-		return;
-
-	moveRaw.x = joy_axisstate.axisvalue[SDL_CONTROLLER_AXIS_LEFTX];
-	moveRaw.y = joy_axisstate.axisvalue[SDL_CONTROLLER_AXIS_LEFTY];
-	lookRaw.x = joy_axisstate.axisvalue[SDL_CONTROLLER_AXIS_RIGHTX];
-	lookRaw.y = joy_axisstate.axisvalue[SDL_CONTROLLER_AXIS_RIGHTY];
-
-	if (joy_swapmovelook->value)
-	{
-		joyaxis_t temp = moveRaw;
-		moveRaw = lookRaw;
-		lookRaw = temp;
-	}
-
-	moveDeadzone = IN_ApplyDeadzone(moveRaw, joy_deadzone->value);
-	lookDeadzone = IN_ApplyDeadzone(lookRaw, joy_deadzone->value);
-
-	moveEased = IN_ApplyMoveEasing(moveDeadzone);
-	lookEased = IN_ApplyLookEasing(lookDeadzone, joy_exponent->value);
-
-	if ((in_speed.state & 1) ^ (int)cl_run->value)
-		speed = 2;
-	else
-		speed = 1;
-	aspeed = speed * cls.frametime;
-
-	cmd->sidemove += moveEased.x * speed * cl_sidespeed->value;
-	cmd->forwardmove -= moveEased.y * speed * cl_forwardspeed->value;
-
-	cl.viewangles[YAW] -= lookEased.x * joy_sensitivity_yaw->value * aspeed * cl_yawspeed->value;
-	cl.viewangles[PITCH] += lookEased.y * joy_sensitivity_pitch->value * (joy_invert->value ? -1.0 : 1.0) * aspeed * cl_pitchspeed->value;;
-#endif
-}
-
 void IN_Move(usercmd_t *cmd)
 {
-	IN_JoyMove(cmd);
 	IN_MouseMove(cmd);
+
+#if SDL_VERSION_ATLEAST(2, 0, 0)
+	IN_ControllerMove(cmd);
+#endif
 }
 
 /* ------------------------------------------------------------------ */
@@ -887,89 +1019,6 @@ static void IN_MLookUp(void)
 {
 	mlooking = false;
 	IN_CenterView();
-}
-
-/* ------------------------------------------------------------------ */
-
-void IN_StartupJoystick(void)
-{
-#if SDL_VERSION_ATLEAST(2, 0, 0)
-	int i;
-	int nummappings;
-	char controllerdb[MAX_OSPATH];
-	char	*path;
-	char	cwd[MAX_OSPATH];
-	const char *controllerdbname = "gamecontrollerdb.txt";
-	SDL_GameController *gamecontroller;
-
-	if (SDL_InitSubSystem(SDL_INIT_GAMECONTROLLER) == -1)
-	{
-		Com_Printf("could not initialize SDL Game Controller\n");
-		return;
-	}
-
-	// Load additional SDL2 controller definitions from gamecontrollerdb.txt
-
-	// check the current directory for other development purposes
-	_getcwd(cwd, sizeof(cwd));
-	Com_sprintf(controllerdb, sizeof(controllerdb), "%s/%s", cwd, controllerdbname);
-	nummappings = SDL_GameControllerAddMappingsFromFile(controllerdb);
-	if (!nummappings)
-	{
-		// now run through the search paths
-		path = NULL;
-
-		while (1)
-		{
-			path = FS_NextPath(path);
-
-			if (!path)
-				return; // couldn't find one anywhere
-
-			Com_sprintf(controllerdb, sizeof(controllerdb), "%s/%s", path, controllerdbname);
-			nummappings = SDL_GameControllerAddMappingsFromFile(controllerdb);
-			if (nummappings > 0)
-			{
-				Com_Printf("%d mappings loaded from gamecontrollerdb.txt\n", nummappings);
-				break;
-			}
-		}
-	}
-
-	// try to detect available controllers
-	for (i = 0; i < SDL_NumJoysticks(); i++)
-	{
-		const char *joyname = SDL_JoystickNameForIndex(i);
-		if (SDL_IsGameController(i))
-		{
-			const char *controllername = SDL_GameControllerNameForIndex(i);
-			gamecontroller = SDL_GameControllerOpen(i);
-			if (gamecontroller)
-			{
-				Com_Printf("detected controller: %s\n", controllername != NULL ? controllername : "NULL");
-
-				joy_active_instaceid = SDL_JoystickInstanceID(SDL_GameControllerGetJoystick(gamecontroller));
-				joy_active_controller = gamecontroller;
-				break;
-			}
-			else
-			{
-				Com_Printf("failed to open controller: %s\n", controllername != NULL ? controllername : "NULL");
-			}
-		}
-		else
-		{
-			Com_Printf("joystick missing controller mappings: %s\n", joyname != NULL ? joyname : "NULL");
-		}
-	}
-#endif
-}
-
-void IN_ShutdownJoystick(void)
-{
-#if SDL_VERSION_ATLEAST(2, 0, 0)
-	SDL_QuitSubSystem(SDL_INIT_GAMECONTROLLER);
-#endif
 }
 
 /* ------------------------------------------------------------------ */
@@ -997,15 +1046,6 @@ void IN_Init(void)
 	vid_fullscreen = Cvar_Get("vid_fullscreen", "0", CVAR_ARCHIVE);
 	windowed_mouse = Cvar_Get("windowed_mouse", "1", CVAR_USERINFO | CVAR_ARCHIVE);
 
-	joy_deadzone = Cvar_Get("joy_deadzone", "0.175", CVAR_ARCHIVE);
-	joy_deadzone_trigger = Cvar_Get("joy_deadzone_trigger", "0.001", CVAR_ARCHIVE);
-	joy_sensitivity_yaw = Cvar_Get("joy_sensitivity_yaw", "2", CVAR_ARCHIVE);
-	joy_sensitivity_pitch = Cvar_Get("joy_sensitivity_pitch", "2", CVAR_ARCHIVE);
-	joy_invert = Cvar_Get("joy_invert", "0", CVAR_ARCHIVE);
-	joy_exponent = Cvar_Get("joy_exponent", "3", CVAR_ARCHIVE);
-	joy_swapmovelook = Cvar_Get("joy_swapmovelook", "0", CVAR_ARCHIVE);
-	joy_enable = Cvar_Get("joy_enable", "1", CVAR_ARCHIVE);
-
 	Cmd_AddCommand("+mlook", IN_MLookDown);
 	Cmd_AddCommand("-mlook", IN_MLookUp);
 
@@ -1015,7 +1055,9 @@ void IN_Init(void)
 	SDL_EnableKeyRepeat(SDL_DEFAULT_REPEAT_DELAY, SDL_DEFAULT_REPEAT_INTERVAL);
 #endif
 
-	IN_StartupJoystick();
+#if SDL_VERSION_ATLEAST(2, 0, 0)
+	IN_ControllerInit();
+#endif
 
 	Com_Printf("------------------------------------\n\n");
 }
@@ -1025,11 +1067,8 @@ void IN_Init(void)
 */
 void IN_Shutdown(void)
 {
-	Cmd_RemoveCommand("force_centerview");
 	Cmd_RemoveCommand("+mlook");
 	Cmd_RemoveCommand("-mlook");
-
-	IN_ShutdownJoystick();
 
 	Com_Printf("Shutting down input.\n");
 }

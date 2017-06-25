@@ -213,10 +213,12 @@ qboolean Field_Key (menufield_s *f, int key)
 
 	switch (key)
 	{
+	case K_GAMEPAD_LEFT:
+	case K_GAMEPAD_LSTICK_LEFT:
+	case K_GAMEPAD_RSTICK_LEFT:
 	case K_KP_LEFTARROW:
 	case K_LEFTARROW:
 	case K_BACKSPACE:
-
 		if (f->cursor > 0)
 		{
 			memmove (&f->buffer[f->cursor-1], &f->buffer[f->cursor], strlen (&f->buffer[f->cursor]) + 1);
@@ -232,20 +234,20 @@ qboolean Field_Key (menufield_s *f, int key)
 
 	case K_KP_DEL:
 	case K_DEL:
+	case K_GAMEPAD_BACK:
 		memmove (&f->buffer[f->cursor], &f->buffer[f->cursor+1], strlen (&f->buffer[f->cursor+1]) + 1);
 		break;
 
 	case K_KP_ENTER:
 	case K_ENTER:
 	case K_ESCAPE:
-	case K_BBUTTON:
-	case K_ABUTTON:
+	case K_GAMEPAD_B:
+	case K_GAMEPAD_A:
 	case K_TAB:
 		return false;
 
 	case K_SPACE:
 	default:
-
 		if (!isdigit (key) && (f->generic.flags & QMF_NUMBERSONLY))
 			return false;
 

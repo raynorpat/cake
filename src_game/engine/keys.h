@@ -29,7 +29,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 //
 // these are the key numbers that should be passed to Key_Event
 //
-enum QKEYS {
+typedef enum {
 	K_TAB = 9,
 	K_ENTER = 13,
 	K_ESCAPE = 27,
@@ -277,19 +277,37 @@ enum QKEYS {
 	K_UNDO,
 
 	// SDL2 game controller keys
-	K_LTHUMB,
-	K_RTHUMB,
-	K_LSHOULDER,
-	K_RSHOULDER,
-	K_ABUTTON,
-	K_BBUTTON,
-	K_XBUTTON,
-	K_YBUTTON,
-	K_LTRIGGER,
-	K_RTRIGGER,
+	K_GAMEPAD_LSTICK_UP,
+	K_GAMEPAD_LSTICK_DOWN,
+	K_GAMEPAD_LSTICK_LEFT,
+	K_GAMEPAD_LSTICK_RIGHT,
+	K_GAMEPAD_RSTICK_UP,
+	K_GAMEPAD_RSTICK_DOWN,
+	K_GAMEPAD_RSTICK_LEFT,
+	K_GAMEPAD_RSTICK_RIGHT,
+	
+	K_GAMEPAD_LT,
+	K_GAMEPAD_RT,
+	
+	K_GAMEPAD_A,
+	K_GAMEPAD_B,
+	K_GAMEPAD_X,
+	K_GAMEPAD_Y,
+	K_GAMEPAD_BACK,
+	K_GAMEPAD_GUIDE,
+	K_GAMEPAD_START,
+	K_GAMEPAD_LEFT_STICK,
+	K_GAMEPAD_RIGHT_STICK,
+	K_GAMEPAD_LS,
+	K_GAMEPAD_RS,
+	
+	K_GAMEPAD_UP,
+	K_GAMEPAD_DOWN,
+	K_GAMEPAD_LEFT,
+	K_GAMEPAD_RIGHT,
 
 	K_LAST
-};
+} keynum_t;
 
 extern char		*keybindings[K_LAST];
 extern	int		key_repeats[K_LAST];

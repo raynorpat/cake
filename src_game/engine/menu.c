@@ -190,60 +190,61 @@ const char *Default_MenuKey (menuframework_s *m, int key)
 	switch (key)
 	{
 	case K_ESCAPE:
-	case K_BBUTTON:
+	case K_GAMEPAD_START:
+	case K_GAMEPAD_B:
+	case K_GAMEPAD_BACK:
 		M_PopMenu ();
 		return menu_out_sound;
+
+	case K_GAMEPAD_UP:
+	case K_GAMEPAD_LSTICK_UP:
+	case K_GAMEPAD_RSTICK_UP:
 	case K_KP_UPARROW:
 	case K_UPARROW:
-
 		if (m)
 		{
 			m->cursor--;
 			Menu_AdjustCursor (m, -1);
 			sound = menu_move_sound;
 		}
-
 		break;
+
 	case K_TAB:
-
-		if (m)
-		{
-			m->cursor++;
-			Menu_AdjustCursor (m, 1);
-			sound = menu_move_sound;
-		}
-
-		break;
 	case K_KP_DOWNARROW:
 	case K_DOWNARROW:
-
+	case K_GAMEPAD_DOWN:
+	case K_GAMEPAD_LSTICK_DOWN:
+	case K_GAMEPAD_RSTICK_DOWN:
 		if (m)
 		{
 			m->cursor++;
 			Menu_AdjustCursor (m, 1);
 			sound = menu_move_sound;
 		}
-
 		break;
+
+	case K_GAMEPAD_LEFT:
+	case K_GAMEPAD_LSTICK_LEFT:
+	case K_GAMEPAD_RSTICK_LEFT:
 	case K_KP_LEFTARROW:
 	case K_LEFTARROW:
-
 		if (m)
 		{
 			Menu_SlideItem (m, -1);
 			sound = menu_move_sound;
 		}
-
 		break;
+
+	case K_GAMEPAD_RIGHT:
+	case K_GAMEPAD_LSTICK_RIGHT:
+	case K_GAMEPAD_RSTICK_RIGHT:
 	case K_KP_RIGHTARROW:
 	case K_RIGHTARROW:
-
 		if (m)
 		{
 			Menu_SlideItem (m, 1);
 			sound = menu_move_sound;
 		}
-
 		break;
 
 	case K_MOUSE1:
@@ -286,8 +287,7 @@ const char *Default_MenuKey (menuframework_s *m, int key)
 
 	case K_KP_ENTER:
 	case K_ENTER:
-
-	case K_ABUTTON:
+	case K_GAMEPAD_A:
 
 		if (m)
 			Menu_SelectItem (m);
@@ -550,29 +550,33 @@ const char *M_Main_Key (int key)
 	switch (key)
 	{
 	case K_ESCAPE:
-	case K_BBUTTON:
+	case K_GAMEPAD_BACK:
+	case K_GAMEPAD_START:
+	case K_GAMEPAD_B:
 		M_PopMenu ();
 		break;
 
+	case K_GAMEPAD_DOWN:
+	case K_GAMEPAD_LSTICK_DOWN:
+	case K_GAMEPAD_RSTICK_DOWN:
 	case K_KP_DOWNARROW:
 	case K_DOWNARROW:
-
 		if (++m_main_cursor >= MAIN_ITEMS)
 			m_main_cursor = 0;
-
 		return sound;
 
+	case K_GAMEPAD_UP:
+	case K_GAMEPAD_LSTICK_UP:
+	case K_GAMEPAD_RSTICK_UP:
 	case K_KP_UPARROW:
 	case K_UPARROW:
-
 		if (--m_main_cursor < 0)
 			m_main_cursor = MAIN_ITEMS - 1;
-
 		return sound;
 
 	case K_KP_ENTER:
 	case K_ENTER:
-	case K_ABUTTON:
+	case K_GAMEPAD_A:
 		m_entersound = true;
 
 		switch (m_main_cursor)
@@ -893,14 +897,18 @@ static const char *Keys_MenuKey (int key)
 	{
 	case K_KP_ENTER:
 	case K_ENTER:
-	case K_ABUTTON:
+	case K_GAMEPAD_A:
 		KeyBindingFunc (item);
 		return menu_in_sound;
+
 	case K_BACKSPACE:		// delete bindings
 	case K_DEL:				// delete bindings
 	case K_KP_DEL:
+	case K_GAMEPAD_B:
+	case K_GAMEPAD_BACK:
 		M_UnbindCommand (bindnames[item->generic.localdata[0]][0]);
 		return menu_out_sound;
+
 	default:
 		return Default_MenuKey (&s_keys_menu, key);
 	}
@@ -920,7 +928,7 @@ CONTROLS MENU
 =======================================================================
 */
 
-extern cvar_t *joy_enable;
+extern cvar_t *in_controller;
 
 static menuframework_s	s_options_menu;
 static menuaction_s		s_options_defaults_action;
@@ -944,7 +952,7 @@ static void CrosshairFunc (void *unused)
 
 static void JoystickFunc (void *unused)
 {
-	Cvar_SetValue ("joy_enable", s_options_joystick_box.curvalue);
+	Cvar_SetValue ("in_controller", s_options_joystick_box.curvalue);
 }
 
 static void CustomizeControlsFunc (void *unused)
@@ -970,9 +978,7 @@ static void MouseSpeedFunc (void *unused)
 static float ClampCvar (float min, float max, float value)
 {
 	if (value < min) return min;
-
 	if (value > max) return max;
-
 	return value;
 }
 
@@ -1001,8 +1007,8 @@ static void ControlsSetMenuItemValues (void)
 	Cvar_SetValue ("crosshair", ClampCvar (0, 3, crosshair->value));
 	s_options_crosshair_box.curvalue		= crosshair->value;
 
-	Cvar_SetValue ("joy_enable", ClampCvar (0, 1, joy_enable->value));
-	s_options_joystick_box.curvalue		= joy_enable->value;
+	Cvar_SetValue ("in_controller", ClampCvar (0, 1, in_controller->value));
+	s_options_joystick_box.curvalue		= in_controller->value;
 }
 
 static void ControlsResetDefaultsFunc (void *unused)
@@ -1665,11 +1671,9 @@ const char *M_Credits_Key (int key)
 	switch (key)
 	{
 	case K_ESCAPE:
-	case K_BBUTTON:
-
+	case K_GAMEPAD_B:
 		if (creditsBuffer)
 			FS_FreeFile (creditsBuffer);
-
 		M_PopMenu ();
 		break;
 	}
@@ -3294,7 +3298,7 @@ void AddressBook_MenuInit (void)
 
 const char *AddressBook_MenuKey (int key)
 {
-	if ((key == K_ESCAPE) || (key == K_BBUTTON))
+	if ((key == K_ESCAPE) || (key == K_GAMEPAD_B))
 	{
 		int index;
 		char buffer[20];
@@ -3812,7 +3816,7 @@ const char *PlayerConfig_MenuKey (int key)
 {
 	int i;
 
-	if ((key == K_ESCAPE) || (key == K_BBUTTON))
+	if ((key == K_ESCAPE) || (key == K_GAMEPAD_B))
 	{
 		char scratch[1024];
 
@@ -3870,7 +3874,8 @@ const char *M_Quit_Key (int key)
 	switch (key)
 	{
 	case K_ESCAPE:
-	case K_BBUTTON:
+	case K_GAMEPAD_B:
+	case K_GAMEPAD_BACK:
 	case 'n':
 	case 'N':
 		M_PopMenu ();
@@ -3878,7 +3883,7 @@ const char *M_Quit_Key (int key)
 
 	case 'Y':
 	case 'y':
-	case K_ABUTTON:
+	case K_GAMEPAD_A:
 		cls.key_dest = key_console;
 		CL_Quit_f ();
 		break;
