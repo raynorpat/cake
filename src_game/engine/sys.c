@@ -455,6 +455,50 @@ int Sys_Milliseconds (void)
 
 //===============================================================================
 
+#ifdef _WIN32
+/*
+================
+Sys_SetHighDPIMode
+
+Force DPI awareness in Windows
+================
+*/
+typedef enum Q2_PROCESS_DPI_AWARENESS {
+	Q2_PROCESS_DPI_UNAWARE = 0,
+	Q2_PROCESS_SYSTEM_DPI_AWARE = 1,
+	Q2_PROCESS_PER_MONITOR_DPI_AWARE = 2
+} Q2_PROCESS_DPI_AWARENESS;
+
+void Sys_SetHighDPIMode(void)
+{
+	// For Vista, Win7 and Win8
+	BOOL(WINAPI *SetProcessDPIAware)(void) = NULL;
+	
+	// Win8.1 and later
+	HRESULT(WINAPI *SetProcessDpiAwareness)(Q2_PROCESS_DPI_AWARENESS dpiAwareness) = NULL;
+	
+	HINSTANCE userDLL = LoadLibrary("USER32.DLL");
+	if (userDLL)
+	{
+		SetProcessDPIAware = (BOOL(WINAPI *)(void)) GetProcAddress(userDLL, "SetProcessDPIAware");
+	}
+	
+	HINSTANCE shcoreDLL = LoadLibrary("SHCORE.DLL");
+	if (shcoreDLL)
+	{
+		SetProcessDpiAwareness = (HRESULT(WINAPI *)(Q2_PROCESS_DPI_AWARENESS))
+		GetProcAddress(shcoreDLL, "SetProcessDpiAwareness");
+	}
+	
+	if (SetProcessDpiAwareness) {
+		SetProcessDpiAwareness(Q2_PROCESS_PER_MONITOR_DPI_AWARE);
+	} else if (SetProcessDPIAware) {
+		SetProcessDPIAware();
+	}
+}
+#endif
+
+//===============================================================================
 
 /*
 ================
@@ -463,7 +507,13 @@ Sys_Init
 */
 void Sys_Init (void)
 {
+	// init SDL timer
 	Sys_InitTime();
+
+#ifdef _WIN32
+	// force DPI awareness in Windows
+	Sys_SetHighDPIMode();
+#endif
 }
 
 
