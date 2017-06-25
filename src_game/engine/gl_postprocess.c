@@ -72,6 +72,7 @@ cvar_t *r_hdrContrastScale;
 cvar_t *r_hdrExposureCompensation;
 cvar_t *r_hdrExposureAdjust;
 cvar_t *r_hdrBlurAmount;
+cvar_t *r_postprocessing;
 cvar_t *r_ssao;
 cvar_t *r_fxaa;
 
@@ -295,29 +296,28 @@ void RPostProcess_Init(void)
 	r_hdrExposureCompensation = Cvar_Get("r_hdrExposureCompensation", "3.0", 0);
 	r_hdrExposureAdjust = Cvar_Get("r_hdrExposureAdjust", "1.4", 0);
 	r_hdrBlurAmount = Cvar_Get("r_hdrBlurAmount", "0.33", 0);
-	r_ssao = Cvar_Get("r_ssao", "1", 0);
-	r_fxaa = Cvar_Get("r_fxaa", "1", 0);
+
+	r_postprocessing = Cvar_Get("r_postprocessing", "1", CVAR_ARCHIVE);
+	r_ssao = Cvar_Get("r_ssao", "1", CVAR_ARCHIVE);
+	r_fxaa = Cvar_Get("r_fxaa", "1", CVAR_ARCHIVE);
 }
 
-qboolean r_dopostprocessing = false;
 qboolean r_dowaterwarppost = false;
 
 void RPostProcess_Begin(void)
 {
 	mleaf_t *leaf;
 
-	r_dopostprocessing = false;
 	r_dowaterwarppost = false;
 
 	if (!r_worldmodel) return;
 	if (r_newrefdef.rdflags & RDF_NOWORLDMODEL) return;
 	if (!hdrRenderFBO) return;
+	if (!r_postprocessing->value) return;
 
 	// bind HDR framebuffer object
 	R_BindFBO(hdrRenderFBO);
-
-	r_dopostprocessing = true;
-
+	
 	// see if we are underwater 
 	leaf = Mod_PointInLeaf (r_origin, r_worldmodel);
 	if ((leaf->contents & CONTENTS_WATER) || (leaf->contents & CONTENTS_LAVA) || (leaf->contents & CONTENTS_SLIME))
@@ -348,10 +348,9 @@ void RPostProcess_ComputeShader_CalculateLuminance(void)
 	glMemoryBarrier (GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
 }
 
-static void RPostProcess_Downscale(void)
+static void RPostProcess_DownscaleTo64(void)
 {
 	// blit current hdr framebuffer into downscaled 64x64 texture
-	// so we can do automatic exposure adaptation
 	glBindFramebuffer(GL_READ_FRAMEBUFFER_EXT, hdrRenderFBO->frameBuffer);
 	glBindFramebuffer(GL_DRAW_FRAMEBUFFER_EXT, hdrDownscale64->frameBuffer);
 	glBlitFramebuffer(0, 0, vid.width, vid.height, 0, 0, 64, 64, GL_COLOR_BUFFER_BIT, GL_LINEAR);
@@ -553,7 +552,7 @@ void RPostProcess_FinishToScreen(void)
 	if (!r_worldmodel) return;
 	if (r_newrefdef.rdflags & RDF_NOWORLDMODEL) return;
 	if (!hdrRenderFBO) return;
-	if (!r_dopostprocessing) return;
+	if (!r_postprocessing->value) return;
 
 	R_BindNullFBO ();
 
@@ -561,7 +560,7 @@ void RPostProcess_FinishToScreen(void)
 	RPostProcess_SSAO ();
 
 	// downscale to 64x64
-	RPostProcess_Downscale ();
+	RPostProcess_DownscaleTo64 ();
 
 	// calculate eye adaptation by compute shader
 	RPostProcess_ComputeShader_CalculateLuminance ();

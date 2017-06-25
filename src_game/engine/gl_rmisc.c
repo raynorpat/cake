@@ -491,8 +491,9 @@ void GL_SetDefaultState (void)
 
 	glDepthRange (gldepthmin, gldepthmax);
 
-	// enable sRGB framebuffer for proper gamma correction
-	glEnable (GL_FRAMEBUFFER_SRGB);
+	// enable sRGB framebuffer for proper gamma correction with the post-processing pipeline
+	if (r_postprocessing->value)
+		glEnable (GL_FRAMEBUFFER_SRGB);
 
 	R_BindNullFBO();
 }

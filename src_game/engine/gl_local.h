@@ -72,7 +72,6 @@ typedef struct ubodef_s
 void GL_UseProgram (GLuint progid);
 void GL_UseProgramWithUBOs (GLuint progid, ubodef_t *ubodef, int numubos);
 
-
 void RSurf_CreatePrograms (void);
 void RWarp_CreatePrograms (void);
 void RSky_CreatePrograms (void);
@@ -252,6 +251,7 @@ extern	cvar_t	*r_fullbright;
 extern	cvar_t	*r_novis;
 extern	cvar_t	*r_nocull;
 extern	cvar_t	*r_lerpmodels;
+extern	cvar_t	*r_postprocessing;
 
 extern	cvar_t	*r_lightlevel;	// FIXME: This is a HACK to get the client's light level
 
