@@ -36,19 +36,9 @@ out vec4 fragColor;
 
 void ParticleFS ()
 {
-	// emissive gain (TODO: the 0.3 should be a cvar)
-	float emissiveGain = exp(0.3 * 5.0);
-	
-	vec4 color = 2.0 * iocolor * emissiveGain;
+	vec4 color = 2.0 * iocolor;
 
-	// makes the standard square texture a circle
-	color.a = (1.0 - dot (offsets.st, offsets.st)) * 1.5;
-
-	// discard the black alpha
-	if( color.a <= 1.0 )
-		discard;
-
-	// multiply the circle by the particle color alpha for fading out
+	// multiply the particle color alpha for fading out
 	fragColor = color * iocolor.a;
 }
 #endif
