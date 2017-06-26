@@ -350,6 +350,13 @@ void RPostProcess_ComputeShader_CalculateLuminance(void)
 	glMemoryBarrier (GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
 }
 
+static void RPostProcess_SetCurrentRender(void)
+{
+	glBindTexture(GL_TEXTURE_2D, r_currentRenderImage);
+	glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, vid.width, vid.height);
+	glBindTexture(GL_TEXTURE_2D, 0);
+}
+
 static void RPostProcess_DownscaleTo64(void)
 {
 	// blit current hdr framebuffer into downscaled 64x64 texture
@@ -539,7 +546,6 @@ void RPostProcess_FXAA(void)
 	glProgramUniform2f(gl_fxaaprog, u_ssaoTexScale, texScale[0], texScale[1]);
 
 	GL_BindTexture(GL_TEXTURE0, GL_TEXTURE_2D, r_drawclampsampler, r_currentRenderImage);
-	glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, vid.width, vid.height);
 
 	GL_BindVertexArray(r_postvao);
 	glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
@@ -572,6 +578,9 @@ void RPostProcess_FinishToScreen(void)
 
 	// perform bloom and tonemap
 	RPostProcess_DoBloomAndTonemap ();
+
+	// set currentrender image for other effects
+	RPostProcess_SetCurrentRender ();
 
 	// perform FXAA pass
 	RPostProcess_FXAA ();
