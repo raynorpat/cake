@@ -37,6 +37,7 @@ extern cvar_t *vid_gamma;
 extern cvar_t *vid_fullscreen;
 static cvar_t *gl_swapinterval;
 static cvar_t *gl_textureanisotropy;
+static cvar_t *r_fxaa;
 
 static menuframework_s	s_opengl_menu;
 
@@ -46,9 +47,9 @@ static menuslider_s		s_brightness_slider;
 static menulist_s 		s_fs_box;
 static menulist_s 		s_vsync_list;
 static menulist_s 		s_af_list;
+static menulist_s 		s_fxaa_list;
 static menuaction_s		s_defaults_action;
 static menuaction_s 	s_apply_action;
-
 
 static int GetCustomValue(menulist_s *list)
 {
@@ -173,6 +174,13 @@ static void ApplyChanges (void *unused)
 		restart = true;
 	}
 
+	// fxaa
+	if (r_fxaa->value != s_fxaa_list.curvalue)
+	{
+		Cvar_SetValue("r_fxaa", s_fxaa_list.curvalue);
+		restart = true;
+	}
+
 	if (restart)
 	{
 		Cbuf_AddText("vid_restart\n");
@@ -256,6 +264,8 @@ void VID_MenuInit (void)
 		gl_swapinterval = Cvar_Get("gl_swapinterval", "1", CVAR_ARCHIVE);
 	if (!gl_textureanisotropy)
 		gl_textureanisotropy = Cvar_Get("gl_textureanisotropy", "0", CVAR_ARCHIVE);
+	if (!r_fxaa)
+		r_fxaa = Cvar_Get("r_fxaa", "0", CVAR_ARCHIVE);
 
 	s_mode_list.curvalue = gl_mode->value;
 
@@ -346,6 +356,12 @@ void VID_MenuInit (void)
 		s_af_list.curvalue--;
 	}
 
+	s_fxaa_list.generic.type = MTYPE_SPINCONTROL;
+	s_fxaa_list.generic.name = "fxaa";
+	s_fxaa_list.generic.x = 0;
+	s_fxaa_list.generic.y = (y += 10);
+	s_fxaa_list.itemnames = yesno_names;
+	s_fxaa_list.curvalue = (r_fxaa->value != 0);
 
 	s_defaults_action.generic.type = MTYPE_ACTION;
 	s_defaults_action.generic.name = "reset to default";
@@ -365,6 +381,7 @@ void VID_MenuInit (void)
 	Menu_AddItem (&s_opengl_menu, (void *) &s_fs_box);
 	Menu_AddItem (&s_opengl_menu, (void *) &s_vsync_list);
 	Menu_AddItem (&s_opengl_menu, (void *) &s_af_list);
+	Menu_AddItem (&s_opengl_menu, (void *) &s_fxaa_list);
 	Menu_AddItem (&s_opengl_menu, (void *) &s_defaults_action);
 	Menu_AddItem (&s_opengl_menu, (void *) &s_apply_action);
 
