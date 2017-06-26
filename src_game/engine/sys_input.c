@@ -515,7 +515,7 @@ void IN_ControllerInit(void)
 	char *p = NULL;
 
 	// abort controller startup if user requests no support
-	in_controller = Cvar_Get("in_controller", "1", CVAR_NOSET);
+	in_controller = Cvar_Get("in_controller", "1", CVAR_ARCHIVE);
 	if (!in_controller->value)
 		return;
 
@@ -543,9 +543,10 @@ void IN_ControllerInit(void)
 		void *buffer = NULL;
 		SDL_RWops *rw;
 		p = name[i];
-		Com_Printf("Loading controller mappings from '%s':\n", p);
-		size = FS_LoadFile(p, &buffer);
 
+		Com_Printf("Loading controller mappings from '%s':\n", p);
+		
+		size = FS_LoadFile(p, &buffer);
 		if (buffer)
 		{
 			int results;
@@ -686,8 +687,8 @@ void IN_ControllerCommands(void)
 	{
 		char buffer[128];
 		SDL_memset(buffer, 0, sizeof(buffer));
-		SDL_snprintf(buffer, sizeof(buffer), "%s disconnected", SDL_GameControllerName(currentController));
-		Com_Printf(buffer);
+		SDL_snprintf(buffer, sizeof(buffer), "%s disconnected.\n", SDL_GameControllerName(currentController));
+		Com_DPrintf(buffer);
 
 		currentController = NULL;
 	}
@@ -706,8 +707,8 @@ void IN_ControllerCommands(void)
 				{
 					char buffer[128];
 					SDL_memset(buffer, 0, sizeof(buffer));
-					SDL_snprintf(buffer, sizeof(buffer), "%s connected", SDL_GameControllerName(currentController));
-					Com_Printf(buffer);
+					SDL_snprintf(buffer, sizeof(buffer), "%s connected.\n", SDL_GameControllerName(currentController));
+					Com_DPrintf(buffer);
 					break;
 				}
 			}
