@@ -308,8 +308,6 @@ void RPostProcess_Begin(void)
 {
 	mleaf_t *leaf;
 
-	r_dowaterwarppost = false;
-
 	if (!r_worldmodel) return;
 	if (r_newrefdef.rdflags & RDF_NOWORLDMODEL) return;
 	if (!hdrRenderFBO) return;
@@ -323,6 +321,10 @@ void RPostProcess_Begin(void)
 	if ((leaf->contents & CONTENTS_WATER) || (leaf->contents & CONTENTS_LAVA) || (leaf->contents & CONTENTS_SLIME))
 	{
 		r_dowaterwarppost = true;
+	}
+	else
+	{
+		r_dowaterwarppost = false;
 	}
 
 	// clear out color in framebuffer object before we start drawing to it
