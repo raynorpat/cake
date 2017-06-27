@@ -72,6 +72,7 @@ cvar_t *r_hdrContrastScale;
 cvar_t *r_hdrExposureCompensation;
 cvar_t *r_hdrExposureAdjust;
 cvar_t *r_hdrBlurAmount;
+cvar_t *r_hdrBlurPasses;
 cvar_t *r_postprocessing;
 cvar_t *r_ssao;
 cvar_t *r_fxaa;
@@ -296,6 +297,7 @@ void RPostProcess_Init(void)
 	r_hdrExposureCompensation = Cvar_Get("r_hdrExposureCompensation", "3.0", 0);
 	r_hdrExposureAdjust = Cvar_Get("r_hdrExposureAdjust", "1.4", 0);
 	r_hdrBlurAmount = Cvar_Get("r_hdrBlurAmount", "0.33", 0);
+	r_hdrBlurPasses = Cvar_Get("r_hdrBlurPasses", "8", 0);
 
 	r_postprocessing = Cvar_Get("r_postprocessing", "1", CVAR_ARCHIVE);
 	r_ssao = Cvar_Get("r_ssao", "1", CVAR_ARCHIVE);
@@ -310,8 +312,8 @@ void RPostProcess_Begin(void)
 
 	if (!r_worldmodel) return;
 	if (r_newrefdef.rdflags & RDF_NOWORLDMODEL) return;
-	if (!hdrRenderFBO) return;
 	if (!r_postprocessing->value) return;
+	if (!hdrRenderFBO) return;
 
 	// bind HDR framebuffer object
 	R_BindFBO(hdrRenderFBO);
@@ -411,7 +413,7 @@ static void RPostProcess_DoBloomAndTonemap(void)
 
 	for (i = 0; i < 2; i++)
 	{
-		for (j = 0; j < 8; j++)
+		for (j = 0; j < r_hdrBlurPasses->value; j++)
 		{
 			texScale[0] = 1.0f / bloomRenderFBO[flip]->width;
 			texScale[1] = 1.0f / bloomRenderFBO[flip]->height;
@@ -580,8 +582,8 @@ void RPostProcess_FinishToScreen(void)
 {
 	if (!r_worldmodel) return;
 	if (r_newrefdef.rdflags & RDF_NOWORLDMODEL) return;
-	if (!hdrRenderFBO) return;
 	if (!r_postprocessing->value) return;
+	if (!hdrRenderFBO) return;
 
 	R_BindNullFBO ();
 
