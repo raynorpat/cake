@@ -112,6 +112,35 @@ void CompositeFS ()
 		fragColor = avgValue / coefficientSum;
 		return;
 	}
+	// sepia pass for menu and loading background
+	else if(compositeMode == 4)
+	{
+		// grab scene
+		color = texture (diffuse, st);
+
+		// convert to greyscale using NTSC weightings
+		float grey = dot(color.rgb, vec3(0.299, 0.587, 0.114));
+		
+		// multiply rgb weightings with grayscale value to give sepia look
+		vec3 sepia = vec3(1.2, 1.0, 0.8);
+		sepia *= grey;
+		vec4 colorSepia = vec4(mix(color.rgb, sepia, 0.88), 1.0);
+		
+		// small vignette
+		float OuterVignetting	= 1.4 - 0.75;
+		float InnerVignetting	= 1.0 - 0.75;
+		float d = distance(vec2(0.5, 0.5), st) * 1.0;
+		float vignetting = clamp((OuterVignetting - d) / (OuterVignetting - InnerVignetting), 0.0, 1.0);
+
+		// mix everything together
+		color = mix(color, colorSepia, vignetting);
+
+		// gamma correct
+		color.rgb = srgbToLinear(color.rgb);	
+	
+		fragColor = color;
+		return;
+	}
 }
 #endif
 

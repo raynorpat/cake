@@ -86,6 +86,7 @@ void RPostProcess_Init(void);
 void RPostProcess_CreatePrograms(void);
 void RPostProcess_Begin (void);
 void RPostProcess_FinishToScreen (void);
+void RPostProcess_MenuBackground (void);
 
 void R_DrawSurfaceChain (struct msurface_s *chain, int numindexes);
 

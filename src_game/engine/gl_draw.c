@@ -436,12 +436,19 @@ void Draw_Fill (int x, int y, int w, int h, int c)
 /*
 ================
 Draw_FadeScreen
-
 ================
 */
 void Draw_FadeScreen (void)
 {
-	Draw_ColouredRect (0, 0, vid.width, vid.height, 0xcc000000);
+	if (!r_postprocessing->value)
+	{
+		Draw_ColouredRect (0, 0, vid.width, vid.height, 0xcc000000);
+	}
+	else
+	{
+		Draw_End2D ();
+		RPostProcess_MenuBackground ();
+	}
 }
 
 //====================================================================

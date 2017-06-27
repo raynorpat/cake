@@ -555,6 +555,27 @@ void RPostProcess_FXAA(void)
 	GL_BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 }
 
+void RPostProcess_MenuBackground(void)
+{
+	vec2_t texScale;
+
+	// set screen scale
+	texScale[0] = 1.0f / vid.width;
+	texScale[1] = 1.0f / vid.height;
+
+	GL_Enable(!DEPTHTEST_BIT | !CULLFACE_BIT | !BLEND_BIT);
+
+	GL_UseProgram(gl_compositeprog);
+
+	glProgramUniform2f(gl_compositeprog, u_compositeTexScale, texScale[0], texScale[1]);
+	glProgramUniform1i(gl_compositeprog, u_compositeMode, 4);
+
+	GL_BindTexture(GL_TEXTURE0, GL_TEXTURE_2D, r_drawclampsampler, r_currentRenderImage);
+
+	GL_BindVertexArray(r_postvao);
+	glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+}
+
 void RPostProcess_FinishToScreen(void)
 {
 	if (!r_worldmodel) return;

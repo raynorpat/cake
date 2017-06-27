@@ -542,6 +542,7 @@ void GLimp_EndFrame (void)
 {
 	//Draw_FPS ();
 	Draw_End2D ();
+
 	GL_UseProgram (0);
 
 	SDL_GL_SwapWindow(window);
