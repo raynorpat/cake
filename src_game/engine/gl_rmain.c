@@ -779,7 +779,6 @@ qboolean R_Init (void)
 	// create all of our vertex/fragment programs
 	RSurf_CreatePrograms ();
 	RWarp_CreatePrograms ();
-	RPostProcess_CreatePrograms();
 	RSky_CreatePrograms ();
 	RDraw_CreatePrograms ();
 	RMesh_CreatePrograms ();
@@ -787,9 +786,6 @@ qboolean R_Init (void)
 	RBeam_CreatePrograms ();
 	RNull_CreatePrograms ();
 	RPart_CreatePrograms ();
-
-	// create framebuffer objects
-	R_InitFBOs();
 
 	// create our ubo for shared stuff
 	glGenBuffers (1, &gl_sharedubo);
@@ -803,6 +799,12 @@ qboolean R_Init (void)
 	Mod_Init ();
 	R_InitParticleTexture ();
 	Draw_InitLocal ();
+
+	// create post process programs
+	RPostProcess_CreatePrograms ();
+
+	// create framebuffer objects
+	R_InitFBOs();
 
 	return 1;
 }
