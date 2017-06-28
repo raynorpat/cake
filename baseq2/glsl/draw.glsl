@@ -27,7 +27,7 @@ out vec4 fragColor;
 void DrawFS ()
 {
 	fragColor = mix (texture (diffuse, texcoords.st), iocolor, texturecolormix);
-	fragColor.rgb = srgbToLinear(fragColor.rgb);
+	fragColor.rgb = toLinear(fragColor.rgb);
 }
 #endif
 

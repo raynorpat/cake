@@ -93,7 +93,7 @@ GLuint r_modelsampler = 0;
 GLuint r_lightmapsampler = 0;
 GLuint r_drawclampsampler = 0;
 GLuint r_drawwrapsampler = 0;
-GLuint r_charsetsampler = 0;
+GLuint r_drawnearestclampsampler = 0;
 GLuint r_skysampler = 0;
 
 
@@ -141,8 +141,8 @@ void RImage_CreateSamplers (void)
 	glGenSamplers (1, &r_drawwrapsampler);
 	RImage_SetSampler (r_drawwrapsampler, GL_LINEAR, GL_REPEAT);
 
-	glGenSamplers (1, &r_charsetsampler);
-	RImage_SetSampler (r_charsetsampler, GL_NEAREST, GL_CLAMP_TO_EDGE);
+	glGenSamplers (1, &r_drawnearestclampsampler);
+	RImage_SetSampler (r_drawnearestclampsampler, GL_NEAREST, GL_CLAMP_TO_EDGE);
 
 	glGenSamplers (1, &r_skysampler);
 	RImage_SetSampler (r_skysampler, GL_LINEAR, GL_CLAMP_TO_EDGE);

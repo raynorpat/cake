@@ -56,6 +56,8 @@ typedef struct wwvert_s
 GLuint r_postvbo = 0;
 GLuint r_postvao = 0;
 
+qboolean r_dowaterwarppost = false;
+
 GLuint r_warpGradientImage;
 GLuint r_brightPassRenderImage;
 GLuint r_bloomRenderImage[MAX_BLOOM_BUFFERS];
@@ -99,6 +101,15 @@ void RPostProcess_CreatePrograms(void)
 		r_warpGradientImage = GL_UploadTexture (data, width, height, false, 32);
 
 	// create textures for use by the HDR framebuffer objects
+	glDeleteTextures(1, &r_currentRenderImage);
+	glGenTextures(1, &r_currentRenderImage);
+	glBindTexture(GL_TEXTURE_2D, r_currentRenderImage);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, vid.width, vid.height, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
 	glDeleteTextures(1, &r_currentRenderHDRImage);
 	glGenTextures(1, &r_currentRenderHDRImage);
 	glBindTexture(GL_TEXTURE_2D, r_currentRenderHDRImage);
@@ -107,7 +118,6 @@ void RPostProcess_CreatePrograms(void)
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-	glBindTexture(GL_TEXTURE_2D, 0);
 
 	glDeleteTextures(1, &r_currentRenderHDRImage64);
 	glGenTextures(1, &r_currentRenderHDRImage64);
@@ -117,7 +127,6 @@ void RPostProcess_CreatePrograms(void)
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-	glBindTexture(GL_TEXTURE_2D, 0);
 
 	glDeleteTextures(1, &r_currentDepthRenderImage);
 	glGenTextures(1, &r_currentDepthRenderImage);
@@ -127,67 +136,35 @@ void RPostProcess_CreatePrograms(void)
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-	glBindTexture(GL_TEXTURE_2D, 0);
 
 	glDeleteTextures(1, &r_currentAORenderImage);
 	glGenTextures(1, &r_currentAORenderImage);
 	glBindTexture(GL_TEXTURE_2D, r_currentAORenderImage);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, vid.width, vid.height, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, vid.width, vid.height, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-	glBindTexture(GL_TEXTURE_2D, 0);
 
-	glDeleteTextures(1, &r_currentRenderImage);
-	glGenTextures(1, &r_currentRenderImage);
-	glBindTexture(GL_TEXTURE_2D, r_currentRenderImage);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, vid.width, vid.height, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-	glBindTexture(GL_TEXTURE_2D, 0);
+	for (int i = 0; i < 2; i++) {
+		glDeleteTextures(1, &r_bloomRenderImage[i]);
+		glGenTextures(1, &r_bloomRenderImage[i]);
+		glBindTexture(GL_TEXTURE_2D, r_bloomRenderImage[i]);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, vid.width, vid.height, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	}
 
-	glDeleteTextures(1, &r_bloomRenderImage[0]);
-	glGenTextures(1, &r_bloomRenderImage[0]);
-	glBindTexture(GL_TEXTURE_2D, r_bloomRenderImage[0]);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, vid.width, vid.height, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-	glBindTexture(GL_TEXTURE_2D, 0);
-
-	glDeleteTextures(1, &r_bloomRenderImage[1]);
-	glGenTextures(1, &r_bloomRenderImage[1]);
-	glBindTexture(GL_TEXTURE_2D, r_bloomRenderImage[1]);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, vid.width, vid.height, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-	glBindTexture(GL_TEXTURE_2D, 0);
-
-	glDeleteTextures(1, &m_lum[0]);
-	glGenTextures(1, &m_lum[0]);
-	glBindTexture(GL_TEXTURE_2D, m_lum[0]);
-	glTexStorage2D(GL_TEXTURE_2D, 1, GL_RGBA16F, 1, 1);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-	glBindTexture(GL_TEXTURE_2D, 0);
-
-	glDeleteTextures(1, &m_lum[1]);
-	glGenTextures(1, &m_lum[1]);
-	glBindTexture(GL_TEXTURE_2D, m_lum[1]);
-	glTexStorage2D(GL_TEXTURE_2D, 1, GL_RGBA16F, 1, 1);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-	glBindTexture(GL_TEXTURE_2D, 0);
+	for (int i = 0; i < 2; i++) {
+		glDeleteTextures(1, &m_lum[i]);
+		glGenTextures(1, &m_lum[i]);
+		glBindTexture(GL_TEXTURE_2D, m_lum[i]);
+		glTexStorage2D(GL_TEXTURE_2D, 1, GL_RGBA16F, 1, 1);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	}
 
 	glDeleteTextures(1, &m_lumCurrent);
 	glGenTextures(1, &m_lumCurrent);
@@ -195,9 +172,6 @@ void RPostProcess_CreatePrograms(void)
 	glTexStorage2D(GL_TEXTURE_2D, 1, GL_RGBA16F, 1, 1);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-	glBindTexture(GL_TEXTURE_2D, 0);
 
 	glDeleteTextures(1, &r_brightPassRenderImage);
 	glGenTextures(1, &r_brightPassRenderImage);
@@ -207,6 +181,7 @@ void RPostProcess_CreatePrograms(void)
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
 	glBindTexture(GL_TEXTURE_2D, 0);
 
 	// set up the screen vbo and vao
@@ -304,59 +279,29 @@ void RPostProcess_Init(void)
 	r_fxaa = Cvar_Get("r_fxaa", "1", CVAR_ARCHIVE);
 }
 
-qboolean r_dowaterwarppost = false;
-
-void RPostProcess_Begin(void)
-{
-	mleaf_t *leaf;
-
-	if (!r_worldmodel) return;
-	if (r_newrefdef.rdflags & RDF_NOWORLDMODEL) return;
-	if (!r_postprocessing->value) return;
-	if (!hdrRenderFBO) return;
-
-	// bind HDR framebuffer object
-	R_BindFBO(hdrRenderFBO);
-	
-	// see if we are underwater 
-	leaf = Mod_PointInLeaf (r_origin, r_worldmodel);
-	if ((leaf->contents & CONTENTS_WATER) || (leaf->contents & CONTENTS_LAVA) || (leaf->contents & CONTENTS_SLIME))
-	{
-		r_dowaterwarppost = true;
-	}
-	else
-	{
-		r_dowaterwarppost = false;
-	}
-
-	// clear out color in framebuffer object before we start drawing to it
-	GL_Clear(GL_COLOR_BUFFER_BIT);
-}
-
 void RPostProcess_ComputeShader_CalculateLuminance(void)
 {
+	// calculate current luminance level
 	GL_UseProgram (gl_calcLumProg);
 	glBindImageTexture (0, r_currentRenderHDRImage64, 0, GL_FALSE, 0, GL_READ_ONLY, GL_RGBA16F);
 	glBindImageTexture (1, m_lumCurrent, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA16F);
 	glDispatchCompute (1, 1, 1);
 	//glMemoryBarrier (GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);  
 
+	// adapt luminance based on current and previous frame
 	GL_UseProgram (gl_calcAdaptiveLumProg);
 	glBindImageTexture (0, m_lumCurrent, 0, GL_FALSE, 0, GL_READ_ONLY, GL_RGBA16F);
 	glBindImageTexture (1, m_lum[0], 0, GL_FALSE, 0, GL_READ_ONLY, GL_RGBA16F);
 	glBindImageTexture (2, m_lum[1], 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA16F);
-
-	// simulates 60fps
-	glUniform1f (u_deltaTime, 1 / 60.0f);
+	glUniform1f (u_deltaTime, 1 / 60.0f); // simulates 60fps
 	glDispatchCompute (1, 1, 1);
 	glMemoryBarrier (GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
 }
 
 static void RPostProcess_SetCurrentRender(void)
 {
-	glBindTexture(GL_TEXTURE_2D, r_currentRenderImage);
+	GL_BindTexture(GL_TEXTURE0, GL_TEXTURE_2D, r_drawnearestclampsampler, r_currentRenderImage);
 	glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, vid.width, vid.height);
-	glBindTexture(GL_TEXTURE_2D, 0);
 }
 
 static void RPostProcess_DownscaleTo64(void)
@@ -376,7 +321,12 @@ static void RPostProcess_DownscaleBrightpass(void)
 	texScale[0] = 1.0f / vid.width;
 	texScale[1] = 1.0f / vid.height;
 
-	GL_Enable(BLEND_BIT);
+	R_BindFBO(brightpassRenderFBO);
+
+	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+	GL_Clear(GL_COLOR_BUFFER_BIT);
+
+	GL_Enable(!BLEND_BIT | !CULLFACE_BIT);
 
 	// do downscaled brightpass
 	GL_UseProgram(gl_compositeprog);
@@ -388,14 +338,13 @@ static void RPostProcess_DownscaleBrightpass(void)
 	glProgramUniform4f(gl_compositeprog, u_compositeBrightParam, brightParam[0], brightParam[1], brightParam[2], brightParam[3]);
 	glProgramUniform2f(gl_compositeprog, u_compositeTexScale, texScale[0], texScale[1]);
 	glProgramUniform1i(gl_compositeprog, u_compositeMode, 1);
-	GL_BindTexture(GL_TEXTURE0, GL_TEXTURE_2D, r_drawclampsampler, r_currentRenderHDRImage);
 
-	R_BindFBO(brightpassRenderFBO);
-	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-	GL_Clear(GL_COLOR_BUFFER_BIT);
+	GL_BindTexture(GL_TEXTURE0, GL_TEXTURE_2D, r_drawnearestclampsampler, r_currentRenderHDRImage);
 
 	GL_BindVertexArray(r_postvao);
 	glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+
+	R_BindNullFBO();
 }
 
 static void RPostProcess_DoBloomAndTonemap(void)
@@ -420,7 +369,6 @@ static void RPostProcess_DoBloomAndTonemap(void)
 
 			R_BindFBO(bloomRenderFBO[flip]);
 
-			glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 			GL_Clear(GL_COLOR_BUFFER_BIT);
 
 			GL_Enable(BLEND_BIT);
@@ -472,13 +420,15 @@ static void RPostProcess_DoBloomAndTonemap(void)
 	}
 
 	GL_Enable(BLEND_BIT);
-	GL_BindTexture(GL_TEXTURE1, GL_TEXTURE_2D, r_drawclampsampler, r_currentRenderHDRImage);
-	GL_BindTexture(GL_TEXTURE2, GL_TEXTURE_2D, r_drawwrapsampler, r_warpGradientImage);
-	GL_BindTexture(GL_TEXTURE3, GL_TEXTURE_2D, r_drawwrapsampler, m_lum[1]);
-	GL_BindTexture(GL_TEXTURE4, GL_TEXTURE_2D, r_drawwrapsampler, r_currentAORenderImage);
-	GL_BindVertexArray(r_postvao);
+
 	GL_UseProgram(gl_postprog);
 
+	GL_BindTexture(GL_TEXTURE1, GL_TEXTURE_2D, r_drawnearestclampsampler, r_currentRenderHDRImage);
+	GL_BindTexture(GL_TEXTURE2, GL_TEXTURE_2D, r_drawwrapsampler, r_warpGradientImage);
+	GL_BindTexture(GL_TEXTURE3, GL_TEXTURE_2D, r_drawclampsampler, m_lum[1]);
+	GL_BindTexture(GL_TEXTURE4, GL_TEXTURE_2D, r_drawnearestclampsampler, r_currentAORenderImage);
+
+	GL_BindVertexArray(r_postvao);
 	glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
 }
 
@@ -504,9 +454,7 @@ void RPostProcess_SSAO(void)
 	texScale[0] = 1.0f / vid.width;
 	texScale[1] = 1.0f / vid.height;
 
-	GL_Enable(!DEPTHTEST_BIT | !CULLFACE_BIT);
-	glEnable(GL_BLEND);
-	GL_BlendFunc(GL_DST_COLOR, GL_ZERO); // multiplicative blend
+	GL_Enable(!DEPTHTEST_BIT | !CULLFACE_BIT | BLEND_BIT);
 
 	GL_UseProgram(gl_ssaoprog);
 
@@ -516,14 +464,10 @@ void RPostProcess_SSAO(void)
 	glProgramUniform3f(gl_ssaoprog, u_ssaoZFar, zFarParam[0], zFarParam[1], zFarParam[2]);
 	glProgramUniform2f(gl_ssaoprog, u_ssaoTexScale, texScale[0], texScale[1]);
 
-	GL_BindTexture(GL_TEXTURE0, GL_TEXTURE_2D, r_drawclampsampler, r_currentDepthRenderImage);
+	GL_BindTexture(GL_TEXTURE0, GL_TEXTURE_2D, r_drawnearestclampsampler, r_currentDepthRenderImage);
 
 	GL_BindVertexArray(r_postvao);
 	glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
-
-	// reset blend mode
-	glDisable(GL_BLEND);
-	GL_BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 	R_BindNullFBO();
 }
@@ -539,21 +483,19 @@ void RPostProcess_FXAA(void)
 	texScale[0] = 1.0f / vid.width;
 	texScale[1] = 1.0f / vid.height;
 	
-	GL_Enable(!DEPTHTEST_BIT | !CULLFACE_BIT);
-	glEnable(GL_BLEND);
+	GL_Enable(!DEPTHTEST_BIT | !CULLFACE_BIT | BLEND_BIT);
 	GL_BlendFunc(GL_DST_COLOR, GL_ONE); // multiplicative blend
 
 	GL_UseProgram(gl_fxaaprog);
 
 	glProgramUniform2f(gl_fxaaprog, u_ssaoTexScale, texScale[0], texScale[1]);
 
-	GL_BindTexture(GL_TEXTURE0, GL_TEXTURE_2D, r_drawclampsampler, r_currentRenderImage);
+	GL_BindTexture(GL_TEXTURE0, GL_TEXTURE_2D, r_drawnearestclampsampler, r_currentRenderImage);
 
 	GL_BindVertexArray(r_postvao);
 	glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
 
 	// reset blend mode
-	glDisable(GL_BLEND);
 	GL_BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 }
 
@@ -572,10 +514,38 @@ void RPostProcess_MenuBackground(void)
 	glProgramUniform2f(gl_compositeprog, u_compositeTexScale, texScale[0], texScale[1]);
 	glProgramUniform1i(gl_compositeprog, u_compositeMode, 4);
 
-	GL_BindTexture(GL_TEXTURE0, GL_TEXTURE_2D, r_drawclampsampler, r_currentRenderImage);
+	GL_BindTexture(GL_TEXTURE0, GL_TEXTURE_2D, r_drawnearestclampsampler, r_currentRenderImage);
 
 	GL_BindVertexArray(r_postvao);
 	glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+}
+
+void RPostProcess_Begin(void)
+{
+	mleaf_t *leaf;
+
+	if (!r_worldmodel) return;
+	if (r_newrefdef.rdflags & RDF_NOWORLDMODEL) return;
+	if (!r_postprocessing->value) return;
+	if (!hdrRenderFBO) return;
+
+	// bind HDR framebuffer object
+	R_BindFBO(hdrRenderFBO);
+
+	// see if we are underwater 
+	leaf = Mod_PointInLeaf(r_origin, r_worldmodel);
+	if ((leaf->contents & CONTENTS_WATER) || (leaf->contents & CONTENTS_LAVA) || (leaf->contents & CONTENTS_SLIME))
+	{
+		r_dowaterwarppost = true;
+	}
+	else
+	{
+		r_dowaterwarppost = false;
+	}
+
+	// clear out color in framebuffer object before we start drawing to it
+	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+	GL_Clear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
 }
 
 void RPostProcess_FinishToScreen(void)

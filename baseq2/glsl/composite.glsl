@@ -136,9 +136,7 @@ void CompositeFS ()
 		color = mix(color, colorSepia, vignetting);
 
 		// gamma correct
-		color.rgb = srgbToLinear(color.rgb);	
-	
-		fragColor = color;
+		fragColor = toLinear(color);
 		return;
 	}
 }

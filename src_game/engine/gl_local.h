@@ -285,7 +285,7 @@ extern GLuint r_surfacesampler;
 extern GLuint r_lightmapsampler;
 extern GLuint r_drawclampsampler;
 extern GLuint r_drawwrapsampler;
-extern GLuint r_charsetsampler;
+extern GLuint r_drawnearestclampsampler;
 extern GLuint r_skysampler;
 extern GLuint r_modelsampler;
 

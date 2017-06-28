@@ -256,7 +256,7 @@ void R_InitFBOs(void)
 		bloomRenderFBO[i] = R_CreateFBO(va("_bloomRender%i", i), vid.width, vid.height);
 		R_BindFBO(bloomRenderFBO[i]);
 
-		R_CreateFBOColorBuffer(bloomRenderFBO[i], GL_RGBA16F, 0);
+		R_CreateFBOColorBuffer(bloomRenderFBO[i], GL_RGBA8, 0);
 
 		R_AttachFBOTexture2D(GL_TEXTURE_2D, r_bloomRenderImage[i], 0);
 
@@ -268,7 +268,7 @@ void R_InitFBOs(void)
 	AORenderFBO = R_CreateFBO("_AORender", vid.width, vid.height);
 	R_BindFBO(AORenderFBO);
 
-	R_CreateFBOColorBuffer(AORenderFBO, GL_RGBA8, 0);
+	R_CreateFBOColorBuffer(AORenderFBO, GL_RGBA16F, 0);
 
 	R_AttachFBOTexture2D(GL_TEXTURE_2D, r_currentAORenderImage, 0);
 

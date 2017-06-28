@@ -297,7 +297,7 @@ void Draw_CharScaled (int x, int y, int num, float scale)
 
 	scaledSize = 8 * scale;
 
-	Draw_TexturedRect(draw_chars->texnum, r_charsetsampler, x, y, scaledSize, scaledSize, fcol, frow, fcol + size, frow + size);
+	Draw_TexturedRect(draw_chars->texnum, r_drawnearestclampsampler, x, y, scaledSize, scaledSize, fcol, frow, fcol + size, frow + size);
 }
 
 void Draw_Char(int x, int y, int num)
