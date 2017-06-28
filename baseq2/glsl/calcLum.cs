@@ -9,20 +9,29 @@ vec3 LUMINANCE_VECTOR  = vec3(0.2125, 0.7154, 0.0721);
 
 void main()
 {
-		float logLumSum = 0.0f;
-		int x, y;
-		
-		for (y = 0; y < 16; y++)
+	int x, y;
+	float luminance = 0.0;
+	float logLumSum = 0.0;
+	float maxLum = 0.0;
+	float minLum = 0.0;
+
+	for (y = 0; y < 16; y++)
+	{
+		for (x = 0; x < 16; x++)
 		{
-			for (x = 0; x < 16; x++)
-			{
-				logLumSum += log(dot(imageLoad(inputImage, ivec2(x, y)).rgb, LUMINANCE_VECTOR) + 0.00001);
-			}
+			luminance = dot(imageLoad(inputImage, ivec2(x, y)).rgb, LUMINANCE_VECTOR) + 0.00001;
+			if(luminance > maxLum)
+				maxLum = luminance;
+			if(luminance < minLum)
+				minLum = luminance;
+			
+			logLumSum += log(luminance);
 		}
-		
-		logLumSum /= 256.0;
-		float val = exp(logLumSum + 0.00001);
-		
-		imageStore(outputImage, ivec2(0, 0), vec4(val, val, val, val));
+	}
+
+	logLumSum /= (16 * 16);
+	float val = exp(logLumSum + 0.00001);
+
+	imageStore(outputImage, ivec2(0, 0), vec4(val, maxLum, minLum, val));
 }
 
