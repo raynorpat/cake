@@ -131,8 +131,7 @@ void PostFS ()
 	// tonemap using filmic tonemapping curve
 #if USE_TONEMAP
 	vec3 luminance = texture(lumTex, vec2(0.0, 0.0)).rgb;
-	float lum = clamp(luminance.r, luminance.b, luminance.g);
-	color.rgb = ToneMap(color.rgb, lum);
+	color.rgb = ToneMap(color.rgb, luminance.r);
 #endif
 
 	// film grain effect

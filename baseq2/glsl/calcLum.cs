@@ -12,19 +12,12 @@ void main()
 	int x, y;
 	float luminance = 0.0;
 	float logLumSum = 0.0;
-	float maxLum = 0.0;
-	float minLum = 0.0;
 
 	for (y = 0; y < 16; y++)
 	{
 		for (x = 0; x < 16; x++)
 		{
-			luminance = max(dot(imageLoad(inputImage, ivec2(x, y)).rgb, LUMINANCE_VECTOR), 0.00001);
-			if(luminance > maxLum)
-				maxLum = luminance;
-			if(luminance < minLum)
-				minLum = luminance;
-			
+			luminance = max(dot(imageLoad(inputImage, ivec2(x, y)).rgb, LUMINANCE_VECTOR), 0.00001);		
 			logLumSum += log(luminance);
 		}
 	}
@@ -32,6 +25,6 @@ void main()
 	logLumSum /= (16 * 16);
 	float val = exp(logLumSum + 0.00001);
 
-	imageStore(outputImage, ivec2(0, 0), vec4(val, maxLum, minLum, val));
+	imageStore(outputImage, ivec2(0, 0), vec4(val, val, val, val));
 }
 
