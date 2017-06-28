@@ -33,12 +33,12 @@ out vec4 fragColor;
 
 void LightmappedFS ()
 {
-	vec4 lmap = texture2DArray (lightmap, texcoords[1].xyz);
-	vec4 albedo = texture (diffuse, texcoords[0].st);
+	vec4 lmap = texture2DArray(lightmap, texcoords[1].xyz);
+	vec4 albedo = texture(diffuse, texcoords[0].st);
 		
 	vec4 final = albedo * (colormatrix * (lmap / lmap.a));
 	
-	fragColor = vec4 (final.rgb, surfalpha);
+	fragColor = vec4(final.rgb, surfalpha);
 }
 #endif
 
