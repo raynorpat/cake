@@ -83,7 +83,8 @@ void RPostProcess_CreatePrograms(void)
 {
 	wwvert_t wwverts[4];
 	byte *data = NULL;
-	int width, height;
+	byte lumdata[1][1][4];
+	int width, height, x, y;
 
 	// create shaders
 	gl_compositeprog = GL_CreateShaderFromName("glsl/composite.glsl", "CompositeVS", "CompositeFS");
@@ -99,6 +100,20 @@ void RPostProcess_CreatePrograms(void)
 	LoadTGAFile("env/warpgradient.tga", &data, &width, &height);
 	if (data)
 		r_warpGradientImage = GL_UploadTexture (data, width, height, false, 32);
+
+	// create 1x1 texture with a decent middle luminance value
+	// This fixes an issue with the adaptation going nuts on the 
+	// very first frame, since there isn't a previous frame to fallback on.
+	for (x = 0; x < 1; x++)
+	{
+		for (y = 0; y < 1; y++)
+		{
+			lumdata[y][x][0] = 32;
+			lumdata[y][x][1] = 32;
+			lumdata[y][x][2] = 32;
+			lumdata[y][x][3] = 255;
+		}
+	}
 
 	// create textures for use by the HDR framebuffer objects
 	glDeleteTextures(1, &r_currentRenderImage);
@@ -161,7 +176,7 @@ void RPostProcess_CreatePrograms(void)
 		glDeleteTextures(1, &m_lum[i]);
 		glGenTextures(1, &m_lum[i]);
 		glBindTexture(GL_TEXTURE_2D, m_lum[i]);
-		glTexStorage2D(GL_TEXTURE_2D, 1, GL_RGBA16F, 1, 1);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, 1, 1, 0, GL_RGBA, GL_UNSIGNED_BYTE, lumdata);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	}
@@ -169,7 +184,7 @@ void RPostProcess_CreatePrograms(void)
 	glDeleteTextures(1, &m_lumCurrent);
 	glGenTextures(1, &m_lumCurrent);
 	glBindTexture(GL_TEXTURE_2D, m_lumCurrent);
-	glTexStorage2D(GL_TEXTURE_2D, 1, GL_RGBA16F, 1, 1);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, 1, 1, 0, GL_RGBA, GL_UNSIGNED_BYTE, lumdata);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 
