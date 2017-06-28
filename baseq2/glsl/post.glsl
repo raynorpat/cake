@@ -39,16 +39,15 @@ uniform vec2 texScale;
 #define USE_TONEMAP						1
 float Uncharted2WhitePoint				= 11.2; // linear white point
 	
-vec3 Uncharted2Tonemap( vec3 x )
+vec3 ACESFilmRec2020( vec3 x )
 {
-	float A = 0.15; // shoulder strength
-	float B = 0.50;	// linear strength
-	float C = 0.10;	// linear angle
-	float D = 0.20;	// toe strength
-	float E = 0.02;	// toe numerator
-	float F = 0.30;	// toe denominator
+    float a = 15.8f;
+    float b = 2.12f;
+    float c = 1.2f;
+    float d = 5.92f;
+    float e = 1.9f;
 
-	return ( ( x * ( A * x + C * B ) + D * E ) / ( x * ( A * x + B ) + D * F ) ) - E / F;
+    return ( x * ( a * x + b ) ) / ( x * ( c * x + d ) + e );
 }
 
 vec3 ToneMap(vec3 c, float avglum)
@@ -70,10 +69,10 @@ vec3 ToneMap(vec3 c, float avglum)
 #endif
 	
 	float exposureBias = 1.0;
-	vec3 curr = Uncharted2Tonemap( exposedColor * exposureBias );
-	vec3 whiteScale = Uncharted2Tonemap( vec3( Uncharted2WhitePoint ) );
+	vec3 curr = ACESFilmRec2020( exposedColor * exposureBias );
+	vec3 whiteScale = 1.0 / ACESFilmRec2020( vec3( Uncharted2WhitePoint ) );
 	
-	return curr / whiteScale;
+	return curr * whiteScale;
 }
 
 #define USE_VIGNETTE						1
