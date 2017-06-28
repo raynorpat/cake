@@ -19,7 +19,7 @@ void main()
 	{
 		for (x = 0; x < 16; x++)
 		{
-			luminance = dot(imageLoad(inputImage, ivec2(x, y)).rgb, LUMINANCE_VECTOR) + 0.00001;
+			luminance = max(dot(imageLoad(inputImage, ivec2(x, y)).rgb, LUMINANCE_VECTOR), 0.00001);
 			if(luminance > maxLum)
 				maxLum = luminance;
 			if(luminance < minLum)
