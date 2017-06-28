@@ -33,6 +33,34 @@ static int dmasize = 0;
 static dma_t *dmabackend;
 cvar_t *s_sdldriver;
 
+/*
+===============
+Snd_Memset
+
+https://zerowing.idsoftware.com/bugzilla/show_bug.cgi?id=371
+
+<TTimo> some shitty mess with DMA buffers
+<TTimo> the mmap'ing permissions were write only
+<TTimo> and glibc optimized for mmx would do memcpy with a prefetch and a read
+<TTimo> causing segfaults
+<TTimo> some other systems would not let you mmap the DMA with read permissions
+<TTimo> so I think I ended up attempting opening with read/write, then try write only
+<TTimo> and use my own copy instead of the glibc crap
+===============
+*/
+void Snd_Memset(void* dest, const int val, const size_t count)
+{
+	int *pDest;
+	int i, iterate;
+
+	iterate = count / sizeof(int);
+	pDest = (int*)dest;
+	for (i = 0; i < iterate; i++)
+	{
+		pDest[i] = val;
+	}
+}
+
 static void sdl_audio_callback(void *data, Uint8 *stream, int length)
 {
 	int length1;

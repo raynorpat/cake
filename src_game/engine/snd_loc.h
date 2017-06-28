@@ -108,6 +108,8 @@ void	SNDDMA_BeginPainting (void);
 
 void	SNDDMA_Submit (void);
 
+void	Snd_Memset(void* dest, const int val, const size_t count);
+
 //====================================================================
 
 #define	MAX_CHANNELS			32

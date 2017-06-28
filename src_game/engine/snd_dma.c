@@ -806,7 +806,7 @@ void S_ClearBuffer (void)
 	SNDDMA_BeginPainting ();
 
 	if (dma.buffer)
-		memset (dma.buffer, clear, dma.samples * dma.samplebits / 8);
+		Snd_Memset (dma.buffer, clear, dma.samples * dma.samplebits / 8);
 
 	SNDDMA_Submit ();
 }
