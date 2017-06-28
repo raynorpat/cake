@@ -274,8 +274,6 @@ extern	cvar_t	*vid_fullscreen;
 extern	cvar_t	*vid_gamma;
 extern	cvar_t	*r_lightscale;
 
-extern	cvar_t	*intensity;
-
 extern	glmatrix	r_drawmatrix;
 extern	glmatrix	r_worldmatrix;
 extern	glmatrix	r_projectionmatrix;
