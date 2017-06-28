@@ -146,7 +146,7 @@ void RPostProcess_CreatePrograms(void)
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
-	for (int i = 0; i < 2; i++) {
+	for (int i = 0; i < MAX_BLOOM_BUFFERS; i++) {
 		glDeleteTextures(1, &r_bloomRenderImage[i]);
 		glGenTextures(1, &r_bloomRenderImage[i]);
 		glBindTexture(GL_TEXTURE_2D, r_bloomRenderImage[i]);
