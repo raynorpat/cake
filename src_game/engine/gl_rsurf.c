@@ -180,7 +180,8 @@ void RSurf_BeginFrame (void)
 
 	glProgramUniform1f (gl_lightmappedsurfprog, u_brushscroll, scroll);
 
-	if (!gl_monolightmap->modified && !r_lightscale->modified) return;
+	if (!gl_monolightmap->modified && !r_lightscale->modified)
+		return;
 
 	if (gl_monolightmap->value)
 	{

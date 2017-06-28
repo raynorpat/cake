@@ -340,7 +340,6 @@ void R_InitParticleTexture (void)
 	r_notexture = GL_LoadPic ("***r_notexture***", (byte *) data, 8, 8, it_wall, 32);
 }
 
-
 /*
 ==============================================================================
 
