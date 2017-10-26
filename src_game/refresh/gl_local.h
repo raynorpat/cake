@@ -30,7 +30,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #include <GL/glu.h>
 #include <math.h>
 
-#include "ref.h"
+#include "ref_public.h"
 
 #define	LIGHTMAP_SIZE	128
 #define	MAX_LIGHTMAPS	128

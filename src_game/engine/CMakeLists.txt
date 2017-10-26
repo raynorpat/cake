@@ -64,7 +64,6 @@ set(CLIENT_INCLUDES
 	keys.h
 	screen.h
 	sound.h
-	ref.h
 	)
 set(CLIENT_SOURCES
 	cl_bgmusic.c
@@ -136,29 +135,30 @@ source_group("common" FILES ${COMMON_INCLUDES})
 source_group("common" FILES ${COMMON_SOURCES})
 	
 set(RENDERER_INCLUDES
-	gl_model.h
-	gl_local.h
+	../refresh/gl_model.h
+	../refresh/gl_local.h
+	../refresh/ref_public.h
 	)	
 set(RENDERER_SOURCES
-	gl_beam.c
-	gl_draw.c
-	gl_framebuffer.c
-	gl_image.c
-	gl_light.c
-	gl_mesh.c
-	gl_model.c
-	gl_nullmodel.c
-	gl_part.c
-	gl_postprocess.c	
-	gl_rmain.c
-	gl_rmisc.c
-	gl_rsurf.c
-	gl_sky.c
-	gl_sprite.c
-	gl_warp.c
+	../refresh/gl_beam.c
+	../refresh/gl_draw.c
+	../refresh/gl_framebuffer.c
+	../refresh/gl_image.c
+	../refresh/gl_light.c
+	../refresh/gl_mesh.c
+	../refresh/gl_model.c
+	../refresh/gl_nullmodel.c
+	../refresh/gl_part.c
+	../refresh/gl_postprocess.c	
+	../refresh/gl_rmain.c
+	../refresh/gl_rmisc.c
+	../refresh/gl_rsurf.c
+	../refresh/gl_sky.c
+	../refresh/gl_sprite.c
+	../refresh/gl_warp.c
 	)
-source_group("client\\renderer" FILES ${RENDERER_INCLUDES})
-source_group("client\\renderer" FILES ${RENDERER_SOURCES})
+source_group("refresh" FILES ${RENDERER_INCLUDES})
+source_group("refresh" FILES ${RENDERER_SOURCES})
 	
 set(SERVER_INCLUDES
 	server.h
@@ -311,6 +311,7 @@ endif()
 include_directories(
 			.
 			../shared
+			../refresh
             )
 
 # build it
