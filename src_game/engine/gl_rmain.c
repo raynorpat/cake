@@ -562,7 +562,7 @@ enum
 	rserr_unknown
 };
 
-static int SetMode_impl(int *pwidth, int *pheight, int mode, qboolean fullscreen)
+static int SetMode_impl(int *pwidth, int *pheight, int mode, int fullscreen)
 {
 	VID_Printf(PRINT_ALL, "setting mode %d:", mode);
 
@@ -574,7 +574,15 @@ static int SetMode_impl(int *pwidth, int *pheight, int mode, qboolean fullscreen
 		return rserr_invalid_mode;
 	}
 
-	VID_Printf(PRINT_ALL, " %d %d\n", *pwidth, *pheight);
+	VID_Printf(PRINT_ALL, " %d x %d", *pwidth, *pheight);
+	if (fullscreen)
+	{
+		VID_Printf(PRINT_ALL, " (fullscreen)\n");
+	}
+	else
+	{
+		VID_Printf(PRINT_ALL, " (windowed)\n");
+	}
 
 	if (!GLimp_InitGraphics(fullscreen, pwidth, pheight))
 	{
@@ -587,9 +595,9 @@ static int SetMode_impl(int *pwidth, int *pheight, int mode, qboolean fullscreen
 static qboolean R_SetMode(void)
 {
 	int err;
-	qboolean fullscreen;
+	int fullscreen;
 
-	fullscreen = vid_fullscreen->value;
+	fullscreen = (int)vid_fullscreen->value;
 
 	vid_fullscreen->modified = false;
 	gl_mode->modified = false;
@@ -618,7 +626,7 @@ static qboolean R_SetMode(void)
 			vid_fullscreen->modified = false;
 			VID_Printf(PRINT_ALL, "ref_gl::R_SetMode() - fullscreen unavailable in this mode\n");
 
-			if ((err = SetMode_impl(&vid.width, &vid.height, gl_mode->value, false)) == rserr_ok)
+			if ((err = SetMode_impl(&vid.width, &vid.height, gl_mode->value, 0)) == rserr_ok)
 			{
 				return true;
 			}
@@ -639,7 +647,7 @@ static qboolean R_SetMode(void)
 		}
 
 		// try setting it back to something safe
-		if ((err = SetMode_impl(&vid.width, &vid.height, gl_state.prev_mode, false)) != rserr_ok)
+		if ((err = SetMode_impl(&vid.width, &vid.height, gl_state.prev_mode, 0)) != rserr_ok)
 		{
 			VID_Printf(PRINT_ALL, "ref_gl::R_SetMode() - could not revert to safe mode\n");
 			return false;
