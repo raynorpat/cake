@@ -460,4 +460,4 @@ void GLimp_BeginFrame (float camera_separation);
 void GLimp_EndFrame (void);
 int GLimp_Init (void);
 void GLimp_Shutdown(qboolean contextOnly);
-qboolean GLimp_InitGraphics(qboolean fullscreen, int *pwidth, int *pheight);
+qboolean GLimp_InitGraphics(int fullscreen, int *pwidth, int *pheight);

@@ -222,6 +222,8 @@ void VID_MenuInit (void)
 		"[1920 1080 ]",
 		"[1920 1200 ]",
 		"[2048 1536 ]",
+		"[3440x1440 ]",
+		"[3840x2160 ]",
 		"[custom    ]",
 		0
 	};
@@ -253,7 +255,7 @@ void VID_MenuInit (void)
 	};
 
 	if (!gl_mode)
-		gl_mode = Cvar_Get ("gl_mode", "4", 0);
+		gl_mode = Cvar_Get ("gl_mode", "10", 0);
 	if (!horplus)
 		horplus = Cvar_Get("horplus", "1", CVAR_ARCHIVE);
 	if (!fov)
