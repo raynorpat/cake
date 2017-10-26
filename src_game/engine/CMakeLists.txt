@@ -119,6 +119,8 @@ source_group("client\\sound" FILES ${SOUND_SOURCES})
 set(COMMON_INCLUDES
 	crc.h
 	qcommon.h
+	vid.h
+	vid_common.h
 	)	
 set(COMMON_SOURCES
 	cmd.c
@@ -128,6 +130,7 @@ set(COMMON_SOURCES
 	files.c
 	matrix.c
 	md4.c
+	net.c
 	net_chan.c
 	pmove.c
 	)
@@ -178,20 +181,17 @@ source_group("server" FILES ${SERVER_INCLUDES})
 source_group("server" FILES ${SERVER_SOURCES})
 	
 set(SYSTEM_INCLUDES
-	q2icon64.h
-	vid.h
-	vid_common.h
+	sdl/q2icon64.h
 	)
 set(SYSTEM_SOURCES
-	sys.c
-	sys_snd.c
-	sys_input.c
-	sys_net.c
-	sys_vid.c
-	sys_glimp.c
+	sdl/sys_sdl.c
+	sdl/sdl_snd.c
+	sdl/sdl_input.c
+	sdl/sdl_vid.c
+	sdl/sdl_glimp.c
 	)
-source_group("system" FILES ${SYSTEM_INCLUDES})
-source_group("system" FILES ${SYSTEM_SOURCES})
+source_group("system\\sdl" FILES ${SYSTEM_INCLUDES})
+source_group("system\\sdl" FILES ${SYSTEM_SOURCES})
 
 # shared code
 set(SHARED_INCLUDES
