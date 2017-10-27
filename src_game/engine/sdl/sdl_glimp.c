@@ -33,7 +33,19 @@ GLimp_SwitchFullscreen
 
 #include <assert.h>
 #include <SDL.h>
-#include "gl_local.h"
+
+#ifdef _WIN32
+# include <windows.h>
+#endif
+#include <stdio.h>
+#include <GL/glew.h>
+#include <GL/wglew.h>
+#include <GL/gl.h>
+#include <math.h>
+
+#include "ref_public.h"
+
+extern cvar_t *gl_swapinterval;
 
 #if SDL_VERSION_ATLEAST(2, 0, 0)
 static SDL_Window* window = NULL;
@@ -556,7 +568,9 @@ GLimp_EndFrame
 
 Responsible for doing a swapbuffer.
 */
-void Draw_FPS (void);
+extern void Draw_FPS (void);
+extern void Draw_End2D(void);
+extern void GL_UseProgram(GLuint progid);
 
 void GLimp_EndFrame (void)
 {

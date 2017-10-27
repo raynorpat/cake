@@ -4,6 +4,17 @@ project(cake)
 # Libraries
 #
 
+# glew
+find_package(GLEW)
+if (GLEW_FOUND)
+    include_directories(${GLEW_INCLUDE_DIRS})
+    set(GLEW_LIBRARY ${GLEW_LIBRARIES})
+else (GLEW_FOUND)
+    include_directories("../libs/glew/include")
+    set(GLEW_LIBRARY "" )
+    add_definitions(-DGLEW_STATIC)
+endif (GLEW_FOUND)
+
 # sdl
 if(NOT USE_SYSTEM_SDL2)
 	SET(SDL2_PATH ../libs/SDL2)
@@ -37,17 +48,6 @@ else (MODPLUG_FOUND)
     include_directories("../libs/modplug/src")
     set(MODPLUG_LIBRARY "" )
 endif (MODPLUG_FOUND)
-
-# glew
-find_package(GLEW)
-if (GLEW_FOUND)
-    include_directories(${GLEW_INCLUDE_DIRS})
-    set(GLEW_LIBRARY ${GLEW_LIBRARIES})
-else (GLEW_FOUND)
-    include_directories("../libs/glew/include")
-    set(GLEW_LIBRARY "" )
-    add_definitions(-DGLEW_STATIC)
-endif (GLEW_FOUND)
 
 # stb headers
 include_directories("../libs/stb")
@@ -128,7 +128,6 @@ set(COMMON_SOURCES
 	crc.c
 	cvar.c
 	files.c
-	matrix.c
 	md4.c
 	net.c
 	net_chan.c
@@ -136,32 +135,6 @@ set(COMMON_SOURCES
 	)
 source_group("common" FILES ${COMMON_INCLUDES})
 source_group("common" FILES ${COMMON_SOURCES})
-	
-set(RENDERER_INCLUDES
-	../refresh/gl_model.h
-	../refresh/gl_local.h
-	../refresh/ref_public.h
-	)	
-set(RENDERER_SOURCES
-	../refresh/gl_beam.c
-	../refresh/gl_draw.c
-	../refresh/gl_framebuffer.c
-	../refresh/gl_image.c
-	../refresh/gl_light.c
-	../refresh/gl_mesh.c
-	../refresh/gl_model.c
-	../refresh/gl_nullmodel.c
-	../refresh/gl_part.c
-	../refresh/gl_postprocess.c	
-	../refresh/gl_rmain.c
-	../refresh/gl_rmisc.c
-	../refresh/gl_rsurf.c
-	../refresh/gl_sky.c
-	../refresh/gl_sprite.c
-	../refresh/gl_warp.c
-	)
-source_group("refresh" FILES ${RENDERER_INCLUDES})
-source_group("refresh" FILES ${RENDERER_SOURCES})
 	
 set(SERVER_INCLUDES
 	server.h
@@ -221,23 +194,6 @@ source_group("system\\win32\\Resources" FILES ${WIN32_RESOURCES})
 
 # libs
 
-# glew
-if (NOT GLEW_FOUND)
-    set(GLEW_INCLUDES ../libs/glew/include/GL/glew.h)
-    set(GLEW_SOURCES ../libs/glew/src/glew.c)
-
-    if(WIN32)
-        set(GLEW_INCLUDES ${GLEW_INCLUDES} ../libs/glew/include/GL/wglew.h)
-    else(WIN32)
-        set(GLEW_INCLUDES ${GLEW_INCLUDES} ../libs/glew/include/GL/glxew.h)
-    endif(WIN32)
-else (NOT GLEW_FOUND)
-    set(GLEW_INCLUDES "")
-    set(GLEW_SOURCES "")
-endif (NOT GLEW_FOUND)
-source_group("libs\\glew" FILES ${GLEW_INCLUDES})
-source_group("libs\\glew" FILES ${GLEW_SOURCES})
-
 # libmad
 if (NOT MAD_FOUND)
 	file(GLOB MAD_INCLUDES ../libs/mad/include/*.h)
@@ -272,12 +228,10 @@ set(CAKE_INCLUDES
 			${MENU_INCLUDES}
 			${SOUND_INCLUDES}
 			${COMMON_INCLUDES}
-			${RENDERER_INCLUDES}
 			${SERVER_INCLUDES}
 			${SYSTEM_INCLUDES}
 			${SHARED_INCLUDES}
 
-			${GLEW_INCLUDES}
 			${MAD_INCLUDES}
 			${MODPLUG_INCLUDES}
 			)			
@@ -285,13 +239,11 @@ set(CAKE_SOURCES
 			${CLIENT_SOURCES}
 			${MENU_SOURCES}
 			${SOUND_SOURCES}
-			${COMMON_SOURCES} 
-			${RENDERER_SOURCES}
+			${COMMON_SOURCES}
 			${SERVER_SOURCES}
 			${SYSTEM_SOURCES}
 			${SHARED_SOURCES}
 			
-			${GLEW_SOURCES}
 			${MAD_SOURCES}
 			${MODPLUG_SOURCES}
 			)
@@ -331,7 +283,9 @@ if(MSVC)
 		wsock32.lib
         ${GLEW_LIBRARY}
 		${CMAKE_DL_LIBS}
+		refresh
 		)
+	
 	set_target_properties(cake PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}/..")
 	
 else()
@@ -358,6 +312,7 @@ else()
 			${SDLx_LIBRARY}
             ${GLEW_LIBRARY}
 			${CMAKE_DL_LIBS}
+			refresh
 			)
 	endif()
 

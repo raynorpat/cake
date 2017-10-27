@@ -155,11 +155,12 @@ elseif(MSVC)
 		add_definitions(-DUSE_INTRINSICS)
     endif()
 	
-	set_property(DIRECTORY PROPERTY VS_STARTUP_PROJECT "cake")
-	set(CMAKE_VS_INCLUDE_INSTALL_TO_DEFAULT_BUILD 1)
+    set_property(DIRECTORY PROPERTY VS_STARTUP_PROJECT "cake")
+    set(CMAKE_VS_INCLUDE_INSTALL_TO_DEFAULT_BUILD 1)
 	
 endif()
 
 # add projects
-add_subdirectory(engine)
+add_subdirectory(refresh)
 add_subdirectory(game)
+add_subdirectory(engine)

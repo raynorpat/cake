@@ -189,6 +189,7 @@ qboolean VID_GetModeInfo (int *width, int *height, int mode);
 void VID_MenuInit (void);
 void VID_NewWindow (int width, int height);
 
+
 // ref export functions
 void R_BeginRegistration (char *model);
 struct model_s *R_RegisterModel (char *name);
