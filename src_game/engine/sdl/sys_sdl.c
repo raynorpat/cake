@@ -212,6 +212,10 @@ void Sys_Quit (void)
 	exit (0);
 }
 
+void Sys_ShowMessageBox (const char* title, const char* message)
+{
+	SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_WARNING, title, message, NULL);
+}
 
 void Sys_Mkdir(char *path)
 {
