@@ -67,6 +67,17 @@ set(RENDERER_GL_SOURCES
 #source_group("refresh\\gl" FILES ${RENDERER_GL_INCLUDES})
 source_group("refresh\\gl" FILES ${RENDERER_GL_SOURCES})
 
+# video backend sources
+set(RENDERER_VID_INCLUDES
+#	../refresh/vid/vid.h
+	../refresh/vid_public.h
+	)	
+set(RENDERER_VID_SOURCES
+	../refresh/vid/vid.c
+	)
+source_group("refresh\\vid" FILES ${RENDERER_VID_INCLUDES})
+source_group("refresh\\vid" FILES ${RENDERER_VID_SOURCES})
+
 #
 # Refresh library
 #
@@ -76,7 +87,8 @@ include_directories(
 			.
 			../engine
 			../shared
+			../libs/stb
             )
 
 # build the refresh library
-add_library(refresh STATIC ${GLEW_INCLUDES} ${GLEW_SOURCES} ${RENDERER_INCLUDES} ${RENDERER_SOURCES} ${RENDERER_GL_SOURCES})
+add_library(refresh STATIC ${GLEW_INCLUDES} ${GLEW_SOURCES} ${RENDERER_INCLUDES} ${RENDERER_SOURCES} ${RENDERER_GL_SOURCES} ${RENDERER_VID_INCLUDES} ${RENDERER_VID_SOURCES})

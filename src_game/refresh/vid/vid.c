@@ -22,9 +22,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #include <float.h>
 
 #include "client.h"
-#include "vid_common.h"
-
-#include "SDL.h"
+#include "vid_public.h"
 
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "stb_image_write.h"
@@ -36,7 +34,6 @@ cvar_t		*vid_fullscreen;
 // Global variables used internally by this module
 viddef_t	viddef;				// global video state; used by other modules
 qboolean	reflib_active = 0;
-
 
 vidmode_t vid_modes[] = {
 	{ "Mode  0:  320x240", 320, 240, 0 },
@@ -100,7 +97,7 @@ void VID_Printf (int print_level, char *fmt, ...)
 	}
 	else if (print_level == PRINT_ALERT)
 	{
-		SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_WARNING, "Alert", msg, NULL);
+		Sys_ShowMessageBox ("Alert", msg);
 	}
 }
 

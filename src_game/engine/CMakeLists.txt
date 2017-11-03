@@ -120,7 +120,6 @@ set(COMMON_INCLUDES
 	crc.h
 	qcommon.h
 	vid.h
-	vid_common.h
 	)	
 set(COMMON_SOURCES
 	cmd.c
@@ -160,7 +159,6 @@ set(SYSTEM_SOURCES
 	sdl/sys_sdl.c
 	sdl/sdl_snd.c
 	sdl/sdl_input.c
-	sdl/sdl_vid.c
 	sdl/sdl_glimp.c
 	)
 source_group("system\\sdl" FILES ${SYSTEM_INCLUDES})
