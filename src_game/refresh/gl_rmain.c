@@ -584,7 +584,7 @@ static int SetMode_impl(int *pwidth, int *pheight, int mode, int fullscreen)
 		VID_Printf(PRINT_ALL, " (windowed)\n");
 	}
 
-	if (!GLimp_InitGraphics(fullscreen, pwidth, pheight))
+	if (!VID_InitWindow(fullscreen, pwidth, pheight))
 	{
 		return rserr_invalid_mode;
 	}
@@ -722,8 +722,7 @@ qboolean R_Init (void)
 	R_Register ();
 
 	// initialize OS-specific parts of OpenGL
-	if (!GLimp_Init ())
-	{
+	if (!VID_Init_GL()) {
 		return -1;
 	}
 
@@ -836,7 +835,7 @@ void R_Shutdown (void)
 	R_ShutdownFBOs ();
 
 	// shut down OS specific OpenGL stuff like contexts, etc.
-	GLimp_Shutdown (true);
+	VID_Shutdown_GL(true);
 }
 
 /*
@@ -853,7 +852,7 @@ void R_BeginFrame (float camera_separation)
 		ref_modified = true;
 	}
 
-	GLimp_BeginFrame (camera_separation);
+	VID_BeginFrame (camera_separation);
 
 	if (gl_texturemode->modified || gl_textureanisotropy->modified)
 	{

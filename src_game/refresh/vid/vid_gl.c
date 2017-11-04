@@ -18,49 +18,31 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
 */
 
-/*
-GL_IMP.C
-
-This file contains ALL of the specific stuff having to do with the
-OpenGL refresh. When a port is being made the following functions
-must be implemented by the port:
-
-GLimp_EndFrame
-GLimp_Init
-GLimp_Shutdown
-GLimp_SwitchFullscreen
-*/
-
+// vid_gl.c - This file contains ALL of the specific stuff having to do with the OpenGL refresh. 
 #include <assert.h>
 #include <SDL.h>
 
-#ifdef _WIN32
-# include <windows.h>
-#endif
-#include <stdio.h>
 #include <GL/glew.h>
-#include <GL/wglew.h>
 #include <GL/gl.h>
 #include <math.h>
 
 #include "ref_public.h"
+#include "vid_public.h"
 
 extern cvar_t *gl_swapinterval;
 
 static SDL_Window* window = NULL;
 static SDL_GLContext context = NULL;
 
-void GLimp_ShutdownWindow(void);
+void VID_ShutdownWindow(void);
 
 static int IsFullscreen()
 {
 	if (SDL_GetWindowFlags(window) & SDL_WINDOW_FULLSCREEN_DESKTOP) {
 		return 1;
-	}
-	else if (SDL_GetWindowFlags(window) & SDL_WINDOW_FULLSCREEN) {
+	} else if (SDL_GetWindowFlags(window) & SDL_WINDOW_FULLSCREEN) {
 		return 2;
-	}
-	else {
+	} else {
 		return 0;
 	}
 }
@@ -80,8 +62,7 @@ static qboolean GetWindowSize(int* w, int* h)
 		return false;
 
 	SDL_DisplayMode m;
-	if (SDL_GetWindowDisplayMode(window, &m) != 0)
-	{
+	if (SDL_GetWindowDisplayMode(window, &m) != 0) {
 		Com_Printf("Can't get Displaymode: %s\n", SDL_GetError());
 		return false;
 	}
@@ -92,15 +73,15 @@ static qboolean GetWindowSize(int* w, int* h)
 }
 
 
-// called by GLimp_InitGraphics() before creating window,
+// called by VID_InitWindow() before creating window,
 // returns flags for SDL window creation, -1 on error
 static int PrepareForWindow(void)
 {
 	unsigned int flags = 0;
 	int msaa_samples = 0;
 
-	if (SDL_GL_LoadLibrary(NULL) < 0) // Default OpenGL is fine.
-	{
+	 // Default OpenGL is fine.
+	if (SDL_GL_LoadLibrary(NULL) < 0) {
 		// TODO: is there a better way?
 		Sys_Error("Couldn't load libGL: %s!", SDL_GetError());
 		return -1;
@@ -117,8 +98,7 @@ static int PrepareForWindow(void)
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
 	int contextFlags = SDL_GL_CONTEXT_FORWARD_COMPATIBLE_FLAG;
-	if (contextFlags != 0)
-	{
+	if (contextFlags != 0) {
 		SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, contextFlags);
 	}
 
@@ -129,44 +109,39 @@ static int PrepareForWindow(void)
 }
 
 
-void GLimp_SetSwapInterval(void)
+static void SetSwapInterval(void)
 {
 	// Set vsync - TODO: -1 could be set for "late swap tearing"
 	SDL_GL_SetSwapInterval(gl_swapinterval->value ? 1 : 0);
 }
 
 
-int GLimp_InitContext(void* win)
+static int Init_GL_Context(void* win)
 {
 	char title[40] = { 0 };
 
-	if (win == NULL)
-	{
-		Sys_Error("R_InitContext() must not be called with NULL argument!");
+	if (win == NULL) {
+		Sys_Error("Init_GL_Context() must not be called with NULL argument!");
 		return false;
 	}
 	window = (SDL_Window*)win;
 
 	context = SDL_GL_CreateContext(window);
-	if (context == NULL)
-	{
-		VID_Printf(PRINT_ALL, "GLimp_InitContext(): Creating OpenGL Context failed: %s\n", SDL_GetError());
+	if (context == NULL) {
+		VID_Printf(PRINT_ALL, "Init_GL_Context(): Creating OpenGL Context failed: %s\n", SDL_GetError());
 		window = NULL;
 		return false;
 	}
 
 	// this must be done after creating the window
-	GLimp_SetSwapInterval();
+	SetSwapInterval();
 
 	// init glew
 	glewExperimental = true;
-	if (GLEW_OK != glewInit())
-	{
-		VID_Printf(PRINT_ALL, "R_InitContext(): loading OpenGL function pointers failed!\n");
+	if (GLEW_OK != glewInit()) {
+		VID_Printf(PRINT_ALL, "Init_GL_Context(): loading OpenGL function pointers failed!\n");
 		return false;
-	}
-	else
-	{
+	} else {
 		VID_Printf(PRINT_ALL, "Successfully loaded OpenGL function pointers using glew!\n");
 	}
 
@@ -177,16 +152,14 @@ int GLimp_InitContext(void* win)
 }
 
 /*
-* Shuts the SDL render backend down
+* Shuts the OpenGL backend down
 */
-void GLimp_Shutdown(qboolean contextOnly)
+void VID_Shutdown_GL(qboolean contextOnly)
 {
 	// Clear the backbuffer and make it current. 
 	// Only do this if we have a context, though.
-	if (window)
-	{
-		if (context)
-		{
+	if (window) {
+		if (context) {
 			glClearColor(0.0, 0.0, 0.0, 0.0);
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 			SDL_GL_SwapWindow(window);
@@ -198,9 +171,8 @@ void GLimp_Shutdown(qboolean contextOnly)
 
 	window = NULL;
 
-	if (!contextOnly)
-	{
-		GLimp_ShutdownWindow();
+	if (!contextOnly) {
+		VID_ShutdownWindow();
 	}
 }
 
@@ -208,7 +180,7 @@ void GLimp_Shutdown(qboolean contextOnly)
 /*
 * Initializes the OpenGL window
 */
-qboolean GLimp_InitGraphics(int fullscreen, int *pwidth, int *pheight)
+qboolean VID_InitWindow(int fullscreen, int *pwidth, int *pheight)
 {
 	int flags;
 	int curWidth, curHeight;
@@ -222,26 +194,22 @@ qboolean GLimp_InitGraphics(int fullscreen, int *pwidth, int *pheight)
 		fs_flag = SDL_WINDOW_FULLSCREEN;
 	}
 
-	if (GetWindowSize(&curWidth, &curHeight) && (curWidth == width) && (curHeight == height))
-	{
+	if (GetWindowSize(&curWidth, &curHeight) && (curWidth == width) && (curHeight == height)) {
 		// If we want fullscreen, but aren't
-		if (fullscreen != IsFullscreen())
-		{
+		if (fullscreen != IsFullscreen()) {
 			SDL_SetWindowFullscreen(window, fs_flag);
 			Cvar_SetValue("vid_fullscreen", fullscreen);
 		}
 
 		// Are we now?
-		if (fullscreen == IsFullscreen())
-		{
+		if (fullscreen == IsFullscreen()) {
 			return true;
 		}
 	}
 
 	// Is the window surface used?
-	if (window)
-	{
-		GLimp_Shutdown(true);
+	if (window) {
+		VID_Shutdown_GL(true);
 		SDL_DestroyWindow(window);
 		window = NULL;
 	}
@@ -251,23 +219,18 @@ qboolean GLimp_InitGraphics(int fullscreen, int *pwidth, int *pheight)
 
 	// let renderer prepare things (set OpenGL attributes)
 	flags = PrepareForWindow();
-	if (flags == -1)
-	{
+	if (flags == -1) {
 		// hopefully PrepareForWindow() logged an error
 		return false;
 	}
 
-	if (fs_flag)
-	{
+	if (fs_flag) {
 		flags |= fs_flag;
 	}
 
-	while (1)
-	{
-		if (!CreateSDLWindow(flags, width, height))
-		{
-			if (width != 640 || height != 480 || (flags & fs_flag))
-			{
+	while (1) {
+		if (!CreateSDLWindow(flags, width, height)) {
+			if (width != 640 || height != 480 || (flags & fs_flag)) {
 				Com_Printf("SDL SetVideoMode failed: %s\n", SDL_GetError());
 				Com_Printf("Reverting to windowed gl_mode 5 (640x480).\n");
 
@@ -278,22 +241,17 @@ qboolean GLimp_InitGraphics(int fullscreen, int *pwidth, int *pheight)
 				*pwidth = width = 640;
 				*pheight = height = 480;
 				flags &= ~fs_flag;
-			}
-			else
-			{
+			} else {
 				Com_Error(ERR_FATAL, "Failed to revert to gl_mode 5. Exiting...\n");
 				return false;
 			}
-		}
-		else
-		{
+		} else {
 			break;
 		}
 	}
 
-	if (!GLimp_InitContext(window))
-	{
-		// InitContext() should have logged an error
+	if (!Init_GL_Context(window)) {
+		// Init_GL_Context() should have logged an error
 		return false;
 	}
 
@@ -310,15 +268,13 @@ qboolean GLimp_InitGraphics(int fullscreen, int *pwidth, int *pheight)
 /*
 * (Un)grab Input
 */
-void GLimp_GrabInput(qboolean grab)
+void VID_GrabInput(qboolean grab)
 {
-	if (window != NULL)
-	{
+	if (window != NULL) {
 		SDL_SetWindowGrab(window, grab ? SDL_TRUE : SDL_FALSE);
 	}
 
-	if (SDL_SetRelativeMouseMode(grab ? SDL_TRUE : SDL_FALSE) < 0)
-	{
+	if (SDL_SetRelativeMouseMode(grab ? SDL_TRUE : SDL_FALSE) < 0) {
 		Com_Printf("WARNING: Setting Relative Mousemode failed, reason: %s\n", SDL_GetError());
 		Com_Printf("         You should probably update to SDL 2.0.3 or newer!\n");
 	}
@@ -326,46 +282,37 @@ void GLimp_GrabInput(qboolean grab)
 
 
 /*
-GLimp_ShutdownWindow
+VID_ShutdownWindow
 
-This routine does all OS specific shutdown procedures for the OpenGL
-subsystem.
+This routine does all OS specific shutdown procedures for the OpenGL subsystem.
 */
-void GLimp_ShutdownWindow (void)
+void VID_ShutdownWindow(void)
 {
-	if (window)
-	{
+	if (window) {
 		// cleanly ungrab input (needs window)
-		GLimp_GrabInput(false);
+		VID_GrabInput(false);
 		SDL_DestroyWindow(window);
 	}
 
 	window = NULL;
 
-	if (SDL_WasInit(SDL_INIT_EVERYTHING) == SDL_INIT_VIDEO)
-	{
+	if (SDL_WasInit(SDL_INIT_EVERYTHING) == SDL_INIT_VIDEO)	{
 		SDL_Quit();
-	}
-	else
-	{
+	} else {
 		SDL_QuitSubSystem(SDL_INIT_VIDEO);
 	}
 }
 
 
 /*
-GLimp_Init
+VID_Init_GL
 
-This routine is responsible for initializing the OS specific portions
-of OpenGL. Under Win32 this means dealing with the pixelformats and
-doing the wgl interface stuff.
+This routine is responsible for initializing the OS specific portions of OpenGL.
 */
-qboolean GLimp_Init (void)
+qboolean VID_Init_GL (void)
 {
-	if (!SDL_WasInit(SDL_INIT_VIDEO))
-	{
-		if (SDL_Init(SDL_INIT_VIDEO) == -1)
-		{
+	if (!SDL_WasInit(SDL_INIT_VIDEO)) {
+		if (SDL_Init(SDL_INIT_VIDEO) == -1) {
 			Com_Printf("Couldn't init SDL video: %s.\n", SDL_GetError());
 			return false;
 		}
@@ -379,15 +326,15 @@ qboolean GLimp_Init (void)
 
 
 /*
-GLimp_BeginFrame
+VID_BeginFrame
 */
-void GLimp_BeginFrame (float camera_separation)
+void VID_BeginFrame (float camera_separation)
 {
 }
 
 
 /*
-GLimp_EndFrame
+VID_EndFrame
 
 Responsible for doing a swapbuffer.
 */
@@ -395,7 +342,7 @@ extern void Draw_FPS (void);
 extern void Draw_End2D(void);
 extern void GL_UseProgram(GLuint progid);
 
-void GLimp_EndFrame (void)
+void VID_EndFrame (void)
 {
 	//Draw_FPS ();
 	Draw_End2D ();

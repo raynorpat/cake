@@ -36,9 +36,26 @@ typedef struct
 extern	viddef_t	viddef;				// global video state
 
 // Video module initialisation etc
+void	VID_Error(int err_level, char *fmt, ...);
+void	VID_Printf(int print_level, char *fmt, ...);
+
 void	VID_Init(void);
 void	VID_Shutdown(void);
+
+void	VID_WriteScreenshot(int width, int height, int comp, const void* data);
+
 void	VID_CheckChanges(void);
+qboolean VID_GetModeInfo(int *width, int *height, int mode);
+void	VID_NewWindow(int width, int height);
+
+void	VID_BeginFrame(float camera_separation);
+void	VID_EndFrame(void);
+
+qboolean VID_InitWindow(int fullscreen, int *pwidth, int *pheight);
+
+// OpenGL specific functions
+qboolean VID_Init_GL(void);
+void VID_Shutdown_GL(qboolean contextOnly);
 
 // Video menu
 void	VID_MenuInit(void);

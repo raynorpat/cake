@@ -158,7 +158,6 @@ set(SYSTEM_SOURCES
 	sdl/sys_sdl.c
 	sdl/sdl_snd.c
 	sdl/sdl_input.c
-	sdl/sdl_glimp.c
 	)
 source_group("system\\sdl" FILES ${SYSTEM_INCLUDES})
 source_group("system\\sdl" FILES ${SYSTEM_SOURCES})

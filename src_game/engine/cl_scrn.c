@@ -1256,7 +1256,7 @@ void SCR_UpdateScreen (void)
 		}
 	}
 
-	GLimp_EndFrame ();
+	VID_EndFrame ();
 }
 
 float SCR_GetScale(void)

@@ -165,11 +165,6 @@ typedef struct
 
 
 // ref import functions
-void VID_Error (int err_level, char *fmt, ...);
-void VID_Printf (int print_level, char *fmt, ...);
-
-void VID_WriteScreenshot (int width, int height, int comp, const void* data);
-
 cvar_t *Cvar_Get (char *var_name, char *var_value, int flags);
 cvar_t *Cvar_Set (char *var_name, char *value);
 void Cvar_SetValue (char *var_name, float value);
@@ -184,10 +179,6 @@ void Cbuf_ExecuteText (int exec_when, char *text);
 int FS_LoadFile (char *path, void **buffer);
 void FS_FreeFile (void *buffer);
 char *FS_Gamedir (void);
-
-qboolean VID_GetModeInfo (int *width, int *height, int mode);
-void VID_MenuInit (void);
-void VID_NewWindow (int width, int height);
 
 
 // ref export functions
@@ -219,6 +210,5 @@ void R_Shutdown (void);
 void R_SetPalette (const unsigned char *palette);
 
 void R_BeginFrame (float camera_separation);
-void GLimp_EndFrame (void);
 
 #endif // __REF_H

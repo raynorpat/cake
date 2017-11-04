@@ -31,6 +31,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #include <math.h>
 
 #include "ref_public.h"
+#include "vid_public.h"
 
 #define	LIGHTMAP_SIZE	128
 #define	MAX_LIGHTMAPS	128
@@ -102,14 +103,6 @@ void LoadTGAFile (char *name, byte **pic, int *width, int *height);
 // fall over
 #define	ROLL	2
 
-
-#ifndef __VIDDEF_T
-#define __VIDDEF_T
-typedef struct
-{
-	unsigned		width, height;			// coordinates from main game
-} viddef_t;
-#endif
 
 extern	viddef_t	vid;
 
@@ -446,18 +439,3 @@ typedef struct sharedubo_s
 	float rightVec[4];
 	float viewOrigin[4];
 } sharedubo_t;
-
-
-/*
-====================================================================
-
-IMPLEMENTATION SPECIFIC FUNCTIONS
-
-====================================================================
-*/
-
-void GLimp_BeginFrame (float camera_separation);
-void GLimp_EndFrame (void);
-int GLimp_Init (void);
-void GLimp_Shutdown(qboolean contextOnly);
-qboolean GLimp_InitGraphics(int fullscreen, int *pwidth, int *pheight);

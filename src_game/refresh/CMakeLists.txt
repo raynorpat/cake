@@ -26,6 +26,20 @@ endif (NOT GLEW_FOUND)
 source_group("libs\\glew" FILES ${GLEW_INCLUDES})
 source_group("libs\\glew" FILES ${GLEW_SOURCES})
 
+# sdl
+if(NOT USE_SYSTEM_SDL2)
+	SET(SDL2_PATH ../libs/SDL2)
+endif()
+if(SDL2)
+	find_package(SDL2 REQUIRED)
+	include_directories(${SDL2_INCLUDE_DIR})
+	set(SDLx_LIBRARY ${SDL2_LIBRARY})
+else()
+	find_package(SDL REQUIRED)
+	include_directories(${SDL_INCLUDE_DIR})
+	set(SDLx_LIBRARY ${SDL_LIBRARY})
+endif()
+
 # refresh sources
 set(RENDERER_INCLUDES
 	../refresh/gl_model.h
@@ -73,6 +87,7 @@ set(RENDERER_VID_INCLUDES
 	)	
 set(RENDERER_VID_SOURCES
 	../refresh/vid/vid.c
+	../refresh/vid/vid_gl.c
 	)
 source_group("refresh\\vid" FILES ${RENDERER_VID_INCLUDES})
 source_group("refresh\\vid" FILES ${RENDERER_VID_SOURCES})
