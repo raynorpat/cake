@@ -69,7 +69,6 @@ source_group("refresh\\gl" FILES ${RENDERER_GL_SOURCES})
 
 # video backend sources
 set(RENDERER_VID_INCLUDES
-#	../refresh/vid/vid.h
 	../refresh/vid_public.h
 	)	
 set(RENDERER_VID_SOURCES

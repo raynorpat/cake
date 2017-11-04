@@ -29,8 +29,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #include <ctype.h>
 
 #include "ref_public.h"
+#include "vid_public.h"
 
-#include "vid.h"
 #include "screen.h"
 #include "sound.h"
 #include "input.h"

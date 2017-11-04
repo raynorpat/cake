@@ -22,7 +22,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #include <float.h>
 
 #include "client.h"
-#include "vid_public.h"
 
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "stb_image_write.h"
@@ -178,7 +177,7 @@ void VID_NewWindow (int width, int height)
 	cl.force_refdef = true;		// can't use a paused refdef
 }
 
-void VID_FreeReflib (void)
+static void VID_FreeReflib (void)
 {
 	reflib_active = false;
 }

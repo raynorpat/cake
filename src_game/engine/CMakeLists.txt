@@ -119,7 +119,6 @@ source_group("client\\sound" FILES ${SOUND_SOURCES})
 set(COMMON_INCLUDES
 	crc.h
 	qcommon.h
-	vid.h
 	)	
 set(COMMON_SOURCES
 	cmd.c
