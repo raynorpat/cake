@@ -459,6 +459,42 @@ int Sys_Milliseconds (void)
 
 //===============================================================================
 
+
+// The 64x64 32bit window icon
+#include "q2icon64.h"
+
+void Sys_SetIcon(void)
+{
+	// these masks are needed to tell SDL_CreateRGBSurface
+	// to assume the data it gets is byte-wise RGB(A) data
+	Uint32 rmask, gmask, bmask, amask;
+
+	// byte swap icon data
+#if SDL_BYTEORDER == SDL_BIG_ENDIAN
+	// big endian, like ppc
+	int shift = (q2icon64.bytes_per_pixel == 3) ? 8 : 0;
+	rmask = 0xff000000 >> shift;
+	gmask = 0x00ff0000 >> shift;
+	bmask = 0x0000ff00 >> shift;
+	amask = 0x000000ff >> shift;
+#else 
+	// little endian, like x86
+	rmask = 0x000000ff;
+	gmask = 0x0000ff00;
+	bmask = 0x00ff0000;
+	amask = (q2icon64.bytes_per_pixel == 3) ? 0 : 0xff000000;
+#endif
+
+	SDL_Surface* icon = SDL_CreateRGBSurfaceFrom((void*)q2icon64.pixel_data, q2icon64.width,
+		q2icon64.height, q2icon64.bytes_per_pixel * 8, q2icon64.bytes_per_pixel*q2icon64.width,
+		rmask, gmask, bmask, amask);
+
+	SDL_SetWindowIcon(NULL, icon);
+
+	SDL_FreeSurface(icon);
+}
+
+
 #ifdef _WIN32
 /*
 ================

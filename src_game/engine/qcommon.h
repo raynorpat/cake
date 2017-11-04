@@ -862,8 +862,10 @@ void	Sys_ConsoleOutput (char *string);
 void	Sys_SendKeyEvents (void);
 void	Sys_Error (char *error, ...);
 void	Sys_Quit (void);
+
 char	*Sys_GetClipboardData (void);
 void    Sys_ShowMessageBox (const char* title, const char* message);
+void	Sys_SetIcon(void);
 
 /*
 ==============================================================

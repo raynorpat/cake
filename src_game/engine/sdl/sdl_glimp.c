@@ -52,36 +52,6 @@ static SDL_GLContext context = NULL;
 
 void GLimp_ShutdownWindow(void);
 
-/* The 64x64 32bit window icon */
-#include "q2icon64.h"
-
-static void SetSDLIcon()
-{
-	/* these masks are needed to tell SDL_CreateRGBSurface(From)
-	to assume the data it gets is byte-wise RGB(A) data */
-	Uint32 rmask, gmask, bmask, amask;
-#if SDL_BYTEORDER == SDL_BIG_ENDIAN
-	int shift = (q2icon64.bytes_per_pixel == 3) ? 8 : 0;
-	rmask = 0xff000000 >> shift;
-	gmask = 0x00ff0000 >> shift;
-	bmask = 0x0000ff00 >> shift;
-	amask = 0x000000ff >> shift;
-#else /* little endian, like x86 */
-	rmask = 0x000000ff;
-	gmask = 0x0000ff00;
-	bmask = 0x00ff0000;
-	amask = (q2icon64.bytes_per_pixel == 3) ? 0 : 0xff000000;
-#endif
-
-	SDL_Surface* icon = SDL_CreateRGBSurfaceFrom((void*)q2icon64.pixel_data, q2icon64.width,
-		q2icon64.height, q2icon64.bytes_per_pixel * 8, q2icon64.bytes_per_pixel*q2icon64.width,
-		rmask, gmask, bmask, amask);
-
-	SDL_SetWindowIcon(window, icon);
-
-	SDL_FreeSurface(icon);
-}
-
 static int IsFullscreen()
 {
 	if (SDL_GetWindowFlags(window) & SDL_WINDOW_FULLSCREEN_DESKTOP) {
@@ -328,7 +298,7 @@ qboolean GLimp_InitGraphics(int fullscreen, int *pwidth, int *pheight)
 	}
 
 	// Set the window icon, this must be done after creating the window
-	SetSDLIcon();
+	Sys_SetIcon();
 
 	// No cursor
 	SDL_ShowCursor(0);
