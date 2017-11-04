@@ -1245,9 +1245,7 @@ struct model_s *R_RegisterModel (char *name)
 			for (i = 0; i < pheader->num_skins; i++)
 				mod->skins[i] = GL_FindImage ((char *) pheader + pheader->ofs_skins + i * MAX_SKINNAME, it_skin);
 
-			//PGM
 			mod->numframes = pheader->num_frames;
-			//PGM
 		}
 		else if (mod->type == mod_brush)
 		{

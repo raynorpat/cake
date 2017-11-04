@@ -21,7 +21,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #include <assert.h>
 #include "gl_local.h"
 
-
 GLenum gl_index_type = GL_UNSIGNED_INT;
 int gl_index_size = sizeof (unsigned int);
 

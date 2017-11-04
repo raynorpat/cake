@@ -50,8 +50,6 @@ int			c_brush_polys, c_alias_polys;
 
 float		v_blend[4];			// final blending color
 
-void GL_Strings_f (void);
-
 //
 // view origin
 //
@@ -540,13 +538,11 @@ void R_Register (void)
 	vid_gamma = Cvar_Get ("vid_gamma", "1.6", CVAR_ARCHIVE);
 	r_lightscale = Cvar_Get ("r_lightscale", "1.0", CVAR_ARCHIVE);
 
-
 	RPostProcess_Init();
 
 	Cmd_AddCommand ("imagelist", GL_ImageList_f);
 	Cmd_AddCommand ("screenshot", GL_ScreenShot_f);
 	Cmd_AddCommand ("modellist", Mod_Modellist_f);
-	Cmd_AddCommand ("gl_strings", GL_Strings_f);
 	Cmd_AddCommand ("fbolist", R_FBOList_f);
 }
 
