@@ -456,6 +456,7 @@ void Cvar_WriteVariables (char *path)
 		}
 	}
 
+	fflush (f);
 	fclose (f);
 }
 
