@@ -302,7 +302,7 @@ void SCR_DrawCenterString (void)
 
 void SCR_CheckDrawCenterString (void)
 {
-	scr_centertime_off -= cls.frametime;
+	scr_centertime_off -= cls.rframetime;
 
 	if (scr_centertime_off <= 0)
 		return;
@@ -438,6 +438,81 @@ void SCR_DrawLoading (void)
 	Draw_PicScaled ((viddef.width - w * scale) / 2, (viddef.height - h * scale) / 2, "loading", scale);
 }
 
+/*
+==============
+SCR_Framecounter
+==============
+*/
+void SCR_Framecounter (void)
+{
+	long long newtime;
+	static int frame;
+	static int frametimes[60] = { 0 };
+	static long long oldtime;
+
+	newtime = Sys_Microseconds();
+	frametimes[frame] = (int)(newtime - oldtime);
+
+	oldtime = newtime;
+	frame++;
+	if (frame > 59) {
+		frame = 0;
+	}
+
+	float scale = SCR_GetConsoleScale();
+
+	if (cl_showfps->value == 1) {
+		// calculate average of frames.
+		int avg = 0;
+		int num = 0;
+
+		for (int i = 0; i < 60; i++) {
+			if (frametimes[i] != 0) {
+				avg += frametimes[i];
+				num++;
+			}
+		}
+
+		char str[10];
+		snprintf(str, sizeof(str), "%3.2ffps", (1000.0 * 1000.0) / (avg / num));
+		DrawStringScaled(viddef.width - scale*(strlen(str) * 8 + 2), 0, str, scale);
+	} else if (cl_showfps->value >= 2) {
+		// calculate average of frames.
+		int avg = 0;
+		int num = 0;
+
+		for (int i = 0; i < 60; i++) {
+			if (frametimes[i] != 0) {
+				avg += frametimes[i];
+				num++;
+			}
+		}
+
+		// find lowest and highest
+		int min = frametimes[0];
+		int max = frametimes[1];
+
+		for (int i = 1; i < 60; i++) {
+			if ((frametimes[i] > 0) && (min < frametimes[i])) {
+				min = frametimes[i];
+			}
+
+			if ((frametimes[i] > 0) && (max > frametimes[i])) {
+				max = frametimes[i];
+			}
+		}
+
+		char str[64];
+		snprintf(str, sizeof(str), "Min: %7.2ffps, Max: %7.2ffps, Avg: %7.2ffps", (1000.0 * 1000.0) / min, (1000.0 * 1000.0) / max, (1000.0 * 1000.0) / (avg / num));
+		DrawStringScaled(viddef.width - scale*(strlen(str) * 8 + 2), 0, str, scale);
+
+		if (cl_showfps->value > 2) {
+			snprintf(str, sizeof(str), "Max: %5.2fms, Min: %5.2fms, Avg: %5.2fms", 0.001f*min, 0.001f*max, 0.001f*(avg / num));
+			DrawStringScaled(viddef.width - scale*(strlen(str) * 8 + 2), scale * 10, str, scale);
+		}
+	}
+}
+
 //=============================================================================
 
 /*
@@ -457,7 +532,7 @@ void SCR_RunConsole (void)
 
 	if (scr_conlines < scr_con_current)
 	{
-		scr_con_current -= scr_conspeed->value * cls.frametime;
+		scr_con_current -= scr_conspeed->value * cls.rframetime;
 
 		if (scr_conlines > scr_con_current)
 			scr_con_current = scr_conlines;
@@ -465,7 +540,7 @@ void SCR_RunConsole (void)
 	}
 	else if (scr_conlines > scr_con_current)
 	{
-		scr_con_current += scr_conspeed->value * cls.frametime;
+		scr_con_current += scr_conspeed->value * cls.rframetime;
 
 		if (scr_conlines < scr_con_current)
 			scr_con_current = scr_conlines;
@@ -1155,8 +1230,7 @@ void SCR_UpdateScreen (void)
 	if (!scr_initialized || !con.initialized)
 		return;				// not initialized yet
 
-	// range check cl_camera_separation so we don't inadvertently fry someone's
-	// brain
+	// range check cl_camera_separation so we don't inadvertently fry someone's brain
 	if (cl_stereo_separation->value > 1.0)
 		Cvar_SetValue ("cl_stereo_separation", 1.0);
 	else if (cl_stereo_separation->value < 0)
@@ -1241,7 +1315,7 @@ void SCR_UpdateScreen (void)
 			SCR_CheckDrawCenterString ();
 
 			if (scr_timegraph->value)
-				SCR_DebugGraph (cls.frametime * 300, 0);
+				SCR_DebugGraph (cls.rframetime * 300, 0);
 
 			if (scr_debuggraph->value || scr_timegraph->value || scr_netgraph->value)
 				SCR_DrawDebugGraph ();
@@ -1256,6 +1330,7 @@ void SCR_UpdateScreen (void)
 		}
 	}
 
+	SCR_Framecounter ();
 	VID_EndFrame ();
 }
 

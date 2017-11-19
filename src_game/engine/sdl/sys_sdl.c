@@ -226,15 +226,6 @@ void Sys_Mkdir (char *path)
 #endif
 }
 
-void Sys_Sleep (int msec)
-{
-#ifdef _WIN32
-	Sleep(msec);
-#else
-	usleep((unsigned int)1000 * msec);
-#endif
-}
-
 //===============================================================================
 
 char	findbase[MAX_OSPATH];
@@ -428,7 +419,6 @@ void Sys_FindClose(void)
 
 
 static unsigned int freq;
-int curtime; // time returned by last Sys_Milliseconds
 
 /*
 ================
@@ -461,8 +451,30 @@ Sys_Milliseconds
 */
 int Sys_Milliseconds (void)
 {
-	curtime = Sys_Microseconds() / 1000;
-	return curtime;
+	return (int)(Sys_Microseconds() / 1000ll);
+}
+
+/*
+================
+Sys_Nanosleep
+================
+*/
+void Sys_Nanosleep(int nanosec)
+{
+#ifdef WIN32
+	HANDLE timer;
+	LARGE_INTEGER li;
+	
+	timer = CreateWaitableTimer(NULL, TRUE, NULL);
+	
+	// Windows has a max resolution of 100ns
+	li.QuadPart = -nanosec / 100;
+	
+	SetWaitableTimer(timer, &li, 0, NULL, NULL, FALSE);
+	WaitForSingleObject(timer, INFINITE);
+	
+	CloseHandle(timer);
+#endif
 }
 
 
@@ -547,6 +559,39 @@ void Sys_SetHighDPIMode(void)
 }
 #endif
 
+/*
+================
+Sys_SetupFPU
+
+Forces the x87 FPU to double precision mode
+================
+*/
+#if defined (__GNUC__) && (__i386 || __x86_64__)
+void Sys_SetupFPU (void)
+{
+	// get current x87 control word
+	volatile unsigned short old_cw = 0;
+	asm("fstcw %0" : : "m" (*&old_cw));
+	unsigned short new_cw = old_cw;
+	
+	// the precision is set through bit 8 and 9
+	// for double precision bit 8 must unset and bit 9 set
+	new_cw &= ~(1 << 8);
+	new_cw |= (1 << 9);
+	
+	// setting the control word is expensive since it
+	// resets the FPU state, so do it if neccessary
+	if (new_cw != old_cw) {
+		asm("fldcw %0" : : "m" (*&new_cw));
+	}
+}
+#else
+void Sys_SetupFPU (void)
+{
+	// no-op
+}
+#endif
+
 //===============================================================================
 
 /*
@@ -563,6 +608,9 @@ void Sys_Init (void)
 	// force DPI awareness in Windows
 	Sys_SetHighDPIMode();
 #endif
+
+	// setup FPU if necessary
+	Sys_SetupFPU();
 }
 
 
@@ -769,27 +817,38 @@ main
 */
 int main(int argc, char **argv)
 {
-	int time, oldtime, newtime;
+	long long oldtime, newtime;
 
-	printf("\n Quake II v%4.2f\n", VERSION);
+	printf("\n Cake v%4.2f\n", VERSION);
 	printf("=====================\n\n");
 
 	Qcommon_Init(argc, argv);
 
 	nostdout = Cvar_Get("nostdout", "0", 0);
 
-	oldtime = Sys_Milliseconds();
+	oldtime = Sys_Microseconds();
 	while (1)
 	{
-		// find time spent rendering last frame
-		do
-		{
-			newtime = Sys_Milliseconds();
-			time = newtime - oldtime;
-		} while (time < 1);
+		// throttle the game a little bit
+#ifdef WIN32
+#ifndef DEDICATED_ONLY
+		Sys_Nanosleep(5000);
+#else
+		Sys_Nanosleep(850000);
+#endif
+#else
+#ifndef DEDICATED_ONLY
+		struct timespec t = { 0, 5000 };
+#else
+		struct timespec t = { 0, 850000 };
+#endif
+		nanosleep(&t, NULL);
+#endif
+
+		newtime = Sys_Microseconds();
 
 		// run the frame
-		Qcommon_Frame(time);
+		Qcommon_Frame(newtime - oldtime);
 
 		oldtime = newtime;
 	}

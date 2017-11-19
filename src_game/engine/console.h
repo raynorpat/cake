@@ -43,8 +43,7 @@ typedef struct
 
 	int		vislines;
 
-	float	times[NUM_CON_TIMES];	// cls.realtime time the line was generated
-	// for transparent notify lines
+	float	times[NUM_CON_TIMES];	// cls.realtime time the line was generated for transparent notify lines
 } console_t;
 
 extern	console_t	con;
@@ -53,7 +52,6 @@ void Con_CheckResize (void);
 void Con_Init (void);
 void Con_DrawConsole (float frac);
 void Con_Print (char *txt);
-void Con_CenteredPrint (char *text);
 void Con_Clear_f (void);
 void Con_DrawNotify (void);
 void Con_ClearNotify (void);

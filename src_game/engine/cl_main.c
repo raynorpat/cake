@@ -44,8 +44,6 @@ cvar_t	*cl_autoskins;
 cvar_t	*cl_footsteps;
 cvar_t	*cl_timeout;
 cvar_t	*cl_predict;
-//cvar_t	*cl_minfps;
-cvar_t	*cl_maxfps;
 cvar_t	*cl_gun;
 
 cvar_t	*cl_add_particles;
@@ -56,9 +54,9 @@ cvar_t	*cl_add_blend;
 cvar_t	*cl_shownet;
 cvar_t	*cl_showmiss;
 cvar_t	*cl_showclamp;
+cvar_t	*cl_showfps;
 
 cvar_t	*cl_paused;
-cvar_t	*cl_timedemo;
 
 cvar_t	*lookspring;
 cvar_t	*lookstrafe;
@@ -1458,6 +1456,7 @@ void CL_RequestNextDownload (void)
 
 	MSG_WriteByte (&cls.netchan.message, clc_stringcmd);
 	MSG_WriteString (&cls.netchan.message, va ("begin %i\n", precache_spawncount));
+	cls.forcePacket = true;
 }
 
 /*
@@ -1526,8 +1525,6 @@ void CL_InitLocal (void)
 	cl_noskins = Cvar_Get ("cl_noskins", "0", 0);
 	cl_autoskins = Cvar_Get ("cl_autoskins", "0", 0);
 	cl_predict = Cvar_Get ("cl_predict", "1", 0);
-	//	cl_minfps = Cvar_Get ("cl_minfps", "5", 0);
-	cl_maxfps = Cvar_Get ("cl_maxfps", "90", CVAR_ARCHIVE);
 
 	cl_upspeed = Cvar_Get ("cl_upspeed", "200", 0);
 	cl_forwardspeed = Cvar_Get ("cl_forwardspeed", "200", 0);
@@ -1550,9 +1547,9 @@ void CL_InitLocal (void)
 	cl_shownet = Cvar_Get ("cl_shownet", "0", 0);
 	cl_showmiss = Cvar_Get ("cl_showmiss", "0", 0);
 	cl_showclamp = Cvar_Get ("showclamp", "0", 0);
+	cl_showfps = Cvar_Get("cl_showfps", "0", 0);
 	cl_timeout = Cvar_Get ("cl_timeout", "120", 0);
 	cl_paused = Cvar_Get ("paused", "0", 0);
-	cl_timedemo = Cvar_Get ("timedemo", "0", 0);
 
 	rcon_client_password = Cvar_Get ("rcon_password", "", 0);
 	rcon_address = Cvar_Get ("rcon_address", "", 0);
@@ -1706,104 +1703,128 @@ void CL_SendCommand (void)
 /*
 ==================
 CL_Frame
-
 ==================
 */
-void CL_Frame (int msec)
+void CL_Frame (int packetdelta, int renderdelta, int timedelta, qboolean packetframe, qboolean renderframe)
 {
-	static int	realtime;
 	static int lasttimecalled;
-
+	
+	// are we running dedicated?
 	if (dedicated->value)
 		return;
 
-	realtime += msec;
+	// decide the simulation time
+	cls.nframetime = packetdelta / 1000000.0f;
+	cls.rframetime = renderdelta / 1000000.0f;
+	cls.realtime = curtime;
+	cl.time += timedelta / 1000;
+
+	// don't extrapolate too far ahead
+	if (cls.nframetime > 0.5f)
+		cls.nframetime = 0.5f;
+	if (cls.rframetime > 0.5f)
+		cls.rframetime = 0.5f;
+
+	// if in the debugger last frame, don't timeout
+	if (timedelta > 5000000)
+		cls.netchan.last_received = Sys_Milliseconds ();
 
 	if (!cl_timedemo->value)
 	{
-		if (cls.state == ca_connected && realtime < 100)
-			return;			// don't flood packets out while connecting
-
-		if (cl_maxfps->value > 0 && realtime < 1000 / cl_maxfps->value) return;
-
-		if (realtime < 12)
+		// don't throttle too much while connecting or loading
+		if ((cls.state == ca_connected) && (packetdelta > 100000))
 		{
-			cls.frametime = 0;
-			SCR_UpdateScreen ();
-			cls.framecount++;
-			return;
+			packetframe = true;
 		}
 	}
 
-	// decide the simulation time
-	cls.frametime = realtime / 1000.0;
-	cl.time += realtime;
-	cls.realtime = curtime;
-
-	realtime = 0;
-
-	if (cls.frametime > (1.0 / 5))
-		cls.frametime = (1.0 / 5);
-
-	// if in the debugger last frame, don't timeout
-	if (msec > 5000)
-		cls.netchan.last_received = Sys_Milliseconds ();
-
-	// fetch results from server
-	CL_ReadPackets ();
-
-	// send a new command message to the server
-	CL_SendCommand ();
-
-	// predict all unacknowledged movements
-	CL_PredictMovement ();
-
-	// allow rendering DLL change
-	VID_CheckChanges ();
-
-	if (!cl.refresh_prepped && cls.state == ca_active)
-		CL_PrepRefresh ();
-
-	// update the screen
-	if (host_speeds->value)
-		time_before_ref = Sys_Milliseconds ();
-
-	SCR_UpdateScreen ();
-
-	if (host_speeds->value)
-		time_after_ref = Sys_Milliseconds ();
-
-	// update audio
-	S_Update (cl.refdef.vieworg, cl.v_forward, cl.v_right, cl.v_up);
-	BGM_Update ();
-
-	// advance local effects for next frame
-	CL_RunDLights ();
-	CL_RunLightStyles ();
-	SCR_RunCinematic ();
-	SCR_RunConsole ();
-
-	cls.framecount++;
-
-	if (log_stats->value)
+	if (packetframe || renderframe)
 	{
-		if (cls.state == ca_active)
+		// fetch input packets
+		CL_ReadPackets();
+		
+		// update input
+		CL_UpdateWindowedMouse();
+		Sys_SendKeyEvents();
+		
+		// execute whats in the command buffer
+		Cbuf_Execute();
+
+		// perform command
+		if (cls.state > ca_connecting)
+			CL_RefreshCmd();
+		else
+			CL_RefreshMove();
+	}
+
+	if (cls.forcePacket || userinfo_modified)
+	{
+		packetframe = true;
+		cls.forcePacket = false;
+	}
+
+	if (packetframe)
+	{		
+		// sned command and check for resending
+		CL_SendCmd();
+		CL_CheckForResend();
+	}
+
+	if (renderframe)
+	{		
+		// check any video changes
+		VID_CheckChanges();
+
+		// run prediction logic
+		CL_PredictMovement();
+
+		// prep for refresh of screen
+		if (!cl.refresh_prepped && cls.state == ca_active)
+			CL_PrepRefresh ();
+
+		// update the screen
+		if (host_speeds->value)
+			time_before_ref = Sys_Milliseconds ();
+
+		SCR_UpdateScreen ();
+
+		if (host_speeds->value)
+			time_after_ref = Sys_Milliseconds ();
+
+		// update audio
+		S_Update (cl.refdef.vieworg, cl.v_forward, cl.v_right, cl.v_up);
+		BGM_Update();
+
+		// advance local effects for next frame
+		CL_RunDLights ();
+		CL_RunLightStyles ();
+		SCR_RunCinematic ();
+		SCR_RunConsole ();
+
+		// update framecounter
+		cls.framecount++;
+
+		// update stats logging
+		if (log_stats->value)
 		{
-			if (!lasttimecalled)
+			if (cls.state == ca_active)
 			{
-				lasttimecalled = Sys_Milliseconds ();
+				if (!lasttimecalled)
+				{
+					lasttimecalled = Sys_Milliseconds();
 
-				if (log_stats_file)
-					fprintf (log_stats_file, "0\n");
-			}
-			else
-			{
-				int now = Sys_Milliseconds ();
+					if (log_stats_file)
+						fprintf(log_stats_file, "0\n");
+				}
+				else
+				{
+					int now = Sys_Milliseconds();
 
-				if (log_stats_file)
-					fprintf (log_stats_file, "%d\n", now - lasttimecalled);
+					if (log_stats_file)
+						fprintf(log_stats_file, "%d\n", now - lasttimecalled);
 
-				lasttimecalled = now;
+					lasttimecalled = now;
+				}
 			}
 		}
 	}
@@ -1880,50 +1901,6 @@ void CL_Shutdown (void)
 }
 
 
-void Draw_FPS (void)
-{
-	int i, len;
-	char str[32] = {0};
-
-	static int frames = 0;
-	static int starttime = 0;
-	static qboolean first = true;
-	static float fps = 0.0f;
-
-	float scale = SCR_GetConsoleScale();
-
-	if (first)
-	{
-		starttime = cls.realtime;
-		first = false;
-		return;
-	}
-
-	frames++;
-
-	if (cls.realtime - starttime > 250 && frames > 10)
-	{
-		fps = (frames * 1000) / (cls.realtime - starttime);
-		starttime = cls.realtime;
-		frames = 0;
-	}
-
-	if (cl.cinematictime > 0) return;
-
-	if (cls.state == ca_active)
-	{
-		sprintf (str, "%0.2f fps", fps);
-		len = (strlen (str) + 1) * 8;
-
-		for (i = 0; ; i++)
-		{
-			if (!str[i]) break;
-
-			Draw_CharScaled (viddef.width - len * scale, 8 * scale, str[i], scale);
-			len -= 8;
-		}
-	}
-}
 
 
 

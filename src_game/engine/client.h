@@ -208,7 +208,8 @@ typedef struct
 
 	int			framecount;
 	int			realtime;			// always increasing, no clamping, etc
-	float		frametime;			// seconds since last frame
+	float		rframetime;			// seconds since last render frame
+	float		nframetime;			// network frame time
 
 	// screen rendering information
 	float		disable_screen;		// showing loading plaque between levels
@@ -227,6 +228,8 @@ typedef struct
 	int			serverProtocol;		// in case we are doing some kind of version hack
 
 	int			challenge;			// from the server to use for connecting
+
+	qboolean	forcePacket;		// forces a packet to be send at the next frame
 
 	FILE		*download;			// file transfer from server
 	char		downloadtempname[MAX_OSPATH];
@@ -275,6 +278,7 @@ extern	cvar_t	*cl_anglespeedkey;
 extern	cvar_t	*cl_shownet;
 extern	cvar_t	*cl_showmiss;
 extern	cvar_t	*cl_showclamp;
+extern	cvar_t	*cl_showfps;
 
 extern	cvar_t	*lookspring;
 extern	cvar_t	*lookstrafe;
@@ -324,10 +328,8 @@ extern	entity_state_t	cl_parse_entities[MAX_PARSE_ENTITIES];
 extern	netadr_t	net_from;
 extern	sizebuf_t	net_message;
 
-void DrawString (int x, int y, char *s);
 void DrawStringScaled (int x, int y, char *s, float factor);
-void DrawAltString (int x, int y, char *s);	// toggle high bit
-void DrawAltStringScaled (int x, int y, char *s, float factor);
+void DrawAltStringScaled (int x, int y, char *s, float factor); // toggle high bit
 
 qboolean CL_CheckOrDownloadFile (char *filename);
 
@@ -481,11 +483,14 @@ extern 	kbutton_t 	in_strafe;
 extern 	kbutton_t 	in_speed;
 
 void CL_InitInput (void);
+void CL_RefreshCmd (void);
 void CL_SendCmd (void);
 
 void CL_ClearState (void);
 
 void CL_ReadPackets (void);
+
+void CL_RefreshMove (void);
 
 void CL_BaseMove (usercmd_t *cmd);
 

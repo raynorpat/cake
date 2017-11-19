@@ -867,7 +867,6 @@ void	Sys_Quit (void);
 char	*Sys_GetClipboardData (void);
 void    Sys_ShowMessageBox (const char* title, const char* message);
 void	Sys_SetIcon (void);
-void	Sys_Sleep (int msec);
 
 
 /*
@@ -881,7 +880,7 @@ CLIENT / SERVER SYSTEMS
 void CL_Init (void);
 void CL_Drop (void);
 void CL_Shutdown (void);
-void CL_Frame (int msec);
+void CL_Frame (int packetdelta, int renderdelta, int timedelta, qboolean packetframe, qboolean renderframe);
 void Con_Print (char *text);
 void SCR_BeginLoadingPlaque (void);
 

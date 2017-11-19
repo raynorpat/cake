@@ -34,6 +34,9 @@ extern cvar_t *gl_swapinterval;
 static SDL_Window* window = NULL;
 static SDL_GLContext context = NULL;
 
+static qboolean vsyncActive = false;
+int vid_refreshRate = -1;
+
 void VID_ShutdownWindow(void);
 
 static int IsFullscreen()
@@ -113,6 +116,7 @@ static void SetSwapInterval(void)
 {
 	// Set vsync - TODO: -1 could be set for "late swap tearing"
 	SDL_GL_SetSwapInterval(gl_swapinterval->value ? 1 : 0);
+	vsyncActive = SDL_GL_GetSwapInterval() != 0;
 }
 
 
@@ -187,6 +191,9 @@ qboolean VID_InitWindow(int fullscreen, int *pwidth, int *pheight)
 	int width = *pwidth;
 	int height = *pheight;
 	unsigned int fs_flag = 0;
+
+	// reset fresh rate
+	vid_refreshRate = -1;
 
 	if (fullscreen == 1) {
 		fs_flag = SDL_WINDOW_FULLSCREEN_DESKTOP;
@@ -326,6 +333,42 @@ qboolean VID_Init_GL (void)
 
 
 /*
+VID_IsVSyncActive
+*/
+qboolean VID_IsVSyncActive(void)
+{
+	return vsyncActive;
+}
+
+/*
+VID_GetRefreshRate
+
+Returns the current display refresh rate.
+*/
+int VID_GetRefreshRate(void)
+{
+	if (vid_refreshRate == -1)
+	{
+		SDL_DisplayMode mode;
+
+		int i = SDL_GetWindowDisplayIndex(window);
+		if (i >= 0 && SDL_GetCurrentDisplayMode(i, &mode) == 0)
+		{
+			vid_refreshRate = mode.refresh_rate;
+		}
+
+		if (vid_refreshRate <= 0)
+		{
+			// apparently the stuff above failed, use default
+			vid_refreshRate = 60;
+		}
+	}
+
+	return vid_refreshRate;
+}
+
+
+/*
 VID_BeginFrame
 */
 void VID_BeginFrame (float camera_separation)
@@ -338,13 +381,11 @@ VID_EndFrame
 
 Responsible for doing a swapbuffer.
 */
-extern void Draw_FPS (void);
 extern void Draw_End2D(void);
 extern void GL_UseProgram(GLuint progid);
 
 void VID_EndFrame (void)
 {
-	//Draw_FPS ();
 	Draw_End2D ();
 
 	GL_UseProgram (0);

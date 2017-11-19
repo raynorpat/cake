@@ -52,6 +52,12 @@ cvar_t	*logfile_active;	// 1 = buffer log, 2 = flush after each print
 cvar_t	*showtrace;
 cvar_t	*dedicated;
 
+// for timing calculations
+cvar_t	*cl_timedemo;
+cvar_t	*cl_async;
+cvar_t	*cl_maxfps;
+cvar_t	*r_maxfps;
+
 FILE	*logfile;
 
 int		server_state;
@@ -61,6 +67,15 @@ int		time_before_game;
 int		time_after_game;
 int		time_before_ref;
 int		time_after_ref;
+
+// used in the network and input pathes
+int		curtime;
+
+// HACK!
+#ifndef DEDICATED_ONLY
+int VID_GetRefreshRate(void);
+qboolean VID_IsVSyncActive(void);
+#endif
 
 /*
 ============================================================================
@@ -1385,19 +1400,6 @@ float	crand (void)
 void Key_Init (void);
 void SCR_EndLoadingPlaque (void);
 
-/*
-=============
-Com_Error_f
-
-Just throw a fatal error to
-test error shutdown procedures
-=============
-*/
-void Com_Error_f (void)
-{
-	Com_Error (ERR_FATAL, "%s", Cmd_Argv (1));
-}
-
 
 /*
 =================
@@ -1443,7 +1445,6 @@ void Qcommon_Init (int argc, char **argv)
 
 	// init commands and vars
 	Cmd_AddCommand ("z_stats", Z_Stats_f);
-	Cmd_AddCommand ("error", Com_Error_f);
 
 	host_speeds = Cvar_Get ("host_speeds", "0", 0);
 	log_stats = Cvar_Get ("log_stats", "0", 0);
@@ -1458,6 +1459,12 @@ void Qcommon_Init (int argc, char **argv)
 #else
 	dedicated = Cvar_Get ("dedicated", "0", CVAR_NOSET);
 #endif
+
+	// For timing calculations
+	cl_timedemo = Cvar_Get ("timedemo", "0", 0);
+	cl_async = Cvar_Get ("cl_async", "1", CVAR_ARCHIVE);
+	cl_maxfps = Cvar_Get ("cl_maxfps", "60", CVAR_ARCHIVE);
+	r_maxfps = Cvar_Get ("r_maxfps", "95", CVAR_ARCHIVE);
 
 	s = va ("%4.2f %s %s %s", VERSION, CPUSTRING, __DATE__, BUILDSTRING);
 	Cvar_Get ("version", s, CVAR_SERVERINFO | CVAR_NOSET);
@@ -1496,15 +1503,32 @@ void Qcommon_Init (int argc, char **argv)
 /*
 =================
 Qcommon_Frame
+
+Runs frames
+
+A packetframe runs the server and the client, but not the renderer. The minimal interval of packetframes is about 10.000 microseconds.
+NOTE: If packetframe run more often the movement prediction in pmove.c breaks.
+
+A rendererframe runs the renderer, but not the client. The minimal interval is about 1000 microseconds.
 =================
 */
+#ifndef DEDICATED_ONLY
 void Qcommon_Frame (int msec)
 {
 	char	*s;
 	int		time_before, time_between, time_after;
-
+	int		pfps; // target packet framerate.
+	int		rfps; // target render framerate.
+	static int packetdelta = 1000000; // time since last packetframe in microsec.
+	static int renderdelta = 1000000; // time since last renderframe in microsec.
+	static int clienttimedelta = 0; // accumulated time since last client run.
+	static int servertimedelta = 0; // accumulated time since last server run.	
+	qboolean packetframe = true;	
+	qboolean renderframe = true;
+	
+	// an ERR_DROP was thrown, so get out of this frame
 	if (setjmp (abortframe))
-		return;			// an ERR_DROP was thrown
+		return;	
 
 	if (log_stats->modified)
 	{
@@ -1533,16 +1557,17 @@ void Qcommon_Frame (int msec)
 		}
 	}
 
+	// timing debug
 	if (fixedtime->value)
-		msec = fixedtime->value;
+	{
+		msec = (int)fixedtime->value;
+	}
 	else if (timescale->value)
 	{
 		msec *= timescale->value;
-
-		if (msec < 1)
-			msec = 1;
 	}
 
+	// content tracing debug
 	if (showtrace->value)
 	{
 		extern	int c_traces, c_brush_traces;
@@ -1554,25 +1579,88 @@ void Qcommon_Frame (int msec)
 		c_pointcontents = 0;
 	}
 
+	// save global time for network and input code
+	curtime = Sys_Milliseconds();
+
+	// calculate target packet and render framerate.
+	if (VID_IsVSyncActive())
+	{
+		rfps = VID_GetRefreshRate ();		
+		if (rfps > r_maxfps->value)
+		{
+			rfps = (int)r_maxfps->value;
+		}
+	}
+	else
+	{
+		rfps = (int)r_maxfps->value;
+	}	
+	pfps = (cl_maxfps->value > rfps) ? rfps : cl_maxfps->value;
+
+	// calculate timings.
+	packetdelta += msec;
+	renderdelta += msec;
+	clienttimedelta += msec;
+	servertimedelta += msec;
+	
+	if (!cl_timedemo->value)
+	{
+		if (cl_async->value)
+		{
+			// network frames..
+			if (packetdelta < (1000000.0f / pfps))
+			{
+				packetframe = false;
+			}
+
+			// render frames.
+			if (renderdelta < (1000000.0f / rfps))
+			{
+				renderframe = false;
+			}
+		}
+		else
+		{
+			// cap frames at target framerate.
+			if (renderdelta < (1000000.0f / rfps))
+			{
+				renderframe = false;
+				packetframe = false;
+			}
+		}
+	}
+	else if (clienttimedelta < 1000 || servertimedelta < 1000)
+	{
+		return;
+	}
+
+	// dedicated server terminal console.
 	do
 	{
 		s = Sys_ConsoleInput ();
 
 		if (s)
-			Cbuf_AddText (va ("%s\n", s));
+			Cbuf_AddText (va("%s\n", s));
 	} while (s);
-
 	Cbuf_Execute ();
 
 	if (host_speeds->value)
 		time_before = Sys_Milliseconds ();
 
-	SV_Frame (msec);
+	// run the server frame
+	if (packetframe) {
+		SV_Frame (servertimedelta);
+		servertimedelta = 0;
+	}
 
 	if (host_speeds->value)
 		time_between = Sys_Milliseconds ();
 
-	CL_Frame (msec);
+	// run the client frame
+	if (packetframe || renderframe) {
+		CL_Frame(packetdelta, renderdelta, clienttimedelta, packetframe, renderframe);
+		clienttimedelta = 0;
+	}
 
 	if (host_speeds->value)
 		time_after = Sys_Milliseconds ();
@@ -1588,10 +1676,77 @@ void Qcommon_Frame (int msec)
 		rf = time_after_ref - time_before_ref;
 		sv -= gm;
 		cl -= rf;
-		Com_Printf ("all:%3i sv:%3i gm:%3i cl:%3i rf:%3i\n",
-					all, sv, gm, cl, rf);
+		Com_Printf ("all:%3i sv:%3i gm:%3i cl:%3i rf:%3i\n", all, sv, gm, cl, rf);
+	}
+
+	// reset deltas if necessary
+	if (packetframe) {
+		packetdelta = 0;
+	}
+	
+	if (renderframe) {
+		renderdelta = 0;
 	}
 }
+#else
+void Qcommon_Frame(int msec)
+{
+	char *s;	
+	int pfps; // target packetframerate
+	static int packetdelta = 1000000; // time since last packetframe in microsec.
+	static int servertimedelta = 0;	// accumulated time since last server run.
+	qboolean packetframe = true;
+	
+	// an ERR_DROP was thrown, so get out of this frame
+	if (setjmp(abortframe))
+		return;
+	
+	// timing debug
+	if (fixedtime->value)
+	{
+		msec = (int)fixedtime->value;
+	}
+	else if (timescale->value)
+	{
+		msec *= timescale->value;
+	}
+
+	// save global time for network and input code
+	curtime = Sys_Milliseconds();
+	
+	// target framerate
+	pfps = (int)cl_maxfps->value;
+	
+	// calculate timings.
+	packetdelta += msec;
+	servertimedelta += msec;
+	
+	// network frame time.
+	if (packetdelta < (1000000.0f / pfps)) {
+		packetframe = false;	
+	}
+	
+	// dedicated server terminal console.
+	do {
+		s = Sys_ConsoleInput();
+		
+		if (s)
+			Cbuf_AddText(va("%s\n", s));
+	} while (s);
+	Cbuf_Execute();
+	
+	// run the serverframe.
+	if (packetframe) {
+		SV_Frame(servertimedelta);
+		servertimedelta = 0;
+	}
+	
+	// reset deltas if necessary.
+	if (packetframe) {
+		packetdelta = 0;
+	}
+}
+#endif
 
 /*
 =================

@@ -28,12 +28,6 @@ extern	char	key_lines[NUM_KEY_LINES][MAXCMDLINE];
 extern	int		edit_line;
 extern	int		key_linepos;
 
-
-void DrawString (int x, int y, char *s)
-{
-	DrawStringScaled(x, y, s, 1.0f);
-}
-
 void DrawStringScaled (int x, int y, char *s, float factor)
 {
 	while (*s)
@@ -42,11 +36,6 @@ void DrawStringScaled (int x, int y, char *s, float factor)
 		x += 8 * factor;
 		s++;
 	}
-}
-
-void DrawAltString (int x, int y, char *s)
-{
-	DrawAltStringScaled(x, y, s, 1.0f);
 }
 
 void DrawAltStringScaled (int x, int y, char *s, float factor)
@@ -441,28 +430,6 @@ void Con_Print (char *txt)
 	}
 }
 
-
-/*
-==============
-Con_CenteredPrint
-==============
-*/
-void Con_CenteredPrint (char *text)
-{
-	int		l;
-	char	buffer[1024];
-
-	l = strlen (text);
-	l = (con.linewidth - l) / 2;
-
-	if (l <= 0)
-		l = 0;
-	else
-		memset (buffer, ' ', l);
-	strcpy (buffer + l, text);
-	strcat (buffer, "\n");
-	Con_Print (buffer);
-}
 
 /*
 ==============================================================================

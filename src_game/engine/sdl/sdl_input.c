@@ -877,7 +877,7 @@ void IN_ControllerMove(usercmd_t *cmd)
 	else
 		speed = 1;
 
-	aspeed = cls.frametime;
+	aspeed = cls.nframetime;
 	if (autosensitivity->value)
 		aspeed *= (cl.refdef.fov_x / 90.0);
 

@@ -248,9 +248,9 @@ void CL_AdjustAngles (void)
 	float	up, down;
 
 	if (in_speed.state & 1)
-		speed = cls.frametime * cl_anglespeedkey->value;
+		speed = cls.nframetime * cl_anglespeedkey->value;
 	else
-		speed = cls.frametime;
+		speed = cls.nframetime;
 
 	if (!(in_strafe.state & 1))
 	{
@@ -364,7 +364,7 @@ void CL_FinishMove (usercmd_t *cmd)
 		cmd->buttons |= BUTTON_ANY;
 
 	// send milliseconds of time to apply the move
-	ms = cls.frametime * 1000;
+	ms = cls.nframetime * 1000;
 
 	if (ms > 250)
 		ms = 100;		// time was unreasonable
@@ -384,38 +384,10 @@ void CL_FinishMove (usercmd_t *cmd)
 }
 
 /*
-=================
-CL_CreateCmd
-=================
+==============
+IN_CenterView
+==============
 */
-usercmd_t CL_CreateCmd (void)
-{
-	usercmd_t	cmd;
-
-	frame_msec = sys_frame_time - old_sys_frame_time;
-
-	if (frame_msec < 1)
-		frame_msec = 1;
-
-	if (frame_msec > 200)
-		frame_msec = 200;
-
-	// get basic movement from keyboard
-	CL_BaseMove (&cmd);
-
-	// allow mice or other external controllers to add to the move
-	IN_Move (&cmd);
-
-	CL_FinishMove (&cmd);
-
-	old_sys_frame_time = sys_frame_time;
-
-	//cmd.impulse = cls.framecount;
-
-	return cmd;
-}
-
-
 void IN_CenterView (void)
 {
 	cl.viewangles[PITCH] = -SHORT2ANGLE (cl.frame.playerstate.pmove.delta_angles[PITCH]);
@@ -465,7 +437,134 @@ void CL_InitInput (void)
 	cl_nodelta = Cvar_Get ("cl_nodelta", "0", 0);
 }
 
+/*
+=================
+CL_RefreshCmd
+=================
+*/
+void CL_RefreshCmd(void)
+{
+	int ms;
+	usercmd_t *cmd;
+	
+	// CMD to fill
+	cmd = &cl.cmds[cls.netchan.outgoing_sequence & (CMD_BACKUP - 1)];
+	
+	// Calculate delta
+	frame_msec = sys_frame_time - old_sys_frame_time;
+	
+	// Check bounds
+	if (frame_msec < 1)
+	{
+		return;
+	}
+	else if (frame_msec > 200)
+	{
+		frame_msec = 200;
+	}
+	
+	// Add movement
+	CL_BaseMove(cmd);
+	IN_Move(cmd);
+	
+	// Clamp angels for prediction
+	CL_ClampPitch();
+	
+	cmd->angles[0] = ANGLE2SHORT(cl.viewangles[0]);
+	cmd->angles[1] = ANGLE2SHORT(cl.viewangles[1]);
+	cmd->angles[2] = ANGLE2SHORT(cl.viewangles[2]);
+	
+	// Update time for prediction
+	ms = (int)(cls.nframetime * 1000.0f);
+	
+	if (ms > 250)
+	{
+		ms = 100;
+	}
+	
+	cmd->msec = ms;
+	
+	// Update frame time for the next call
+	old_sys_frame_time = sys_frame_time;
+	
+	// Important events are send immediately
+	if (((in_attack.state & 2)) || (in_use.state & 2))
+	{
+		cls.forcePacket = true;
+	}
+}
 
+/*
+=================
+CL_RefreshMove
+=================
+*/
+void CL_RefreshMove(void)
+{
+	usercmd_t *cmd;
+	
+	// CMD to fill
+	cmd = &cl.cmds[cls.netchan.outgoing_sequence & (CMD_BACKUP - 1)];
+	
+	// Calculate delta
+	frame_msec = sys_frame_time - old_sys_frame_time;
+	
+	// Check bounds
+	if (frame_msec < 1)
+	{
+		return;
+	}
+	else if (frame_msec > 200)
+	{
+		frame_msec = 200;
+	}
+	
+	// Add movement
+	CL_BaseMove(cmd);
+	IN_Move(cmd);
+	
+	old_sys_frame_time = sys_frame_time;
+}
+
+/*
+=================
+CL_FinalizeCmd
+=================
+*/
+void CL_FinalizeCmd(void)
+{
+	usercmd_t *cmd;
+	
+	// CMD to fill
+	cmd = &cl.cmds[cls.netchan.outgoing_sequence & (CMD_BACKUP - 1)];
+	
+	// Mouse button events
+	if (in_attack.state & 3)
+	{
+		cmd->buttons |= BUTTON_ATTACK;
+	}
+	
+	in_attack.state &= ~2;
+	
+	if (in_use.state & 3)
+	{
+		cmd->buttons |= BUTTON_USE;
+	}
+	
+	in_use.state &= ~2;
+	
+	// Keyboard events
+	if (anykeydown && cls.key_dest == key_game)
+	{
+		cmd->buttons |= BUTTON_ANY;
+	}
+	
+	cmd->impulse = in_impulse;
+	in_impulse = 0;
+	
+	// Set light level for muzzle flash
+	cmd->lightlevel = (byte)cl_lightlevel->value;
+}
 
 /*
 =================
@@ -481,17 +580,14 @@ void CL_SendCmd (void)
 	usercmd_t	nullcmd;
 	int			checksumIndex;
 
-	// this only ever worked because buf overflowed into data - yuck!
 	SZ_Init (&buf, data, sizeof (data));
-
-	// build a command even if not connected
 
 	// save this command off for prediction
 	i = cls.netchan.outgoing_sequence & (CMD_BACKUP - 1);
 	cmd = &cl.cmds[i];
 	cl.cmd_time[i] = cls.realtime;	// for netgraph ping calculation
 
-	*cmd = CL_CreateCmd ();
+	CL_FinalizeCmd();
 
 	cl.cmd = *cmd;
 
@@ -502,7 +598,6 @@ void CL_SendCmd (void)
 	{
 		if (cls.netchan.message.cursize	|| curtime - cls.netchan.last_sent > 1000)
 			Netchan_Transmit (&cls.netchan, 0, buf.data);
-
 		return;
 	}
 
@@ -560,10 +655,12 @@ void CL_SendCmd (void)
 								 buf.data + checksumIndex + 1, buf.cursize - checksumIndex - 1,
 								 cls.netchan.outgoing_sequence);
 
-	//
 	// deliver the message
-	//
 	Netchan_Transmit (&cls.netchan, buf.cursize, buf.data);
+
+	// reinit the current cmd buffer
+	cmd = &cl.cmds[cls.netchan.outgoing_sequence & (CMD_BACKUP - 1)];
+	memset(cmd, 0, sizeof(*cmd));
 }
 
 

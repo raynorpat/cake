@@ -248,9 +248,7 @@ void CL_PredictMovement (void)
 	memset (&pm, 0, sizeof (pm));
 	pm.trace = CL_PMTrace;
 	pm.pointcontents = CL_PMpointcontents;
-
 	pm_airaccelerate = atof (cl.configstrings[CS_AIRACCEL]);
-
 	pm.s = cl.frame.playerstate.pmove;
 
 	//	SCR_DebugGraph (current - ack - 1, 0);
@@ -258,10 +256,16 @@ void CL_PredictMovement (void)
 	frame = 0;
 
 	// run frames
-	while (++ack < current)
+	while (++ack <= current)
 	{
 		frame = ack & (CMD_BACKUP - 1);
 		cmd = &cl.cmds[frame];
+
+		// ignore null entries
+		if (!cmd->msec)
+		{
+			continue;
+		}
 
 		pm.cmd = *cmd;
 		Pmove (&pm);
@@ -276,7 +280,7 @@ void CL_PredictMovement (void)
 	if (((step > 126 && step < 130)) && !VectorCompare(tmp, vec3_origin) && (pm.s.pm_flags & PMF_ON_GROUND))
 	{
 		cl.predicted_step = step * 0.125;
-		cl.predicted_step_time = cls.realtime - (int)(cls.frametime * 500);
+		cl.predicted_step_time = cls.realtime - (int)(cls.nframetime * 500);
 	}
 	
 	// copy results out for rendering
