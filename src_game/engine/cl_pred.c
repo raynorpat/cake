@@ -209,12 +209,11 @@ void CL_PredictMovement (void)
 {
 	int			ack, current;
 	int			frame;
-	int			oldframe;
 	usercmd_t	*cmd;
 	pmove_t		pm;
 	int			i;
 	int			step;
-	int			oldz;
+	vec3_t		tmp;
 
 	if (cls.state != ca_active)
 		return;
@@ -271,17 +270,15 @@ void CL_PredictMovement (void)
 		VectorCopy (pm.s.origin, cl.predicted_origins[frame]);
 	}
 
-	oldframe = (ack - 2) & (CMD_BACKUP - 1);
-	oldz = cl.predicted_origins[oldframe][2];
-	step = pm.s.origin[2] - oldz;
+	step = pm.s.origin[2] - (int)(cl.predicted_origin[2] * 8);
+	VectorCopy(tmp, pm.s.velocity);
 
-	if (step > 63 && step < 160 && (pm.s.pm_flags & PMF_ON_GROUND))
+	if (((step > 126 && step < 130)) && !VectorCompare(tmp, vec3_origin) && (pm.s.pm_flags & PMF_ON_GROUND))
 	{
 		cl.predicted_step = step * 0.125;
-		cl.predicted_step_time = cls.realtime - cls.frametime * 500;
+		cl.predicted_step_time = cls.realtime - (int)(cls.frametime * 500);
 	}
-
-
+	
 	// copy results out for rendering
 	cl.predicted_origin[0] = pm.s.origin[0] * 0.125;
 	cl.predicted_origin[1] = pm.s.origin[1] * 0.125;
