@@ -936,12 +936,12 @@ void Key_Event (int key, qboolean down, qboolean special)
 
 		if (!fullscreen->value)
 		{
-			fullscreen->value = 1;
+			Cvar_Set("vid_fullscreen", "1");
 			fullscreen->modified = true;
 		}
 		else
 		{
-			fullscreen->value = 0;
+			Cvar_Set("vid_fullscreen", "0");
 			fullscreen->modified = true;
 		}
 
