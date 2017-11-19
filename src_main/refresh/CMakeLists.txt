@@ -42,43 +42,40 @@ endif()
 
 # refresh sources
 set(RENDERER_INCLUDES
-	../refresh/gl_model.h
-	../refresh/gl_local.h
 	../refresh/ref_public.h
+	../refresh/vid_public.h
 	)	
 set(RENDERER_SOURCES
-	../refresh/gl_beam.c
-	../refresh/gl_draw.c
-	../refresh/gl_framebuffer.c
-	../refresh/gl_image.c
-	../refresh/gl_light.c
-	../refresh/gl_mesh.c
-	../refresh/gl_model.c
-	../refresh/gl_nullmodel.c
-	../refresh/gl_part.c
-	../refresh/gl_postprocess.c	
-	../refresh/gl_rmain.c
-	../refresh/gl_rmisc.c
-	../refresh/gl_rsurf.c
-	../refresh/gl_sky.c
-	../refresh/gl_sprite.c
-	../refresh/gl_warp.c
 	../refresh/matrix.c
 	)
 source_group("refresh" FILES ${RENDERER_INCLUDES})
 source_group("refresh" FILES ${RENDERER_SOURCES})
 
 # OpenGL refresh backend sources
-#set(RENDERER_GL_INCLUDES
-#	../refresh/gl_model.h
-#	../refresh/gl_local.h
-#	../refresh/ref_public.h
-#	)	
+set(RENDERER_GL_INCLUDES
+	../refresh/gl/gl_model.h
+	../refresh/gl/gl_local.h
+	)	
 set(RENDERER_GL_SOURCES
-	../refresh/gl/gl_backend.c
+	../refresh/gl/gl_beam.c
+	../refresh/gl/gl_draw.c
+	../refresh/gl/gl_framebuffer.c
+	../refresh/gl/gl_image.c
+	../refresh/gl/gl_light.c
+	../refresh/gl/gl_mesh.c
+	../refresh/gl/gl_model.c
+	../refresh/gl/gl_nullmodel.c
+	../refresh/gl/gl_part.c
+	../refresh/gl/gl_postprocess.c	
+	../refresh/gl/gl_rmain.c
+	../refresh/gl/gl_rmisc.c
+	../refresh/gl/gl_rsurf.c
+	../refresh/gl/gl_sky.c
+	../refresh/gl/gl_sprite.c
 	../refresh/gl/gl_state.c
+	../refresh/gl/gl_warp.c
 	)
-#source_group("refresh\\gl" FILES ${RENDERER_GL_INCLUDES})
+source_group("refresh\\gl" FILES ${RENDERER_GL_INCLUDES})
 source_group("refresh\\gl" FILES ${RENDERER_GL_SOURCES})
 
 # video backend sources
@@ -105,4 +102,4 @@ include_directories(
             )
 
 # build the refresh library
-add_library(refresh STATIC ${GLEW_INCLUDES} ${GLEW_SOURCES} ${RENDERER_INCLUDES} ${RENDERER_SOURCES} ${RENDERER_GL_SOURCES} ${RENDERER_VID_INCLUDES} ${RENDERER_VID_SOURCES})
+add_library(refresh STATIC ${GLEW_INCLUDES} ${GLEW_SOURCES} ${RENDERER_INCLUDES} ${RENDERER_SOURCES} ${RENDERER_GL_INCLUDES} ${RENDERER_GL_SOURCES} ${RENDERER_VID_INCLUDES} ${RENDERER_VID_SOURCES})

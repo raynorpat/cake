@@ -19,7 +19,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 */
 // matrix.c -- opengl matrix math functionality
 
-#include "gl_local.h"
+// TODO: split that out into matrix.h
+#include "gl/gl_local.h"
 
 inline float QXVec3Length(const QXVECTOR3 *pv)
 {
