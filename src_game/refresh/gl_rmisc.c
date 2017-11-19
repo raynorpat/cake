@@ -146,7 +146,7 @@ void GL_ScreenShot_f (void)
 	// so swap bottom rows with top rows
 	{
 		size_t bytesPerRow = 3 * w;
-		byte *rowBuffer = (byte *)alloca(sizeof(byte) * bytesPerRow);
+		byte *rowBuffer = (byte *)_alloca(sizeof(byte) * bytesPerRow);
 		byte *curRowL = buffer; // first byte of first row
 		byte *curRowH = buffer + bytesPerRow*(h - 1); // first byte of last row
 		while (curRowL < curRowH)
