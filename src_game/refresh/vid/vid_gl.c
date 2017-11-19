@@ -192,9 +192,6 @@ qboolean VID_InitWindow(int fullscreen, int *pwidth, int *pheight)
 	int height = *pheight;
 	unsigned int fs_flag = 0;
 
-	// reset fresh rate
-	vid_refreshRate = -1;
-
 	if (fullscreen == 1) {
 		fs_flag = SDL_WINDOW_FULLSCREEN_DESKTOP;
 	} else if (fullscreen == 2) {
@@ -302,6 +299,9 @@ void VID_ShutdownWindow(void)
 	}
 
 	window = NULL;
+
+	// make sure that after vid_restart the refresh rate will be queried from SDL again.
+	vid_refreshRate = -1;
 
 	if (SDL_WasInit(SDL_INIT_EVERYTHING) == SDL_INIT_VIDEO)	{
 		SDL_Quit();
