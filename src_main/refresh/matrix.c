@@ -17,10 +17,8 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
 */
-// matrix.c -- opengl matrix math functionality
-
-// TODO: split that out into matrix.h
-#include "gl/gl_local.h"
+// matrix.c -- matrix math functionality
+#include "ref_public.h"
 
 inline float QXVec3Length(const QXVECTOR3 *pv)
 {
