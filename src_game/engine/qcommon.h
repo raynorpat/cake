@@ -540,6 +540,7 @@ void 	Cvar_WriteVariables (char *path);
 // with the archive flag set to true.
 
 void	Cvar_Init (void);
+void	Cvar_Shutdown(void);
 
 char	*Cvar_Userinfo (void);
 // returns an info string containing all the CVAR_USERINFO cvars

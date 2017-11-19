@@ -545,5 +545,26 @@ void Cvar_Init (void)
 {
 	Cmd_AddCommand ("set", Cvar_Set_f);
 	Cmd_AddCommand ("cvarlist", Cvar_List_f);
+}
 
+/*
+============
+Cvar_Shutdown
+============
+*/
+void Cvar_Shutdown (void)
+{
+	cvar_t *var;
+	
+	for (var = cvar_vars; var;)
+	{
+		cvar_t *c = var;
+		Z_Free(var->string);
+		Z_Free(var->name);
+		Z_Free(var);
+		var = c->next;
+	}
+	
+	Cmd_RemoveCommand("cvarlist");
+	Cmd_RemoveCommand("set");
 }
