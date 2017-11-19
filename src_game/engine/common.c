@@ -1603,4 +1603,3 @@ void Qcommon_Shutdown (void)
 	Cvar_Shutdown ();
 }
 
-
