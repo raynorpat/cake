@@ -1610,7 +1610,7 @@ UINT CSoundFile::CreateStereoMix(int count)
 #endif
 
 // Clip and convert to 8 bit
-#ifdef _MSC_VER
+#if defined _MSC_VER && _M_IX86
 __declspec(naked) DWORD MPPASMCALL X86_Convert32To8(LPVOID lp16, int *pBuffer, DWORD lSampleCount, LPLONG lpMin, LPLONG lpMax)
 //------------------------------------------------------------------------------
 {
@@ -1700,7 +1700,7 @@ DWORD MPPASMCALL X86_Convert32To8(LPVOID lp8, int *pBuffer, DWORD lSampleCount, 
 #endif // _MSC_VER, else
 
 
-#ifdef _MSC_VER
+#if defined _MSC_VER && _M_IX86
 // Clip and convert to 16 bit
 __declspec(naked) DWORD MPPASMCALL X86_Convert32To16(LPVOID lp16, int *pBuffer, DWORD lSampleCount, LPLONG lpMin, LPLONG lpMax)
 //------------------------------------------------------------------------------
@@ -1793,7 +1793,7 @@ DWORD MPPASMCALL X86_Convert32To16(LPVOID lp16, int *pBuffer, DWORD lSampleCount
 }
 #endif //_MSC_VER, else
 
-#ifdef _MSC_VER
+#if defined _MSC_VER && _M_IX86
 // Clip and convert to 24 bit
 __declspec(naked) DWORD MPPASMCALL X86_Convert32To24(LPVOID lp16, int *pBuffer, DWORD lSampleCount, LPLONG lpMin, LPLONG lpMax)
 //------------------------------------------------------------------------------
@@ -1901,7 +1901,7 @@ DWORD MPPASMCALL X86_Convert32To24(LPVOID lp16, int *pBuffer, DWORD lSampleCount
 }
 #endif
 
-#ifdef _MSC_VER
+#if defined _MSC_VER && _M_IX86
 // Clip and convert to 32 bit
 __declspec(naked) DWORD MPPASMCALL X86_Convert32To32(LPVOID lp16, int *pBuffer, DWORD lSampleCount, LPLONG lpMin, LPLONG lpMax)
 //------------------------------------------------------------------------------
@@ -1991,7 +1991,7 @@ DWORD MPPASMCALL X86_Convert32To32(LPVOID lp16, int *pBuffer, DWORD lSampleCount
 #endif
 
 
-#ifdef _MSC_VER
+#if defined _MSC_VER && _M_IX86
 void MPPASMCALL X86_InitMixBuffer(int *pBuffer, UINT nSamples)
 //------------------------------------------------------------
 {
@@ -2033,7 +2033,7 @@ void MPPASMCALL X86_InitMixBuffer(int *pBuffer, UINT nSamples)
 #endif
 
 
-#ifdef _MSC_VER
+#if defined _MSC_VER && _M_IX86
 __declspec(naked) void MPPASMCALL X86_InterleaveFrontRear(int *pFrontBuf, int *pRearBuf, DWORD nSamples)
 //------------------------------------------------------------------------------
 {
@@ -2078,7 +2078,7 @@ void MPPASMCALL X86_InterleaveFrontRear(int *pFrontBuf, int *pRearBuf, DWORD nSa
 #endif
 
 
-#ifdef _MSC_VER
+#if defined _MSC_VER && _M_IX86
 VOID MPPASMCALL X86_MonoFromStereo(int *pMixBuf, UINT nSamples)
 //-------------------------------------------------------------
 {
@@ -2115,7 +2115,7 @@ VOID MPPASMCALL X86_MonoFromStereo(int *pMixBuf, UINT nSamples)
 #define OFSDECAYMASK	0xFF
 
 
-#ifdef _MSC_VER
+#if defined _MSC_VER && _M_IX86
 void MPPASMCALL X86_StereoFill(int *pBuffer, UINT nSamples, LPLONG lpROfs, LPLONG lpLOfs)
 //------------------------------------------------------------------------------
 {
@@ -2216,7 +2216,7 @@ void MPPASMCALL X86_StereoFill(int *pBuffer, UINT nSamples, LPLONG lpROfs, LPLON
 }
 #endif
 
-#ifdef _MSC_VER
+#if defined _MSC_VER && _M_IX86
 void MPPASMCALL X86_EndChannelOfs(MODCHANNEL *pChannel, int *pBuffer, UINT nSamples)
 //------------------------------------------------------------------------------
 {
@@ -2290,7 +2290,7 @@ void MPPASMCALL X86_EndChannelOfs(MODCHANNEL *pChannel, int *pBuffer, UINT nSamp
 #define MIXING_LIMITMAX		(0x08100000)
 #define MIXING_LIMITMIN		(-MIXING_LIMITMAX)
 
-#ifdef _MSC_VER
+#if defined _MSC_VER && _M_IX86
 __declspec(naked) UINT MPPASMCALL X86_AGC(int *pBuffer, UINT nSamples, UINT nAGC)
 //------------------------------------------------------------------------------
 {

@@ -798,7 +798,7 @@ UINT CSoundFile::GetSaveFormats() const
 UINT CSoundFile::GetSampleName(UINT nSample,LPSTR s) const
 //--------------------------------------------------------
 {
-        char sztmp[40] = "";      // changed from CHAR
+    char sztmp[40] = "";      // changed from CHAR
 	if (nSample < MAX_SAMPLES)
 		memcpy(sztmp, m_szNames[nSample], 32);
 	sztmp[31] = 0;
@@ -810,7 +810,7 @@ UINT CSoundFile::GetSampleName(UINT nSample,LPSTR s) const
 UINT CSoundFile::GetInstrumentName(UINT nInstr,LPSTR s) const
 //-----------------------------------------------------------
 {
-        char sztmp[40] = "";  // changed from CHAR
+    char sztmp[40] = "";  // changed from CHAR
 	if ((nInstr >= MAX_INSTRUMENTS) || (!Headers[nInstr]))
 	{
 		if (s) *s = 0;
@@ -1657,7 +1657,7 @@ void CSoundFile::AdjustSampleLoop(MODINSTRUMENT *pIns)
 DWORD CSoundFile::TransposeToFrequency(int transp, int ftune)
 //-----------------------------------------------------------
 {
-#ifdef _MSC_VER
+#if defined _MSC_VER && _M_IX86
 	const float _fbase = 8363;
 	const float _factor = 1.0f/(12.0f*128.0f);
 	int result;
@@ -1697,7 +1697,7 @@ DWORD CSoundFile::TransposeToFrequency(int transp, int ftune)
 int CSoundFile::FrequencyToTranspose(DWORD freq)
 //----------------------------------------------
 {
-#ifdef _MSC_VER
+#if defined _MSC_VER && _M_IX86
 	const float _f1_8363 = 1.0f / 8363.0f;
 	const float _factor = 128 * 12;
 	LONG result;

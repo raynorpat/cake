@@ -280,6 +280,7 @@ __declspec (naked) long Q_ftol (float f)
 #pragma warning (default:4035)
 #endif
 
+#if defined _M_IX86 && !defined C_ONLY
 __declspec (naked) void Q_sincos (float angradians, float *angsin, float *angcos)
 {
 	__asm fld dword ptr [esp + 4]
@@ -293,6 +294,13 @@ __declspec (naked) void Q_sincos (float angradians, float *angsin, float *angcos
 
 	__asm ret
 }
+#else
+void Q_sincos (float angle, float *s, float *c)
+{
+	*s = (float)sin(angle);
+	*c = (float)cos(angle);
+}
+#endif
 
 
 /*

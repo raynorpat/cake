@@ -93,12 +93,6 @@ if(CMAKE_COMPILER_IS_GNUCC OR CMAKE_C_COMPILER_ID STREQUAL "Clang")
 			set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -ffloat-store")
 		endif()
 	endif()
- 
-	# Force SSE math on x86_64. All sane compilers should do this
-	# anyway, just to protect us from broken Linux distros.
-	if ("${ARCH}" STREQUAL "x86_64")
-		set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -mfpmath=sse")
-	endif()	
 	
 	# the warnings are used for every profile anyway, so put them in a variable
 	set(my_warn_flags "-Wno-pragmas -Wno-unused-variable -Wno-switch -Wno-unused-value -Winvalid-pch -Wno-multichar")
