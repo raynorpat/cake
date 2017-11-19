@@ -217,12 +217,21 @@ void Sys_ShowMessageBox (const char* title, const char* message)
 	SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_WARNING, title, message, NULL);
 }
 
-void Sys_Mkdir(char *path)
+void Sys_Mkdir (char *path)
 {
 #ifdef _WIN32
 	_mkdir(path);
 #else
 	mkdir(path, 0755);
+#endif
+}
+
+void Sys_Sleep (int msec)
+{
+#ifdef _WIN32
+	Sleep(msec);
+#else
+	usleep((unsigned int)1000 * msec);
 #endif
 }
 
