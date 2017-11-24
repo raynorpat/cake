@@ -272,14 +272,14 @@ void Draw_InitLocal (void)
 
 /*
 ================
-Draw_Char
+RE_Draw_Char
 
 Draws one 8*8 graphics character with 0 being transparent.
 It can be clipped to the top of the screen to allow the console to be
 smoothly scrolled off.
 ================
 */
-void Draw_CharScaled (int x, int y, int num, float scale)
+void RE_GL_Draw_CharScaled (int x, int y, int num, float scale)
 {
 	float frow, fcol, size, scaledSize;
 
@@ -300,17 +300,17 @@ void Draw_CharScaled (int x, int y, int num, float scale)
 	Draw_TexturedRect(draw_chars->texnum, r_drawnearestclampsampler, x, y, scaledSize, scaledSize, fcol, frow, fcol + size, frow + size);
 }
 
-void Draw_Char(int x, int y, int num)
+void RE_GL_Draw_Char (int x, int y, int num)
 {
-	Draw_CharScaled(x, y, num, 1.0f);
+	RE_GL_Draw_CharScaled(x, y, num, 1.0f);
 }
 
 /*
 =============
-Draw_FindPic
+RE_Draw_RegisterPic
 =============
 */
-image_t	*Draw_FindPic (char *name)
+image_t	*RE_GL_Draw_RegisterPic(char *name)
 {
 	image_t *gl;
 	char	fullname[MAX_QPATH];
@@ -327,14 +327,14 @@ image_t	*Draw_FindPic (char *name)
 
 /*
 =============
-Draw_GetPicSize
+RE_Draw_GetPicSize
 =============
 */
-void Draw_GetPicSize (int *w, int *h, char *pic)
+void RE_GL_Draw_GetPicSize (int *w, int *h, char *pic)
 {
 	image_t *gl;
 
-	gl = Draw_FindPic (pic);
+	gl = RE_GL_Draw_RegisterPic (pic);
 
 	if (!gl)
 	{
@@ -348,14 +348,14 @@ void Draw_GetPicSize (int *w, int *h, char *pic)
 
 /*
 =============
-Draw_StretchPic
+RE_Draw_StretchPic
 =============
 */
-void Draw_StretchPic (int x, int y, int w, int h, char *pic)
+void RE_GL_Draw_StretchPic (int x, int y, int w, int h, char *pic)
 {
 	image_t *gl;
 
-	gl = Draw_FindPic (pic);
+	gl = RE_GL_Draw_RegisterPic (pic);
 
 	if (!gl)
 	{
@@ -369,14 +369,14 @@ void Draw_StretchPic (int x, int y, int w, int h, char *pic)
 
 /*
 =============
-Draw_Pic
+RE_Draw_Pic
 =============
 */
-void Draw_PicScaled (int x, int y, char *pic, float scale)
+void RE_GL_Draw_PicScaled (int x, int y, char *pic, float scale)
 {
 	image_t *gl;
 
-	gl = Draw_FindPic(pic);
+	gl = RE_GL_Draw_RegisterPic (pic);
 
 	if (!gl)
 	{
@@ -390,24 +390,24 @@ void Draw_PicScaled (int x, int y, char *pic, float scale)
 	Draw_TexturedRect(gl->texnum, r_drawclampsampler, x, y, w, h, gl->sl, gl->tl, gl->sh, gl->th);
 }
 
-void Draw_Pic (int x, int y, char *pic)
+void RE_GL_Draw_Pic (int x, int y, char *pic)
 {
-	Draw_PicScaled(x, y, pic, 1.0f);
+	RE_GL_Draw_PicScaled(x, y, pic, 1.0f);
 }
 
 /*
 =============
-Draw_TileClear
+RE_Draw_TileClear
 
 This repeats a 64*64 tile graphic to fill the screen around a sized down
 refresh window.
 =============
 */
-void Draw_TileClear (int x, int y, int w, int h, char *pic)
+void RE_GL_Draw_TileClear (int x, int y, int w, int h, char *pic)
 {
 	image_t	*image;
 
-	image = Draw_FindPic (pic);
+	image = RE_GL_Draw_RegisterPic (pic);
 
 	if (!image)
 	{
@@ -421,12 +421,12 @@ void Draw_TileClear (int x, int y, int w, int h, char *pic)
 
 /*
 =============
-Draw_Fill
+RE_Draw_Fill
 
 Fills a box of pixels with a single color
 =============
 */
-void Draw_Fill (int x, int y, int w, int h, int c)
+void RE_GL_Draw_Fill (int x, int y, int w, int h, int c)
 {
 	Draw_ColouredRect (x, y, w, h, d_8to24table_rgba[c & 255]);
 }
@@ -435,10 +435,10 @@ void Draw_Fill (int x, int y, int w, int h, int c)
 
 /*
 ================
-Draw_FadeScreen
+RE_Draw_FadeScreen
 ================
 */
-void Draw_FadeScreen (void)
+void RE_GL_Draw_FadeScreen (void)
 {
 	if (!r_postprocessing->value)
 	{
@@ -456,12 +456,12 @@ void Draw_FadeScreen (void)
 
 /*
 =============
-Draw_StretchRaw
+RE_Draw_StretchRaw
 =============
 */
 extern unsigned	r_rawpalette[256];
 
-void Draw_StretchRaw (int x, int y, int w, int h, int cols, int rows, byte *data)
+void RE_GL_Draw_StretchRaw (int x, int y, int w, int h, int cols, int rows, byte *data)
 {
 	Draw_End2D ();
 

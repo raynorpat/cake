@@ -484,11 +484,10 @@ void R_SetLightLevel (void)
 
 /*
 =====================
-R_RenderFrame
-
+RE_RenderFrame
 =====================
 */
-void R_RenderFrame (refdef_t *fd)
+void RE_GL_RenderFrame (refdef_t *fd)
 {
 	R_RenderView (fd);
 	R_SetLightLevel ();
@@ -703,15 +702,13 @@ void RMain_CheckExtension (char *ext)
 
 /*
 ===============
-R_Init
+RE_Init
 ===============
 */
-qboolean R_Init (void)
+int RE_GL_Init (void)
 {
 	char renderer_buffer[1000];
 	char vendor_buffer[1000];
-
-	VID_Printf (PRINT_ALL, "ref_gl version: "REF_VERSION"\n");
 
 	Draw_GetPalette ();
 
@@ -728,7 +725,7 @@ qboolean R_Init (void)
 	// create the window and set up the context
 	if (!R_SetMode ())
 	{
-		VID_Printf (PRINT_ALL, "ref_gl::R_Init() - could not R_SetMode()\n");
+		VID_Printf (PRINT_ALL, "ref_gl::RE_GL_Init() - could not R_SetMode()\n");
 		return -1;
 	}
 
@@ -814,10 +811,10 @@ qboolean R_Init (void)
 
 /*
 ===============
-R_Shutdown
+RE_Shutdown
 ===============
 */
-void R_Shutdown (void)
+void RE_GL_Shutdown (void)
 {
 	Cmd_RemoveCommand ("modellist");
 	Cmd_RemoveCommand ("screenshot");
@@ -836,16 +833,16 @@ void R_Shutdown (void)
 
 /*
 =====================
-R_BeginFrame
+RE_BeginFrame
 =====================
 */
-void R_BeginFrame (float camera_separation)
+void RE_GL_BeginFrame (float camera_separation)
 {
 	// change modes if necessary
 	if (gl_mode->modified || vid_fullscreen->modified)
 	{
-		extern qboolean ref_modified;
-		ref_modified = true;
+		cvar_t	*ref = Cvar_Get("vid_ref", "gl", 0);
+		ref->modified = true;
 	}
 
 	VID_BeginFrame (camera_separation);
@@ -862,12 +859,12 @@ void R_BeginFrame (float camera_separation)
 
 /*
 =============
-R_SetPalette
+RE_SetPalette
 =============
 */
 unsigned r_rawpalette[256];
 
-void R_SetPalette (const unsigned char *palette)
+void RE_GL_SetPalette (const unsigned char *palette)
 {
 	int		i;
 

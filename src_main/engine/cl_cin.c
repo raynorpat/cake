@@ -170,7 +170,7 @@ void SCR_StopCinematic (void)
 
 	if (cl.cinematicpalette_active)
 	{
-		R_SetPalette (NULL);
+		RE_SetPalette (NULL);
 		cl.cinematicpalette_active = false;
 	}
 
@@ -607,22 +607,21 @@ qboolean SCR_DrawCinematic (void)
 	if (cls.key_dest == key_menu)
 	{
 		// blank screen and pause if menu is up
-		R_SetPalette (NULL);
+		RE_SetPalette (NULL);
 		cl.cinematicpalette_active = false;
 		return true;
 	}
 
 	if (!cl.cinematicpalette_active)
 	{
-		R_SetPalette (cl.cinematicpalette);
+		RE_SetPalette (cl.cinematicpalette);
 		cl.cinematicpalette_active = true;
 	}
 
 	if (!cin.pic)
 		return true;
 
-	Draw_StretchRaw (0, 0, viddef.width, viddef.height,
-					  cin.width, cin.height, cin.pic);
+	RE_Draw_StretchRaw (0, 0, viddef.width, viddef.height, cin.width, cin.height, cin.pic);
 
 	return true;
 }
@@ -630,7 +629,6 @@ qboolean SCR_DrawCinematic (void)
 /*
 ==================
 SCR_PlayCinematic
-
 ==================
 */
 void SCR_PlayCinematic (char *arg)

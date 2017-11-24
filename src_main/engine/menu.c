@@ -70,8 +70,8 @@ static void M_Banner (char *name)
 	int w, h;
 	float scale = SCR_GetMenuScale();
 
-	Draw_GetPicSize (&w, &h, name);
-	Draw_PicScaled(viddef.width / 2 - (w * scale) / 2, viddef.height / 2 - (110 * scale), name, scale);
+	RE_Draw_GetPicSize (&w, &h, name);
+	RE_Draw_PicScaled(viddef.width / 2 - (w * scale) / 2, viddef.height / 2 - (110 * scale), name, scale);
 }
 
 void M_ForceMenuOff (void)
@@ -311,7 +311,7 @@ higher res screens.
 void M_DrawCharacter (int cx, int cy, int num)
 {
 	float scale = SCR_GetMenuScale();
-	Draw_CharScaled(cx + ((int)(viddef.width - 320 * scale) >> 1), cy + ((int)(viddef.height - 240 * scale) >> 1), num, scale);
+	RE_Draw_CharScaled(cx + ((int)(viddef.width - 320 * scale) >> 1), cy + ((int)(viddef.height - 240 * scale) >> 1), num, scale);
 }
 
 void M_Print (int x, int y, char *str)
@@ -341,7 +341,7 @@ void M_DrawPic (int x, int y, char *pic)
 {
 	float scale = SCR_GetMenuScale();
 
-	Draw_PicScaled((x + ((viddef.width - 320) >> 1)) * scale, (y + ((viddef.height - 240) >> 1)) * scale, pic, scale);
+	RE_Draw_PicScaled((x + ((viddef.width - 320) >> 1)) * scale, (y + ((viddef.height - 240) >> 1)) * scale, pic, scale);
 }
 
 /*
@@ -367,14 +367,14 @@ void M_DrawCursor (int x, int y, int f)
 		{
 			Com_sprintf (cursorname, sizeof (cursorname), "m_cursor%d", i);
 
-			Draw_FindPic (cursorname);
+			RE_Draw_RegisterPic (cursorname);
 		}
 
 		cached = true;
 	}
 
 	Com_sprintf (cursorname, sizeof (cursorname), "m_cursor%d", f);
-	Draw_PicScaled (x * scale, y * scale, cursorname, scale);
+	RE_Draw_PicScaled (x * scale, y * scale, cursorname, scale);
 }
 
 void M_DrawTextBox (int x, int y, int width, int lines)
@@ -514,7 +514,7 @@ void M_Main_Draw (void)
 
 	for (i = 0; names[i] != 0; i++)
 	{
-		Draw_GetPicSize (&w, &h, names[i]);
+		RE_Draw_GetPicSize (&w, &h, names[i]);
 
 		if (w > widest)
 			widest = w;
@@ -528,19 +528,19 @@ void M_Main_Draw (void)
 	for (i = 0; names[i] != 0; i++)
 	{
 		if (i != m_main_cursor)
-			Draw_PicScaled (xoffset * scale, (ystart + i * 40 + 13) * scale, names[i], scale);
+			RE_Draw_PicScaled (xoffset * scale, (ystart + i * 40 + 13) * scale, names[i], scale);
 	}
 
 	strcpy (litname, names[m_main_cursor]);
 	strcat (litname, "_sel");
-	Draw_PicScaled (xoffset * scale, (ystart + m_main_cursor * 40 + 13) * scale, litname, scale);
+	RE_Draw_PicScaled (xoffset * scale, (ystart + m_main_cursor * 40 + 13) * scale, litname, scale);
 
 	M_DrawCursor (xoffset - 25, ystart + m_main_cursor * 40 + 11, (int) (cls.realtime / 100) % NUM_CURSOR_FRAMES);
 
-	Draw_GetPicSize (&w, &h, "m_main_plaque");
-	Draw_PicScaled ((xoffset - 30 - w) * scale, ystart * scale, "m_main_plaque", scale);
+	RE_Draw_GetPicSize (&w, &h, "m_main_plaque");
+	RE_Draw_PicScaled ((xoffset - 30 - w) * scale, ystart * scale, "m_main_plaque", scale);
 
-	Draw_PicScaled ((xoffset - 30 - w) * scale, (ystart + h + 5) * scale, "m_main_logo", scale);
+	RE_Draw_PicScaled ((xoffset - 30 - w) * scale, (ystart + h + 5) * scale, "m_main_logo", scale);
 }
 
 const char *M_Main_Key (int key)
@@ -792,9 +792,9 @@ static void KeyCursorDrawFunc (menuframework_s *menu)
 	float scale = SCR_GetMenuScale();
 
 	if (bind_grab)
-		Draw_CharScaled (menu->x, (menu->y + menu->cursor * 9) * scale, '=', scale);
+		RE_Draw_CharScaled (menu->x, (menu->y + menu->cursor * 9) * scale, '=', scale);
 	else
-		Draw_CharScaled (menu->x, (menu->y + menu->cursor * 9) * scale, 12 + ((int)(Sys_Milliseconds() / 250) & 1), scale);
+		RE_Draw_CharScaled (menu->x, (menu->y + menu->cursor * 9) * scale, 12 + ((int)(Sys_Milliseconds() / 250) & 1), scale);
 }
 
 static void DrawKeyBindingFunc (void *self)
@@ -1656,9 +1656,9 @@ void M_Credits_MenuDraw (void)
 			x = (viddef.width / scale - strlen (credits[i]) * 8 - stringoffset * 8) / 2 + (j + stringoffset) * 8;
 
 			if (bold)
-				Draw_CharScaled (x * scale, y * scale, credits[i][j + stringoffset] + 128, scale);
+				RE_Draw_CharScaled (x * scale, y * scale, credits[i][j + stringoffset] + 128, scale);
 			else
-				Draw_CharScaled (x * scale, y * scale, credits[i][j + stringoffset], scale);
+				RE_Draw_CharScaled (x * scale, y * scale, credits[i][j + stringoffset], scale);
 		}
 	}
 
@@ -3776,9 +3776,9 @@ void PlayerConfig_MenuDraw (void)
 		memset (&entity, 0, sizeof (entity));
 
 		Com_sprintf (scratch, sizeof (scratch), "players/%s/tris.md2", s_pmi[s_player_model_box.curvalue].directory);
-		entity.model = R_RegisterModel (scratch);
+		entity.model = RE_RegisterModel (scratch);
 		Com_sprintf (scratch, sizeof (scratch), "players/%s/%s.pcx", s_pmi[s_player_model_box.curvalue].directory, s_pmi[s_player_model_box.curvalue].skindisplaynames[s_player_skin_box.curvalue]);
-		entity.skin = R_RegisterSkin (scratch);
+		entity.skin = RE_RegisterSkin (scratch);
 		entity.flags = RF_FULLBRIGHT;
 		entity.currorigin[0] = 80;
 		entity.currorigin[1] = 0;
@@ -3803,12 +3803,12 @@ void PlayerConfig_MenuDraw (void)
 		M_DrawTextBox ((refdef.x) * (320.0f / viddef.width) - 8, (viddef.height / 2) * (240.0f / viddef.height) - 77, refdef.width / (8 * scale), refdef.height / (8 * scale));
 		refdef.height += 4 * scale;
 
-		R_RenderFrame (&refdef);
+		RE_RenderFrame (&refdef);
 
 		Com_sprintf (scratch, sizeof (scratch), "/players/%s/%s_i.pcx",
 					 s_pmi[s_player_model_box.curvalue].directory,
 					 s_pmi[s_player_model_box.curvalue].skindisplaynames[s_player_skin_box.curvalue]);
-		Draw_PicScaled (s_player_config_menu.x - 40 * scale, refdef.y, scratch, scale);
+		RE_Draw_PicScaled (s_player_config_menu.x - 40 * scale, refdef.y, scratch, scale);
 	}
 }
 
@@ -3997,9 +3997,9 @@ void M_Draw (void)
 
 	// dim everything behind it down
 	if (cl.cinematictime > 0)
-		Draw_Fill (0, 0, viddef.width, viddef.height, 0);
+		RE_Draw_Fill (0, 0, viddef.width, viddef.height, 0);
 	else
-		Draw_FadeScreen ();
+		RE_Draw_FadeScreen ();
 
 	m_drawfunc ();
 

@@ -28,6 +28,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
 // Console variables that we need to access from this module
 cvar_t		*vid_gamma;
+cvar_t		*vid_ref;			// Name of Refresh currently loaded
 cvar_t		*vid_fullscreen;
 
 // Global variables used internally by this module
@@ -119,13 +120,12 @@ void VID_Error (int err_level, char *fmt, ...)
 ============
 VID_Restart_f
 
-Console command to re-start the video mode and refresh DLL.
+Console command to re-start the video mode and refresh.
 ============
 */
 void VID_Restart_f (void)
 {
-	extern qboolean ref_modified;
-	ref_modified = true;
+	vid_ref->modified = true;
 }
 
 /*
@@ -180,6 +180,8 @@ void VID_NewWindow (int width, int height)
 static void VID_FreeReflib (void)
 {
 	reflib_active = false;
+
+	GFX_CoreShutdown ();
 }
 
 /*
@@ -187,19 +189,25 @@ static void VID_FreeReflib (void)
 VID_LoadRefresh
 ==============
 */
-qboolean VID_LoadRefresh (void)
+qboolean VID_LoadRefresh (char *name)
 {
 	if (reflib_active)
 	{
-		R_Shutdown ();
+		RE_Shutdown ();
 		VID_FreeReflib ();
 	}
 
+	Com_Printf("------- Loading %s -------\n", name);
+
 	Swap_Init ();
 
-	if (R_Init() == -1)
+	// Make sure to init GFX core
+	GFX_CoreInit( name );
+
+	// Init refresh
+	if (RE_Init() == -1)
 	{
-		R_Shutdown ();
+		RE_Shutdown ();
 		VID_FreeReflib ();
 		return false;
 	}
@@ -222,31 +230,38 @@ is to check to see if any of the video mode parameters have changed, and if they
 update the rendering DLL and/or video mode to match.
 ============
 */
-
-// this must be initialized to true so that the first frame will init the ref properly
-qboolean ref_modified = true;
-
 void VID_CheckChanges (void)
 {
-	if (ref_modified)
+	char name[100];
+
+	if (vid_ref->modified)
 	{
 		cl.force_refdef = true;		// can't use a paused refdef
 		S_StopAllSounds ();
 		BGM_Stop ();
 	}
 
-	while (ref_modified)
+	while (vid_ref->modified)
 	{
 		// refresh has changed
-		ref_modified = false;
+		vid_ref->modified = false;
 		vid_fullscreen->modified = true;
 		cl.refresh_prepped = false;
 		cl.cinematicpalette_active = false;
 		cls.disable_screen = true;
 
-		if (!VID_LoadRefresh ())
+		Com_sprintf(name, sizeof(name), "ref_%s", vid_ref->string);
+		if (!VID_LoadRefresh(name))
 		{
-			Com_Error (ERR_FATAL, "Couldn't load OpenGL refresh!");
+			if (strcmp(vid_ref->string, "gl") == 0)
+				Com_Error (ERR_FATAL, "Couldn't load refresh subsystem, couldn't fallback to GL!");
+			Cvar_Set ("vid_ref", "gl");
+
+			// drop the console if we fail to load a refresh
+			if (cls.key_dest != key_console)
+			{
+				Con_ToggleConsole_f ();
+			}
 		}
 
 		cls.disable_screen = false;
@@ -372,6 +387,7 @@ VID_Init
 void VID_Init (void)
 {
 	// Create the video variables so we know how to start the graphics drivers
+	vid_ref = Cvar_Get ("vid_ref", "gl", CVAR_ARCHIVE);
 	vid_fullscreen = Cvar_Get ("vid_fullscreen", "0", CVAR_ARCHIVE);
 	vid_gamma = Cvar_Get ("vid_gamma", "1.6", CVAR_ARCHIVE);
 
@@ -392,7 +408,7 @@ void VID_Shutdown (void)
 {
 	if (reflib_active)
 	{
-		R_Shutdown ();
+		RE_Shutdown ();
 		VID_FreeReflib ();
 	}
 }

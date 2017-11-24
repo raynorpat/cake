@@ -44,7 +44,7 @@ void Inv_DrawStringScaled (int x, int y, char *string, float factor)
 {
 	while (*string)
 	{
-		Draw_CharScaled (x, y, *string, factor);
+		RE_Draw_CharScaled (x, y, *string, factor);
 		x += 8 * factor;
 		string++;
 	}
@@ -111,7 +111,7 @@ void CL_DrawInventory (void)
 	x = (viddef.width - scale * 256) / 2;
 	y = (viddef.height - scale * 240) / 2;
 
-	Draw_PicScaled (x, y + scale * 8, "inventory", scale);
+	RE_Draw_PicScaled (x, y + scale * 8, "inventory", scale);
 
 	y += scale * 24;
 	x += scale * 24;
@@ -141,7 +141,7 @@ void CL_DrawInventory (void)
 		else	// draw a blinky cursor by the selected item
 		{
 			if ((int) (cls.realtime * 10) & 1)
-				Draw_CharScaled (x - scale * 8, y, 15, scale);
+				RE_Draw_CharScaled (x - scale * 8, y, 15, scale);
 		}
 
 		Inv_DrawStringScaled (x, y, string, scale);

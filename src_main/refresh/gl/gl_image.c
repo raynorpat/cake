@@ -1110,10 +1110,10 @@ image_t	*GL_FindImage (char *name, imagetype_t type)
 
 /*
 ===============
-R_RegisterSkin
+RE_RegisterSkin
 ===============
 */
-struct image_s *R_RegisterSkin (char *name)
+struct image_s *RE_GL_RegisterSkin (char *name)
 {
 	return GL_FindImage (name, it_skin);
 }

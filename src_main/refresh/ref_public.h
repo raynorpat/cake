@@ -22,6 +22,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
 #include "qcommon.h"
 
+// TODO: move these math functions out of here
 typedef struct _QVECTOR {
 	float x;
 	float y;
@@ -163,7 +164,6 @@ typedef struct
 	particle_t	*particles;
 } refdef_t;
 
-
 // ref import functions
 cvar_t *Cvar_Get (char *var_name, char *var_value, int flags);
 cvar_t *Cvar_Set (char *var_name, char *value);
@@ -180,35 +180,6 @@ int FS_LoadFile (char *path, void **buffer);
 void FS_FreeFile (void *buffer);
 char *FS_Gamedir (void);
 
-
-// ref export functions
-void R_BeginRegistration (char *model);
-struct model_s *R_RegisterModel (char *name);
-struct image_s *R_RegisterSkin (char *name);
-struct image_s *Draw_FindPic (char *name);
-void R_SetSky (char *name, float rotate, vec3_t axis);
-void R_EndRegistration (void);
-
-void R_RenderFrame (refdef_t *fd);
-
-void Draw_GetPicSize (int *w, int *h, char *pic);
-
-void Draw_Pic (int x, int y, char *pic);
-void Draw_PicScaled (int x, int y, char *pic, float scale);
-void Draw_StretchPic (int x, int y, int w, int h, char *pic);
-void Draw_Char (int x, int y, int num);
-void Draw_CharScaled (int x, int y, int num, float scale);
-void Draw_TileClear (int x, int y, int w, int h, char *pic);
-void Draw_Fill (int x, int y, int w, int h, int c);
-void Draw_FadeScreen (void);
-
-void Draw_StretchRaw (int x, int y, int w, int h, int cols, int rows, byte *data);
-
-qboolean R_Init (void);
-void R_Shutdown (void);
-
-void R_SetPalette (const unsigned char *palette);
-
-void R_BeginFrame (float camera_separation);
+#include "gfx.h"
 
 #endif // __REF_H

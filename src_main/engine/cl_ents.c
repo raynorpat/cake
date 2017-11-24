@@ -859,25 +859,25 @@ struct model_s *S_RegisterSexedModel (entity_state_t *ent, char *base)
 		strcpy (model, "male");
 
 	Com_sprintf (buffer, sizeof (buffer), "players/%s/%s", model, base + 1);
-	mdl = R_RegisterModel (buffer);
+	mdl = RE_RegisterModel (buffer);
 
 	if (!mdl)
 	{
 		// not found, try default weapon model
 		Com_sprintf (buffer, sizeof (buffer), "players/%s/weapon.md2", model);
-		mdl = R_RegisterModel (buffer);
+		mdl = RE_RegisterModel (buffer);
 
 		if (!mdl)
 		{
 			// no, revert to the male model
 			Com_sprintf (buffer, sizeof (buffer), "players/%s/%s", "male", base + 1);
-			mdl = R_RegisterModel (buffer);
+			mdl = RE_RegisterModel (buffer);
 
 			if (!mdl)
 			{
 				// last try, default male weapon.md2
 				Com_sprintf (buffer, sizeof (buffer), "players/male/weapon.md2");
-				mdl = R_RegisterModel (buffer);
+				mdl = RE_RegisterModel (buffer);
 			}
 		}
 	}
@@ -1020,18 +1020,18 @@ void CL_AddPacketEntities (frame_t *frame)
 				{
 					if (!strncmp ((char *) ent.skin, "players/male", 12))
 					{
-						ent.skin = R_RegisterSkin ("players/male/disguise.pcx");
-						ent.model = R_RegisterModel ("players/male/tris.md2");
+						ent.skin = RE_RegisterSkin ("players/male/disguise.pcx");
+						ent.model = RE_RegisterModel ("players/male/tris.md2");
 					}
 					else if (!strncmp ((char *) ent.skin, "players/female", 14))
 					{
-						ent.skin = R_RegisterSkin ("players/female/disguise.pcx");
-						ent.model = R_RegisterModel ("players/female/tris.md2");
+						ent.skin = RE_RegisterSkin ("players/female/disguise.pcx");
+						ent.model = RE_RegisterModel ("players/female/tris.md2");
 					}
 					else if (!strncmp ((char *) ent.skin, "players/cyborg", 14))
 					{
-						ent.skin = R_RegisterSkin ("players/cyborg/disguise.pcx");
-						ent.model = R_RegisterModel ("players/cyborg/tris.md2");
+						ent.skin = RE_RegisterSkin ("players/cyborg/disguise.pcx");
+						ent.model = RE_RegisterModel ("players/cyborg/tris.md2");
 					}
 				}
 

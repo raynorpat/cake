@@ -32,7 +32,7 @@ void DrawStringScaled (int x, int y, char *s, float factor)
 {
 	while (*s)
 	{
-		Draw_CharScaled(x, y, *s, factor);
+		RE_Draw_CharScaled(x, y, *s, factor);
 		x += 8 * factor;
 		s++;
 	}
@@ -42,7 +42,7 @@ void DrawAltStringScaled (int x, int y, char *s, float factor)
 {
 	while (*s)
 	{
-		Draw_CharScaled(x, y, *s ^ 0x80, factor);
+		RE_Draw_CharScaled(x, y, *s ^ 0x80, factor);
 		x += 8 * factor;
 		s++;
 	}
@@ -475,7 +475,7 @@ void Con_DrawInput (void)
 
 	// draw it
 	for (i = 0; i < con.linewidth; i++)
-		Draw_CharScaled (((i + 1) << 3) * scale, con.vislines - 22 * scale, text[i], scale);
+		RE_Draw_CharScaled (((i + 1) << 3) * scale, con.vislines - 22 * scale, text[i], scale);
 
 	// remove cursor
 	key_lines[edit_line][key_linepos] = 0;
@@ -520,7 +520,7 @@ void Con_DrawNotify (void)
 		text = con.text + (i % con.totallines) * con.linewidth;
 
 		for (x = 0; x < con.linewidth; x++)
-			Draw_CharScaled (((x + 1) << 3) * scale, v * scale, text[x], scale);
+			RE_Draw_CharScaled (((x + 1) << 3) * scale, v * scale, text[x], scale);
 
 		v += 8;
 	}
@@ -547,11 +547,11 @@ void Con_DrawNotify (void)
 
 		while (s[x])
 		{
-			Draw_CharScaled (((x + skip) << 3) * scale, v * scale, s[x], scale);
+			RE_Draw_CharScaled (((x + skip) << 3) * scale, v * scale, s[x], scale);
 			x++;
 		}
 
-		Draw_CharScaled (((x + skip) << 3) * scale, v + scale, 10 + ((cls.realtime >> 8) & 1), scale);
+		RE_Draw_CharScaled (((x + skip) << 3) * scale, v + scale, 10 + ((cls.realtime >> 8) & 1), scale);
 		v += 8;
 	}
 }
@@ -585,12 +585,12 @@ void Con_DrawConsole (float frac)
 		lines = viddef.height;
 
 	// draw the background
-	Draw_StretchPic (0, -viddef.height + lines, viddef.width, viddef.height, "conback");
+	RE_Draw_StretchPic (0, -viddef.height + lines, viddef.width, viddef.height, "conback");
 
 	Com_sprintf (version, sizeof (version), "v%4.2f", VERSION);
 
 	for (x = 0; x < 5; x++)
-		Draw_CharScaled (viddef.width - (44 * scale) + x * 8 * scale, lines - 12 * scale, 128 + version[x], scale);
+		RE_Draw_CharScaled (viddef.width - (44 * scale) + x * 8 * scale, lines - 12 * scale, 128 + version[x], scale);
 
 	// draw the text
 	con.vislines = lines;
@@ -603,7 +603,7 @@ void Con_DrawConsole (float frac)
 	{
 		// draw arrows to show the buffer is backscrolled
 		for (x = 0; x < con.linewidth; x += 4)
-			Draw_CharScaled (((x + 1) << 3) * scale, y * scale, '^', scale);
+			RE_Draw_CharScaled (((x + 1) << 3) * scale, y * scale, '^', scale);
 
 		y -= 8;
 		rows--;
@@ -622,7 +622,7 @@ void Con_DrawConsole (float frac)
 		text = con.text + (row % con.totallines) * con.linewidth;
 
 		for (x = 0; x < con.linewidth; x++)
-			Draw_CharScaled (((x + 1) << 3) * scale, y * scale, text[x], scale);
+			RE_Draw_CharScaled (((x + 1) << 3) * scale, y * scale, text[x], scale);
 	}
 
 	// draw the download bar
@@ -673,7 +673,7 @@ void Con_DrawConsole (float frac)
 		y = con.vislines - 12;
 
 		for (i = 0; i < strlen (dlbar); i++)
-			Draw_CharScaled (((i + 1) << 3) * scale, y * scale, dlbar[i], scale);
+			RE_Draw_CharScaled (((i + 1) << 3) * scale, y * scale, dlbar[i], scale);
 	}
 
 	// draw the input prompt, user text, and cursor if desired

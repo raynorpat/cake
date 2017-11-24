@@ -1180,12 +1180,12 @@ void Mod_LoadSpriteModel (model_t *mod, void *buffer)
 
 /*
 =====================
-R_BeginRegistration
+RE_GL_BeginRegistration
 
 Specifies the model that will be used as the world
 =====================
 */
-void R_BeginRegistration (char *model)
+void RE_GL_BeginRegistration (char *model)
 {
 	char	fullname[MAX_QPATH];
 	cvar_t	*flushmap;
@@ -1213,11 +1213,10 @@ void R_BeginRegistration (char *model)
 
 /*
 =====================
-R_RegisterModel
-
+RE_RegisterModel
 =====================
 */
-struct model_s *R_RegisterModel (char *name)
+struct model_s *RE_GL_RegisterModel (char *name)
 {
 	model_t	*mod;
 	int		i;
@@ -1260,11 +1259,10 @@ struct model_s *R_RegisterModel (char *name)
 
 /*
 =====================
-R_EndRegistration
-
+RE_EndRegistration
 =====================
 */
-void R_EndRegistration (void)
+void RE_GL_EndRegistration (void)
 {
 	int		i;
 	model_t	*mod;

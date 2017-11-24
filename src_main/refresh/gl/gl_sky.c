@@ -45,7 +45,7 @@ vec3_t	skyaxis;
 int c_sky;
 GLuint r_skytexture;
 
-void R_SetSky (char *name, float rotate, vec3_t axis)
+void RE_GL_SetSky (char *name, float rotate, vec3_t axis)
 {
 	int i;
 	char *suf[6] = {"ft", "bk", "up", "dn", "rt", "lf"};

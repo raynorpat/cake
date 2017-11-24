@@ -295,8 +295,8 @@ extern	unsigned	d_8to24table_rgba[256];
 
 extern	int		registration_sequence;
 
-int	R_Init (void);
-void R_Shutdown (void);
+int RE_GL_Init (void);
+void RE_GL_Shutdown (void);
 
 void R_RenderView (refdef_t *fd);
 void GL_ScreenShot_f (void);
@@ -316,27 +316,27 @@ void R_DrawParticles (void);
 void R_DrawSkyChain (msurface_t *surf);
 void R_MarkLights (dlight_t *light, int bit, mnode_t *node);
 
-void Draw_GetPicSize (int *w, int *h, char *name);
-void Draw_Pic (int x, int y, char *name);
-void Draw_PicScaled (int x, int y, char *name, float scale);
-void Draw_StretchPic (int x, int y, int w, int h, char *name);
-void Draw_Char (int x, int y, int c);
-void Draw_CharScaled (int x, int y, int num, float scale);
-void Draw_TileClear (int x, int y, int w, int h, char *name);
-void Draw_Fill (int x, int y, int w, int h, int c);
-void Draw_FadeScreen (void);
-void Draw_StretchRaw (int x, int y, int w, int h, int cols, int rows, byte *data);
+void RE_GL_Draw_GetPicSize (int *w, int *h, char *name);
+void RE_GL_Draw_Pic (int x, int y, char *name);
+void RE_GL_Draw_PicScaled (int x, int y, char *name, float scale);
+void RE_GL_Draw_StretchPic (int x, int y, int w, int h, char *name);
+void RE_GL_Draw_Char (int x, int y, int c);
+void RE_GL_Draw_CharScaled (int x, int y, int num, float scale);
+void RE_GL_Draw_TileClear (int x, int y, int w, int h, char *name);
+void RE_GL_Draw_Fill (int x, int y, int w, int h, int c);
+void RE_GL_Draw_FadeScreen (void);
+void RE_GL_Draw_StretchRaw (int x, int y, int w, int h, int cols, int rows, byte *data);
 void Draw_Begin2D (void);
 void Draw_End2D (void);
 
-void R_BeginFrame (float camera_separation);
-void R_SetPalette (const unsigned char *palette);
+void RE_GL_BeginFrame (float camera_separation);
+void RE_GL_SetPalette (const unsigned char *palette);
 
 int	Draw_GetPalette (void);
 
 void GL_ResampleTexture (unsigned *in, int inwidth, int inheight, unsigned *out, int outwidth, int outheight);
 
-struct image_s *R_RegisterSkin (char *name);
+struct image_s *RE_GL_RegisterSkin (char *name);
 
 void LoadPCX (char *filename, byte **pic, byte **palette, int *width, int *height);
 image_t *GL_LoadPic (char *name, byte *pic, int width, int height, imagetype_t type, int bits);

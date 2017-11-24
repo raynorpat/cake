@@ -645,7 +645,7 @@ void CL_Disconnect (void)
 	}
 
 	VectorClear (cl.refdef.blend);
-	R_SetPalette (NULL);
+	RE_SetPalette (NULL);
 
 	M_ForceMenuOff ();
 

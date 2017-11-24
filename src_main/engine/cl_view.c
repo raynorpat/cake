@@ -253,7 +253,7 @@ void CL_PrepRefresh (void)
 	mapname[strlen (mapname)-4] = 0;		// cut off ".bsp"
 
 	// register models, pics, and skins
-	R_BeginRegistration (mapname);
+	RE_BeginRegistration (mapname);
 
 	// precache status bar pics
 	SCR_TouchPics ();
@@ -279,7 +279,7 @@ void CL_PrepRefresh (void)
 		}
 		else
 		{
-			cl.model_draw[i] = R_RegisterModel (cl.configstrings[CS_MODELS+i]);
+			cl.model_draw[i] = RE_RegisterModel (cl.configstrings[CS_MODELS+i]);
 
 			if (name[0] == '*')
 				cl.model_clip[i] = CM_InlineModel (cl.configstrings[CS_MODELS+i]);
@@ -290,7 +290,7 @@ void CL_PrepRefresh (void)
 
 	for (i = 1; i < MAX_IMAGES && cl.configstrings[CS_IMAGES+i][0]; i++)
 	{
-		cl.image_precache[i] = Draw_FindPic (cl.configstrings[CS_IMAGES+i]);
+		cl.image_precache[i] = RE_Draw_RegisterPic (cl.configstrings[CS_IMAGES+i]);
 	}
 
 	for (i = 0; i < MAX_CLIENTS; i++)
@@ -306,10 +306,10 @@ void CL_PrepRefresh (void)
 	// set sky textures and speed
 	rotate = atof (cl.configstrings[CS_SKYROTATE]);
 	sscanf (cl.configstrings[CS_SKYAXIS], "%f %f %f", &axis[0], &axis[1], &axis[2]);
-	R_SetSky (cl.configstrings[CS_SKY], rotate, axis);
+	RE_SetSky (cl.configstrings[CS_SKY], rotate, axis);
 
 	// the renderer can now free unneeded stuff
-	R_EndRegistration ();
+	RE_EndRegistration ();
 
 	// clear any lines of console text
 	Con_ClearNotify ();
@@ -404,7 +404,7 @@ void V_Gun_Model_f (void)
 	}
 
 	Com_sprintf (name, sizeof (name), "models/%s/tris.md2", Cmd_Argv (1));
-	gun_model = R_RegisterModel (name);
+	gun_model = RE_RegisterModel (name);
 }
 
 //============================================================================
@@ -440,7 +440,7 @@ void SCR_DrawCrosshair (void)
 		scale = crosshair_scale->value;
 	}
 
-	Draw_PicScaled ((viddef.width - crosshair_width * scale) / 2, (viddef.height - crosshair_height * scale) / 2, crosshair_pic, scale);
+	RE_Draw_PicScaled ((viddef.width - crosshair_width * scale) / 2, (viddef.height - crosshair_height * scale) / 2, crosshair_pic, scale);
 }
 
 /*
@@ -561,7 +561,7 @@ void V_RenderView (float stereo_separation)
 		qsort (cl.refdef.entities, cl.refdef.num_entities, sizeof (cl.refdef.entities[0]), (int (*) (const void *, const void *)) entitycmpfnc);
 	}
 
-	R_RenderFrame (&cl.refdef);
+	RE_RenderFrame (&cl.refdef);
 
 	if (cl_stats->value)
 		Com_Printf ("ent:%i lt:%i part:%i\n", r_numentities, r_numdlights, r_numparticles);

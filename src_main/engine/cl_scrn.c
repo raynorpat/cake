@@ -146,7 +146,7 @@ void SCR_DrawDebugGraph (void)
 	w = viddef.width;
 	x = 0;
 	y = viddef.height;
-	Draw_Fill (x, y - scr_graphheight->value, w, scr_graphheight->value, 8);
+	RE_Draw_Fill (x, y - scr_graphheight->value, w, scr_graphheight->value, 8);
 
 	for (a = 0; a < w; a++)
 	{
@@ -159,7 +159,7 @@ void SCR_DrawDebugGraph (void)
 			v += scr_graphheight->value * (1 + (int) (-v / scr_graphheight->value));
 
 		h = (int) v % (int) scr_graphheight->value;
-		Draw_Fill (x + w - 1 - a, y - h, 1,	h, color);
+		RE_Draw_Fill (x + w - 1 - a, y - h, 1,	h, color);
 	}
 }
 
@@ -281,7 +281,7 @@ void SCR_DrawCenterString (void)
 
 		for (j = 0; j < l; j++, x += char_unscaled_width)
 		{
-			Draw_CharScaled (x * scale, y * scale, start[j], scale);
+			RE_Draw_CharScaled (x * scale, y * scale, start[j], scale);
 
 			if (!remaining--)
 				return;
@@ -349,7 +349,7 @@ void SCR_Sky_f (void)
 		axis[2] = 1;
 	}
 
-	R_SetSky (Cmd_Argv (1), rotate, axis);
+	RE_SetSky (Cmd_Argv (1), rotate, axis);
 }
 
 //============================================================================
@@ -397,7 +397,7 @@ void SCR_DrawNet (void)
 	if (cls.netchan.outgoing_sequence - cls.netchan.incoming_acknowledged < CMD_BACKUP - 1)
 		return;
 
-	Draw_PicScaled (64 * scale, 0, "net", scale);
+	RE_Draw_PicScaled (64 * scale, 0, "net", scale);
 }
 
 /*
@@ -416,8 +416,8 @@ void SCR_DrawPause (void)
 	if (!cl_paused->value)
 		return;
 
-	Draw_GetPicSize (&w, &h, "pause");
-	Draw_PicScaled ((viddef.width - w * scale) / 2, viddef.height / 2 + 8 * scale, "pause", scale);
+	RE_Draw_GetPicSize (&w, &h, "pause");
+	RE_Draw_PicScaled ((viddef.width - w * scale) / 2, viddef.height / 2 + 8 * scale, "pause", scale);
 }
 
 /*
@@ -434,8 +434,8 @@ void SCR_DrawLoading (void)
 		return;
 
 	scr_draw_loading = false;
-	Draw_GetPicSize (&w, &h, "loading");
-	Draw_PicScaled ((viddef.width - w * scale) / 2, (viddef.height - h * scale) / 2, "loading", scale);
+	RE_Draw_GetPicSize (&w, &h, "loading");
+	RE_Draw_PicScaled ((viddef.width - w * scale) / 2, (viddef.height - h * scale) / 2, "loading", scale);
 }
 
 /*
@@ -568,7 +568,7 @@ void SCR_DrawConsole (void)
 	{
 		// connected, but can't render
 		Con_DrawConsole (0.5);
-		Draw_Fill (0, viddef.height / 2, viddef.width, viddef.height / 2, 0);
+		RE_Draw_Fill (0, viddef.height / 2, viddef.width, viddef.height / 2, 0);
 		return;
 	}
 
@@ -725,7 +725,7 @@ void DrawHUDStringScaled (char *string, int x, int y, int centerwidth, int xor, 
 
 		for (i = 0; i < width; i++)
 		{
-			Draw_CharScaled (x, y, line[i] ^ xor, factor);
+			RE_Draw_CharScaled (x, y, line[i] ^ xor, factor);
 			x += 8 * factor;
 		}
 
@@ -779,7 +779,7 @@ void SCR_DrawFieldScaled (int x, int y, int color, int width, int value, float f
 		else
 			frame = *ptr - '0';
 
-		Draw_PicScaled (x, y, sb_nums[color][frame], factor);
+		RE_Draw_PicScaled (x, y, sb_nums[color][frame], factor);
 		x += CHAR_WIDTH * factor;
 		ptr++;
 		l--;
@@ -805,7 +805,7 @@ void SCR_TouchPics (void)
 
 	for (i = 0; i < 2; i++)
 		for (j = 0; j < 11; j++)
-			Draw_FindPic (sb_nums[i][j]);
+			RE_Draw_RegisterPic (sb_nums[i][j]);
 
 	if (crosshair->value)
 	{
@@ -813,7 +813,7 @@ void SCR_TouchPics (void)
 			crosshair->value = 3;
 
 		Com_sprintf (crosshair_pic, sizeof (crosshair_pic), "ch%i", (int) (crosshair->value));
-		Draw_GetPicSize (&crosshair_width, &crosshair_height, crosshair_pic);
+		RE_Draw_GetPicSize (&crosshair_width, &crosshair_height, crosshair_pic);
 
 		if (!crosshair_width)
 			crosshair_pic[0] = 0;
@@ -912,7 +912,7 @@ void SCR_ExecuteLayoutString (char *s)
 
 			statpic = cl.configstrings[CS_IMAGES + value];
 			if (statpic)
-				Draw_PicScaled (x, y, statpic, scale);
+				RE_Draw_PicScaled (x, y, statpic, scale);
 
 			if (statnum == STAT_SELECTED_ICON)
 			{
@@ -931,7 +931,7 @@ void SCR_ExecuteLayoutString (char *s)
 					{
 						if (!cl.configstrings[CS_ITEMS + cl.frame.playerstate.stats[STAT_SELECTED_ITEM]][i]) break;
 
-						Draw_CharScaled (xx * scale, y + 8 * scale, cl.configstrings[CS_ITEMS + cl.frame.playerstate.stats[STAT_SELECTED_ITEM]][i], scale);
+						RE_Draw_CharScaled (xx * scale, y + 8 * scale, cl.configstrings[CS_ITEMS + cl.frame.playerstate.stats[STAT_SELECTED_ITEM]][i], scale);
 					}
 				}
 			}
@@ -975,7 +975,7 @@ void SCR_ExecuteLayoutString (char *s)
 			if (!ci->icon)
 				ci = &cl.baseclientinfo;
 
-			Draw_PicScaled (x, y, ci->iconname, scale);
+			RE_Draw_PicScaled (x, y, ci->iconname, scale);
 			continue;
 		}
 
@@ -1021,7 +1021,7 @@ void SCR_ExecuteLayoutString (char *s)
 		{
 			// draw a pic from a name
 			token = COM_Parse (&s);
-			Draw_PicScaled (x, y, token, scale);
+			RE_Draw_PicScaled (x, y, token, scale);
 			continue;
 		}
 
@@ -1052,7 +1052,7 @@ void SCR_ExecuteLayoutString (char *s)
 				color = 1;
 
 			if (cl.frame.playerstate.stats[STAT_FLASHES] & 1)
-				Draw_PicScaled (x, y, "field_3", scale);
+				RE_Draw_PicScaled (x, y, "field_3", scale);
 
 			SCR_DrawFieldScaled (x, y, color, width, value, scale);
 			continue;
@@ -1074,7 +1074,7 @@ void SCR_ExecuteLayoutString (char *s)
 				continue;	// negative number = don't show
 
 			if (cl.frame.playerstate.stats[STAT_FLASHES] & 4)
-				Draw_PicScaled (x, y, "field_3", scale);
+				RE_Draw_PicScaled (x, y, "field_3", scale);
 
 			SCR_DrawFieldScaled (x, y, color, width, value, scale);
 			continue;
@@ -1094,7 +1094,7 @@ void SCR_ExecuteLayoutString (char *s)
 			color = 0;	// green
 
 			if (cl.frame.playerstate.stats[STAT_FLASHES] & 2)
-				Draw_PicScaled (x, y, "field_3", scale);
+				RE_Draw_PicScaled (x, y, "field_3", scale);
 
 			SCR_DrawFieldScaled (x, y, color, width, value, scale);
 			continue;
@@ -1251,17 +1251,17 @@ void SCR_UpdateScreen (void)
 
 	for (i = 0; i < numframes; i++)
 	{
-		R_BeginFrame (separation[i]);
+		RE_BeginFrame (separation[i]);
 
 		if (scr_draw_loading == 2)
 		{
 			// loading plaque over black screen
 			int		w, h;
 
-			R_SetPalette (NULL);
+			RE_SetPalette (NULL);
 			scr_draw_loading = false;
-			Draw_GetPicSize (&w, &h, "loading");
-			Draw_PicScaled((viddef.width - w * scale) / 2, (viddef.height - h * scale) / 2, "loading", scale);
+			RE_Draw_GetPicSize (&w, &h, "loading");
+			RE_Draw_PicScaled((viddef.width - w * scale) / 2, (viddef.height - h * scale) / 2, "loading", scale);
 		}
 		// if a cinematic is supposed to be running, handle menus
 		// and console specially
@@ -1271,7 +1271,7 @@ void SCR_UpdateScreen (void)
 			{
 				if (cl.cinematicpalette_active)
 				{
-					R_SetPalette (NULL);
+					RE_SetPalette (NULL);
 					cl.cinematicpalette_active = false;
 				}
 
@@ -1281,7 +1281,7 @@ void SCR_UpdateScreen (void)
 			{
 				if (cl.cinematicpalette_active)
 				{
-					R_SetPalette (NULL);
+					RE_SetPalette (NULL);
 					cl.cinematicpalette_active = false;
 				}
 
@@ -1297,7 +1297,7 @@ void SCR_UpdateScreen (void)
 			// make sure the game palette is active
 			if (cl.cinematicpalette_active)
 			{
-				R_SetPalette (NULL);
+				RE_SetPalette (NULL);
 				cl.cinematicpalette_active = false;
 			}
 
