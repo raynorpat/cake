@@ -23,6 +23,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #define __GFX_H__
 
 extern void (* RE_BeginFrame)( float camera_separation );
+extern void (* RE_RenderFrame)( refdef_t *fd );
 extern void (* RE_EndFrame)( void );
 
 extern void (* RE_SetPalette)( const unsigned char *palette );
@@ -40,8 +41,6 @@ extern void	(* RE_Draw_StretchPic)( int x, int y, int w, int h, char *pic );
 extern void (* RE_Draw_PicScaled)( int x, int y, char *pic, float scale );
 extern void	(* RE_Draw_Pic)( int x, int y, char *pic );
 extern void (* RE_Draw_GetPicSize)( int *w, int *h, char *pic );
-
-extern void (* RE_RenderFrame)( refdef_t *fd );
 
 extern void (* RE_BeginRegistration)( char *model );
 extern struct model_s * (* RE_RegisterModel)( char *name );

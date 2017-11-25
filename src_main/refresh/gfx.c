@@ -23,6 +23,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 extern cvar_t	*vid_ref;
 
 void            (* RE_BeginFrame)( float camera_separation ) = NULL;
+void			(* RE_RenderFrame)( refdef_t *fd ) = NULL;
 void			(* RE_EndFrame)( void ) = NULL;
 
 void            (* RE_SetPalette)( const unsigned char *palette ) = NULL;
@@ -40,8 +41,6 @@ void		    (* RE_Draw_StretchPic)( int x, int y, int w, int h, char *pic ) = NULL
 void            (* RE_Draw_PicScaled)( int x, int y, char *pic, float scale ) = NULL;
 void	        (* RE_Draw_Pic)( int x, int y, char *pic ) = NULL;
 void            (* RE_Draw_GetPicSize)( int *w, int *h, char *pic ) = NULL;
-
-void            (* RE_RenderFrame)( refdef_t *fd ) = NULL;
 
 void            (* RE_BeginRegistration)( char *model ) = NULL;
 struct model_s * (* RE_RegisterModel)( char *name ) = NULL;
@@ -61,6 +60,7 @@ OpenGL refresh core
 ============
 */
 void RE_GL_BeginFrame(float camera_separation);
+void RE_GL_RenderFrame(refdef_t *fd);
 void RE_GL_EndFrame(void);
 void RE_GL_SetPalette(const unsigned char *palette);
 int RE_GL_Init(void);
@@ -75,7 +75,6 @@ void RE_GL_Draw_StretchPic(int x, int y, int w, int h, char *name);
 void RE_GL_Draw_PicScaled(int x, int y, char *name, float scale);
 void RE_GL_Draw_Pic(int x, int y, char *name);
 void RE_GL_Draw_GetPicSize(int *w, int *h, char *name);
-void RE_GL_RenderFrame(refdef_t *fd);
 void RE_GL_BeginRegistration(char *model);
 struct model_s *RE_GL_RegisterModel(char *name);
 struct image_s *RE_GL_RegisterSkin(char *name);
@@ -86,6 +85,7 @@ void RE_GL_EndRegistration(void);
 void GFX_GL_CoreInit (void)
 {
 	RE_BeginFrame = RE_GL_BeginFrame;
+	RE_RenderFrame = RE_GL_RenderFrame;
 	RE_EndFrame = RE_GL_EndFrame;
 
 	RE_SetPalette = RE_GL_SetPalette;
@@ -104,8 +104,6 @@ void GFX_GL_CoreInit (void)
 	RE_Draw_Pic = RE_GL_Draw_Pic;
 	RE_Draw_GetPicSize = RE_GL_Draw_GetPicSize;
     
-	RE_RenderFrame = RE_GL_RenderFrame;
-
 	RE_BeginRegistration = RE_GL_BeginRegistration;
 	RE_RegisterModel = RE_GL_RegisterModel;
 	RE_RegisterSkin = RE_GL_RegisterSkin;
@@ -123,6 +121,7 @@ Software refresh core
 ============
 */
 void RE_SW_BeginFrame(float camera_separation);
+void RE_SW_RenderFrame(refdef_t *fd);
 void RE_SW_EndFrame(void);
 void RE_SW_SetPalette(const unsigned char *palette);
 int RE_SW_Init(void);
@@ -135,7 +134,6 @@ void RE_SW_Draw_CharScaled(int x, int y, int num, float scale);
 void RE_SW_Draw_StretchPic(int x, int y, int w, int h, char *name);
 void RE_SW_Draw_PicScaled(int x, int y, char *name, float scale);
 void RE_SW_Draw_GetPicSize(int *w, int *h, char *name);
-void RE_SW_RenderFrame(refdef_t *fd);
 void RE_SW_BeginRegistration(char *model);
 struct model_s *RE_SW_RegisterModel(char *name);
 struct image_s *RE_SW_RegisterSkin(char *name);
@@ -146,6 +144,7 @@ void RE_SW_EndRegistration(void);
 void GFX_SOFT_CoreInit (void)
 {
 	RE_BeginFrame = RE_SW_BeginFrame;
+	RE_RenderFrame = RE_SW_RenderFrame;
 	RE_EndFrame = RE_SW_EndFrame;
 
 	RE_SetPalette = RE_SW_SetPalette;
@@ -163,8 +162,6 @@ void GFX_SOFT_CoreInit (void)
 	RE_Draw_PicScaled = RE_SW_Draw_PicScaled;
 	RE_Draw_Pic = NULL;
 	RE_Draw_GetPicSize = RE_SW_Draw_GetPicSize;
-
-	RE_RenderFrame = RE_SW_RenderFrame;
 
 	RE_BeginRegistration = RE_SW_BeginRegistration;
 	RE_RegisterModel = RE_SW_RegisterModel;
