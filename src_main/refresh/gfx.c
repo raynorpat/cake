@@ -206,7 +206,7 @@ void GFX_CoreInit (char *name)
 		break;
 	case REF_API_UNDETERMINED:
 	default:
-		Com_Error(ERR_FATAL, "Couldn't load refresh subsystem: undetermined refresh!");
+		Com_Error (ERR_FATAL, "Couldn't load refresh subsystem: undetermined refresh!");
 		break;
 	}
 }
@@ -223,8 +223,10 @@ void GFX_CoreShutdown (void)
 	switch (RE_gfxVal)
 	{
 	case REF_API_SOFT:
+		// software shutdown works fine with call to RE_Shutdown
 		break;
 	case REF_API_OPENGL:
+		// OpenGL needs to destroy everything, including the context, hence this extra call
 		VID_Shutdown_GL (false);
 		break;
 	case REF_API_DIRECT3D_9:
