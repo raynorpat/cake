@@ -251,9 +251,9 @@ void VID_CheckChanges (void)
 		Com_sprintf(name, sizeof(name), "ref_%s", vid_ref->string);
 		if (!VID_LoadRefresh(name))
 		{
-			if (strcmp(vid_ref->string, "gl") == 0)
-				Com_Error (ERR_FATAL, "Couldn't load refresh subsystem, couldn't fallback to GL!");
-			Cvar_Set ("vid_ref", "gl");
+			if (strcmp(vid_ref->string, "soft") == 0)
+				Com_Error (ERR_FATAL, "Couldn't load refresh subsystem, couldn't fallback to software refresh!");
+			Cvar_Set ("vid_ref", "soft");
 
 			// drop the console if we fail to load a refresh
 			if (cls.key_dest != key_console)
@@ -273,12 +273,12 @@ void VID_WriteScreenshot(int width, int height, int comp, const void* data)
 	char picname[80];
 	char checkname[MAX_OSPATH];
 	int i, success = 0;
-	static char* supportedFormats[] = { "tga", "png", "jpg" };
+	static char* supportedFormats[] = { "png", "jpg", "tga" };
 	static const int numFormats = sizeof(supportedFormats) / sizeof(supportedFormats[0]);
-	int format = 0; // 0=tga 1=png 2=jpg
+	int format = 0; // 0=png 1=jpg 2=tga
 	int quality = 85;
 	int argc = Cmd_Argc();
-	const char* gameDir = FS_Gamedir();
+	char* gameDir = FS_Gamedir();
 	
 	// create the scrnshots directory if it doesn't exist
 	Com_sprintf(checkname, sizeof(checkname), "%s/scrnshot", gameDir);
@@ -348,21 +348,21 @@ void VID_WriteScreenshot(int width, int height, int comp, const void* data)
 	
 	if (i == 10000)
 	{
-		Com_Printf("SCR_ScreenShot_f: Couldn't create a file\n");
+		Com_Printf("VID_WriteScreenshot: Couldn't create a file\n");
 		return;
 	}
 	
-	switch (format) // 0=tga 1=png 2=jpg
+	switch (format) // 0=png 1=jpg 2=tga
 	{
 		case 0:
-			success = stbi_write_tga(checkname, width, height, comp, data);
-			break;
-		case 1:
 			stbi_png_level = (quality <= 10) ? quality : 7;
 			success = stbi_write_png(checkname, width, height, comp, data, 0);
 			break;
-		case 2:
+		case 1:
 			success = stbi_write_jpg(checkname, width, height, comp, data, quality);
+			break;
+		case 2:
+			success = stbi_write_tga(checkname, width, height, comp, data);
 			break;
 	}
 	
@@ -372,7 +372,7 @@ void VID_WriteScreenshot(int width, int height, int comp, const void* data)
 	}
 	else
 	{
-		Com_Printf("SCR_ScreenShot_f: Couldn't write %s\n", picname);
+		Com_Printf("VID_WriteScreenshot: Couldn't write %s\n", picname);
 	}
 }
 
