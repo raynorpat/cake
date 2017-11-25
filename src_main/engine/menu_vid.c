@@ -175,7 +175,7 @@ static void ApplyChanges (void *unused)
 		else
 		{
 			// Restarts automatically
-			Cvar_SetValue("_mode", -1);
+			Cvar_SetValue("gl_mode", -1);
 		}
 	}
 
@@ -307,7 +307,7 @@ void VID_MenuInit (void)
 	if (!fov)
 		fov = Cvar_Get("fov", "90",  CVAR_USERINFO | CVAR_ARCHIVE);
 	if (!vid_gamma)
-		vid_gamma = Cvar_Get("vid_gamma", "1.6", CVAR_ARCHIVE);
+		vid_gamma = Cvar_Get("vid_gamma", "1.2", CVAR_ARCHIVE);
 	if (!gl_swapinterval)
 		gl_swapinterval = Cvar_Get("gl_swapinterval", "1", CVAR_ARCHIVE);
 	if (!gl_textureanisotropy)
