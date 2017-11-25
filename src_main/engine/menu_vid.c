@@ -175,7 +175,7 @@ static void ApplyChanges (void *unused)
 		else
 		{
 			// Restarts automatically
-			Cvar_SetValue("gl_mode", -1);
+			Cvar_SetValue("_mode", -1);
 		}
 	}
 

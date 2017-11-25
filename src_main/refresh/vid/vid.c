@@ -199,8 +199,6 @@ qboolean VID_LoadRefresh (char *name)
 
 	Com_Printf("------- Loading %s -------\n", name);
 
-	Swap_Init ();
-
 	// Make sure to init GFX core
 	GFX_CoreInit( name );
 
