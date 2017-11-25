@@ -818,6 +818,7 @@ void RE_GL_Shutdown (void)
 	Cmd_RemoveCommand ("modellist");
 	Cmd_RemoveCommand ("screenshot");
 	Cmd_RemoveCommand ("imagelist");
+	Cmd_RemoveCommand ("fbolist");
 	Cmd_RemoveCommand ("gl_strings");
 
 	Mod_FreeAll ();
