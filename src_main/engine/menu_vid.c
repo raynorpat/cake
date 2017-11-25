@@ -179,7 +179,7 @@ static void ApplyChanges (void *unused)
 		}
 	}
 
-	// Restarts automatically
+	// fullscreen restarts automatically
 	Cvar_SetValue ("vid_fullscreen", s_fs_box.curvalue);
 
 	// vertical sync
@@ -323,6 +323,7 @@ void VID_MenuInit (void)
 	s_opengl_menu.x = viddef.width * 0.50;
 	s_opengl_menu.nitems = 0;
 
+	// refresh list
 	s_renderer_list.generic.type = MTYPE_SPINCONTROL;
 	s_renderer_list.generic.name = "renderer";
 	s_renderer_list.generic.x = 0;
@@ -330,6 +331,7 @@ void VID_MenuInit (void)
 	s_renderer_list.itemnames = renderers;
 	s_renderer_list.curvalue = GetRefresh ();
 
+	// video mode resolution
 	s_mode_list.generic.type = MTYPE_SPINCONTROL;
 	s_mode_list.generic.name = "video mode";
 	s_mode_list.generic.x = 0;
@@ -359,15 +361,25 @@ void VID_MenuInit (void)
 		}
 	}
 
-	s_brightness_slider.generic.type	= MTYPE_SLIDER;
-	s_brightness_slider.generic.name	= "brightness";
-	s_brightness_slider.generic.x	= 0;
-	s_brightness_slider.generic.y	= (y += 20);
+	// fullscreen
+	s_fs_box.generic.type = MTYPE_SPINCONTROL;
+	s_fs_box.generic.name = "fullscreen";
+	s_fs_box.generic.x = 0;
+	s_fs_box.generic.y = (y += 10);
+	s_fs_box.itemnames = fullscreen_names;
+	s_fs_box.curvalue = (int)vid_fullscreen->value;
+
+	// brightness/gamma
+	s_brightness_slider.generic.type = MTYPE_SLIDER;
+	s_brightness_slider.generic.name = "brightness";
+	s_brightness_slider.generic.x = 0;
+	s_brightness_slider.generic.y = (y += 20);
 	s_brightness_slider.generic.callback = BrightnessCallback;
 	s_brightness_slider.minvalue = 1;
 	s_brightness_slider.maxvalue = 20;
 	s_brightness_slider.curvalue = vid_gamma->value * 10;
 
+	// field of view
 	s_fov_slider.generic.type = MTYPE_SLIDER;
 	s_fov_slider.generic.x = 0;
 	s_fov_slider.generic.y = (y += 10);
@@ -377,43 +389,41 @@ void VID_MenuInit (void)
 	s_fov_slider.maxvalue = 120;
 	s_fov_slider.curvalue = fov->value;
 
-	s_fs_box.generic.type = MTYPE_SPINCONTROL;
-	s_fs_box.generic.name	= "fullscreen";
-	s_fs_box.generic.x	= 0;
-	s_fs_box.generic.y	= (y += 10);
-	s_fs_box.itemnames = fullscreen_names;
-	s_fs_box.curvalue = (int)vid_fullscreen->value;
-
-	s_vsync_list.generic.type = MTYPE_SPINCONTROL;
-	s_vsync_list.generic.name = "vertical sync";
-	s_vsync_list.generic.x = 0;
-	s_vsync_list.generic.y = (y += 10);
-	s_vsync_list.itemnames = yesno_names;
-	s_vsync_list.curvalue = (gl_swapinterval->value != 0);
-
-	s_af_list.generic.type = MTYPE_SPINCONTROL;
-	s_af_list.generic.name = "aniso filtering";
-	s_af_list.generic.x = 0;
-	s_af_list.generic.y = (y += 10);
-	s_af_list.generic.callback = AnisotropicCallback;
-	s_af_list.itemnames = pow2_names;
-	s_af_list.curvalue = 0;
-	if (gl_textureanisotropy->value)
+	if (GetRefresh() > 0)
 	{
-		do
-		{
-			s_af_list.curvalue++;
-		} while (pow2_names[s_af_list.curvalue] &&
-				pow(2, s_af_list.curvalue) <= gl_textureanisotropy->value);
-		s_af_list.curvalue--;
-	}
+		// vsync
+		s_vsync_list.generic.type = MTYPE_SPINCONTROL;
+		s_vsync_list.generic.name = "vertical sync";
+		s_vsync_list.generic.x = 0;
+		s_vsync_list.generic.y = (y += 10);
+		s_vsync_list.itemnames = yesno_names;
+		s_vsync_list.curvalue = (gl_swapinterval->value != 0);
 
-	s_fxaa_list.generic.type = MTYPE_SPINCONTROL;
-	s_fxaa_list.generic.name = "fxaa";
-	s_fxaa_list.generic.x = 0;
-	s_fxaa_list.generic.y = (y += 10);
-	s_fxaa_list.itemnames = yesno_names;
-	s_fxaa_list.curvalue = (r_fxaa->value != 0);
+		// anisotropic filtering
+		s_af_list.generic.type = MTYPE_SPINCONTROL;
+		s_af_list.generic.name = "aniso filtering";
+		s_af_list.generic.x = 0;
+		s_af_list.generic.y = (y += 10);
+		s_af_list.generic.callback = AnisotropicCallback;
+		s_af_list.itemnames = pow2_names;
+		s_af_list.curvalue = 0;
+		if (gl_textureanisotropy->value)
+		{
+			do
+			{
+				s_af_list.curvalue++;
+			} while (pow2_names[s_af_list.curvalue] && pow(2, s_af_list.curvalue) <= gl_textureanisotropy->value);
+			s_af_list.curvalue--;
+		}
+
+		// fxaa
+		s_fxaa_list.generic.type = MTYPE_SPINCONTROL;
+		s_fxaa_list.generic.name = "fxaa";
+		s_fxaa_list.generic.x = 0;
+		s_fxaa_list.generic.y = (y += 10);
+		s_fxaa_list.itemnames = yesno_names;
+		s_fxaa_list.curvalue = (r_fxaa->value != 0);
+	}
 
 	s_defaults_action.generic.type = MTYPE_ACTION;
 	s_defaults_action.generic.name = "reset to default";
@@ -429,12 +439,15 @@ void VID_MenuInit (void)
 
 	Menu_AddItem (&s_opengl_menu, (void *) &s_renderer_list);
 	Menu_AddItem (&s_opengl_menu, (void *) &s_mode_list);
+	Menu_AddItem (&s_opengl_menu, (void *) &s_fs_box);
 	Menu_AddItem (&s_opengl_menu, (void *) &s_brightness_slider);
 	Menu_AddItem (&s_opengl_menu, (void *) &s_fov_slider);
-	Menu_AddItem (&s_opengl_menu, (void *) &s_fs_box);
-	Menu_AddItem (&s_opengl_menu, (void *) &s_vsync_list);
-	Menu_AddItem (&s_opengl_menu, (void *) &s_af_list);
-	Menu_AddItem (&s_opengl_menu, (void *) &s_fxaa_list);
+	if (GetRefresh() > 0)
+	{
+		Menu_AddItem(&s_opengl_menu, (void *)&s_vsync_list);
+		Menu_AddItem(&s_opengl_menu, (void *)&s_af_list);
+		Menu_AddItem(&s_opengl_menu, (void *)&s_fxaa_list);
+	}
 	Menu_AddItem (&s_opengl_menu, (void *) &s_defaults_action);
 	Menu_AddItem (&s_opengl_menu, (void *) &s_apply_action);
 
