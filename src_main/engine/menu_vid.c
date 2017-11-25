@@ -31,6 +31,7 @@ VIDEO MENU INTERACTION
 extern void M_ForceMenuOff (void);
 
 static cvar_t *gl_mode;
+static cvar_t *sw_mode;
 static cvar_t *fov;
 extern cvar_t *vid_ref;
 extern cvar_t *vid_gamma;
@@ -151,15 +152,31 @@ static void ApplyChanges (void *unused)
 	}
 
 	// custom mode
-	if (s_mode_list.curvalue != GetCustomValue(&s_mode_list))
+	if (GetRefresh() == 0)
 	{
-		// Restarts automatically
-		Cvar_SetValue("gl_mode", s_mode_list.curvalue);
+		if (s_mode_list.curvalue != GetCustomValue(&s_mode_list))
+		{
+			// Restarts automatically
+			Cvar_SetValue("sw_mode", s_mode_list.curvalue);
+		}
+		else
+		{
+			// Restarts automatically
+			Cvar_SetValue("sw_mode", -1);
+		}
 	}
 	else
 	{
-		// Restarts automatically
-		Cvar_SetValue("gl_mode", -1);
+		if (s_mode_list.curvalue != GetCustomValue(&s_mode_list))
+		{
+			// Restarts automatically
+			Cvar_SetValue("gl_mode", s_mode_list.curvalue);
+		}
+		else
+		{
+			// Restarts automatically
+			Cvar_SetValue("gl_mode", -1);
+		}
 	}
 
 	// Restarts automatically
@@ -203,7 +220,7 @@ void VID_MenuInit (void)
 		0
 	};
 
-	static const char *resolutions[] = {
+	static const char *hw_resolutions[] = {
 		"[320 240   ]",
 		"[400 300   ]",
 		"[512 384   ]",
@@ -233,6 +250,33 @@ void VID_MenuInit (void)
 		"[custom    ]",
 		0
 	};
+	static const char *sw_resolutions[] =
+	{
+		"[320 240   ]",
+		"[400 300   ]",
+		"[512 384   ]",
+		"[640 400   ]",
+		"[640 480   ]",
+		"[800 500   ]",
+		"[800 600   ]",
+		"[960 720   ]",
+		"[1024 480  ]",
+		"[1024 640  ]",
+		"[1024 768  ]",
+		"[1152 768  ]",
+		"[1152 864  ]",
+		"[1280 800  ]",
+		"[1280 720  ]",
+		"[1280 960  ]",
+		"[1280 1024 ]",
+		"[1366 768  ]",
+		"[1440 900  ]",
+		"[1600 1200 ]",
+		"[1680 1050 ]",
+		"[1920 1080 ]",
+		"[custom    ]",
+		0
+	};
 
 	static const char *yesno_names[] = {
 		"no",
@@ -258,6 +302,8 @@ void VID_MenuInit (void)
 
 	if (!gl_mode)
 		gl_mode = Cvar_Get ("gl_mode", "10", 0);
+	if (!sw_mode)
+		sw_mode = Cvar_Get("sw_mode", "10", 0);
 	if (!fov)
 		fov = Cvar_Get("fov", "90",  CVAR_USERINFO | CVAR_ARCHIVE);
 	if (!vid_gamma)
@@ -269,7 +315,10 @@ void VID_MenuInit (void)
 	if (!r_fxaa)
 		r_fxaa = Cvar_Get("r_fxaa", "0", CVAR_ARCHIVE);
 
-	s_mode_list.curvalue = gl_mode->value;
+	if (GetRefresh() == 0)
+		s_mode_list.curvalue = sw_mode->value;
+	else
+		s_mode_list.curvalue = gl_mode->value;
 
 	s_opengl_menu.x = viddef.width * 0.50;
 	s_opengl_menu.nitems = 0;
@@ -285,14 +334,29 @@ void VID_MenuInit (void)
 	s_mode_list.generic.name = "video mode";
 	s_mode_list.generic.x = 0;
 	s_mode_list.generic.y = (y += 10);
-	s_mode_list.itemnames = resolutions;
-	if (gl_mode->value >= 0)
+	if (GetRefresh() == 0)
 	{
-		s_mode_list.curvalue = gl_mode->value;
+		s_mode_list.itemnames = sw_resolutions;
+		if (sw_mode->value >= 0)
+		{
+			s_mode_list.curvalue = sw_mode->value;
+		}
+		else
+		{
+			s_mode_list.curvalue = GetCustomValue(&s_mode_list);
+		}
 	}
 	else
 	{
-		s_mode_list.curvalue = GetCustomValue(&s_mode_list);
+		s_mode_list.itemnames = hw_resolutions;
+		if (gl_mode->value >= 0)
+		{
+			s_mode_list.curvalue = gl_mode->value;
+		}
+		else
+		{
+			s_mode_list.curvalue = GetCustomValue(&s_mode_list);
+		}
 	}
 
 	s_brightness_slider.generic.type	= MTYPE_SLIDER;
