@@ -19,6 +19,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 */
 // gfx.c -- graphics layer core
 #include "ref_public.h"
+#include "vid_public.h"
 
 extern cvar_t	*vid_ref;
 
@@ -224,6 +225,7 @@ void GFX_CoreShutdown (void)
 	case REF_API_SOFT:
 		break;
 	case REF_API_OPENGL:
+		VID_Shutdown_GL (false);
 		break;
 	case REF_API_DIRECT3D_9:
 		break;
