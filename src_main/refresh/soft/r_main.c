@@ -52,7 +52,7 @@ void		*colormap;
 vec3_t		viewlightvec;
 alight_t	r_viewlighting = {128, 192, viewlightvec};
 float		r_time1;
-int			r_numallocatededges;
+unsigned int r_numallocatededges;
 float		r_aliasuvscale = 1.0;
 int			r_outofsurfaces;
 int			r_outofedges;
@@ -62,7 +62,7 @@ qboolean	r_dowarp;
 mvertex_t	*r_pcurrentvertbase;
 
 int			c_surf;
-int			r_maxsurfsseen, r_maxedgesseen, r_cnumsurfs;
+unsigned int r_maxsurfsseen, r_maxedgesseen, r_cnumsurfs;
 qboolean	r_surfsonstack;
 int			r_clipflags;
 

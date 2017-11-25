@@ -146,26 +146,18 @@ extern oldrefdef_t      r_refdef;
 #define VID_CBITS       6
 #define VID_GRADES      (1 << VID_CBITS)
 
-
 // r_shared.h: general refresh-related stuff shared between the refresh and the
 // driver
 
-
 #define MAXVERTS        64              // max points in a surface polygon
-#define MAXWORKINGVERTS (MAXVERTS+4)    // max points in an intermediate
-										//  polygon (while processing)
-// !!! if this is changed, it must be changed in d_ifacea.h too !!!
-#define MAXHEIGHT       5120
+#define MAXWORKINGVERTS (MAXVERTS+4)    // max points in an intermediate polygon (while processing)
 
-/* be careful if you ever want to change MAXWIDTH: 12.20 fixed
-* point math used in R_ScanEdges() overflows at width 2048 !! */
-#define MAXWIDTH		2040
+// !!! if this is changed, it must be changed in d_ifacea.h too !!!
+#define MAXHEIGHT       1200
+#define MAXWIDTH		2040 // NOTE: R_ScanEdges() overflows at 2048 due to 12.20 fixed point math...
 #define MAXDIMENSION	((MAXHEIGHT > MAXWIDTH) ? MAXHEIGHT : MAXWIDTH)
 
-#define INFINITE_DISTANCE	0x10000 // distance that's always guaranteed to
-					//  be farther away than anything in
-					//  the scene
-
+#define INFINITE_DISTANCE	0x10000 // distance that's always guaranteed to be farther away than anything in the scene
 
 // d_iface.h: interface header file for rasterization driver modules
 
@@ -190,11 +182,11 @@ extern oldrefdef_t      r_refdef;
 
 #define DS_SPAN_LIST_END        -128
 
-#define NUMSTACKEDGES           2000
-#define MINEDGES                        NUMSTACKEDGES
-#define NUMSTACKSURFACES        1000
-#define MINSURFACES                     NUMSTACKSURFACES
-#define MAXSPANS                        3000
+#define NUMSTACKEDGES           8192
+#define MINEDGES                NUMSTACKEDGES
+#define NUMSTACKSURFACES        8192
+#define MINSURFACES             NUMSTACKSURFACES
+#define MAXSPANS                8192
 
 // flags in finalvert_t.flags
 #define ALIAS_LEFT_CLIP                         0x0001
@@ -470,7 +462,7 @@ extern int              r_screenwidth;
 
 extern int              r_drawnpolycount;
 
-#define TABLESIZE (MAXDIMENSION+CYCLE) // FS: Fix going underwater with 1280x960 or higher modes
+#define TABLESIZE (MAXDIMENSION + CYCLE) // FS: Fix going underwater with 1280x960 or higher modes
 
 extern int      sintable[TABLESIZE];
 extern int      intsintable[TABLESIZE];
@@ -634,7 +626,7 @@ void SW_R_DrawParticles (void);
 
 extern int              r_amodels_drawn;
 extern edge_t   *auxedges;
-extern int              r_numallocatededges;
+extern unsigned int r_numallocatededges;
 extern edge_t   *r_edges, *edge_p, *edge_max;
 
 extern  edge_t  *newedges[MAXHEIGHT];
@@ -671,8 +663,8 @@ extern float    r_time1;
 extern float	da_time1, da_time2;
 extern float	dp_time1, dp_time2, db_time1, db_time2, rw_time1, rw_time2;
 extern float	se_time1, se_time2, de_time1, de_time2, dv_time1, dv_time2;
-extern int	r_frustum_indexes[4*6];
-extern int	r_maxsurfsseen, r_maxedgesseen, r_cnumsurfs;
+extern int		r_frustum_indexes[4*6];
+extern unsigned int r_maxsurfsseen, r_maxedgesseen, r_cnumsurfs;
 extern qboolean r_surfsonstack;
 
 extern mleaf_t *r_viewleaf;
