@@ -369,22 +369,22 @@ int VID_GetRefreshRate(void)
 
 
 /*
-VID_BeginFrame
+VID_GL_BeginFrame
 */
-void VID_BeginFrame (float camera_separation)
+void VID_GL_BeginFrame(float camera_separation)
 {
 }
 
 
 /*
-VID_EndFrame
+VID_GL_EndFrame
 
 Responsible for doing a swapbuffer.
 */
 extern void Draw_End2D(void);
 extern void GL_UseProgram(GLuint progid);
 
-void VID_EndFrame (void)
+void VID_GL_EndFrame (void)
 {
 	Draw_End2D ();
 

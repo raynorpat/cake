@@ -169,7 +169,7 @@ void R_DrawSingleEntity (entity_t *ent)
 R_DrawEntitiesOnList
 =============
 */
-void R_DrawEntitiesOnList (void)
+static void R_DrawEntitiesOnList (void)
 {
 	int i;
 	entity_t *ent;
@@ -224,7 +224,7 @@ int SignbitsForPlane (cplane_t *out)
 R_SetupFrame
 ===============
 */
-void R_SetupFrame (void)
+static void R_SetupFrame (void)
 {
 	int i;
 	mleaf_t	*leaf;
@@ -453,10 +453,9 @@ void R_RenderView (refdef_t *fd)
 /*
 ====================
 R_SetLightLevel
-
 ====================
 */
-void R_SetLightLevel (void)
+static void R_SetLightLevel (void)
 {
 	vec3_t		shadelight;
 
@@ -501,7 +500,7 @@ void RE_GL_RenderFrame (refdef_t *fd)
 }
 
 
-void R_Register (void)
+static void R_Register (void)
 {
 	r_lefthand = Cvar_Get ("hand", "0", CVAR_USERINFO | CVAR_ARCHIVE);
 	r_norefresh = Cvar_Get ("r_norefresh", "0", 0);
@@ -845,7 +844,7 @@ void RE_GL_BeginFrame (float camera_separation)
 		ref->modified = true;
 	}
 
-	VID_BeginFrame (camera_separation);
+	VID_GL_BeginFrame (camera_separation);
 
 	if (gl_texturemode->modified || gl_textureanisotropy->modified)
 	{
@@ -855,6 +854,17 @@ void RE_GL_BeginFrame (float camera_separation)
 	}
 
 	GL_UpdateSwapInterval ();
+}
+
+/*
+=====================
+RE_EndFrame
+=====================
+*/
+void RE_GL_EndFrame (void)
+{
+	// do a swap buffer
+	VID_GL_EndFrame ();
 }
 
 /*

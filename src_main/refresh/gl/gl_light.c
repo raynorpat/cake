@@ -37,7 +37,7 @@ DYNAMIC LIGHTS
 R_MarkLights
 =============
 */
-void R_MarkLights (dlight_t *light, int bit, mnode_t *node)
+static void R_MarkLights (dlight_t *light, int bit, mnode_t *node)
 {
 	cplane_t	*splitplane;
 	float		dist;
@@ -113,7 +113,7 @@ LIGHT SAMPLING
 cplane_t		*lightplane;		// used as shadow plane
 vec3_t			lightspot;
 
-int RecursiveLightPoint (mnode_t *node, vec3_t start, vec3_t end, float *pointcolor)
+static int RecursiveLightPoint (mnode_t *node, vec3_t start, vec3_t end, float *pointcolor)
 {
 	float		front, back, frac;
 	int			side;

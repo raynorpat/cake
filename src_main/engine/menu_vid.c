@@ -32,6 +32,7 @@ extern void M_ForceMenuOff (void);
 
 static cvar_t *gl_mode;
 static cvar_t *fov;
+extern cvar_t *vid_ref;
 extern cvar_t *vid_gamma;
 extern cvar_t *vid_fullscreen;
 static cvar_t *gl_swapinterval;
@@ -40,6 +41,7 @@ static cvar_t *r_fxaa;
 
 static menuframework_s	s_opengl_menu;
 
+static menulist_s		s_renderer_list;
 static menulist_s		s_mode_list;
 static menuslider_s		s_brightness_slider;
 static menuslider_s		s_fov_slider;
@@ -49,6 +51,26 @@ static menulist_s 		s_af_list;
 static menulist_s 		s_fxaa_list;
 static menuaction_s		s_defaults_action;
 static menuaction_s 	s_apply_action;
+
+static int GetRefresh(void)
+{
+	if (Q_stricmp(vid_ref->string, "soft") == 0)
+	{
+		return 0;
+	}
+	else if (Q_stricmp(vid_ref->string, "gl") == 0)
+	{
+		return 1;
+	}
+	else if (Q_stricmp(vid_ref->string, "d3d9") == 0)
+	{
+		return 2;
+	}
+	else
+	{
+		return 3;
+	}
+}
 
 static int GetCustomValue(menulist_s *list)
 {
@@ -108,6 +130,26 @@ static void ApplyChanges (void *unused)
 {
 	qboolean restart = false;
 
+	// refresh
+	if (s_renderer_list.curvalue != GetRefresh())
+	{
+		if (s_renderer_list.curvalue == 0)
+		{
+			Cvar_Set("vid_ref", "soft");
+			restart = true;
+		}
+		else if (s_renderer_list.curvalue == 1)
+		{
+			Cvar_Set("vid_ref", "gl");
+			restart = true;
+		}
+		else if (s_renderer_list.curvalue == 2)
+		{
+			Cvar_Set("vid_ref", "d3d9");
+			restart = true;
+		}
+	}
+
 	// custom mode
 	if (s_mode_list.curvalue != GetCustomValue(&s_mode_list))
 	{
@@ -152,6 +194,14 @@ VID_MenuInit
 void VID_MenuInit (void)
 {
 	int y = 0;
+
+	static const char *renderers[] = {
+		"[Software  ]",
+		"[OpenGL    ]",
+		"[Direct3D 9]",
+		"[Custom    ]",
+		0
+	};
 
 	static const char *resolutions[] = {
 		"[320 240   ]",
@@ -224,10 +274,17 @@ void VID_MenuInit (void)
 	s_opengl_menu.x = viddef.width * 0.50;
 	s_opengl_menu.nitems = 0;
 
+	s_renderer_list.generic.type = MTYPE_SPINCONTROL;
+	s_renderer_list.generic.name = "renderer";
+	s_renderer_list.generic.x = 0;
+	s_renderer_list.generic.y = (y = 0);
+	s_renderer_list.itemnames = renderers;
+	s_renderer_list.curvalue = GetRefresh ();
+
 	s_mode_list.generic.type = MTYPE_SPINCONTROL;
 	s_mode_list.generic.name = "video mode";
 	s_mode_list.generic.x = 0;
-	s_mode_list.generic.y = (y = 0);
+	s_mode_list.generic.y = (y += 10);
 	s_mode_list.itemnames = resolutions;
 	if (gl_mode->value >= 0)
 	{
@@ -306,6 +363,7 @@ void VID_MenuInit (void)
 	s_apply_action.generic.y = (y += 10);
 	s_apply_action.generic.callback = ApplyChanges;
 
+	Menu_AddItem (&s_opengl_menu, (void *) &s_renderer_list);
 	Menu_AddItem (&s_opengl_menu, (void *) &s_mode_list);
 	Menu_AddItem (&s_opengl_menu, (void *) &s_brightness_slider);
 	Menu_AddItem (&s_opengl_menu, (void *) &s_fov_slider);

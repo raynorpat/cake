@@ -26,7 +26,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 int r_lastrawcols = -1;
 int r_lastrawrows = -1;
 GLuint r_rawtexture = 0;
-image_t *draw_chars;
+static image_t *draw_chars;
 
 GLuint gl_drawprog = 0;
 GLuint u_drawtexturecolormix = 0;

@@ -1331,7 +1331,7 @@ void SCR_UpdateScreen (void)
 	}
 
 	SCR_Framecounter ();
-	VID_EndFrame ();
+	RE_EndFrame ();
 }
 
 float SCR_GetScale(void)

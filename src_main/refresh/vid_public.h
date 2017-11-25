@@ -48,14 +48,13 @@ void	VID_CheckChanges(void);
 qboolean VID_GetModeInfo(int *width, int *height, int mode);
 void	VID_NewWindow(int width, int height);
 
-void	VID_BeginFrame(float camera_separation);
-void	VID_EndFrame(void);
-
 qboolean VID_InitWindow(int fullscreen, int *pwidth, int *pheight);
 
 // OpenGL specific functions
 qboolean VID_Init_GL(void);
-void VID_Shutdown_GL(qboolean contextOnly);
+void	VID_Shutdown_GL(qboolean contextOnly);
+void	VID_GL_BeginFrame(float camera_separation);
+void	VID_GL_EndFrame(void);
 
 // Video menu
 void	VID_MenuInit(void);

@@ -142,12 +142,12 @@ extern void R_BuildLightMap (msurface_t *surf, unsigned *dest, int stride);
 
 /*
 ===============
-R_TextureAnimation
+GL_R_TextureAnimation
 
 Returns the proper texture for a given time and base texture
 ===============
 */
-image_t *R_TextureAnimation (entity_t *e, mtexinfo_t *tex)
+image_t *GL_R_TextureAnimation(entity_t *e, mtexinfo_t *tex)
 {
 	int c;
 
@@ -390,7 +390,7 @@ void R_DrawTextureChains (entity_t *e)
 		if (!mod->texinfo[i].image) continue;
 		if (!mod->texinfo[i].image->texturechain) continue;
 
-		image = R_TextureAnimation (e, &mod->texinfo[i]);
+		image = GL_R_TextureAnimation (e, &mod->texinfo[i]);
 		surf = mod->texinfo[i].image->texturechain;
 
 		if (surf->flags & SURF_DRAWTURB) continue;

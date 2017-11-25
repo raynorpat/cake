@@ -79,6 +79,35 @@ set(RENDERER_GL_SOURCES
 source_group("refresh\\gl" FILES ${RENDERER_GL_INCLUDES})
 source_group("refresh\\gl" FILES ${RENDERER_GL_SOURCES})
 
+# Software refresh backend sources
+set(RENDERER_SOFT_INCLUDES
+	../refresh/soft/adivtab.h
+	../refresh/soft/anorms.h
+	../refresh/soft/r_model.h
+	../refresh/soft/r_local.h
+	)	
+set(RENDERER_SOFT_SOURCES
+	../refresh/soft/r_aclip.c
+	../refresh/soft/r_alias.c
+	../refresh/soft/r_bsp.c
+	../refresh/soft/r_draw.c
+	../refresh/soft/r_edge.c
+	../refresh/soft/r_image.c
+	../refresh/soft/r_light.c
+	../refresh/soft/r_main.c
+	../refresh/soft/r_misc.c
+	../refresh/soft/r_model.c
+	../refresh/soft/r_part.c
+	../refresh/soft/r_poly.c
+	../refresh/soft/r_polyse.c
+	../refresh/soft/r_rast.c
+	../refresh/soft/r_scan.c
+	../refresh/soft/r_sprite.c
+	../refresh/soft/r_surf.c
+	)
+source_group("refresh\\soft" FILES ${RENDERER_SOFT_INCLUDES})
+source_group("refresh\\soft" FILES ${RENDERER_SOFT_SOURCES})
+
 # video backend sources
 set(RENDERER_VID_INCLUDES
 	../refresh/vid_public.h
@@ -103,4 +132,14 @@ include_directories(
             )
 
 # build the refresh library
-add_library(refresh STATIC ${GLEW_INCLUDES} ${GLEW_SOURCES} ${RENDERER_INCLUDES} ${RENDERER_SOURCES} ${RENDERER_GL_INCLUDES} ${RENDERER_GL_SOURCES} ${RENDERER_VID_INCLUDES} ${RENDERER_VID_SOURCES})
+add_library(refresh STATIC ${GLEW_INCLUDES}
+	${GLEW_SOURCES}
+	${RENDERER_INCLUDES}
+	${RENDERER_SOURCES}
+	${RENDERER_GL_INCLUDES}
+	${RENDERER_GL_SOURCES}
+	${RENDERER_SOFT_INCLUDES}
+	${RENDERER_SOFT_SOURCES}
+	${RENDERER_VID_INCLUDES}
+	${RENDERER_VID_SOURCES}
+	)

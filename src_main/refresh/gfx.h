@@ -23,6 +23,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #define __GFX_H__
 
 extern void (* RE_BeginFrame)( float camera_separation );
+extern void (* RE_EndFrame)( void );
 
 extern void (* RE_SetPalette)( const unsigned char *palette );
 
@@ -50,8 +51,9 @@ extern void  (* RE_SetSky)( char *name, float rotate, vec3_t axis );
 extern void (* RE_EndRegistration)( void );
 
 #define REF_API_UNDETERMINED	1
-#define REF_API_OPENGL			2
-#define REF_API_DIRECT3D_9 		3
+#define REF_API_SOFT	 		2
+#define REF_API_OPENGL			3
+#define REF_API_DIRECT3D_9 		4
 extern int RE_gfxVal;
 
 void GFX_CoreInit (char *name);
