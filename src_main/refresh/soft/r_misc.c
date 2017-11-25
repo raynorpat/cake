@@ -67,8 +67,8 @@ void D_ViewChanged (void)
 	if (d_pix_min < 1)
 		d_pix_min = 1;
 
-	d_pix_max = (int)((float)r_refdef.vrect.width / (320.0 / 4.0) + 0.5);
-	d_pix_shift = 8 - (int)((float)r_refdef.vrect.width / 320.0 + 0.5);
+	d_pix_max = (int)((float)r_refdef.vrect.width / (800.0 / 4.0) + 0.5);
+	d_pix_shift = 8 - (int)((float)r_refdef.vrect.width / 800.0 + 0.5);
 	if (d_pix_max < 1)
 		d_pix_max = 1;
 
