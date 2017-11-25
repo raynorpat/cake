@@ -937,7 +937,6 @@ static menuslider_s		s_options_sensitivity_slider;
 static menulist_s		s_options_freelook_box;
 static menulist_s		s_options_alwaysrun_box;
 static menulist_s		s_options_invertmouse_box;
-static menulist_s		s_options_lookspring_box;
 static menulist_s		s_options_lookstrafe_box;
 static menulist_s		s_options_crosshair_box;
 static menuslider_s		s_options_sfxvolume_slider;
@@ -995,9 +994,6 @@ static void ControlsSetMenuItemValues (void)
 
 	s_options_invertmouse_box.curvalue		= m_pitch->value < 0;
 
-	Cvar_SetValue ("lookspring", ClampCvar (0, 1, lookspring->value));
-	s_options_lookspring_box.curvalue		= lookspring->value;
-
 	Cvar_SetValue ("lookstrafe", ClampCvar (0, 1, lookstrafe->value));
 	s_options_lookstrafe_box.curvalue		= lookstrafe->value;
 
@@ -1022,11 +1018,6 @@ static void ControlsResetDefaultsFunc (void *unused)
 static void InvertMouseFunc (void *unused)
 {
 	Cvar_SetValue ("m_pitch", -m_pitch->value);
-}
-
-static void LookspringFunc (void *unused)
-{
-	Cvar_SetValue ("lookspring", !lookspring->value);
 }
 
 static void LookstrafeFunc (void *unused)
@@ -1153,17 +1144,10 @@ void Options_MenuInit (void)
 
 	s_options_invertmouse_box.generic.type = MTYPE_SPINCONTROL;
 	s_options_invertmouse_box.generic.x	= 0;
-	s_options_invertmouse_box.generic.y	= 50;
+	s_options_invertmouse_box.generic.y	= 60;
 	s_options_invertmouse_box.generic.name	= "invert mouse";
 	s_options_invertmouse_box.generic.callback = InvertMouseFunc;
 	s_options_invertmouse_box.itemnames = yesno_names;
-
-	s_options_lookspring_box.generic.type = MTYPE_SPINCONTROL;
-	s_options_lookspring_box.generic.x	= 0;
-	s_options_lookspring_box.generic.y	= 60;
-	s_options_lookspring_box.generic.name	= "lookspring";
-	s_options_lookspring_box.generic.callback = LookspringFunc;
-	s_options_lookspring_box.itemnames = yesno_names;
 
 	s_options_lookstrafe_box.generic.type = MTYPE_SPINCONTROL;
 	s_options_lookstrafe_box.generic.x	= 0;
@@ -1218,7 +1202,6 @@ void Options_MenuInit (void)
 	Menu_AddItem (&s_options_menu, (void *) &s_options_sensitivity_slider);
 	Menu_AddItem (&s_options_menu, (void *) &s_options_alwaysrun_box);
 	Menu_AddItem (&s_options_menu, (void *) &s_options_invertmouse_box);
-	Menu_AddItem (&s_options_menu, (void *) &s_options_lookspring_box);
 	Menu_AddItem (&s_options_menu, (void *) &s_options_lookstrafe_box);
 	Menu_AddItem (&s_options_menu, (void *) &s_options_freelook_box);
 	Menu_AddItem (&s_options_menu, (void *) &s_options_crosshair_box);

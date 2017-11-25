@@ -280,7 +280,6 @@ extern	cvar_t	*cl_showmiss;
 extern	cvar_t	*cl_showclamp;
 extern	cvar_t	*cl_showfps;
 
-extern	cvar_t	*lookspring;
 extern	cvar_t	*lookstrafe;
 extern	cvar_t	*sensitivity;
 
