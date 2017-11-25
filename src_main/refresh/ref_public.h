@@ -132,6 +132,8 @@ typedef struct
 		unsigned int color;
 		byte rgba[4];
 	};
+	int		soft_color;
+	float	alpha;
 } particle_t;
 
 typedef struct

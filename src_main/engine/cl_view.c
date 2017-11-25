@@ -102,8 +102,14 @@ void V_AddParticle (vec3_t org, int color, float alpha)
 	p = &r_particles[r_numparticles++];
 
 	VectorCopy (org, p->origin);
+
+	// transform 8bit colors into RGBA
 	p->color = d_8to24table_rgba[color & 255];
 	((byte *) &p->color)[3] = (alpha > 1) ? 255 : ((alpha < 0) ? 0 : alpha * 255);
+
+	// these are leftover for software refresh
+	p->soft_color = color;
+	p->alpha = alpha;
 }
 
 
@@ -159,6 +165,24 @@ If cl_testparticles is set, create 4096 particles in the view
 */
 void V_TestParticles (void)
 {
+	particle_t	*p;
+	int			i, j;
+	float		d, r, u;
+
+	r_numparticles = MAX_PARTICLES;
+	for (i = 0; i<r_numparticles; i++)
+	{
+		d = i*0.25f;
+		r = 4 * ((i & 7) - 3.5f);
+		u = 4 * (((i >> 3) & 7) - 3.5f);
+		p = &r_particles[i];
+
+		for (j = 0; j<3; j++)
+			p->origin[j] = cl.refdef.vieworg[j] + cl.v_forward[j] * d + cl.v_right[j] * r + cl.v_up[j] * u;
+
+		p->color = 8;
+		p->alpha = cl_testparticles->value;
+	}
 }
 
 

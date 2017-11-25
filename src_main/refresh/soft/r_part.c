@@ -47,7 +47,7 @@ static partparms_t partparms;
 ** function pointer route.  This exacts some overhead, but
 ** it pays off in clean and easy to understand code.
 */
-void R_DrawParticle( void )
+static void R_DrawParticle( void )
 {
 	particle_t *pparticle = partparms.particle;
 	int         level     = partparms.level;
@@ -55,7 +55,7 @@ void R_DrawParticle( void )
 	float	zi;
 	byte	*pdest;
 	short	*pz;
-	int      color = pparticle->color;
+	int      color = pparticle->soft_color;
 	int		i, izi, pix, count, u, v;
 
 	/*
@@ -174,15 +174,15 @@ void SW_R_DrawParticles (void)
 
 	for (p=r_newrefdef.particles, i=0 ; i<r_newrefdef.num_particles ; i++,p++)
 	{
-//		if ( p->alpha > 0.66 )
+		if ( p->alpha > 0.66 )
 			partparms.level = PARTICLE_OPAQUE;
-//		else if ( p->alpha > 0.33 )
-//			partparms.level = PARTICLE_66;
-//		else
-//			partparms.level = PARTICLE_33;
+		else if ( p->alpha > 0.33 )
+			partparms.level = PARTICLE_66;
+		else
+			partparms.level = PARTICLE_33;
 
 		partparms.particle = p;
-		partparms.color    = p->color;
+		partparms.color    = p->soft_color;
 
 		R_DrawParticle();
 	}
