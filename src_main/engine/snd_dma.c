@@ -715,7 +715,18 @@ void S_StartSound (vec3_t origin, int entnum, int entchannel, sfx_t *sfx, float 
 		ps->fixed_origin = true;
 	}
 	else
+	{
 		ps->fixed_origin = false;
+	}
+
+	if (sfx->name)
+	{
+		// with !fixed we have all sounds related directly to player, e.g. players fire, pain, menu
+		if (!ps->fixed_origin)
+		{
+			Haptic_Feedback(sfx->name);
+		}
+	}
 
 	ps->entnum = entnum;
 	ps->entchannel = entchannel;
