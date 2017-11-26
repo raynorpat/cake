@@ -1903,7 +1903,3 @@ void CL_Shutdown (void)
 	VID_Shutdown ();
 }
 
-
-
-
-
