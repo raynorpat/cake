@@ -21,7 +21,6 @@ Fax(714)549-0757
 #include "gserver.h"
 #include "darray.h"
 #include "../nonport.h"
-#include "../../../engine/client.h" /* FS: For the cl_gamespy CVARs */
 #include "gutil.h"
 #include <stdio.h>
 #include <string.h>
