@@ -25,6 +25,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #include <windows.h>
 #endif
 #if !(defined(_WINSOCKAPI_) || defined(_WINSOCK_H))
+#define _WINSOCK_DEPRECATED_NO_WARNINGS
 #include <winsock2.h>
 #endif
 #elif defined(__linux__) || defined(__FreeBSD__) || defined(__APPLE__)
@@ -68,8 +69,6 @@ static cvar_t	*noudp;
 
 loopback_t	loopbacks[2];
 int			ip_sockets[2];
-
-char *NET_ErrorString (void);
 
 //=============================================================================
 
