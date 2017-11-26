@@ -638,8 +638,8 @@ void SCR_PlayCinematic (char *arg)
 	char	name[MAX_OSPATH], *dot;
 	int		old_khz;
 
-	// empty input queue
-	In_FlushQueue();
+	// make sure we clear all key states
+	Key_ClearStates ();
 
 	// make sure music isn't playing
 	BGM_Stop ();
