@@ -49,6 +49,16 @@ else (MODPLUG_FOUND)
     set(MODPLUG_LIBRARY "" )
 endif (MODPLUG_FOUND)
 
+# libgamespy
+find_package(GAMESPY)
+if (GAMESPY_FOUND)
+    include_directories(${GAMESPY_INCLUDE_DIRS})
+    set(GAMESPY_LIBRARY ${GAMESPY_LIBRARIES})
+else (GAMESPY_FOUND)
+    include_directories("../libs/gamespy")
+    set(GAMESPY_LIBRARY "" )
+endif (GAMESPY_FOUND)
+
 # stb headers
 include_directories("../libs/stb")
 
@@ -213,6 +223,18 @@ endif (NOT MODPLUG_FOUND)
 source_group("libs\\modplug" FILES ${MODPLUG_INCLUDES})
 source_group("libs\\modplug" FILES ${MODPLUG_SOURCES})
 
+# libgamespy
+if (NOT GAMESPY_FOUND)
+	file(GLOB GAMESPY_INCLUDES ../libs/gamespy/*.h ../libs/gamespy/CEngine/*.h)
+	file(GLOB GAMESPY_SOURCES ../libs/gamespy/*.c ../libs/gamespy/CEngine/*.c)
+else (NOT GAMESPY_FOUND)
+    set(GAMESPY_INCLUDES "")
+    set(GAMESPY_SOURCES "")
+endif (NOT GAMESPY_FOUND)
+source_group("libs\\gamespy" FILES ${GAMESPY_INCLUDES})
+source_group("libs\\gamespy" FILES ${GAMESPY_SOURCES})
+
+
 
 #
 # Engine Executable
@@ -230,6 +252,7 @@ set(CAKE_INCLUDES
 
 			${MAD_INCLUDES}
 			${MODPLUG_INCLUDES}
+			${GAMESPY_INCLUDES}
 			)			
 set(CAKE_SOURCES
 			${CLIENT_SOURCES}
@@ -242,6 +265,7 @@ set(CAKE_SOURCES
 			
 			${MAD_SOURCES}
 			${MODPLUG_SOURCES}
+			${GAMESPY_SOURCES}
 			)
 	
 if(MONOLITH)
