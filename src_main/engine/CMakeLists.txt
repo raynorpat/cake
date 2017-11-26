@@ -81,6 +81,7 @@ set(CLIENT_SOURCES
 	cl_console.c
 	cl_ents.c
 	cl_fx.c
+	cl_gamespy.c
 	cl_input.c
 	cl_inv.c
 	cl_main.c

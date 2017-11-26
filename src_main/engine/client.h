@@ -238,6 +238,12 @@ typedef struct
 	dltype_t	downloadtype;
 	int			downloadpercent;
 
+	//* For gamespy
+	int			gamespypercent;
+	int			gamespyupdate;
+	int			gamespytotalservers;
+	int			gamespystarttime;
+
 	// demo recording info must be here, so it isn't cleared on level change
 	qboolean	demorecording;
 	qboolean	demowaiting;	// don't record until a non-delta message is received
@@ -555,6 +561,30 @@ void CL_AddParticles (void);
 void CL_EntityEvent (entity_state_t *ent);
 // RAFAEL
 void CL_TrapParticles (entity_t *ent);
+
+//
+// cl_gamespy.c
+//
+#define MAX_SERVERS 512 // FS: There's barely 200 active servers existing, but OK.
+#define SHOW_POPULATED_SERVERS 1
+#define SHOW_ALL_SERVERS 2
+typedef struct
+{
+	char ip[16];
+	int port;
+	int ping;
+	char hostname[32];
+	int curPlayers;
+	int maxPlayers;
+	char mapname[32];
+	int menuNumber;
+} gamespyBrowser_t;
+
+extern gamespyBrowser_t browserList[MAX_SERVERS];
+extern gamespyBrowser_t browserListAll[MAX_SERVERS];
+void CL_GameSpy_Async_Think (void);
+void CL_GameSpy_PingServers_f (void);
+void CL_GameSpy_Init (void);
 
 //
 // menus

@@ -1501,6 +1501,8 @@ void CL_InitLocal (void)
 
 	CL_InitInput ();
 
+	CL_GameSpy_Init ();
+
 	adr0 = Cvar_Get ("adr0", "", CVAR_ARCHIVE);
 	adr1 = Cvar_Get ("adr1", "", CVAR_ARCHIVE);
 	adr2 = Cvar_Get ("adr2", "", CVAR_ARCHIVE);
@@ -1710,6 +1712,9 @@ void CL_Frame (int packetdelta, int renderdelta, int timedelta, qboolean packetf
 	// are we running dedicated?
 	if (dedicated->value)
 		return;
+
+	// update the GameSpy query loop if we're pinging some servers
+	CL_GameSpy_Async_Think ();
 
 	// decide the simulation time
 	cls.nframetime = packetdelta / 1000000.0f;
