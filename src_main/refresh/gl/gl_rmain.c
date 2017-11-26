@@ -533,7 +533,7 @@ static void R_Register (void)
 	gl_swapinterval = Cvar_Get ("gl_swapinterval", "1", CVAR_ARCHIVE);
 
 	vid_fullscreen = Cvar_Get ("vid_fullscreen", "0", CVAR_ARCHIVE);
-	vid_gamma = Cvar_Get ("vid_gamma", "1.2", CVAR_ARCHIVE);
+	vid_gamma = Cvar_Get ("vid_gamma", "1.0", CVAR_ARCHIVE);
 	r_lightscale = Cvar_Get ("r_lightscale", "1.0", CVAR_ARCHIVE);
 
 	RPostProcess_Init();

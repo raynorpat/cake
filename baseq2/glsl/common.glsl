@@ -43,3 +43,8 @@ vec3 toGamma(vec3 v) {
 vec4 toGamma(vec4 v) {
   return vec4(toGamma(v.rgb), v.a);
 }
+
+vec3 doBrightness(vec3 value, float param)
+{
+    return vec3(pow(abs(value.r), param), pow(abs(value.g), param), pow(abs(value.b), param));
+}

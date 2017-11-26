@@ -97,7 +97,7 @@ static void BrightnessCallback (void *s)
 {
 	menuslider_s *slider = (menuslider_s *) s;
 
-	float gamma = slider->curvalue / 10.0;
+	float gamma = 1.3 - (slider->curvalue / 20.0);
 	Cvar_SetValue ("vid_gamma", gamma);
 }
 
@@ -307,7 +307,7 @@ void VID_MenuInit (void)
 	if (!fov)
 		fov = Cvar_Get("fov", "90",  CVAR_USERINFO | CVAR_ARCHIVE);
 	if (!vid_gamma)
-		vid_gamma = Cvar_Get("vid_gamma", "1.2", CVAR_ARCHIVE);
+		vid_gamma = Cvar_Get("vid_gamma", "1.0", CVAR_ARCHIVE);
 	if (!gl_swapinterval)
 		gl_swapinterval = Cvar_Get("gl_swapinterval", "1", CVAR_ARCHIVE);
 	if (!gl_textureanisotropy)
@@ -375,9 +375,9 @@ void VID_MenuInit (void)
 	s_brightness_slider.generic.x = 0;
 	s_brightness_slider.generic.y = (y += 20);
 	s_brightness_slider.generic.callback = BrightnessCallback;
-	s_brightness_slider.minvalue = 1;
+	s_brightness_slider.minvalue = 0;
 	s_brightness_slider.maxvalue = 20;
-	s_brightness_slider.curvalue = vid_gamma->value * 10;
+	s_brightness_slider.curvalue = (1.3 - Cvar_VariableValue("vid_gamma")) * 20;
 
 	// field of view
 	s_fov_slider.generic.type = MTYPE_SLIDER;

@@ -273,7 +273,7 @@ static void R_Register (void)
 	r_novis = Cvar_Get( "r_novis", "0", 0 );
 
 	vid_fullscreen = Cvar_Get( "vid_fullscreen", "0", CVAR_ARCHIVE );
-	vid_gamma = Cvar_Get( "vid_gamma", "1.2", CVAR_ARCHIVE );
+	vid_gamma = Cvar_Get( "vid_gamma", "1.0", CVAR_ARCHIVE );
 
 	Cmd_AddCommand("modellist", SW_Mod_Modellist_f);
 	Cmd_AddCommand("screenshot", R_ScreenShot_f);

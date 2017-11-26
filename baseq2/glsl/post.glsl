@@ -29,6 +29,7 @@ uniform sampler2D AOTex;
 
 uniform float blurAmount;
 uniform float exposure;
+uniform float brightnessAmount;
 
 uniform int waterwarppost;
 
@@ -127,7 +128,7 @@ void PostFS ()
     vig = pow(vig, 0.25);
 	color.rgb *= vig;
 #endif
-	
+
 	// tonemap using filmic tonemapping curve
 #if USE_TONEMAP
 	vec3 luminance = texture(lumTex, vec2(0.0, 0.0)).rgb;
@@ -141,7 +142,10 @@ void PostFS ()
 
 	// mix scene with possible modulation (eg item pickups, getting shot, etc)
 	color = mix(color, surfcolor, surfcolor.a);
-	
+
+	// brightness
+	fragColor.rgb = doBrightness(fragColor.rgb, brightnessAmount);
+
 	// gamma correct
 	fragColor = toLinear(color);
 }
