@@ -62,6 +62,16 @@ typedef enum {false, true}	qboolean;
 #define NULL ((void *)0)
 #endif
 
+#if !defined(__GNUC__)
+#define	__attribute__(x)
+#endif
+
+// argument format attributes for function pointers are supported for gcc >= 3.1
+#if defined(__GNUC__) && (__GNUC__ > 3 || (__GNUC__ == 3 && __GNUC_MINOR__ > 0))
+#define	__fp_attribute__ __attribute__
+#else
+#define	__fp_attribute__(x)
+#endif
 
 // Generic helper definitions for shared library support
 #if defined _WIN32 || defined __CYGWIN__
@@ -79,6 +89,12 @@ typedef enum {false, true}	qboolean;
 #  define Q_DLL_LOCAL
 # endif
 #endif
+
+
+#define CL_MASTER_ADDR	"maraakate.org" /* FS: master.gamespy.com & co are dead */
+#define CL_MASTER_PORT	"28900"
+#define SV_MASTER_IP	"maraakate.org" /* FS: master.gamespy.com & co are dead */
+#define SV_MASTER_PORT	"27900"
 
 
 // angle indexes
@@ -152,6 +168,10 @@ typedef vec_t vec5_t[5];
 typedef	int	fixed4_t;
 typedef	int	fixed8_t;
 typedef	int	fixed16_t;
+
+#ifndef bound
+#define bound(a,b,c) ((a) >= (c) ? (a) : (b) < (a) ? (a) : (b) > (c) ? (c) : (b))
+#endif
 
 #ifndef M_PI
 #define M_PI		3.14159265358979323846	// matches value in gcc v2 math.h
@@ -249,6 +269,8 @@ char *COM_Parse (char **data_p);
 // data is an in/out parm, returns a parsed out token
 
 void Com_sprintf (char *dest, int size, char *fmt, ...);
+void Com_strcpy (char *dest, int destSize, const char *src);
+void Com_strcat (char *dest, int destSize, const char *src);
 
 void Com_PageInMemory (byte *buffer, int size);
 
@@ -356,6 +378,7 @@ typedef struct cvar_s
 	int			flags;
 	qboolean	modified;	// set each time the cvar is changed
 	float		value;
+	int			integer;
 	struct cvar_s *next;
 } cvar_t;
 

@@ -1271,8 +1271,6 @@ int Q_strcasecmp (char *s1, char *s2)
 	return Q_strncasecmp (s1, s2, 99999);
 }
 
-
-
 void Com_sprintf (char *dest, int size, char *fmt, ...)
 {
 	int		len;
@@ -1288,6 +1286,59 @@ void Com_sprintf (char *dest, int size, char *fmt, ...)
 
 	strncpy (dest, bigbuffer, size - 1);
 }
+
+void Com_strcpy(char *dest, int destSize, const char *src)
+{
+	if (!dest)
+	{
+		Com_Printf("Com_strcpy: NULL dst\n");
+		return;
+	}
+	if (!src)
+	{
+		Com_Printf("Com_strcpy: NULL src\n");
+		return;
+	}
+	if (destSize < 1)
+	{
+		Com_Printf("Com_strcpy: dstSize < 1\n");
+		return;
+	}
+
+	strncpy(dest, src, destSize - 1);
+	dest[destSize - 1] = 0;
+}
+
+void Com_strcat(char *dest, int destSize, const char *src)
+{
+	if (!dest)
+	{
+		Com_Printf("Com_strcat: NULL dst\n");
+		return;
+	}
+	if (!src)
+	{
+		Com_Printf("Com_strcat: NULL src\n");
+		return;
+	}
+	if (destSize < 1)
+	{
+		Com_Printf("Com_strcat: dstSize < 1\n");
+		return;
+	}
+
+	while (--destSize && *dest)
+		dest++;
+
+	if (destSize > 0)
+	{
+		while (--destSize && *src)
+			*dest++ = *src++;
+
+		*dest = 0;
+	}
+}
+
 
 char *Q_strlwr(char *s)
 {
