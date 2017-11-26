@@ -83,7 +83,7 @@ struct image_s *RE_GL_Draw_RegisterPic(char *name);
 void RE_GL_SetSky(char *name, float rotate, vec3_t axis);
 void RE_GL_EndRegistration(void);
 
-void GFX_GL_CoreInit (void)
+static void GFX_GL_CoreInit (void)
 {
 	RE_BeginFrame = RE_GL_BeginFrame;
 	RE_RenderFrame = RE_GL_RenderFrame;
@@ -142,7 +142,7 @@ struct image_s *RE_SW_Draw_RegisterPic(char *name);
 void RE_SW_SetSky(char *name, float rotate, vec3_t axis);
 void RE_SW_EndRegistration(void);
 
-void GFX_SOFT_CoreInit (void)
+static void GFX_SOFT_CoreInit (void)
 {
 	RE_BeginFrame = RE_SW_BeginFrame;
 	RE_RenderFrame = RE_SW_RenderFrame;
