@@ -513,17 +513,16 @@ void IN_Update(void)
 
 		case SDL_QUIT:
 			Com_Quit();
-
 			break;
 		}
 	}
 
-	/* Grab and ungrab the mouse if the console or the menu is opened */
+	/* Grab and ungrab the mouse if the console or the menu is opened 
+	 * calling VID_GrabInput() each is a but ugly but simple and should work.
+	 * + the called SDL functions return after a cheap check, if there's
+	 * nothing to do, anyway
+	 */
 	want_grab = (vid_fullscreen->value || in_grab->value == 1 || (in_grab->value == 2 && windowed_mouse->value));
-	/* calling VID_GrabInput() each is a but ugly but simple and should work.
-	* + the called SDL functions return after a cheap check, if there's
-	* nothing to do, anyway
-	*/
 	VID_GrabInput(want_grab);
 }
 
