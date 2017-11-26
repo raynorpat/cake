@@ -70,6 +70,22 @@ float Cvar_VariableValue (char *var_name)
 	return atof (var->string);
 }
 
+/*
+============
+Cvar_VariableInteger
+============
+*/
+int Cvar_VariableInteger(char *var_name)
+{
+	cvar_t	*var;
+
+	var = Cvar_FindVar(var_name);
+
+	if (!var)
+		return 0;
+
+	return atoi (var->string);
+}
 
 /*
 ============
@@ -164,6 +180,7 @@ cvar_t *Cvar_Get (char *var_name, char *var_value, int flags)
 	var->string = CopyString (var_value);
 	var->modified = true;
 	var->value = atof (var->string);
+	var->integer = atoi (var->string);
 
 	// link the variable in
 	var->next = cvar_vars;
@@ -232,6 +249,7 @@ cvar_t *Cvar_Set2 (char *var_name, char *value, qboolean force)
 			{
 				var->string = CopyString (value);
 				var->value = atof (var->string);
+				var->integer = atoi (var->string);
 
 				if (!strcmp (var->name, "game"))
 				{
@@ -263,6 +281,7 @@ cvar_t *Cvar_Set2 (char *var_name, char *value, qboolean force)
 
 	var->string = CopyString (value);
 	var->value = atof (var->string);
+	var->integer = atoi (var->string);
 
 	return var;
 }
@@ -313,6 +332,7 @@ cvar_t *Cvar_FullSet (char *var_name, char *value, int flags)
 
 	var->string = CopyString (value);
 	var->value = atof (var->string);
+	var->integer = atoi (var->string);
 	var->flags = flags;
 
 	return var;
@@ -329,7 +349,8 @@ void Cvar_SetValue (char *var_name, float value)
 
 	if (value == (int) value)
 		Com_sprintf (val, sizeof (val), "%i", (int) value);
-	else Com_sprintf (val, sizeof (val), "%f", value);
+	else
+		Com_sprintf (val, sizeof (val), "%f", value);
 
 	Cvar_Set (var_name, val);
 }
@@ -355,6 +376,7 @@ void Cvar_GetLatchedVars (void)
 		var->string = var->latched_string;
 		var->latched_string = NULL;
 		var->value = atof (var->string);
+		var->integer = atoi (var->string);
 
 		if (!strcmp (var->name, "game"))
 		{
