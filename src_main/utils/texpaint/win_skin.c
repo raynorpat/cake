@@ -176,7 +176,7 @@ Load a skin texture and the base.tri from the same directory
 void Skin_SaveFile (char *name)
 {
 	byte	*data;
-	int		i, j;
+	int		i;
 	char	backup[1024];
 
 	// back up the current file if it exists
@@ -409,11 +409,6 @@ void DrawSkin (void)
 
 void Skin_Draw (void)
 {
-	int		x, y;
-	float	aspect;
-	float	xs, ys;
-	int		c;
-
 	//
 	// draw it
 	//
@@ -450,7 +445,6 @@ void Skin_Draw (void)
 	}
 
 	SwapBuffers(skindc);
-
 
 	// now fill the back buffer with the index texture
 	glClearColor (0,0,0,0);

@@ -32,7 +32,6 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include <gl/gl.h>
 #include <gl/glu.h>
-#include <gl/glaux.h>
 #include "glingr.h"
 #include <math.h>
 #include <stdlib.h>

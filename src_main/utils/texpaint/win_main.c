@@ -406,14 +406,13 @@ void Main_Create (HINSTANCE hInstance)
 	if (!mainwindow)
 		Error ("Couldn't create main window");
 
-//	GetWindowInfo("mainwindow", &SavedInfo, NULL);
 	ShowWindow (mainwindow, SW_SHOWDEFAULT);
 }
 
 
 
 
-BOOL SaveWindowInfo(const char *pszName, void *pvBuf, long lSize)
+static BOOL Main_SaveWindowInfo(const char *pszName, void *pvBuf, long lSize)
 {
 	LONG lres;
 	DWORD dwDisp;
@@ -436,7 +435,7 @@ BOOL SaveWindowInfo(const char *pszName, void *pvBuf, long lSize)
 }
 
 
-BOOL GetWindowInfo(const char *pszName, void *pvBuf, long *plSize)
+static BOOL Main_GetWindowInfo(const char *pszName, void *pvBuf, long *plSize)
 {
 	HKEY  hKey;
 	long lres, lType, lSize;
@@ -466,7 +465,7 @@ BOOL SaveWindowState(HWND hWnd, const char *pszName)
 
 	GetWindowRect(hWnd, &rc);
 	MapWindowPoints(NULL, mainwindow, (POINT *)&rc, 2);
-	return SaveWindowInfo(pszName, &rc, sizeof(rc));
+	return Main_SaveWindowInfo(pszName, &rc, sizeof(rc));
 }
 
 
@@ -475,7 +474,7 @@ BOOL RestoreWindowState(HWND hWnd, const char *pszName)
 	RECT rc;
 	LONG lSize = sizeof(rc);
 
-	if (GetWindowInfo(pszName, &rc, &lSize))
+	if (Main_GetWindowInfo(pszName, &rc, &lSize))
 	{
 		if (rc.left < 0)
 			rc.left = 0;

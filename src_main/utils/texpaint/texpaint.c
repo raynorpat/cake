@@ -121,7 +121,7 @@ void AddFace (int facenum, triangle_t *f)
 {
 	vec3_t		v1, v2, normal;
 	int		basex, basey;
-	int			i, j;
+	int			i;
 	int		coords[3][2];
 
 //
