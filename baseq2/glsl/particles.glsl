@@ -36,7 +36,7 @@ out vec4 fragColor;
 
 void ParticleFS ()
 {
-	vec4 color = 2.0 * iocolor;
+	vec4 color = iocolor;
 
 	// multiply the particle color alpha for fading out
 	fragColor = color * iocolor.a;
