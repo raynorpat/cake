@@ -34,6 +34,11 @@ qboolean CanDamage (edict_t *targ, edict_t *inflictor)
 	vec3_t	dest;
 	trace_t	trace;
 
+	if (!targ || !inflictor)
+	{
+		return false;
+	}
+
 // bmodels need special checking because their origin is 0,0,0
 	if (targ->movetype == MOVETYPE_PUSH)
 	{
@@ -91,6 +96,10 @@ Killed
 */
 void Killed (edict_t *targ, edict_t *inflictor, edict_t *attacker, int damage, vec3_t point)
 {
+	if (!targ || !inflictor || !attacker)
+	{
+		return;
+	}
 	if (targ->health < -999)
 		targ->health = -999;
 
@@ -131,13 +140,10 @@ void Killed (edict_t *targ, edict_t *inflictor, edict_t *attacker, int damage, v
 SpawnDamage
 ================
 */
-void SpawnDamage (int type, vec3_t origin, vec3_t normal, int damage)
+void SpawnDamage (int type, vec3_t origin, vec3_t normal)
 {
-	if (damage > 255)
-		damage = 255;
 	gi.WriteByte (svc_temp_entity);
 	gi.WriteByte (type);
-//	gi.WriteByte (damage);
 	gi.WritePosition (origin);
 	gi.WriteDir (normal);
 	gi.multicast (origin, MULTICAST_PVS);
@@ -176,11 +182,18 @@ static int CheckPowerArmor (edict_t *ent, vec3_t point, vec3_t normal, int damag
 	int			index;
 	int			damagePerCell;
 	int			pa_te_type;
-	int			power;
+	int			power = 0;
 	int			power_used;
+
+	if (!ent)
+	{
+		return 0;
+	}
 
 	if (!damage)
 		return 0;
+
+	index = 0;
 
 	client = ent->client;
 
@@ -241,7 +254,7 @@ static int CheckPowerArmor (edict_t *ent, vec3_t point, vec3_t normal, int damag
 	if (save > damage)
 		save = damage;
 
-	SpawnDamage (pa_te_type, point, normal, save);
+	SpawnDamage (pa_te_type, point, normal);
 	ent->powerarmor_time = level.time + 0.2;
 
 	power_used = save / damagePerCell;
@@ -259,6 +272,11 @@ static int CheckArmor (edict_t *ent, vec3_t point, vec3_t normal, int damage, in
 	int			save;
 	int			index;
 	gitem_t		*armor;
+
+	if (!ent)
+	{
+		return 0;
+	}
 
 	if (!damage)
 		return 0;
@@ -288,17 +306,27 @@ static int CheckArmor (edict_t *ent, vec3_t point, vec3_t normal, int damage, in
 		return 0;
 
 	client->pers.inventory[index] -= save;
-	SpawnDamage (te_sparks, point, normal, save);
+	SpawnDamage (te_sparks, point, normal);
 
 	return save;
 }
 
 void M_ReactToDamage (edict_t *targ, edict_t *attacker)
 {
+	if (!targ || !attacker)
+	{
+		return;
+	}
+
+	if (targ->health <= 0)
+	{
+		return;
+	}
+
 	if (!(attacker->client) && !(attacker->svflags & SVF_MONSTER))
 		return;
 
-	if (attacker == targ || attacker == targ->enemy)
+	if ((attacker == targ) || (attacker == targ->enemy))
 		return;
 
 	// if we are a good guy monster and our attacker is a player
@@ -368,13 +396,6 @@ void M_ReactToDamage (edict_t *targ, edict_t *attacker)
 	}
 }
 
-qboolean CheckTeamDamage (edict_t *targ, edict_t *attacker)
-{
-		//FIXME make the next line real and uncomment this block
-		// if ((ability to damage a teammate == OFF) && (targ's team == attacker's team))
-	return false;
-}
-
 void T_Damage (edict_t *targ, edict_t *inflictor, edict_t *attacker, vec3_t dir, vec3_t point, vec3_t normal, int damage, int knockback, int dflags, int mod)
 {
 	gclient_t	*client;
@@ -383,6 +404,11 @@ void T_Damage (edict_t *targ, edict_t *inflictor, edict_t *attacker, vec3_t dir,
 	int			asave;
 	int			psave;
 	int			te_sparks;
+
+	if (!targ || !inflictor || !attacker)
+	{
+		return;
+	}
 
 	if (!targ->takedamage)
 		return;
@@ -403,7 +429,7 @@ void T_Damage (edict_t *targ, edict_t *inflictor, edict_t *attacker, vec3_t dir,
 	meansOfDeath = mod;
 
 	// easy mode takes half damage
-	if (skill->value == 0 && deathmatch->value == 0 && targ->client)
+	if ((skill->value == 0) && (deathmatch->value == 0) && targ->client)
 	{
 		damage *= 0.5;
 		if (!damage)
@@ -439,7 +465,7 @@ void T_Damage (edict_t *targ, edict_t *inflictor, edict_t *attacker, vec3_t dir,
 			else
 				mass = targ->mass;
 
-			if (targ->client  && attacker == targ)
+			if (targ->client  && (attacker == targ))
 				VectorScale (dir, 1600.0 * (float)knockback / mass, kvel);	// the rocket jump hack...
 			else
 				VectorScale (dir, 500.0 * (float)knockback / mass, kvel);
@@ -456,7 +482,7 @@ void T_Damage (edict_t *targ, edict_t *inflictor, edict_t *attacker, vec3_t dir,
 	{
 		take = 0;
 		save = damage;
-		SpawnDamage (te_sparks, point, normal, save);
+		SpawnDamage (te_sparks, point, normal);
 	}
 
 	// check for invincibility
@@ -481,16 +507,16 @@ void T_Damage (edict_t *targ, edict_t *inflictor, edict_t *attacker, vec3_t dir,
 	asave += save;
 
 	// team damage avoidance
-	if (!(dflags & DAMAGE_NO_PROTECTION) && CheckTeamDamage (targ, attacker))
+	if (!(dflags & DAMAGE_NO_PROTECTION) && false)
 		return;
 
 // do the damage
 	if (take)
 	{
 		if ((targ->svflags & SVF_MONSTER) || (client))
-			SpawnDamage (TE_BLOOD, point, normal, take);
+			SpawnDamage (TE_BLOOD, point, normal);
 		else
-			SpawnDamage (te_sparks, point, normal, take);
+			SpawnDamage (te_sparks, point, normal);
 
 
 		targ->health = targ->health - take;
@@ -551,6 +577,11 @@ void T_RadiusDamage (edict_t *inflictor, edict_t *attacker, float damage, edict_
 	edict_t	*ent = NULL;
 	vec3_t	v;
 	vec3_t	dir;
+
+	if (!inflictor || !attacker)
+	{
+		return;
+	}
 
 	while ((ent = findradius(ent, inflictor->s.origin, radius)) != NULL)
 	{

@@ -80,6 +80,11 @@ static qboolean StringToFilter (char *s, ipfilter_t *f)
 	byte	b[4];
 	byte	m[4];
 	
+	if (!s || !f)
+	{
+		return false;
+	}
+
 	for (i=0 ; i<4 ; i++)
 	{
 		b[i] = 0;
@@ -88,7 +93,7 @@ static qboolean StringToFilter (char *s, ipfilter_t *f)
 	
 	for (i=0 ; i<4 ; i++)
 	{
-		if (*s < '0' || *s > '9')
+		if ((*s < '0') || (*s > '9'))
 		{
 			gi.cprintf(NULL, PRINT_HIGH, "Bad filter address: %s\n", s);
 			return false;
@@ -100,7 +105,7 @@ static qboolean StringToFilter (char *s, ipfilter_t *f)
 			num[j++] = *s++;
 		}
 		num[j] = 0;
-		b[i] = atoi(num);
+		b[i] = (int)strtol(num, (char **)NULL, 10);
 		if (b[i] != 0)
 			m[i] = 255;
 
@@ -127,6 +132,11 @@ qboolean SV_FilterPacket (char *from)
 	byte m[4];
 	char *p;
 
+	if (!from)
+	{
+		return false;
+	}
+
 	i = 0;
 	p = from;
 	while (*p && i < 4) {
@@ -135,7 +145,7 @@ qboolean SV_FilterPacket (char *from)
 			m[i] = m[i]*10 + (*p - '0');
 			p++;
 		}
-		if (!*p || *p == ':')
+		if (!*p || (*p == ':'))
 			break;
 		i++, p++;
 	}
@@ -200,8 +210,8 @@ void SVCmd_RemoveIP_f (void)
 		return;
 
 	for (i=0 ; i<numipfilters ; i++)
-		if (ipfilters[i].mask == f.mask
-		&& ipfilters[i].compare == f.compare)
+		if ((ipfilters[i].mask == f.mask)
+		&& (ipfilters[i].compare == f.compare))
 		{
 			for (j=i+1 ; j<numipfilters ; j++)
 				ipfilters[j-1] = ipfilters[j];

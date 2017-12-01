@@ -50,7 +50,7 @@ void PlayerTrail_Init (void)
 {
 	int		n;
 
-	if (deathmatch->value /* FIXME || coop */)
+	if (deathmatch->value)
 		return;
 
 	for (n = 0; n < TRAIL_LENGTH; n++)
@@ -97,6 +97,11 @@ edict_t *PlayerTrail_PickFirst (edict_t *self)
 	int		marker;
 	int		n;
 
+	if (!self)
+	{
+		return NULL;
+	}
+
 	if (!trail_active)
 		return NULL;
 
@@ -125,6 +130,11 @@ edict_t *PlayerTrail_PickNext (edict_t *self)
 {
 	int		marker;
 	int		n;
+
+	if (!self)
+	{
+		return NULL;
+	}
 
 	if (!trail_active)
 		return NULL;

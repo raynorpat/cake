@@ -51,6 +51,11 @@ edict_t *G_Find (edict_t *from, int fieldofs, char *match)
 	else
 		from++;
 
+	if (!match)
+	{
+		return NULL;
+	}
+
 	for ( ; from < &g_edicts[globals.num_edicts] ; from++)
 	{
 		if (!from->inuse)
@@ -150,6 +155,11 @@ edict_t *G_PickTarget (char *targetname)
 
 void Think_Delay (edict_t *ent)
 {
+	if (!ent)
+	{
+		return;
+	}
+
 	G_UseTargets (ent, ent->activator);
 	G_FreeEdict (ent);
 }
@@ -173,6 +183,11 @@ match (string)self.target and call their .use function
 void G_UseTargets (edict_t *ent, edict_t *activator)
 {
 	edict_t		*t;
+
+	if (!ent || !activator)
+	{
+		return;
+	}
 
 //
 // check for a delay
@@ -214,6 +229,21 @@ void G_UseTargets (edict_t *ent, edict_t *activator)
 		t = NULL;
 		while ((t = G_Find (t, FOFS(targetname), ent->killtarget)))
 		{
+			// decrement secret count if target_secret is removed
+			if (!Q_stricmp(t->classname,"target_secret"))
+			{
+				level.total_secrets--;
+			}
+			// same deal with target_goal, but also turn off CD music if applicable
+			else if (!Q_stricmp(t->classname,"target_goal"))
+			{
+				level.total_goals--;
+				if (level.found_goals >= level.total_goals)
+				{
+					gi.configstring (CS_CDTRACK, "0");
+				}
+			}
+
 			G_FreeEdict (t);
 			if (!ent->inuse)
 			{
@@ -254,7 +284,6 @@ void G_UseTargets (edict_t *ent, edict_t *activator)
 	}
 }
 
-
 /*
 =============
 TempVector
@@ -281,7 +310,6 @@ float	*tv (float x, float y, float z)
 	return v;
 }
 
-
 /*
 =============
 VectorToString
@@ -304,7 +332,6 @@ char	*vtos (vec3_t v)
 
 	return s;
 }
-
 
 vec3_t VEC_UP		= {0, -1, 0};
 vec3_t MOVEDIR_UP	= {0, 0, 1};
@@ -329,7 +356,6 @@ void G_SetMovedir (vec3_t angles, vec3_t movedir)
 	VectorClear (angles);
 }
 
-
 float vectoyaw (vec3_t vec)
 {
 	float	yaw;
@@ -352,13 +378,12 @@ float vectoyaw (vec3_t vec)
 	return yaw;
 }
 
-
 void vectoangles (vec3_t value1, vec3_t angles)
 {
 	float	forward;
 	float	yaw, pitch;
 	
-	if (value1[1] == 0 && value1[0] == 0)
+	if ((value1[1] == 0) && (value1[0] == 0))
 	{
 		yaw = 0;
 		if (value1[2] > 0)
@@ -427,7 +452,7 @@ edict_t *G_Spawn (void)
 	{
 		// the first couple seconds of server time can involve a lot of
 		// freeing and allocating, so relax the replacement policy
-		if (!e->inuse && ( e->freetime < 2 || level.time - e->freetime > 0.5 ) )
+		if (!e->inuse && ((e->freetime < 2) || (level.time - e->freetime > 0.5)))
 		{
 			G_InitEdict (e);
 			return e;
@@ -453,10 +478,20 @@ void G_FreeEdict (edict_t *ed)
 {
 	gi.unlinkentity (ed);		// unlink from world
 
-	if ((ed - g_edicts) <= (maxclients->value + BODY_QUEUE_SIZE))
+	if (deathmatch->value || coop->value)
 	{
-//		gi.dprintf("tried to free special edict\n");
-		return;
+		if ((ed - g_edicts) <= (maxclients->value + BODY_QUEUE_SIZE))
+		{
+	//		gi.dprintf("tried to free special edict\n");
+			return;
+		}
+	}
+	else
+	{
+		if ((ed - g_edicts) <= maxclients->value)
+		{
+			return;
+		}
 	}
 
 	memset (ed, 0, sizeof(*ed));
@@ -465,17 +500,21 @@ void G_FreeEdict (edict_t *ed)
 	ed->inuse = false;
 }
 
-
 /*
 ============
 G_TouchTriggers
 
 ============
 */
-void	G_TouchTriggers (edict_t *ent)
+void G_TouchTriggers (edict_t *ent)
 {
 	int			i, num;
 	edict_t		*touch[MAX_EDICTS], *hit;
+
+	if (!ent)
+	{
+		return;
+	}
 
 	// dead things don't activate triggers!
 	if ((ent->client || (ent->svflags & SVF_MONSTER)) && (ent->health <= 0))
@@ -510,6 +549,11 @@ void	G_TouchSolids (edict_t *ent)
 	int			i, num;
 	edict_t		*touch[MAX_EDICTS], *hit;
 
+	if (!ent)
+	{
+		return;
+	}
+
 	num = gi.BoxEdicts (ent->absmin, ent->absmax, touch
 		, MAX_EDICTS, AREA_SOLID);
 
@@ -528,16 +572,6 @@ void	G_TouchSolids (edict_t *ent)
 }
 
 
-
-
-/*
-==============================================================================
-
-Kill box
-
-==============================================================================
-*/
-
 /*
 =================
 KillBox
@@ -549,6 +583,11 @@ of ent.  Ent should be unlinked before calling this!
 qboolean KillBox (edict_t *ent)
 {
 	trace_t		tr;
+
+	if (!ent)
+	{
+		return false;
+	}
 
 	while (1)
 	{

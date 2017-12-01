@@ -48,27 +48,52 @@ static int	sound_strike;
 
 void tank_sight (edict_t *self, edict_t *other)
 {
+	if (!self)
+	{
+		return;
+	}
+
 	gi.sound (self, CHAN_VOICE, sound_sight, 1, ATTN_NORM, 0);
 }
 
 
 void tank_footstep (edict_t *self)
 {
+	if (!self)
+	{
+		return;
+	}
+
 	gi.sound (self, CHAN_BODY, sound_step, 1, ATTN_NORM, 0);
 }
 
 void tank_thud (edict_t *self)
 {
+	if (!self)
+	{
+		return;
+	}
+
 	gi.sound (self, CHAN_BODY, sound_thud, 1, ATTN_NORM, 0);
 }
 
 void tank_windup (edict_t *self)
 {
+	if (!self)
+	{
+		return;
+	}
+
 	gi.sound (self, CHAN_WEAPON, sound_windup, 1, ATTN_NORM, 0);
 }
 
 void tank_idle (edict_t *self)
 {
+	if (!self)
+	{
+		return;
+	}
+
 	gi.sound (self, CHAN_VOICE, sound_idle, 1, ATTN_IDLE, 0);
 }
 
@@ -114,6 +139,11 @@ mmove_t	tank_move_stand = {FRAME_stand01, FRAME_stand30, tank_frames_stand, NULL
 	
 void tank_stand (edict_t *self)
 {
+	if (!self)
+	{
+		return;
+	}
+
 	self->monsterinfo.currentmove = &tank_move_stand;
 }
 
@@ -218,6 +248,11 @@ mmove_t	tank_move_stop_run = {FRAME_walk21, FRAME_walk25, tank_frames_stop_run, 
 
 void tank_run (edict_t *self)
 {
+	if (!self)
+	{
+		return;
+	}
+
 	if (self->enemy && self->enemy->client)
 		self->monsterinfo.aiflags |= AI_BRUTAL;
 	else
@@ -229,8 +264,8 @@ void tank_run (edict_t *self)
 		return;
 	}
 
-	if (self->monsterinfo.currentmove == &tank_move_walk ||
-		self->monsterinfo.currentmove == &tank_move_start_run)
+	if ((self->monsterinfo.currentmove == &tank_move_walk) ||
+		(self->monsterinfo.currentmove == &tank_move_start_run))
 	{
 		self->monsterinfo.currentmove = &tank_move_run;
 	}
@@ -287,6 +322,11 @@ mmove_t	tank_move_pain3 = {FRAME_pain301, FRAME_pain316, tank_frames_pain3, tank
 
 void tank_pain (edict_t *self, edict_t *other, float kick, int damage)
 {
+	if (!self)
+	{
+		return;
+	}
+
 	if (self->health < (self->max_health / 2))
 			self->s.skinnum |= 1;
 
@@ -336,6 +376,11 @@ void TankBlaster (edict_t *self)
 	vec3_t	dir;
 	int		flash_number;
 
+	if (!self)
+	{
+		return;
+	}
+
 	if (self->s.frame == FRAME_attak110)
 		flash_number = MZ2_TANK_BLASTER_1;
 	else if (self->s.frame == FRAME_attak113)
@@ -366,6 +411,11 @@ void TankRocket (edict_t *self)
 	vec3_t	vec;
 	int		flash_number;
 
+	if (!self)
+	{
+		return;
+	}
+
 	if (self->s.frame == FRAME_attak324)
 		flash_number = MZ2_TANK_ROCKET_1;
 	else if (self->s.frame == FRAME_attak327)
@@ -391,6 +441,11 @@ void TankMachineGun (edict_t *self)
 	vec3_t	start;
 	vec3_t	forward, right;
 	int		flash_number;
+
+	if (!self)
+	{
+		return;
+	}
 
 	flash_number = MZ2_TANK_MACHINEGUN_1 + (self->s.frame - FRAME_attak406);
 
@@ -466,6 +521,11 @@ mmove_t tank_move_attack_post_blast = {FRAME_attak117, FRAME_attak122, tank_fram
 
 void tank_reattack_blaster (edict_t *self)
 {
+	if (!self)
+	{
+		return;
+	}
+
 	if (skill->value >= 2)
 		if (visible (self, self->enemy))
 			if (self->enemy->health > 0)
@@ -480,6 +540,11 @@ void tank_reattack_blaster (edict_t *self)
 
 void tank_poststrike (edict_t *self)
 {
+	if (!self)
+	{
+		return;
+	}
+
 	self->enemy = NULL;
 	tank_run (self);
 }
@@ -635,6 +700,11 @@ mmove_t tank_move_attack_chain = {FRAME_attak401, FRAME_attak429, tank_frames_at
 
 void tank_refire_rocket (edict_t *self)
 {
+	if (!self)
+	{
+		return;
+	}
+
 	// Only on hard or nightmare
 	if ( skill->value >= 2 )
 		if (self->enemy->health > 0)
@@ -649,6 +719,11 @@ void tank_refire_rocket (edict_t *self)
 
 void tank_doattack_rocket (edict_t *self)
 {
+	if (!self)
+	{
+		return;
+	}
+
 	self->monsterinfo.currentmove = &tank_move_attack_fire_rocket;
 }
 
@@ -657,6 +732,11 @@ void tank_attack(edict_t *self)
 	vec3_t	vec;
 	float	range;
 	float	r;
+
+	if (!self)
+	{
+		return;
+	}
 
 	if (self->enemy->health < 0)
 	{
@@ -705,6 +785,11 @@ void tank_attack(edict_t *self)
 
 void tank_dead (edict_t *self)
 {
+	if (!self)
+	{
+		return;
+	}
+
 	Vector3Set (self->mins, -16, -16, -16);
 	Vector3Set (self->maxs, 16, 16, -0);
 	self->movetype = MOVETYPE_TOSS;
@@ -754,6 +839,11 @@ void tank_die (edict_t *self, edict_t *inflictor, edict_t *attacker, int damage,
 {
 	int		n;
 
+	if (!self)
+	{
+		return;
+	}
+
 // check for gib
 	if (self->health <= self->gib_health)
 	{
@@ -791,6 +881,11 @@ void tank_die (edict_t *self, edict_t *inflictor, edict_t *attacker, int damage,
 */
 void SP_monster_tank (edict_t *self)
 {
+	if (!self)
+	{
+		return;
+	}
+
 	if (deathmatch->value)
 	{
 		G_FreeEdict (self);

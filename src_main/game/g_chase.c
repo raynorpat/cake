@@ -26,8 +26,12 @@ void UpdateChaseCam(edict_t *ent)
 	vec3_t forward, right;
 	trace_t trace;
 	int i;
-	vec3_t oldgoal;
 	vec3_t angles;
+
+	if (!ent)
+	{
+		return;
+	}
 
 	// is our chase target gone?
 	if (!ent->client->chase_target->inuse
@@ -44,7 +48,6 @@ void UpdateChaseCam(edict_t *ent)
 	targ = ent->client->chase_target;
 
 	VectorCopy(targ->s.origin, ownerv);
-	VectorCopy(ent->s.origin, oldgoal);
 
 	ownerv[2] += targ->viewheight;
 
@@ -113,6 +116,11 @@ void ChaseNext(edict_t *ent)
 	int i;
 	edict_t *e;
 
+	if (!ent)
+	{
+		return;
+	}
+
 	if (!ent->client->chase_target)
 		return;
 
@@ -136,6 +144,11 @@ void ChasePrev(edict_t *ent)
 {
 	int i;
 	edict_t *e;
+
+	if (!ent)
+	{
+		return;
+	}
 
 	if (!ent->client->chase_target)
 		return;
@@ -161,6 +174,11 @@ void GetChaseTarget(edict_t *ent)
 	int i;
 	edict_t *other;
 
+	if (!ent)
+	{
+		return;
+	}
+
 	for (i = 1; i <= maxclients->value; i++) {
 		other = g_edicts + i;
 		if (other->inuse && !other->client->resp.spectator) {
@@ -170,6 +188,7 @@ void GetChaseTarget(edict_t *ent)
 			return;
 		}
 	}
+
 	gi.centerprintf(ent, "No other players to chase.");
 }
 

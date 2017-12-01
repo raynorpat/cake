@@ -55,7 +55,11 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #endif
 
 typedef unsigned char 		byte;
+#if defined(__cplusplus)
+typedef int			qboolean;
+#else
 typedef enum {false, true}	qboolean;
+#endif
 
 
 #ifndef NULL
@@ -90,6 +94,10 @@ typedef enum {false, true}	qboolean;
 # endif
 #endif
 
+#if defined(__DJGPP__) || defined(_WIN32)
+char *strtok_r(char *s, const char *delim, char **last);
+#endif
+
 
 #define CL_MASTER_ADDR	"maraakate.org" /* FS: master.gamespy.com & co are dead */
 #define CL_MASTER_PORT	"28900"
@@ -107,7 +115,7 @@ typedef enum {false, true}	qboolean;
 #define	MAX_TOKEN_CHARS		128		// max length of an individual token
 
 #define	MAX_QPATH			64		// max length of a quake game pathname
-#define	MAX_OSPATH			128		// max length of a filesystem pathname
+#define	MAX_OSPATH			256		// max length of a filesystem pathname
 
 //
 // per-level limits
@@ -424,7 +432,6 @@ COLLISION DETECTION
 #define	CONTENTS_DETAIL			0x8000000	// brushes to be added after vis leafs
 #define	CONTENTS_TRANSLUCENT	0x10000000	// auto set if any surface has trans
 #define	CONTENTS_LADDER			0x20000000
-
 
 
 #define	SURF_LIGHT		0x1		// value will hold the light strength

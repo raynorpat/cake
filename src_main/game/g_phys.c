@@ -51,6 +51,11 @@ edict_t	*SV_TestEntityPosition (edict_t *ent)
 	trace_t	trace;
 	int		mask;
 
+	if (!ent)
+	{
+		return NULL;
+	}
+
 	if (ent->clipmask)
 		mask = ent->clipmask;
 	else
@@ -58,7 +63,14 @@ edict_t	*SV_TestEntityPosition (edict_t *ent)
 	trace = gi.trace (ent->s.origin, ent->mins, ent->maxs, ent->s.origin, ent, mask);
 	
 	if (trace.startsolid)
+	{
+        if ((ent->svflags & SVF_DEADMONSTER) && (trace.ent->client || (trace.ent->svflags & SVF_MONSTER)))
+		{
+			return NULL;
+		}
+
 		return g_edicts;
+	}
 		
 	return NULL;
 }
@@ -71,17 +83,18 @@ SV_CheckVelocity
 */
 void SV_CheckVelocity (edict_t *ent)
 {
-	int		i;
+	if (!ent)
+	{
+		return;
+	}
 
 //
 // bound velocity
 //
-	for (i=0 ; i<3 ; i++)
+	if (VectorLength(ent->velocity) > sv_maxvelocity->value)
 	{
-		if (ent->velocity[i] > sv_maxvelocity->value)
-			ent->velocity[i] = sv_maxvelocity->value;
-		else if (ent->velocity[i] < -sv_maxvelocity->value)
-			ent->velocity[i] = -sv_maxvelocity->value;
+		VectorNormalize(ent->velocity);
+		VectorScale(ent->velocity, sv_maxvelocity->value, ent->velocity);
 	}
 }
 
@@ -95,6 +108,11 @@ Runs thinking code for this frame if necessary
 qboolean SV_RunThink (edict_t *ent)
 {
 	float	thinktime;
+
+	if (!ent)
+	{
+		return false;
+	}
 
 	thinktime = ent->nextthink;
 	if (thinktime <= 0)
@@ -122,12 +140,17 @@ void SV_Impact (edict_t *e1, trace_t *trace)
 	edict_t		*e2;
 //	cplane_t	backplane;
 
+	if (!e1 || !trace)
+	{
+		return;
+	}
+
 	e2 = trace->ent;
 
-	if (e1->touch && e1->solid != SOLID_NOT)
+	if (e1->touch && (e1->solid != SOLID_NOT))
 		e1->touch (e1, e2, &trace->plane, trace->surface);
 	
-	if (e2->touch && e2->solid != SOLID_NOT)
+	if (e2->touch && (e2->solid != SOLID_NOT))
 		e2->touch (e2, e1, NULL, NULL);
 }
 
@@ -160,7 +183,9 @@ int ClipVelocity (vec3_t in, vec3_t normal, vec3_t out, float overbounce)
 	{
 		change = normal[i]*backoff;
 		out[i] = in[i] - change;
-		if (out[i] > -STOP_EPSILON && out[i] < STOP_EPSILON)
+
+		if ((out[i] > -STOP_EPSILON) && (out[i] < STOP_EPSILON))
+
 			out[i] = 0;
 	}
 
@@ -195,6 +220,11 @@ int SV_FlyMove (edict_t *ent, float time, int mask)
 	float		time_left;
 	int			blocked;
 	
+	if (!ent)
+	{
+		return 0;
+	}
+
 	numbumps = 4;
 	
 	blocked = 0;
@@ -321,8 +351,131 @@ SV_AddGravity
 */
 void SV_AddGravity (edict_t *ent)
 {
+	if (!ent)
+	{
+		return;
+	}
+
 	ent->velocity[2] -= ent->gravity * sv_gravity->value * FRAMETIME;
 }
+
+/*
+============
+RealBoundingBox
+
+Returns the actual bounding box of a bmodel.
+
+This is a big improvement over what q2 normally
+does with rotating bmodels - q2 sets absmin,
+absmax to a cube that will completely contain
+the bmodel at *any* rotation on *any* axis, whether
+the bmodel can actually rotate to that angle or not.
+
+This leads to a lot of false block tests in SV_Push
+if another bmodel is in the vicinity.
+============
+*/
+void RealBoundingBox(edict_t *ent, vec3_t mins, vec3_t maxs)
+{
+	vec3_t forward, left, up, f1, l1, u1;
+	vec3_t p[8];
+	int i, j, k, j2, k4;
+
+	for (k = 0; k < 2; k++)
+	{
+		k4 = k * 4;
+
+		if (k)
+		{
+			p[k4][2] = ent->maxs[2];
+		}
+		else
+		{
+			p[k4][2] = ent->mins[2];
+		}
+
+		p[k4 + 1][2] = p[k4][2];
+		p[k4 + 2][2] = p[k4][2];
+		p[k4 + 3][2] = p[k4][2];
+
+		for (j = 0; j < 2; j++)
+		{
+			j2 = j * 2;
+
+			if (j)
+			{
+				p[j2 + k4][1] = ent->maxs[1];
+			}
+			else
+			{
+				p[j2 + k4][1] = ent->mins[1];
+			}
+
+			p[j2 + k4 + 1][1] = p[j2 + k4][1];
+
+			for (i = 0; i < 2; i++)
+			{
+				if (i)
+				{
+					p[i + j2 + k4][0] = ent->maxs[0];
+				}
+				else
+				{
+					p[i + j2 + k4][0] = ent->mins[0];
+				}
+			}
+		}
+	}
+
+	AngleVectors(ent->s.angles, forward, left, up);
+
+	for (i = 0; i < 8; i++)
+	{
+		VectorScale(forward, p[i][0], f1);
+		VectorScale(left, -p[i][1], l1);
+		VectorScale(up, p[i][2], u1);
+		VectorAdd(ent->s.origin, f1, p[i]);
+		VectorAdd(p[i], l1, p[i]);
+		VectorAdd(p[i], u1, p[i]);
+	}
+
+	VectorCopy(p[0], mins);
+	VectorCopy(p[0], maxs);
+
+	for (i = 1; i < 8; i++)
+	{
+		if (mins[0] > p[i][0])
+		{
+			mins[0] = p[i][0];
+		}
+
+		if (mins[1] > p[i][1])
+		{
+			mins[1] = p[i][1];
+		}
+
+		if (mins[2] > p[i][2])
+		{
+			mins[2] = p[i][2];
+		}
+
+		if (maxs[0] < p[i][0])
+		{
+			maxs[0] = p[i][0];
+		}
+
+ 		if (maxs[1] < p[i][1])
+		{
+			maxs[1] = p[i][1];
+		}
+
+		if (maxs[2] < p[i][2])
+		{
+			maxs[2] = p[i][2];
+		}
+	}
+}
+
 
 /*
 ===============================================================================
@@ -357,6 +510,12 @@ retry:
 
 	trace = gi.trace (start, ent->mins, ent->maxs, end, ent, mask);
 	
+	if (trace.startsolid || trace.allsolid)
+	{
+		mask ^= CONTENTS_DEADMONSTER;
+		trace = gi.trace (start, ent->mins, ent->maxs, end, ent, mask);
+	}
+
 	VectorCopy (trace.endpos, ent->s.origin);
 	gi.linkentity (ent);
 
@@ -404,9 +563,14 @@ qboolean SV_Push (edict_t *pusher, vec3_t move, vec3_t amove)
 {
 	int			i, e;
 	edict_t		*check, *block;
-	vec3_t		mins, maxs;
 	pushed_t	*p;
 	vec3_t		org, org2, move2, forward, right, up;
+	vec3_t realmins, realmaxs;
+
+	if (!pusher)
+	{
+		return false;
+	}
 
 	// clamp the move to 1/8 units, so the position will
 	// be accurate for client side prediction
@@ -418,14 +582,8 @@ qboolean SV_Push (edict_t *pusher, vec3_t move, vec3_t amove)
 			temp += 0.5;
 		else
 			temp -= 0.5;
-		move[i] = 0.125 * (int)temp;
-	}
 
-	// find the bounding box
-	for (i=0 ; i<3 ; i++)
-	{
-		mins[i] = pusher->absmin[i] + move[i];
-		maxs[i] = pusher->absmax[i] + move[i];
+		move[i] = 0.125 * (int)temp;
 	}
 
 // we need this for pushing things later
@@ -444,6 +602,9 @@ qboolean SV_Push (edict_t *pusher, vec3_t move, vec3_t amove)
 	VectorAdd (pusher->s.origin, move, pusher->s.origin);
 	VectorAdd (pusher->s.angles, amove, pusher->s.angles);
 	gi.linkentity (pusher);
+
+	// create a real bounding box for rotating brush models
+	RealBoundingBox(pusher,realmins,realmaxs);
 
 // see if any solid entities are inside the final position
 	check = g_edicts+1;
@@ -464,12 +625,12 @@ qboolean SV_Push (edict_t *pusher, vec3_t move, vec3_t amove)
 		if (check->groundentity != pusher)
 		{
 			// see if the ent needs to be tested
-			if ( check->absmin[0] >= maxs[0]
-			|| check->absmin[1] >= maxs[1]
-			|| check->absmin[2] >= maxs[2]
-			|| check->absmax[0] <= mins[0]
-			|| check->absmax[1] <= mins[1]
-			|| check->absmax[2] <= mins[2] )
+			if ((check->absmin[0] >= realmaxs[0]) ||
+				(check->absmin[1] >= realmaxs[1]) ||
+				(check->absmin[2] >= realmaxs[2]) ||
+				(check->absmax[0] <= realmins[0]) ||
+				(check->absmax[1] <= realmins[1]) ||
+				(check->absmax[2] <= realmins[2]))
 				continue;
 
 			// see if the ent's bbox is inside the pusher's final position
@@ -487,6 +648,7 @@ qboolean SV_Push (edict_t *pusher, vec3_t move, vec3_t amove)
 
 			// try moving the contacted entity 
 			VectorAdd (check->s.origin, move, check->s.origin);
+
 			if (check->client)
 			{	// FIXME: doesn't rotate monsters?
 				check->client->ps.pmove.delta_angles[YAW] += amove[YAW];
@@ -514,7 +676,6 @@ qboolean SV_Push (edict_t *pusher, vec3_t move, vec3_t amove)
 
 			// if it is ok to leave in the old position, do it
 			// this is only relevent for riding entities, not pushed
-			// FIXME: this doesn't acount for rotation
 			VectorSubtract (check->s.origin, move, check->s.origin);
 			block = SV_TestEntityPosition (check);
 			if (!block)
@@ -564,6 +725,11 @@ void SV_Physics_Pusher (edict_t *ent)
 	vec3_t		move, amove;
 	edict_t		*part, *mv;
 
+	if (!ent)
+	{
+		return;
+	}
+
 	// if not a team captain, so movement will be handled elsewhere
 	if ( ent->flags & FL_TEAMSLAVE)
 		return;
@@ -571,7 +737,6 @@ void SV_Physics_Pusher (edict_t *ent)
 	// make sure all team slaves can move before commiting
 	// any moves or calling any think functions
 	// if the move is blocked, all moved objects will be backed out
-//retry:
 	pushed_p = pushed;
 	for (part = ent ; part ; part=part->teamchain)
 	{
@@ -602,11 +767,6 @@ void SV_Physics_Pusher (edict_t *ent)
 		// otherwise, just stay in place until the obstacle is gone
 		if (part->blocked)
 			part->blocked (part, obstacle);
-#if 0
-		// if the pushed entity went away and the pusher is still there
-		if (!obstacle->inuse && part->inuse)
-			goto retry;
-#endif
 	}
 	else
 	{
@@ -629,6 +789,11 @@ Non moving objects can only think
 */
 void SV_Physics_None (edict_t *ent)
 {
+	if (!ent)
+	{
+		return;
+	}
+
 // regular thinking
 	SV_RunThink (ent);
 }
@@ -642,6 +807,11 @@ A moving object that doesn't obey physics
 */
 void SV_Physics_Noclip (edict_t *ent)
 {
+	if (!ent)
+	{
+		return;
+	}
+
 // regular thinking
 	if (!SV_RunThink (ent))
 		return;
@@ -676,6 +846,11 @@ void SV_Physics_Toss (edict_t *ent)
 	qboolean	wasinwater;
 	qboolean	isinwater;
 	vec3_t		old_origin;
+
+	if (!ent)
+	{
+		return;
+	}
 
 // regular thinking
 	SV_RunThink (ent);
@@ -726,7 +901,7 @@ void SV_Physics_Toss (edict_t *ent)
 	// stop if on ground
 		if (trace.plane.normal[2] > 0.7)
 		{		
-			if (ent->velocity[2] < 60 || ent->movetype != MOVETYPE_BOUNCE )
+			if ((ent->velocity[2] < 60) || (ent->movetype != MOVETYPE_BOUNCE))
 			{
 				ent->groundentity = trace.ent;
 				ent->groundentity_linkcount = trace.ent->linkcount;
@@ -793,6 +968,11 @@ void SV_AddRotationalFriction (edict_t *ent)
 	int		n;
 	float	adjustment;
 
+	if (!ent)
+	{
+		return;
+	}
+
 	VectorMA (ent->s.angles, FRAMETIME, ent->avelocity, ent->s.angles);
 	adjustment = FRAMETIME * sv_stopspeed * sv_friction;
 	for (n = 0; n < 3; n++)
@@ -821,6 +1001,11 @@ void SV_Physics_Step (edict_t *ent)
 	float		friction;
 	edict_t		*groundentity;
 	int			mask;
+
+	if (!ent)
+	{
+		return;
+	}
 
 	// airborn monsters should always check for ground
 	if (!ent->groundentity)
@@ -881,7 +1066,7 @@ void SV_Physics_Step (edict_t *ent)
 		// apply friction
 		// let dead monsters who aren't completely onground slide
 		if ((wasonground) || (ent->flags & (FL_SWIM|FL_FLY)))
-			if (!(ent->health <= 0.0 && !M_CheckBottom(ent)))
+			if (!((ent->health <= 0.0) && !M_CheckBottom(ent)))
 			{
 				vel = ent->velocity;
 				speed = sqrt(vel[0]*vel[0] +vel[1]*vel[1]);
@@ -931,6 +1116,11 @@ G_RunEntity
 */
 void G_RunEntity (edict_t *ent)
 {
+	if (!ent)
+	{
+		return;
+	}
+
 	if (ent->prethink)
 		ent->prethink (ent);
 

@@ -156,7 +156,7 @@ void InitGame (void)
 	gun_x = gi.cvar ("gun_x", "0", 0);
 	gun_y = gi.cvar ("gun_y", "0", 0);
 	gun_z = gi.cvar ("gun_z", "0", 0);
-	oldsave = gi.cvar("oldsave", "0", CVAR_ARCHIVE);
+
 	//FIXME: sv_ prefix is wrong for these
 	sv_rollspeed = gi.cvar ("sv_rollspeed", "200", 0);
 	sv_rollangle = gi.cvar ("sv_rollangle", "2", 0);
@@ -206,9 +206,8 @@ void InitGame (void)
 	// items
 	InitItems ();
 
-	Com_sprintf (game.helpmessage1, sizeof(game.helpmessage1), "");
-
-	Com_sprintf (game.helpmessage2, sizeof(game.helpmessage2), "");
+	game.helpmessage1[0] = 0;
+	game.helpmessage2[0] = 0;
 
 	// initialize all entities for this game
 	game.maxentities = maxentities->value;
@@ -504,7 +503,7 @@ void ReadGame (char *filename)
 		gi.error ("Couldn't open %s", filename);
 
 	fread (str, sizeof(str), 1, f);
-	if (!(oldsave->value) && strcmp (str, __DATE__))
+	if (0/*!(oldsave->value) && strcmp (str, __DATE__)*/)
 	{
 		fclose (f);
 		gi.error ("Savegame from an older version.\n");
@@ -586,7 +585,6 @@ void WriteLevelLocals (FILE *f)
 		WriteField2 (f, field, (byte *)&level);
 	}
 }
-
 
 /*
 ==============

@@ -251,9 +251,15 @@ void ED_CallSpawn (edict_t *ent)
 	gitem_t	*item;
 	int		i;
 
+	if (!ent)
+	{
+		return;
+	}
+
 	if (!ent->classname)
 	{
 		gi.dprintf ("ED_CallSpawn: NULL classname\n");
+		G_FreeEdict(ent);
 		return;
 	}
 
@@ -291,6 +297,11 @@ char *ED_NewString (char *string)
 	char	*newb, *new_p;
 	int		i,l;
 	
+	if (!string)
+	{
+		return NULL;
+	}
+
 	l = strlen(string) + 1;
 
 	newb = (char *) gi.TagMalloc (l, TAG_LEVEL);
@@ -299,7 +310,7 @@ char *ED_NewString (char *string)
 
 	for (i=0 ; i< l ; i++)
 	{
-		if (string[i] == '\\' && i < l-1)
+		if ((string[i] == '\\') && (i < l - 1))
 		{
 			i++;
 			if (string[i] == 'n')
@@ -332,9 +343,14 @@ void ED_ParseField (char *key, char *value, edict_t *ent)
 	float	v;
 	vec3_t	vec;
 
+	if (!key || !value)
+	{
+		return;
+	}
+
 	for (f=fields ; f->name ; f++)
 	{
-		if (!(f->flags & FFL_NOSPAWN) && !Q_stricmp(f->name, key))
+		if (!(f->flags & FFL_NOSPAWN) && !Q_strcasecmp(f->name, (char *)key))
 		{	// found it
 			if (f->flags & FFL_SPAWNTEMP)
 				b = (byte *)&st;
@@ -353,13 +369,13 @@ void ED_ParseField (char *key, char *value, edict_t *ent)
 				((float *)(b+f->ofs))[2] = vec[2];
 				break;
 			case F_INT:
-				*(int *)(b+f->ofs) = atoi(value);
+				*(int *)(b + f->ofs) = (int)strtol(value, (char **)NULL, 10);
 				break;
 			case F_FLOAT:
-				*(float *)(b+f->ofs) = atof(value);
+				*(float *)(b + f->ofs) = strtod(value, (char **)NULL);
 				break;
 			case F_ANGLEHACK:
-				v = atof(value);
+				v = strtod(value, (char **)NULL);
 				((float *)(b+f->ofs))[0] = 0;
 				((float *)(b+f->ofs))[1] = v;
 				((float *)(b+f->ofs))[2] = 0;
@@ -388,6 +404,11 @@ char *ED_ParseEdict (char *data, edict_t *ent)
 	qboolean	init;
 	char		keyname[256];
 	char		*com_token;
+
+	if (!ent)
+	{
+		return NULL;
+	}
 
 	init = false;
 	memset (&st, 0, sizeof(st));
@@ -496,6 +517,11 @@ void SpawnEntities (char *mapname, char *entities, char *spawnpoint)
 	char		*com_token;
 	int			i;
 	float		skill_level;
+
+	if (!mapname || !entities || !spawnpoint)
+	{
+		return;
+	}
 
 	skill_level = floor (skill->value);
 	if (skill_level < 0)
@@ -767,6 +793,11 @@ Only used for the world.
 */
 void SP_worldspawn (edict_t *ent)
 {
+	if (!ent)
+	{
+		return;
+	}
+
 	ent->movetype = MOVETYPE_PUSH;
 	ent->solid = SOLID_BSP;
 	ent->inuse = true;			// since the world doesn't use G_Spawn()

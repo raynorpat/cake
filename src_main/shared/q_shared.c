@@ -900,6 +900,10 @@ void COM_FileBase (char *in, char *out)
 {
 	char *s, *s2;
 
+	if (!*in) {
+		*out = 0;
+		return;
+	}
 	s = in + strlen (in) - 1;
 
 	while (s != in && *s != '.')
@@ -929,6 +933,10 @@ void COM_FilePath (char *in, char *out)
 {
 	char *s;
 
+	if (!*in) {
+		*out = 0;
+		return;
+	}
 	s = in + strlen (in) - 1;
 
 	while (s != in && *s != '/')
@@ -951,6 +959,9 @@ void COM_DefaultExtension (char *path, char *extension)
 	// if path doesn't have a .EXT, append extension
 	// (extension should include the .)
 	//
+	if (!*path)
+		return;
+
 	src = path + strlen (path) - 1;
 
 	while (*src != '/' && src != path)
@@ -1591,4 +1602,46 @@ void Info_SetValueForKey (char *s, char *key, char *value)
 
 //====================================================================
 
+#if defined(_WIN32)
+char *strtok_r(char *s, const char *delim, char **last)
+{
+	const char *spanp;
+	int c, sc;
+	char *tok;
+
+	if (s == NULL && (s = *last) == NULL)
+		return (NULL);
+
+	// Skip (span) leading delimiters (s += strspn(s, delim), sort of).
+cont:
+	c = *s++;
+	for (spanp = delim; (sc = *spanp++) != 0;) {
+		if (c == sc)
+			goto cont;
+	}
+
+	if (c == 0) {		// no non-delimiter characters
+		*last = NULL;
+		return (NULL);
+	}
+	tok = s - 1;
+
+	// Scan token (scan for delimiters: s += strcspn(s, delim), sort of).
+	// Note that delim must have one NUL; we stop if we see that, too.
+	for (;;) {
+		c = *s++;
+		spanp = delim;
+		do {
+			if ((sc = *spanp++) == c) {
+				if (c == 0)
+					s = NULL;
+				else
+					s[-1] = '\0';
+				*last = s;
+				return (tok);
+			}
+		} while (sc != 0);
+	}
+}
+#endif
 

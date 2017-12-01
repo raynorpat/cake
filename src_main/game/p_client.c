@@ -41,6 +41,11 @@ static void SP_FixCoopSpots (edict_t *self)
 	edict_t	*spot;
 	vec3_t	d;
 
+	if (!self)
+	{
+		return;
+	}
+
 	spot = NULL;
 
 	while(1)
@@ -51,9 +56,9 @@ static void SP_FixCoopSpots (edict_t *self)
 		if (!spot->targetname)
 			continue;
 		VectorSubtract(self->s.origin, spot->s.origin, d);
-		if (VectorLength(d) < 384)
+		if (VectorLength(d) < 550)
 		{
-			if ((!self->targetname) || Q_stricmp(self->targetname, spot->targetname) != 0)
+			if ((!self->targetname) || (Q_stricmp(self->targetname, spot->targetname) != 0))
 			{
 //				gi.dprintf("FixCoopSpots changed %s at %s targetname from %s to %s\n", self->classname, vtos(self->s.origin), self->targetname, spot->targetname);
 				self->targetname = spot->targetname;
@@ -70,6 +75,11 @@ static void SP_FixCoopSpots (edict_t *self)
 static void SP_CreateCoopSpots (edict_t *self)
 {
 	edict_t	*spot;
+
+	if (!self)
+	{
+		return;
+	}
 
 	if(Q_stricmp(level.mapname, "security") == 0)
 	{
@@ -107,6 +117,11 @@ The normal starting point for a level.
 */
 void SP_info_player_start(edict_t *self)
 {
+	if (!self)
+	{
+		return;
+	}
+
 	if (!coop->value)
 		return;
 	if(Q_stricmp(level.mapname, "security") == 0)
@@ -122,11 +137,17 @@ potential spawning position for deathmatch games
 */
 void SP_info_player_deathmatch(edict_t *self)
 {
+	if (!self)
+	{
+		return;
+	}
+
 	if (!deathmatch->value)
 	{
 		G_FreeEdict (self);
 		return;
 	}
+
 	SP_misc_teleporter_dest (self);
 }
 
@@ -136,6 +157,11 @@ potential spawning position for coop games
 
 void SP_info_player_coop(edict_t *self)
 {
+	if (!self)
+	{
+		return;
+	}
+
 	if (!coop->value)
 	{
 		G_FreeEdict (self);
@@ -186,11 +212,16 @@ qboolean IsFemale (edict_t *ent)
 {
 	char		*info;
 
+	if (!ent)
+	{
+		return false;
+	}
+
 	if (!ent->client)
 		return false;
 
 	info = Info_ValueForKey (ent->client->pers.userinfo, "gender");
-	if (info[0] == 'f' || info[0] == 'F')
+	if ((info[0] == 'f') || (info[0] == 'F'))
 		return true;
 	return false;
 }
@@ -199,11 +230,16 @@ qboolean IsNeutral (edict_t *ent)
 {
 	char		*info;
 
+	if (!ent)
+	{
+		return false;
+	}
+
 	if (!ent->client)
 		return false;
 
 	info = Info_ValueForKey (ent->client->pers.userinfo, "gender");
-	if (info[0] != 'f' && info[0] != 'F' && info[0] != 'm' && info[0] != 'M')
+	if ((info[0] != 'f') && (info[0] != 'F') && (info[0] != 'm') && (info[0] != 'M'))
 		return true;
 	return false;
 }
@@ -214,6 +250,11 @@ void ClientObituary (edict_t *self, edict_t *inflictor, edict_t *attacker)
 	char		*message;
 	char		*message2;
 	qboolean	ff;
+
+	if (!self || !inflictor)
+	{
+		return;
+	}
 
 	if (coop->value && attacker->client)
 		meansOfDeath |= MOD_FRIENDLY_FIRE;
@@ -414,6 +455,11 @@ void TossClientWeapon (edict_t *self)
 	qboolean	quad;
 	float		spread;
 
+	if (!self)
+	{
+		return;
+	}
+
 	if (!deathmatch->value)
 		return;
 
@@ -464,11 +510,16 @@ void LookAtKiller (edict_t *self, edict_t *inflictor, edict_t *attacker)
 {
 	vec3_t		dir;
 
-	if (attacker && attacker != world && attacker != self)
+	if (!self || !inflictor || !attacker)
+	{
+		return;
+	}
+
+	if (attacker && (attacker != world) && (attacker != self))
 	{
 		VectorSubtract (attacker->s.origin, self->s.origin, dir);
 	}
-	else if (inflictor && inflictor != world && inflictor != self)
+	else if (inflictor && (inflictor != world) && (inflictor != self))
 	{
 		VectorSubtract (inflictor->s.origin, self->s.origin, dir);
 	}
@@ -501,6 +552,11 @@ player_die
 void player_die (edict_t *self, edict_t *inflictor, edict_t *attacker, int damage, vec3_t point)
 {
 	int		n;
+
+	if (!self || !inflictor || !attacker)
+	{
+		return;
+	}
 
 	VectorClear (self->avelocity);
 
@@ -548,16 +604,20 @@ void player_die (edict_t *self, edict_t *inflictor, edict_t *attacker, int damag
 	self->flags &= ~FL_POWER_ARMOR;
 
 	if (self->health < -40)
-	{	// gib
+	{
+		// gib
 		gi.sound (self, CHAN_BODY, gi.soundindex ("misc/udeath.wav"), 1, ATTN_NORM, 0);
+
 		for (n= 0; n < 4; n++)
 			ThrowGib (self, "models/objects/gibs/sm_meat/tris.md2", damage, GIB_ORGANIC);
+
 		ThrowClientHead (self, damage);
 
 		self->takedamage = DAMAGE_NO;
 	}
 	else
-	{	// normal death
+	{
+		// normal death
 		if (!self->deadflag)
 		{
 			static int i;
@@ -565,25 +625,29 @@ void player_die (edict_t *self, edict_t *inflictor, edict_t *attacker, int damag
 			i = (i+1)%3;
 			// start a death animation
 			self->client->anim_priority = ANIM_DEATH;
+
 			if (self->client->ps.pmove.pm_flags & PMF_DUCKED)
 			{
 				self->s.frame = FRAME_crdeath1-1;
 				self->client->anim_end = FRAME_crdeath5;
 			}
-			else switch (i)
+			else
 			{
-			case 0:
-				self->s.frame = FRAME_death101-1;
-				self->client->anim_end = FRAME_death106;
-				break;
-			case 1:
-				self->s.frame = FRAME_death201-1;
-				self->client->anim_end = FRAME_death206;
-				break;
-			case 2:
-				self->s.frame = FRAME_death301-1;
-				self->client->anim_end = FRAME_death308;
-				break;
+				switch (i)
+				{
+				case 0:
+					self->s.frame = FRAME_death101-1;
+					self->client->anim_end = FRAME_death106;
+					break;
+				case 1:
+					self->s.frame = FRAME_death201-1;
+					self->client->anim_end = FRAME_death206;
+					break;
+				case 2:
+					self->s.frame = FRAME_death301-1;
+					self->client->anim_end = FRAME_death308;
+					break;
+				}
 			}
 			gi.sound (self, CHAN_VOICE, gi.soundindex(va("*death%i.wav", (rand()%4)+1)), 1, ATTN_NORM, 0);
 		}
@@ -608,6 +672,11 @@ void InitClientPersistant (gclient_t *client)
 {
 	gitem_t		*item;
 
+	if (!client)
+	{
+		return;
+	}
+
 	memset (&client->pers, 0, sizeof(client->pers));
 
 	item = FindItem("Blaster");
@@ -629,9 +698,13 @@ void InitClientPersistant (gclient_t *client)
 	client->pers.connected = true;
 }
 
-
 void InitClientResp (gclient_t *client)
 {
+	if (!client)
+	{
+		return;
+	}
+
 	memset (&client->resp, 0, sizeof(client->resp));
 	client->resp.enterframe = level.framenum;
 	client->resp.coop_respawn = client->pers;
@@ -667,9 +740,15 @@ void SaveClientData (void)
 
 void FetchClientEntData (edict_t *ent)
 {
+	if (!ent)
+	{
+		return;
+	}
+
 	ent->health = ent->client->pers.health;
 	ent->max_health = ent->client->pers.max_health;
 	ent->flags |= ent->client->pers.savedFlags;
+
 	if (coop->value)
 		ent->client->resp.score = ent->client->pers.score;
 }
@@ -691,7 +770,7 @@ PlayersRangeFromSpot
 Returns the distance to the nearest player from the given spot
 ================
 */
-float	PlayersRangeFromSpot (edict_t *spot)
+float PlayersRangeFromSpot (edict_t *spot)
 {
 	edict_t	*player;
 	float	bestplayerdistance;
@@ -699,6 +778,10 @@ float	PlayersRangeFromSpot (edict_t *spot)
 	int		n;
 	float	playerdistance;
 
+	if (!spot)
+	{
+		return 0;
+	}
 
 	bestplayerdistance = 9999999;
 
@@ -765,7 +848,17 @@ edict_t *SelectRandomDeathmatchSpawnPoint (void)
 		spot1 = spot2 = NULL;
 	}
 	else
-		count -= 2;
+	{
+		if (spot1)
+		{
+			count--;
+		}
+
+		if (spot2)
+		{
+			count--;
+		}
+	}
 
 	selection = rand() % count;
 
@@ -773,7 +866,7 @@ edict_t *SelectRandomDeathmatchSpawnPoint (void)
 	do
 	{
 		spot = G_Find (spot, FOFS(classname), "info_player_deathmatch");
-		if (spot == spot1 || spot == spot2)
+		if ((spot == spot1) || (spot == spot2))
 			selection++;
 	} while(selection--);
 
@@ -792,10 +885,10 @@ edict_t *SelectFarthestDeathmatchSpawnPoint (void)
 	float	bestdistance, bestplayerdistance;
 	edict_t	*spot;
 
-
 	spot = NULL;
 	bestspot = NULL;
 	bestdistance = 0;
+
 	while ((spot = G_Find (spot, FOFS(classname), "info_player_deathmatch")) != NULL)
 	{
 		bestplayerdistance = PlayersRangeFromSpot (spot);
@@ -833,6 +926,11 @@ edict_t *SelectCoopSpawnPoint (edict_t *ent)
 	int		index;
 	edict_t	*spot = NULL;
 	char	*target;
+
+	if (!ent)
+	{
+		return NULL;
+	}
 
 	index = ent->client - game.clients;
 
@@ -876,6 +974,11 @@ void	SelectSpawnPoint (edict_t *ent, vec3_t origin, vec3_t angles)
 {
 	edict_t	*spot = NULL;
 
+	if (!ent)
+	{
+		return;
+	}
+
 	if (deathmatch->value)
 		spot = SelectDeathmatchSpawnPoint ();
 	else if (coop->value)
@@ -917,20 +1020,29 @@ void	SelectSpawnPoint (edict_t *ent, vec3_t origin, vec3_t angles)
 
 void InitBodyQue (void)
 {
-	int		i;
-	edict_t	*ent;
-
-	level.body_que = 0;
-	for (i=0; i<BODY_QUEUE_SIZE ; i++)
+	if (deathmatch->value || coop->value)
 	{
-		ent = G_Spawn();
-		ent->classname = "bodyque";
+		int		i;
+		edict_t	*ent;
+	
+		level.body_que = 0;
+	
+		for (i=0; i<BODY_QUEUE_SIZE ; i++)
+		{
+			ent = G_Spawn();
+			ent->classname = "bodyque";
+		}
 	}
 }
 
 void body_die (edict_t *self, edict_t *inflictor, edict_t *attacker, int damage, vec3_t point)
 {
 	int	n;
+
+	if (!self)
+	{
+		return;
+	}
 
 	if (self->health < -40)
 	{
@@ -947,6 +1059,11 @@ void CopyToBodyQue (edict_t *ent)
 {
 	edict_t		*body;
 
+	if (!ent)
+	{
+		return;
+	}
+
 	// grab a body que and cycle to the next one
 	body = &g_edicts[(int)maxclients->value + level.body_que + 1];
 	level.body_que = (level.body_que + 1) % BODY_QUEUE_SIZE;
@@ -954,7 +1071,6 @@ void CopyToBodyQue (edict_t *ent)
 	// FIXME: send an effect on the removed body
 
 	gi.unlinkentity (ent);
-
 	gi.unlinkentity (body);
 	body->s = ent->s;
 	body->s.number = body - g_edicts;
@@ -979,6 +1095,11 @@ void CopyToBodyQue (edict_t *ent)
 
 void respawn (edict_t *self)
 {
+	if (!self)
+	{
+		return;
+	}
+
 	if (deathmatch->value || coop->value)
 	{
 		// spectator's don't leave bodies
@@ -1010,6 +1131,11 @@ void respawn (edict_t *self)
 void spectator_respawn (edict_t *ent)
 {
 	int i, numspec;
+
+	if (!ent)
+	{
+		return;
+	}
 
 	// if the user wants to become a spectator, make sure he doesn't
 	// exceed max_spectators
@@ -1045,6 +1171,7 @@ void spectator_respawn (edict_t *ent)
 		// he was a spectator and wants to join the game
 		// he must have the right password
 		char *value = Info_ValueForKey (ent->client->pers.userinfo, "password");
+
 		if (*password->string && strcmp(password->string, "none") && 
 			strcmp(password->string, value)) {
 			gi.cprintf(ent, PRINT_HIGH, "Password incorrect.\n");
@@ -1096,6 +1223,7 @@ a deathmatch.
 */
 void PutClientInServer (edict_t *ent)
 {
+	char userinfo[MAX_INFO_STRING];
 	vec3_t	mins = {-16, -16, -24};
 	vec3_t	maxs = {16, 16, 32};
 	int		index;
@@ -1104,6 +1232,11 @@ void PutClientInServer (edict_t *ent)
 	int		i;
 	client_persistant_t	saved;
 	client_respawn_t	resp;
+
+  	if (!ent)
+	{
+		return;
+	}
 
 	// find a spawn point
 	// do it before setting health back up, so farthest
@@ -1116,8 +1249,6 @@ void PutClientInServer (edict_t *ent)
 	// deathmatch wipes most client data every spawn
 	if (deathmatch->value)
 	{
-		char		userinfo[MAX_INFO_STRING];
-
 		resp = client->resp;
 		memcpy (userinfo, client->pers.userinfo, sizeof(userinfo));
 		InitClientPersistant (client);
@@ -1125,17 +1256,8 @@ void PutClientInServer (edict_t *ent)
 	}
 	else if (coop->value)
 	{
-//		int			n;
-		char		userinfo[MAX_INFO_STRING];
-
 		resp = client->resp;
 		memcpy (userinfo, client->pers.userinfo, sizeof(userinfo));
-		// this is kind of ugly, but it's how we want to handle keys in coop
-//		for (n = 0; n < game.num_items; n++)
-//		{
-//			if (itemlist[n].flags & IT_KEY)
-//				resp.coop_respawn.inventory[n] = client->pers.inventory[n];
-//		}
 		resp.coop_respawn.game_helpchanged = client->pers.game_helpchanged;
 		resp.coop_respawn.helpchanged = client->pers.helpchanged;
 		client->pers = resp.coop_respawn;
@@ -1148,12 +1270,17 @@ void PutClientInServer (edict_t *ent)
 		memset (&resp, 0, sizeof(resp));
 	}
 
+	memcpy(userinfo, client->pers.userinfo, sizeof(userinfo));
+	ClientUserinfoChanged(ent, userinfo);
+
 	// clear everything but the persistant data
 	saved = client->pers;
 	memset (client, 0, sizeof(*client));
 	client->pers = saved;
+
 	if (client->pers.health <= 0)
 		InitClientPersistant(client);
+
 	client->resp = resp;
 
 	// copy some data from the client to the entity
@@ -1178,7 +1305,7 @@ void PutClientInServer (edict_t *ent)
 	ent->waterlevel = 0;
 	ent->watertype = 0;
 	ent->flags &= ~FL_NO_KNOCKBACK;
-	ent->svflags &= ~SVF_DEADMONSTER;
+	ent->svflags = 0;
 
 	VectorCopy (mins, ent->mins);
 	VectorCopy (maxs, ent->maxs);
@@ -1267,6 +1394,11 @@ deathmatch mode, so clear everything out before starting them.
 */
 void ClientBeginDeathmatch (edict_t *ent)
 {
+	if (!ent)
+	{
+		return;
+	}
+
 	G_InitEdict (ent);
 
 	InitClientResp (ent->client);
@@ -1305,6 +1437,11 @@ to be placed into the game.  This will happen every level load.
 void ClientBegin (edict_t *ent)
 {
 	int		i;
+
+	if (!ent)
+	{
+		return;
+	}
 
 	ent->client = game.clients + (ent - g_edicts - 1);
 
@@ -1372,6 +1509,11 @@ void ClientUserinfoChanged (edict_t *ent, char *userinfo)
 {
 	char	*s;
 	int		playernum;
+
+	if (!ent || !userinfo)
+	{
+		return;
+	}
 
 	// check for malformed or illegal info strings
 	if (!Info_Validate(userinfo))
@@ -1441,6 +1583,11 @@ qboolean ClientConnect (edict_t *ent, char *userinfo)
 {
 	char	*value;
 
+	if (!ent || !userinfo)
+	{
+		return false;
+	}
+
 	// check to see if they are on the banned IP list
 	value = Info_ValueForKey (userinfo, "ip");
 	if (SV_FilterPacket(value)) {
@@ -1479,7 +1626,6 @@ qboolean ClientConnect (edict_t *ent, char *userinfo)
 		}
 	}
 
-
 	// they can connect
 	ent->client = game.clients + (ent - g_edicts - 1);
 
@@ -1489,6 +1635,7 @@ qboolean ClientConnect (edict_t *ent, char *userinfo)
 	{
 		// clear the respawning variables
 		InitClientResp (ent->client);
+
 		if (!game.autosaved || !ent->client->pers.weapon)
 			InitClientPersistant (ent->client);
 	}
@@ -1514,6 +1661,11 @@ Will not be called between levels.
 void ClientDisconnect (edict_t *ent)
 {
 	int		playernum;
+
+	if (!ent)
+	{
+		return;
+	}
 
 	if (!ent->client)
 		return;
@@ -1555,6 +1707,12 @@ trace_t	PM_trace (vec3_t start, vec3_t mins, vec3_t maxs, vec3_t end)
 unsigned CheckBlock (void *b, int c)
 {
 	int	v,i;
+
+	if (!b)
+	{
+		return 0;
+	}
+
 	v = 0;
 	for (i=0 ; i<c ; i++)
 		v+= ((byte *)b)[i];
@@ -1563,6 +1721,11 @@ unsigned CheckBlock (void *b, int c)
 void PrintPmove (pmove_t *pm)
 {
 	unsigned	c1, c2;
+
+	if (!pm)
+	{
+		return;
+	}
 
 	c1 = CheckBlock (&pm->s, sizeof(pm->s));
 	c2 = CheckBlock (&pm->cmd, sizeof(pm->cmd));
@@ -1584,18 +1747,23 @@ void ClientThink (edict_t *ent, usercmd_t *ucmd)
 	int		i, j;
 	pmove_t	pm;
 
+	if (!ent || !ucmd)
+	{
+		return;
+	}
+
 	level.current_entity = ent;
 	client = ent->client;
 
 	if (level.intermissiontime)
 	{
 		client->ps.pmove.pm_type = PM_FREEZE;
-		// can exit intermission after five seconds
 		
-		//if (level.time > level.intermissiontime + 5.0 && 
-		printf("%d\n", ucmd->buttons);
-		if ((ucmd->buttons & BUTTON_ANY) )
+		// can exit intermission after five seconds
+		if ((level.time > level.intermissiontime + 5.0) && (ucmd->buttons & BUTTON_ANY))
+		{
 		    level.exitintermission = true;
+		}
 		return;
 	}
 
@@ -1608,6 +1776,7 @@ void ClientThink (edict_t *ent, usercmd_t *ucmd)
 		client->resp.cmd_angles[2] = SHORT2ANGLE(ucmd->angles[2]);
 
 	} else {
+		int tmpVel;
 
 		// set up for pmove
 		memset (&pm, 0, sizeof(pm));
@@ -1626,8 +1795,12 @@ void ClientThink (edict_t *ent, usercmd_t *ucmd)
 
 		for (i=0 ; i<3 ; i++)
 		{
-			pm.s.origin[i] = ent->s.origin[i]*8;
-			pm.s.velocity[i] = ent->velocity[i]*8;
+			pm.s.origin[i] = ent->s.origin[i] * 8;
+
+			// save to an int first, in case the short overflows
+			// so we get defined behavior (at least with -fwrapv)
+			tmpVel = ent->velocity[i] * 8;
+			pm.s.velocity[i] = tmpVel;
 		}
 
 		if (memcmp(&client->old_pmove, &pm.s, sizeof(pm.s)))
@@ -1750,7 +1923,7 @@ void ClientThink (edict_t *ent, usercmd_t *ucmd)
 	// update chase cam if being followed
 	for (i = 1; i <= maxclients->value; i++) {
 		other = g_edicts + i;
-		if (other->inuse && other->client->chase_target == ent)
+		if (other->inuse && (other->client->chase_target == ent))
 			UpdateChaseCam(other);
 	}
 }
@@ -1769,14 +1942,19 @@ void ClientBeginServerFrame (edict_t *ent)
 	gclient_t	*client;
 	int			buttonMask;
 
+	if (!ent)
+	{
+		return;
+	}
+
 	if (level.intermissiontime)
 		return;
 
 	client = ent->client;
 
 	if (deathmatch->value &&
-		client->pers.spectator != client->resp.spectator &&
-		(level.time - client->respawn_time) >= 5) {
+		(client->pers.spectator != client->resp.spectator) &&
+		((level.time - client->respawn_time) >= 5)) {
 		spectator_respawn(ent);
 		return;
 	}

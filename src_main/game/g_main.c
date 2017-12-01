@@ -45,8 +45,11 @@ cvar_t	*maxclients;
 cvar_t	*maxspectators;
 cvar_t	*maxentities;
 cvar_t	*g_select_empty;
+#ifndef GAME_HARD_LINKED
 cvar_t	*dedicated;
-
+#else
+extern cvar_t *dedicated;
+#endif
 cvar_t	*filterban;
 
 cvar_t	*sv_maxvelocity;
@@ -57,7 +60,6 @@ cvar_t	*sv_rollangle;
 cvar_t	*gun_x;
 cvar_t	*gun_y;
 cvar_t	*gun_z;
-cvar_t  *oldsave;
 
 cvar_t	*run_pitch;
 cvar_t	*run_roll;
@@ -204,6 +206,11 @@ edict_t *CreateTargetChangeLevel(char *map)
 {
 	edict_t *ent;
 
+	if (!map)
+	{
+		return NULL;
+	}
+
 	ent = G_Spawn ();
 	ent->classname = "target_changelevel";
 	Com_sprintf(level.nextmap, sizeof(level.nextmap), "%s", map);
@@ -221,7 +228,7 @@ The timelimit or fraglimit has been exceeded
 void EndDMLevel (void)
 {
 	edict_t		*ent;
-	char *s, *t, *f;
+	char *s, *t, *tPtr, *f;
 	static const char *seps = " ,\n\r";
 
 	// stay on same level flag
@@ -239,7 +246,8 @@ void EndDMLevel (void)
 		while (t != NULL) {
 			if (Q_stricmp(t, level.mapname) == 0) {
 				// it's in the list, go to the next one
-				t = strtok(NULL, seps);
+				t = strtok_r(NULL, seps, &tPtr);
+
 				if (t == NULL) { // end of list, go to first one
 					if (f == NULL) // there isn't a first one, same level
 						BeginIntermission (CreateTargetChangeLevel (level.mapname) );
@@ -250,9 +258,11 @@ void EndDMLevel (void)
 				free(s);
 				return;
 			}
+
 			if (!f)
 				f = t;
-			t = strtok(NULL, seps);
+
+			t = strtok_r(NULL, seps, &tPtr);
 		}
 		free(s);
 	}
@@ -371,6 +381,8 @@ void ExitLevel (void)
 			ent->health = ent->client->pers.max_health;
 	}
 
+	gibsthisframe = 0;
+	lastgibframe = 0;
 }
 
 /*
@@ -423,7 +435,7 @@ void G_RunFrame (void)
 			}
 		}
 
-		if (i > 0 && i <= maxclients->value)
+		if ((i > 0) && (i <= maxclients->value))
 		{
 			ClientBeginServerFrame (ent);
 			continue;

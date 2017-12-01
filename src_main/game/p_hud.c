@@ -31,6 +31,11 @@ INTERMISSION
 
 void MoveClientToIntermission (edict_t *ent)
 {
+	if (!ent)
+	{
+		return;
+	}
+
 	if (deathmatch->value || coop->value)
 		ent->client->showscores = true;
 	VectorCopy (level.intermission_origin, ent->s.origin);
@@ -60,20 +65,25 @@ void MoveClientToIntermission (edict_t *ent)
 	ent->s.sound = 0;
 	ent->solid = SOLID_NOT;
 
-	// add the layout
+	gi.linkentity(ent);
 
+	// add the layout
 	if (deathmatch->value || coop->value)
 	{
 		DeathmatchScoreboardMessage (ent, NULL);
 		gi.unicast (ent, true);
 	}
-
 }
 
 void BeginIntermission (edict_t *targ)
 {
 	int		i, n;
 	edict_t	*ent, *client;
+
+	if (!targ)
+	{
+		return;
+	}
 
 	if (level.intermissiontime)
 		return;		// already activated
@@ -170,11 +180,15 @@ void DeathmatchScoreboardMessage (edict_t *ent, edict_t *killer)
 	int		sorted[MAX_CLIENTS];
 	int		sortedscores[MAX_CLIENTS];
 	int		score, total;
-	int		picnum;
 	int		x, y;
 	gclient_t	*cl;
 	edict_t		*cl_ent;
 	char	*tag;
+
+	if (!ent) // killer can be NULL
+	{
+		return;
+	}
 
 	// sort the clients by score
 	total = 0;
@@ -213,7 +227,6 @@ void DeathmatchScoreboardMessage (edict_t *ent, edict_t *killer)
 		cl = &game.clients[sorted[i]];
 		cl_ent = g_edicts + 1 + sorted[i];
 
-		picnum = gi.imageindex ("i_fixme");
 		x = (i>=6) ? 160 : 0;
 		y = 32 + 32 * (i%6);
 
@@ -250,48 +263,6 @@ void DeathmatchScoreboardMessage (edict_t *ent, edict_t *killer)
 	gi.WriteString (string);
 }
 
-
-/*
-==================
-DeathmatchScoreboard
-
-Draw instead of help message.
-Note that it isn't that hard to overflow the 1400 byte message limit!
-==================
-*/
-void DeathmatchScoreboard (edict_t *ent)
-{
-	DeathmatchScoreboardMessage (ent, ent->enemy);
-	gi.unicast (ent, true);
-}
-
-
-/*
-==================
-Cmd_Score_f
-
-Display the scoreboard
-==================
-*/
-void Cmd_Score_f (edict_t *ent)
-{
-	ent->client->showinventory = false;
-	ent->client->showhelp = false;
-
-	if (!deathmatch->value && !coop->value)
-		return;
-
-	if (ent->client->showscores)
-	{
-		ent->client->showscores = false;
-		return;
-	}
-
-	ent->client->showscores = true;
-	DeathmatchScoreboard (ent);
-}
-
-
 /*
 ==================
 HelpComputer
@@ -303,6 +274,11 @@ void HelpComputer (edict_t *ent)
 {
 	char	string[1024];
 	char	*sk;
+
+	if (!ent)
+	{
+		return;
+	}
 
 	if (skill->value == 0)
 		sk = "easy";
@@ -335,36 +311,29 @@ void HelpComputer (edict_t *ent)
 	gi.unicast (ent, true);
 }
 
-
 /*
-==================
-Cmd_Help_f
-
-Display the current help message
-==================
+===============
+InventoryMessage
+===============
 */
-void Cmd_Help_f (edict_t *ent)
+void InventoryMessage(edict_t *ent)
 {
-	// this is for backwards compatability
-	if (deathmatch->value)
-	{
-		Cmd_Score_f (ent);
-		return;
-	}
+	int i;
 
-	ent->client->showinventory = false;
-	ent->client->showscores = false;
+    if (!ent)
+    {
+    	return;
+    }
 
-	if (ent->client->showhelp && (ent->client->pers.game_helpchanged == game.helpchanged))
-	{
-		ent->client->showhelp = false;
-		return;
-	}
+    gi.WriteByte(svc_inventory);
 
-	ent->client->showhelp = true;
-	ent->client->pers.helpchanged = 0;
-	HelpComputer (ent);
+    for (i = 0; i < MAX_ITEMS; i++)
+    {
+		gi.WriteShort(ent->client->pers.inventory[i]);
+    }
 }
+
+
 
 
 //=======================================================================
@@ -377,8 +346,13 @@ G_SetStats
 void G_SetStats (edict_t *ent)
 {
 	gitem_t		*item;
-	int			index, cells;
+	int			index, cells = 0;
 	int			power_armor_type;
+
+	if (!ent)
+	{
+		return;
+	}
 
 	//
 	// health
@@ -400,9 +374,7 @@ void G_SetStats (edict_t *ent)
 		ent->client->ps.stats[STAT_AMMO_ICON] = gi.imageindex (item->icon);
 		ent->client->ps.stats[STAT_AMMO] = ent->client->pers.inventory[ent->client->ammo_index];
 	}
-	
-	cells = 0;
-	
+		
 	//
 	// armor
 	//
@@ -414,7 +386,7 @@ void G_SetStats (edict_t *ent)
 		{	// ran out of cells for power armor
 			ent->flags &= ~FL_POWER_ARMOR;
 			gi.sound(ent, CHAN_ITEM, gi.soundindex("misc/power2.wav"), 1, ATTN_NORM, 0);
-			power_armor_type = 0;;
+			power_armor_type = 0;
 		}
 	}
 
@@ -517,9 +489,24 @@ void G_SetStats (edict_t *ent)
 		ent->client->ps.stats[STAT_HELPICON] = gi.imageindex ("i_help");
 	else if ( (ent->client->pers.hand == CENTER_HANDED || ent->client->ps.fov > 91)
 		&& ent->client->pers.weapon)
-		ent->client->ps.stats[STAT_HELPICON] = gi.imageindex (ent->client->pers.weapon->icon);
+	{
+		cvar_t *gun;
+		gun = gi.cvar("cl_gun", "2", 0);
+
+		if (gun->value != 2)
+		{
+			ent->client->ps.stats[STAT_HELPICON] = gi.imageindex(
+					ent->client->pers.weapon->icon);
+		}
+		else
+		{
+			ent->client->ps.stats[STAT_HELPICON] = 0;
+		}
+	}
 	else
+	{
 		ent->client->ps.stats[STAT_HELPICON] = 0;
+	}
 
 	ent->client->ps.stats[STAT_SPECTATOR] = 0;
 }
@@ -534,10 +521,16 @@ void G_CheckChaseStats (edict_t *ent)
 	int i;
 	gclient_t *cl;
 
+	if (!ent)
+	{
+		return;
+	}
+
 	for (i = 1; i <= maxclients->value; i++) {
 		cl = g_edicts[i].client;
-		if (!g_edicts[i].inuse || cl->chase_target != ent)
+		if (!g_edicts[i].inuse || (cl->chase_target != ent))
 			continue;
+
 		memcpy(cl->ps.stats, ent->client->ps.stats, sizeof(cl->ps.stats));
 		G_SetSpectatorStats(g_edicts + i);
 	}
@@ -550,7 +543,14 @@ G_SetSpectatorStats
 */
 void G_SetSpectatorStats (edict_t *ent)
 {
-	gclient_t *cl = ent->client;
+	gclient_t *cl;
+
+	if (!ent)
+	{
+		return;
+	}
+
+	cl = ent->client;
 
 	if (!cl->chase_target)
 		G_SetStats (ent);
@@ -559,9 +559,9 @@ void G_SetSpectatorStats (edict_t *ent)
 
 	// layouts are independant in spectator
 	cl->ps.stats[STAT_LAYOUTS] = 0;
-	if (cl->pers.health <= 0 || level.intermissiontime || cl->showscores)
+	if ((cl->pers.health <= 0) || level.intermissiontime || cl->showscores)
 		cl->ps.stats[STAT_LAYOUTS] |= 1;
-	if (cl->showinventory && cl->pers.health > 0)
+	if (cl->showinventory && (cl->pers.health > 0))
 		cl->ps.stats[STAT_LAYOUTS] |= 2;
 
 	if (cl->chase_target && cl->chase_target->inuse)
