@@ -48,5 +48,5 @@ include_directories(
 # build it
 add_executable(qrad3 ${QRAD_INCLUDES} ${QRAD_SOURCES} ${COMMON_INCLUDES} ${COMMON_SOURCES})
 
-q_set_output_dir(qrad3 "")
-install(TARGETS qrad3 RUNTIME DESTINATION .)
+q_set_output_dir(qrad3 ${Q_UTILS_DIR})
+install(TARGETS qrad3 RUNTIME DESTINATION ${Q_UTILS_DIR})

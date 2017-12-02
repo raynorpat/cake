@@ -56,5 +56,5 @@ include_directories(
 # build it
 add_executable(qbsp3 ${QBSP_INCLUDES} ${QBSP_SOURCES} ${COMMON_INCLUDES} ${COMMON_SOURCES})
 
-q_set_output_dir(qbsp3 "")
-install(TARGETS qbsp3 RUNTIME DESTINATION .)
+q_set_output_dir(qbsp3 ${Q_UTILS_DIR})
+install(TARGETS qbsp3 RUNTIME DESTINATION ${Q_UTILS_DIR})

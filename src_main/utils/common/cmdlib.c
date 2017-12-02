@@ -34,7 +34,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #include <libc.h>
 #endif
 
-#define	BASEDIRNAME	"quake2"
+#define	BASEDIRNAME	"cake"
 #define PATHSEPERATOR   '/'
 
 // set these before calling CheckParm
@@ -197,8 +197,7 @@ void SetQdirFromPath (char *path)
 		path = temp;
 	}
 
-	// search for "quake2" in path
-
+	// search for "cake" in path
 	len = strlen(BASEDIRNAME);
 	for (c=path+strlen(path)-1 ; c != path ; c--)
 		if (!Q_strncasecmp (c, BASEDIRNAME, len))

@@ -29,5 +29,5 @@ source_group("qe4\\Resources" FILES ${WIN32_RESOURCES})
 add_executable(qe4 WIN32 ${WIN32_RESOURCES} ${QE4_INCLUDES} ${QE4_SOURCES})
 target_link_libraries(qe4 PRIVATE opengl32 glu32 comctl32)
 
-q_set_output_dir(qe4 "")
-install(TARGETS qe4 RUNTIME DESTINATION .)
+q_set_output_dir(qe4 ${Q_UTILS_DIR})
+install(TARGETS qe4 RUNTIME DESTINATION ${Q_UTILS_DIR})

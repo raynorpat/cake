@@ -33,5 +33,5 @@ include_directories(
 # build it
 add_executable(bspinfo3 ${BSPINFO_SOURCES} ${COMMON_INCLUDES} ${COMMON_SOURCES})
 
-q_set_output_dir(bspinfo3 "")
-install(TARGETS bspinfo3 RUNTIME DESTINATION .)
+q_set_output_dir(bspinfo3 ${Q_UTILS_DIR})
+install(TARGETS bspinfo3 RUNTIME DESTINATION ${Q_UTILS_DIR})

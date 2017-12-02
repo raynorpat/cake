@@ -32,5 +32,5 @@ add_definitions(-DSCREWUP)
 # build it
 add_executable(extractfuncts ${EXTRACTFUNCTS_INCLUDES} ${EXTRACTFUNCTS_SOURCES})
 
-q_set_output_dir(extractfuncts "")
-install(TARGETS extractfuncts RUNTIME DESTINATION .)
+q_set_output_dir(extractfuncts ${Q_UTILS_DIR})
+install(TARGETS extractfuncts RUNTIME DESTINATION ${Q_UTILS_DIR})

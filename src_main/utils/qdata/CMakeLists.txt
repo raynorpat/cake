@@ -55,5 +55,5 @@ include_directories(
 # build it
 add_executable(qdata ${QDATA_INCLUDES} ${QDATA_SOURCES} ${COMMON_INCLUDES} ${COMMON_SOURCES})
 
-q_set_output_dir(qdata "")
-install(TARGETS qdata RUNTIME DESTINATION .)
+q_set_output_dir(qdata ${Q_UTILS_DIR})
+install(TARGETS qdata RUNTIME DESTINATION ${Q_UTILS_DIR})

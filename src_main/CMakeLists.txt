@@ -20,8 +20,15 @@ macro(q_set_output_dir name dir)
     set_target_properties(${name} PROPERTIES ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_HOME_DIRECTORY}/../${dir})
 endmacro()
 
+# set directory names
 set(Q_GAME_DIR baseq2)
-
+if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
+	set(Q_UTILS_DIR bin_nt)
+elseif (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+	set(Q_UTILS_DIR bin_linux)
+elseif (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+	set(Q_UTILS_DIR bin_mac)
+endif()
 
 #
 # Options

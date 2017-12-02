@@ -42,5 +42,5 @@ include_directories(
 # build it
 add_executable(qvis3 ${QVIS_INCLUDES} ${QVIS_SOURCES} ${COMMON_INCLUDES} ${COMMON_SOURCES})
 
-q_set_output_dir(qvis3 "")
-install(TARGETS qvis3 RUNTIME DESTINATION .)
+q_set_output_dir(qvis3 ${Q_UTILS_DIR})
+install(TARGETS qvis3 RUNTIME DESTINATION ${Q_UTILS_DIR})

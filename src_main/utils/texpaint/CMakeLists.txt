@@ -55,5 +55,5 @@ source_group("texpaint\\Resources" FILES ${WIN32_RESOURCES})
 add_executable(texpaint WIN32 ${WIN32_RESOURCES} ${TEXPAINT_INCLUDES} ${TEXPAINT_SOURCES} ${COMMON_INCLUDES} ${COMMON_SOURCES})
 target_link_libraries(texpaint PRIVATE opengl32 glu32)
 
-q_set_output_dir(texpaint "")
-install(TARGETS texpaint RUNTIME DESTINATION .)
+q_set_output_dir(texpaint ${Q_UTILS_DIR})
+install(TARGETS texpaint RUNTIME DESTINATION ${Q_UTILS_DIR})
