@@ -1,0 +1,13 @@
+This is the tool used to generate the function and mmove lists for the
+Yamagi Quake II savegame system. This tool is fundamental broken, it has
+literally thousands of bugs and the code is unreadable. The tool crashes
+at every second run. But nevertheless it did the job. Patches (or better
+pull requests) are welcome. :)
+
+This tool was written by Raven Software for 'Return To Caste Wolfenstein'
+and released with the RTCW code. Knightmare of KMQ2 modified it to work
+with Quake II and the Yamagi Quake II fixed some bugs.
+
+To generate the Yamagi Quake II savegame system function and mmove lists:
+extractfuncs *.c -o g_func_list.h g_func_decs.h
+extractfuncs *.c -t mmove_t -o g_mmove_list.h g_mmove_decs.h

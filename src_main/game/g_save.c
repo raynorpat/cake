@@ -20,125 +20,171 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "g_local.h"
 
-#define Function(f) {#f, f}
+/*
+ * This is the Quake 2 savegame system, fixed by Yamagi
+ * based on an idea by Knightmare of kmquake2. This major
+ * rewrite of the original g_save.c is much more robust
+ * and portable since it doesn't use any function pointers.
+ *
+ * Inner workings:
+ * When the game is saved all function pointers are
+ * translated into human readable function definition strings.
+ * The same way all mmove_t pointers are translated. This
+ * human readable strings are then written into the file.
+ * At game load the human readable strings are retranslated
+ * into the actual function pointers and struct pointers. The
+ * pointers are generated at each compilation / start of the
+ * client, thus the pointers are always correct.
+ *
+ * Limitations:
+ * While savegames survive recompilations of the game source
+ * and bigger changes in the source, there are some limitation
+ * which a nearly impossible to fix without a object orientated
+ * rewrite of the game.
+ *  - If functions or mmove_t structs that a referencenced
+ *    inside savegames are added or removed (e.g. the files
+ *    in tables/ are altered) the load functions cannot
+ *    reconnect all pointers and thus not restore the game.
+ *  - If the operating system is changed internal structures
+ *    may change in an unrepairable way.
+ *  - If the architecture is changed pointer length and
+ *    other internal datastructures change in an
+ *    incompatible way.
+ *  - If the edict_t struct is changed, savegames
+ *    will break.
+ * This is not so bad as it looks since functions and
+ * struct won't be added and edict_t won't be changed
+ * if no big, sweeping changes are done. The operating
+ * system and architecture are in the hands of the user.
+ */
 
-mmove_t mmove_reloc;
+/*
+ * When ever the savegame version
+ * is changed, q2 will refuse to
+ * load older savegames. This
+ * should be bumped if the files
+ * in tables/ are changed, otherwise
+ * strange things may happen.
+ */
+#define SAVEGAMEVER "Q2-1"
 
+/*
+ * This macros are used to
+ * prohibit loading of savegames
+ * created on other systems or
+ * architectures. This will
+ * crash q2 in spectacular
+ * ways
+ */
+#if defined(__APPLE__)
+ #define OS "MacOS X"
+#elif defined(__FreeBSD__)
+ #define OS "FreeBSD"
+#elif defined(__OpenBSD__)
+ #define OS "OpenBSD"
+#elif defined(__linux__)
+ #define OS "Linux"
+#elif defined(_WIN32)
+ #define OS "Windows"
+#elif defined(__DJGPP__) /* FS: Added */
+ #define OS "MS-DOS"
+#else
+ #define OS "Unknown"
+#endif
+
+#if defined(__i386__)
+ #define ARCH "i386"
+#elif defined(__x86_64__)
+ #define ARCH "amd64"
+#elif defined(__sparc__)
+ #define ARCH "sparc64"
+#elif defined(__ia64__)
+ #define ARCH "ia64"
+#else
+ #define ARCH "unknown"
+#endif
+
+/*
+ * Connects a human readable
+ * function signature with
+ * the corresponding pointer
+ */
+typedef struct
+{
+	char *funcStr;
+	byte *funcPtr;
+} functionList_t;
+
+/*
+ * Connects a human readable
+ * mmove_t string with the
+ * corresponding pointer
+ * */
+typedef struct
+{
+	char	*mmoveStr;
+	mmove_t *mmovePtr;
+} mmoveList_t;
+
+//=========================================================
+
+/*
+ * Prototypes for forward
+ * declaration for all game
+ * functions.
+ */
+#include "tables/g_func_decs.h"
+
+/*
+ * List with function pointer
+ * to each of the functions
+ * prototyped above.
+ */
+functionList_t functionList[] = {
+	#include "tables/g_func_list.h"
+};
+
+/*
+ * Prototypes for forward
+ * declaration for all game
+ * mmove_t functions.
+ */
+#include "tables/g_mmove_decs.h"
+
+/*
+ * List with pointers to
+ * each of the mmove_t
+ * functions prototyped
+ * above.
+ */
+mmoveList_t mmoveList[] = {
+	#include "tables/g_mmove_list.h"
+};
+
+/*
+ * Fields to be saved
+ */
 field_t fields[] = {
-	{"classname", FOFS(classname), F_LSTRING},
-	{"model", FOFS(model), F_LSTRING},
-	{"spawnflags", FOFS(spawnflags), F_INT},
-	{"speed", FOFS(speed), F_FLOAT},
-	{"accel", FOFS(accel), F_FLOAT},
-	{"decel", FOFS(decel), F_FLOAT},
-	{"target", FOFS(target), F_LSTRING},
-	{"targetname", FOFS(targetname), F_LSTRING},
-	{"pathtarget", FOFS(pathtarget), F_LSTRING},
-	{"deathtarget", FOFS(deathtarget), F_LSTRING},
-	{"killtarget", FOFS(killtarget), F_LSTRING},
-	{"combattarget", FOFS(combattarget), F_LSTRING},
-	{"message", FOFS(message), F_LSTRING},
-	{"team", FOFS(team), F_LSTRING},
-	{"wait", FOFS(wait), F_FLOAT},
-	{"delay", FOFS(delay), F_FLOAT},
-	{"random", FOFS(random), F_FLOAT},
-	{"move_origin", FOFS(move_origin), F_VECTOR},
-	{"move_angles", FOFS(move_angles), F_VECTOR},
-	{"style", FOFS(style), F_INT},
-	{"count", FOFS(count), F_INT},
-	{"health", FOFS(health), F_INT},
-	{"sounds", FOFS(sounds), F_INT},
-	{"light", 0, F_IGNORE},
-	{"dmg", FOFS(dmg), F_INT},
-	{"mass", FOFS(mass), F_INT},
-	{"volume", FOFS(volume), F_FLOAT},
-	{"attenuation", FOFS(attenuation), F_FLOAT},
-	{"map", FOFS(map), F_LSTRING},
-	{"origin", FOFS(s.origin), F_VECTOR},
-	{"angles", FOFS(s.angles), F_VECTOR},
-	{"angle", FOFS(s.angles), F_ANGLEHACK},
-
-	{"goalentity", FOFS(goalentity), F_EDICT, FFL_NOSPAWN},
-	{"movetarget", FOFS(movetarget), F_EDICT, FFL_NOSPAWN},
-	{"enemy", FOFS(enemy), F_EDICT, FFL_NOSPAWN},
-	{"oldenemy", FOFS(oldenemy), F_EDICT, FFL_NOSPAWN},
-	{"activator", FOFS(activator), F_EDICT, FFL_NOSPAWN},
-	{"groundentity", FOFS(groundentity), F_EDICT, FFL_NOSPAWN},
-	{"teamchain", FOFS(teamchain), F_EDICT, FFL_NOSPAWN},
-	{"teammaster", FOFS(teammaster), F_EDICT, FFL_NOSPAWN},
-	{"owner", FOFS(owner), F_EDICT, FFL_NOSPAWN},
-	{"mynoise", FOFS(mynoise), F_EDICT, FFL_NOSPAWN},
-	{"mynoise2", FOFS(mynoise2), F_EDICT, FFL_NOSPAWN},
-	{"target_ent", FOFS(target_ent), F_EDICT, FFL_NOSPAWN},
-	{"chain", FOFS(chain), F_EDICT, FFL_NOSPAWN},
-
-	{"prethink", FOFS(prethink), F_FUNCTION, FFL_NOSPAWN},
-	{"think", FOFS(think), F_FUNCTION, FFL_NOSPAWN},
-	{"blocked", FOFS(blocked), F_FUNCTION, FFL_NOSPAWN},
-	{"touch", FOFS(touch), F_FUNCTION, FFL_NOSPAWN},
-	{"use", FOFS(use), F_FUNCTION, FFL_NOSPAWN},
-	{"pain", FOFS(pain), F_FUNCTION, FFL_NOSPAWN},
-	{"die", FOFS(die), F_FUNCTION, FFL_NOSPAWN},
-
-	{"stand", FOFS(monsterinfo.stand), F_FUNCTION, FFL_NOSPAWN},
-	{"idle", FOFS(monsterinfo.idle), F_FUNCTION, FFL_NOSPAWN},
-	{"search", FOFS(monsterinfo.search), F_FUNCTION, FFL_NOSPAWN},
-	{"walk", FOFS(monsterinfo.walk), F_FUNCTION, FFL_NOSPAWN},
-	{"run", FOFS(monsterinfo.run), F_FUNCTION, FFL_NOSPAWN},
-	{"dodge", FOFS(monsterinfo.dodge), F_FUNCTION, FFL_NOSPAWN},
-	{"attack", FOFS(monsterinfo.attack), F_FUNCTION, FFL_NOSPAWN},
-	{"melee", FOFS(monsterinfo.melee), F_FUNCTION, FFL_NOSPAWN},
-	{"sight", FOFS(monsterinfo.sight), F_FUNCTION, FFL_NOSPAWN},
-	{"checkattack", FOFS(monsterinfo.checkattack), F_FUNCTION, FFL_NOSPAWN},
-	{"currentmove", FOFS(monsterinfo.currentmove), F_MMOVE, FFL_NOSPAWN},
-
-	{"endfunc", FOFS(moveinfo.endfunc), F_FUNCTION, FFL_NOSPAWN},
-
-	// temp spawn vars -- only valid when the spawn function is called
-	{"lip", STOFS(lip), F_INT, FFL_SPAWNTEMP},
-	{"distance", STOFS(distance), F_INT, FFL_SPAWNTEMP},
-	{"height", STOFS(height), F_INT, FFL_SPAWNTEMP},
-	{"noise", STOFS(noise), F_LSTRING, FFL_SPAWNTEMP},
-	{"pausetime", STOFS(pausetime), F_FLOAT, FFL_SPAWNTEMP},
-	{"item", STOFS(item), F_LSTRING, FFL_SPAWNTEMP},
-
-//need for item field in edict struct, FFL_SPAWNTEMP item will be skipped on saves
-	{"item", FOFS(item), F_ITEM},
-
-	{"gravity", STOFS(gravity), F_LSTRING, FFL_SPAWNTEMP},
-	{"sky", STOFS(sky), F_LSTRING, FFL_SPAWNTEMP},
-	{"skyrotate", STOFS(skyrotate), F_FLOAT, FFL_SPAWNTEMP},
-	{"skyaxis", STOFS(skyaxis), F_VECTOR, FFL_SPAWNTEMP},
-	{"minyaw", STOFS(minyaw), F_FLOAT, FFL_SPAWNTEMP},
-	{"maxyaw", STOFS(maxyaw), F_FLOAT, FFL_SPAWNTEMP},
-	{"minpitch", STOFS(minpitch), F_FLOAT, FFL_SPAWNTEMP},
-	{"maxpitch", STOFS(maxpitch), F_FLOAT, FFL_SPAWNTEMP},
-	{"nextmap", STOFS(nextmap), F_LSTRING, FFL_SPAWNTEMP},
-
-	{0, 0, F_INT, 0}
-
+	#include "tables/fields.h"
 };
 
-field_t		levelfields[] =
-{
-	{"changemap", LLOFS(changemap), F_LSTRING},
-                   
-	{"sight_client", LLOFS(sight_client), F_EDICT},
-	{"sight_entity", LLOFS(sight_entity), F_EDICT},
-	{"sound_entity", LLOFS(sound_entity), F_EDICT},
-	{"sound2_entity", LLOFS(sound2_entity), F_EDICT},
-
-	{NULL, 0, F_INT}
+/*
+ * Level fields to
+ * be saved
+ */
+field_t levelfields[] = {
+	#include "tables/levelfields.h"
 };
 
-field_t		clientfields[] =
-{
-	{"pers.weapon", CLOFS(pers.weapon), F_ITEM},
-	{"pers.lastweapon", CLOFS(pers.lastweapon), F_ITEM},
-	{"newweapon", CLOFS(newweapon), F_ITEM},
-
-	{NULL, 0, F_INT}
+/*
+ * Client fields to
+ * be saved
+ */
+field_t clientfields[] = {
+	#include "tables/clientfields.h"
 };
+
+//=========================================================
 
 /*
 ============
@@ -223,11 +269,107 @@ void InitGame (void)
 
 //=========================================================
 
+/*
+ * Helper function to get
+ * the human readable function
+ * definition by an address.
+ * Called by WriteField1 and
+ * WriteField2.
+ */
+functionList_t *GetFunctionByAddress(byte *adr)
+{
+	int i;
+
+	for (i = 0; functionList[i].funcStr; i++)
+	{
+		if (functionList[i].funcPtr == adr)
+		{
+			return &functionList[i];
+		}
+	}
+
+	return NULL;
+}
+
+/*
+ * Helper function to get the
+ * pointer to a function by
+ * it's human readable name.
+ * Called by WriteField1 and
+ * WriteField2.
+ */
+byte *FindFunctionByName(char *name)
+{
+	int i;
+
+	for (i = 0; functionList[i].funcStr; i++)
+	{
+		if (!strcmp(name, functionList[i].funcStr))
+		{
+			return functionList[i].funcPtr;
+		}
+	}
+
+	return NULL;
+}
+
+/*
+ * Helper function to get the
+ * human readable definition of
+ * a mmove_t struct by a pointer.
+ */
+mmoveList_t *GetMmoveByAddress(mmove_t *adr)
+{
+	int i;
+
+	for (i = 0; mmoveList[i].mmoveStr; i++)
+	{
+		if (mmoveList[i].mmovePtr == adr)
+		{
+			return &mmoveList[i];
+		}
+	}
+
+	return NULL;
+}
+
+/*
+ * Helper function to get the
+ * pointer to a mmove_t struct
+ * by a human readable definition.
+ */
+mmove_t *FindMmoveByName(char *name)
+{
+	int i;
+
+	for (i = 0; mmoveList[i].mmoveStr; i++)
+	{
+		if (!strcmp(name, mmoveList[i].mmoveStr))
+		{
+			return mmoveList[i].mmovePtr;
+		}
+	}
+
+	return NULL;
+}
+
+
+//=========================================================
+
+/*
+ * The following two functions are
+ * doing the dirty work to write the
+ * data generated by the functions
+ * below this block into files.
+ */
+
 void WriteField1 (FILE *f, field_t *field, byte *base)
 {
 	void		*p;
 	int			len;
 	int			index;
+	functionList_t *func;
+	mmoveList_t *mmove;
 
 	if (field->flags & FFL_SPAWNTEMP)
 		return;
@@ -275,19 +417,41 @@ void WriteField1 (FILE *f, field_t *field, byte *base)
 	//relative to code segment
 	case F_FUNCTION:
 		if (*(byte **)p == NULL)
-			index = 0;
+		{
+			len = 0;
+		}
 		else
-			index = *(byte **)p - ((byte *)InitGame);
-		*(int *)p = index;
+		{
+			func = GetFunctionByAddress (*(byte **)p);
+			if (!func)
+			{
+				gi.error ("WriteField1: function not in list, can't save game");
+			}
+
+			len = strlen(func->funcStr)+1;
+		}
+
+		*(int *)p = len;
 		break;
 
 	//relative to data segment
 	case F_MMOVE:
 		if (*(byte **)p == NULL)
-			index = 0;
+		{
+			len = 0;
+		}
 		else
-			index = *(byte **)p - (byte *)&mmove_reloc;
-		*(int *)p = index;
+		{
+			mmove = GetMmoveByAddress (*(mmove_t **)p);
+			if (!mmove)
+			{
+				gi.error ("WriteField1: mmove not in list, can't save game");
+			}
+
+			len = strlen(mmove->mmoveStr)+1;
+		}
+
+		*(int *)p = len;
 		break;
 
 	default:
@@ -300,6 +464,8 @@ void WriteField2 (FILE *f, field_t *field, byte *base)
 {
 	int			len;
 	void		*p;
+	functionList_t *func;
+	mmoveList_t *mmove;
 
 	if (field->flags & FFL_SPAWNTEMP)
 		return;
@@ -313,17 +479,55 @@ void WriteField2 (FILE *f, field_t *field, byte *base)
 			len = strlen(*(char **)p) + 1;
 			fwrite (*(char **)p, len, 1, f);
 		}
+
+			break;
+		case F_FUNCTION:
+			if (*(byte **)p)
+			{
+				func = GetFunctionByAddress (*(byte **)p);
+				if (!func)
+				{
+					gi.error ("WriteField2: function not in list, can't save game");
+				}
+
+				len = strlen(func->funcStr)+1;
+				fwrite (func->funcStr, len, 1, f);
+			}
+			break;
+		case F_MMOVE:
+			if (*(byte **)p)
+			{
+				mmove = GetMmoveByAddress (*(mmove_t **)p);
+				if (!mmove)
+				{
+					gi.error ("WriteField2: mmove not in list, can't save game");
+				}
+
+				len = strlen(mmove->mmoveStr)+1;
+				fwrite (mmove->mmoveStr, len, 1, f);
+			}
 		break;
 	default:
 		break;
 	}
 }
 
+//=========================================================
+
+/*
+ * This function does the dirty
+ * work to read the data from a
+ * file. The processing of the
+ * data is done in the functions
+ * below
+ */
+
 void ReadField (FILE *f, field_t *field, byte *base)
 {
 	void		*p;
 	int			len;
 	int			index;
+	char funcStr[2048];
 
 	if (field->flags & FFL_SPAWNTEMP)
 		return;
@@ -376,20 +580,50 @@ void ReadField (FILE *f, field_t *field, byte *base)
 
 	//relative to code segment
 	case F_FUNCTION:
-		index = *(int *)p;
-		if ( index == 0 )
+		len = *(int *)p;
+		if (!len)
+		{
 			*(byte **)p = NULL;
+		}
 		else
-			*(byte **)p = ((byte *)InitGame) + index;
+		{
+			if (len > sizeof(funcStr))
+			{
+				gi.error ("ReadField: function name is longer than buffer (%i chars)",
+						(int)sizeof(funcStr));
+			}
+
+			fread (funcStr, len, 1, f);
+
+			if ( !(*(byte **)p = FindFunctionByName (funcStr)) )
+			{
+				gi.error ("ReadField: function %s not found in table, can't load game", funcStr);
+			}
+		}
 		break;
 
 	//relative to data segment
 	case F_MMOVE:
-		index = *(int *)p;
-		if (index == 0)
+		len = *(int *)p;
+		if (!len)
+		{
 			*(byte **)p = NULL;
+		}
 		else
-			*(byte **)p = (byte *)&mmove_reloc + index;
+		{
+			if (len > sizeof(funcStr))
+			{
+				gi.error ("ReadField: mmove name is longer than buffer (%i chars)",
+						(int)sizeof(funcStr));
+			}
+
+			fread (funcStr, len, 1, f);
+
+			if ( !(*(mmove_t **)p = FindMmoveByName (funcStr)) )
+			{
+				gi.error ("ReadField: mmove %s not found in table, can't load game", funcStr);
+			}
+		}
 		break;
 
 	default:
@@ -414,7 +648,7 @@ void WriteClient (FILE *f, gclient_t *client)
 	// all of the ints, floats, and vectors stay as they are
 	temp = *client;
 
-	// change the pointers to lengths or indexes
+	// change the pointers to indexes
 	for (field=clientfields ; field->name ; field++)
 	{
 		WriteField1 (f, field, (byte *)&temp);
@@ -467,7 +701,10 @@ void WriteGame (char *filename, qboolean autosave)
 {
 	FILE	*f;
 	int		i;
-	char	str[16];
+	char str_ver[32];
+	char str_game[32];
+	char str_os[32];
+	char str_arch[32];
 
 	if (!autosave)
 		SaveClientData ();
@@ -476,10 +713,22 @@ void WriteGame (char *filename, qboolean autosave)
 	if (!f)
 		gi.error ("Couldn't open %s", filename);
 
-	memset (str, 0, sizeof(str));
-	strcpy (str, __DATE__);
-	fwrite (str, sizeof(str), 1, f);
+	// Savegame identification
+	memset(str_ver, 0, sizeof(str_ver));
+	memset(str_game, 0, sizeof(str_game));
+	memset(str_os, 0, sizeof(str_os));
+	memset(str_arch, 0, sizeof(str_arch));
 
+	strncpy(str_ver, SAVEGAMEVER, sizeof(str_ver) - 1);
+	strncpy(str_game, GAMEVERSION, sizeof(str_game) - 1);
+	strncpy(str_os, OS, sizeof(str_os) - 1);
+	strncpy(str_arch, ARCH, sizeof(str_arch) - 1);
+
+	fwrite(str_ver, sizeof(str_ver), 1, f);
+	fwrite(str_game, sizeof(str_game), 1, f);
+	fwrite(str_os, sizeof(str_os), 1, f);
+	fwrite(str_arch, sizeof(str_arch), 1, f);
+ 
 	game.autosaved = autosave;
 	fwrite (&game, sizeof(game), 1, f);
 	game.autosaved = false;
@@ -494,7 +743,10 @@ void ReadGame (char *filename)
 {
 	FILE	*f;
 	int		i;
-	char	str[16];
+	char str_ver[32];
+	char str_game[32];
+	char str_os[32];
+	char str_arch[32];
 
 	gi.FreeTags (TAG_GAME);
 
@@ -502,11 +754,31 @@ void ReadGame (char *filename)
 	if (!f)
 		gi.error ("Couldn't open %s", filename);
 
-	fread (str, sizeof(str), 1, f);
-	if (0/*!(oldsave->value) && strcmp (str, __DATE__)*/)
+	// Sanity checks
+	fread(str_ver, sizeof(str_ver), 1, f);
+	fread(str_game, sizeof(str_game), 1, f);
+	fread(str_os, sizeof(str_os), 1, f);
+	fread(str_arch, sizeof(str_arch), 1, f);
+
+	if (strcmp(str_ver, SAVEGAMEVER))
 	{
-		fclose (f);
-		gi.error ("Savegame from an older version.\n");
+		fclose(f);
+		gi.error("Savegame from an incompatible version.\n");
+	}
+	else if (strcmp(str_game, GAMEVERSION))
+	{
+		fclose(f);
+		gi.error("Savegame from an other game module.\n");
+	}
+ 	else if (strcmp(str_os, OS))
+	{
+		fclose(f);
+		gi.error("Savegame from an other os.\n");
+	}
+ 	else if (strcmp(str_arch, ARCH))
+	{
+		fclose(f);
+		gi.error("Savegame from an other architecure.\n");
 	}
 
 	g_edicts = (edict_t *) gi.TagMalloc (game.maxentities * sizeof(g_edicts[0]), TAG_GAME);
@@ -520,8 +792,7 @@ void ReadGame (char *filename)
 	fclose (f);
 }
 
-//==========================================================
-
+// ==========================================================
 
 /*
 ==============
@@ -552,7 +823,6 @@ void WriteEdict (FILE *f, edict_t *ent)
 	{
 		WriteField2 (f, field, (byte *)ent);
 	}
-
 }
 
 /*
@@ -585,6 +855,48 @@ void WriteLevelLocals (FILE *f)
 		WriteField2 (f, field, (byte *)&level);
 	}
 }
+
+/*
+=================
+WriteLevel
+
+=================
+*/
+void WriteLevel (char *filename)
+{
+	int		i;
+	edict_t	*ent;
+	FILE	*f;
+
+	f = fopen (filename, "wb");
+	if (!f)
+		gi.error ("Couldn't open %s", filename);
+
+	// write out edict size for checking
+	i = sizeof(edict_t);
+	fwrite (&i, sizeof(i), 1, f);
+
+	// write out level_locals_t
+	WriteLevelLocals (f);
+
+	// write out all the entities
+	for (i=0 ; i<globals.num_edicts ; i++)
+	{
+		ent = &g_edicts[i];
+		if (!ent->inuse)
+			continue;
+
+		fwrite (&i, sizeof(i), 1, f);
+		WriteEdict (f, ent);
+	}
+
+	i = -1;
+	fwrite (&i, sizeof(i), 1, f);
+
+	fclose (f);
+}
+
+// ==========================================================
 
 /*
 ==============
@@ -626,50 +938,6 @@ void ReadLevelLocals (FILE *f)
 
 /*
 =================
-WriteLevel
-
-=================
-*/
-void WriteLevel (char *filename)
-{
-	int		i;
-	edict_t	*ent;
-	FILE	*f;
-	void	*base;
-
-	f = fopen (filename, "wb");
-	if (!f)
-		gi.error ("Couldn't open %s", filename);
-
-	// write out edict size for checking
-	i = sizeof(edict_t);
-	fwrite (&i, sizeof(i), 1, f);
-
-	// write out a function pointer for checking
-	base = (void *)InitGame;
-	fwrite (&base, sizeof(base), 1, f);
-
-	// write out level_locals_t
-	WriteLevelLocals (f);
-
-	// write out all the entities
-	for (i=0 ; i<globals.num_edicts ; i++)
-	{
-		ent = &g_edicts[i];
-		if (!ent->inuse)
-			continue;
-		fwrite (&i, sizeof(i), 1, f);
-		WriteEdict (f, ent);
-	}
-	i = -1;
-	fwrite (&i, sizeof(i), 1, f);
-
-	fclose (f);
-}
-
-
-/*
-=================
 ReadLevel
 
 SpawnEntities will allready have been called on the
@@ -689,7 +957,6 @@ void ReadLevel (char *filename)
 	int		entnum;
 	FILE	*f;
 	int		i;
-	void	*base;
 	edict_t	*ent;
 
 	f = fopen (filename, "rb");
@@ -712,18 +979,6 @@ void ReadLevel (char *filename)
 		gi.error ("ReadLevel: mismatched edict size");
 	}
 
-	// check function pointer base address
-	fread (&base, sizeof(base), 1, f);
-#ifdef _WIN32
-	if (base != (void *)InitGame)
-	{
-		fclose (f);
-		gi.error ("ReadLevel: function pointers have moved");
-	}
-#else
-	gi.dprintf("Function offsets %d\n", ((byte *)base) - ((byte *)InitGame));
-#endif
-
 	// load the level locals
 	ReadLevelLocals (f);
 
@@ -735,8 +990,10 @@ void ReadLevel (char *filename)
 			fclose (f);
 			gi.error ("ReadLevel: failed to read entnum");
 		}
+
 		if (entnum == -1)
 			break;
+
 		if (entnum >= globals.num_edicts)
 			globals.num_edicts = entnum+1;
 

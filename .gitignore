@@ -74,3 +74,4 @@ baseq2/textures
 baseq2/video/*.cin
 *.lst
 *.bak
+*.tmp
