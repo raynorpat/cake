@@ -91,7 +91,7 @@ void SelectBrush (int entitynum, int brushnum)
 			e=e->next;
 			if (e == &entities)
 			{
-				Sys_Status ("No such entity.", 0);
+				Sys_Status (0, "No such entity.");
 				return;
 			}
 		}
@@ -100,7 +100,7 @@ void SelectBrush (int entitynum, int brushnum)
 	b = e->brushes.onext;
 	if (b == &e->brushes)
 	{
-		Sys_Status ("No such brush.", 0);
+		Sys_Status (0, "No such brush.");
 		return;
 	}
 	while (brushnum--)
@@ -108,7 +108,7 @@ void SelectBrush (int entitynum, int brushnum)
 		b=b->onext;
 		if (b == &e->brushes)
 		{
-			Sys_Status ("No such brush.", 0);
+			Sys_Status (0, "No such brush.");
 			return;
 		}
 	}
@@ -121,7 +121,7 @@ void SelectBrush (int entitynum, int brushnum)
 	for (i=0 ; i<3 ; i++)
 		g_qeglobals.d_xy.origin[i] = (b->mins[i] + b->maxs[i])/2;
 
-	Sys_Status ("Selected.", 0);
+	Sys_Status (0, "Selected.");
 }
 
 /*
@@ -635,6 +635,8 @@ BOOL CALLBACK SurfaceDlgProc (
 	default:
 		return FALSE;
 	}
+
+	return FALSE;
 }
 
 

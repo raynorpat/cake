@@ -191,7 +191,7 @@ qboolean DoColor(int iIndex)
 
 	cc.lStructSize = sizeof(cc);
 	cc.hwndOwner = g_qeglobals.d_hwndMain;
-	cc.hInstance = g_qeglobals.d_hInstance;
+	cc.hInstance = NULL;
 	cc.rgbResult =
 		(int)(g_qeglobals.d_savedinfo.colors[iIndex][0]*255) +
 		(((int)(g_qeglobals.d_savedinfo.colors[iIndex][1]*255))<<8) +
@@ -1151,41 +1151,49 @@ void Sys_UpdateStatusBar( void )
 {
 	extern int   g_numbrushes, g_numentities;
 
-	char numbrushbuffer[100]="";
-
-	sprintf( numbrushbuffer, "Brushes: %d Entities: %d", g_numbrushes, g_numentities );
-
-	Sys_Status( numbrushbuffer, 2 );
+	Sys_Status(3, "Brushes: %d Entities: %d", g_numbrushes, g_numentities );
+	Sys_Status(4, "Grid size: %d", g_qeglobals.d_gridsize);
 }
 
-void Sys_Status(const char *psz, int part )
+void Sys_Status(int part, char *format, ...)
 {
-	SendMessage(g_qeglobals.d_hwndStatus, SB_SETTEXT, part, (LPARAM)psz);
+	va_list argptr;
+	char	buf[512];
+	char	*out;
+
+	va_start (argptr, format);
+	vsprintf (buf, format, argptr);
+	va_end (argptr);
+
+	out = TranslateString (buf);
+
+	SendMessage(g_qeglobals.d_hwndStatus, SB_SETTEXT, part, (LPARAM)out);
 }
 
 static HWND CreateMyStatusWindow(HINSTANCE hInst)
 {
 	HWND hWnd;
-	int partsize[3] = { 300, 1100, -1 };
+	int partsize[5] = { 150, 400, 550, 700,	1100 };
 
 	hWnd = CreateWindowEx( WS_EX_TOPMOST, // no extended styles
             STATUSCLASSNAME,                 // status bar
             "",                              // no text
-            WS_CHILD | WS_BORDER | WS_VISIBLE,  // styles
+            SBARS_SIZEGRIP | WS_CHILD |
+			WS_BORDER | WS_VISIBLE,			// styles
             -100, -100, 10, 10,              // x, y, cx, cy
             g_qeglobals.d_hwndMain,          // parent window
             (HMENU)100,                      // window ID
             hInst,                           // instance
             NULL);							 // window data
 
-	SendMessage( hWnd, SB_SETPARTS, 3, ( long ) partsize );
+	SendMessage( hWnd, SB_SETPARTS, 5, ( long ) partsize );
 
 	return hWnd;
 }
 
 //==============================================================
 
-#define NUMBUTTONS 15
+#define NUMBUTTONS 23
 HWND CreateToolBar(HINSTANCE hinst)
 {
     HWND hwndTB;
@@ -1217,115 +1225,168 @@ HWND CreateToolBar(HINSTANCE hinst)
     // Fill the TBBUTTON array with button information, and add the
     // buttons to the toolbar.
 
-    tbb[0].iBitmap = 0;
-    tbb[0].idCommand = ID_BRUSH_FLIPX;
+    tbb[0].iBitmap = 15;
+    tbb[0].idCommand = ID_FILE_NEW;
     tbb[0].fsState = TBSTATE_ENABLED;
     tbb[0].fsStyle = TBSTYLE_BUTTON;
     tbb[0].dwData = 0;
     tbb[0].iString = 0;
-
-    tbb[1].iBitmap = 2;
-    tbb[1].idCommand = ID_BRUSH_FLIPY;
+ 
+    tbb[1].iBitmap = 16;
+    tbb[1].idCommand = ID_FILE_OPEN;
     tbb[1].fsState = TBSTATE_ENABLED;
     tbb[1].fsStyle = TBSTYLE_BUTTON;
     tbb[1].dwData = 0;
     tbb[1].iString = 0;
-
-    tbb[2].iBitmap = 4;
-    tbb[2].idCommand = ID_BRUSH_FLIPZ;
+ 
+    tbb[2].iBitmap = 17;
+    tbb[2].idCommand = ID_FILE_SAVE;
     tbb[2].fsState = TBSTATE_ENABLED;
     tbb[2].fsStyle = TBSTYLE_BUTTON;
     tbb[2].dwData = 0;
     tbb[2].iString = 0;
 
-    tbb[3].iBitmap = 1;
-    tbb[3].idCommand = ID_BRUSH_ROTATEX;
+    tbb[3].iBitmap = 0;
+    tbb[3].idCommand = 0;
     tbb[3].fsState = TBSTATE_ENABLED;
-    tbb[3].fsStyle = TBSTYLE_BUTTON;
+    tbb[3].fsStyle = TBSTYLE_SEP;
     tbb[3].dwData = 0;
     tbb[3].iString = 0;
 
-    tbb[4].iBitmap = 3;
-    tbb[4].idCommand = ID_BRUSH_ROTATEY;
+    tbb[4].iBitmap = 0;
+    tbb[4].idCommand = ID_BRUSH_FLIPX;
     tbb[4].fsState = TBSTATE_ENABLED;
     tbb[4].fsStyle = TBSTYLE_BUTTON;
     tbb[4].dwData = 0;
     tbb[4].iString = 0;
 
-    tbb[5].iBitmap = 5;
-    tbb[5].idCommand = ID_BRUSH_ROTATEZ;
+    tbb[5].iBitmap = 2;
+    tbb[5].idCommand = ID_BRUSH_FLIPY;
     tbb[5].fsState = TBSTATE_ENABLED;
     tbb[5].fsStyle = TBSTYLE_BUTTON;
     tbb[5].dwData = 0;
     tbb[5].iString = 0;
 
-    tbb[6].iBitmap = 6;
-    tbb[6].idCommand = ID_SELECTION_SELECTCOMPLETETALL;
+    tbb[6].iBitmap = 4;
+    tbb[6].idCommand = ID_BRUSH_FLIPZ;
     tbb[6].fsState = TBSTATE_ENABLED;
     tbb[6].fsStyle = TBSTYLE_BUTTON;
     tbb[6].dwData = 0;
     tbb[6].iString = 0;
 
-    tbb[7].iBitmap = 7;
-    tbb[7].idCommand = ID_SELECTION_SELECTTOUCHING;
+    tbb[7].iBitmap = 0;
+    tbb[7].idCommand = 0;
     tbb[7].fsState = TBSTATE_ENABLED;
-    tbb[7].fsStyle = TBSTYLE_BUTTON;
+    tbb[7].fsStyle = TBSTYLE_SEP;
     tbb[7].dwData = 0;
     tbb[7].iString = 0;
 
-    tbb[8].iBitmap = 8;
-    tbb[8].idCommand = ID_SELECTION_SELECTPARTIALTALL;
+    tbb[8].iBitmap = 1;
+    tbb[8].idCommand = ID_BRUSH_ROTATEX;
     tbb[8].fsState = TBSTATE_ENABLED;
     tbb[8].fsStyle = TBSTYLE_BUTTON;
     tbb[8].dwData = 0;
     tbb[8].iString = 0;
 
-
-    tbb[9].iBitmap = 9;
-    tbb[9].idCommand = ID_SELECTION_SELECTINSIDE;
+    tbb[9].iBitmap = 3;
+    tbb[9].idCommand = ID_BRUSH_ROTATEY;
     tbb[9].fsState = TBSTATE_ENABLED;
     tbb[9].fsStyle = TBSTYLE_BUTTON;
     tbb[9].dwData = 0;
     tbb[9].iString = 0;
 
-    tbb[10].iBitmap = 10;
-    tbb[10].idCommand = ID_SELECTION_CSGSUBTRACT;
+    tbb[10].iBitmap = 5;
+    tbb[10].idCommand = ID_BRUSH_ROTATEZ;
     tbb[10].fsState = TBSTATE_ENABLED;
     tbb[10].fsStyle = TBSTYLE_BUTTON;
     tbb[10].dwData = 0;
     tbb[10].iString = 0;
 
-
-    tbb[11].iBitmap = 11;
-    tbb[11].idCommand = ID_SELECTION_MAKEHOLLOW;
+    tbb[11].iBitmap = 0;
+    tbb[11].idCommand = 0;
     tbb[11].fsState = TBSTATE_ENABLED;
-    tbb[11].fsStyle = TBSTYLE_BUTTON;
+    tbb[11].fsStyle = TBSTYLE_SEP;
     tbb[11].dwData = 0;
     tbb[11].iString = 0;
 
-    tbb[12].iBitmap = 12;
-    tbb[12].idCommand = ID_TEXTURES_WIREFRAME;
+    tbb[12].iBitmap = 6;
+    tbb[12].idCommand = ID_SELECTION_SELECTCOMPLETETALL;
     tbb[12].fsState = TBSTATE_ENABLED;
     tbb[12].fsStyle = TBSTYLE_BUTTON;
     tbb[12].dwData = 0;
     tbb[12].iString = 0;
 
-    tbb[13].iBitmap = 13;
-    tbb[13].idCommand = ID_TEXTURES_FLATSHADE;
+    tbb[13].iBitmap = 7;
+    tbb[13].idCommand = ID_SELECTION_SELECTTOUCHING;
     tbb[13].fsState = TBSTATE_ENABLED;
     tbb[13].fsStyle = TBSTYLE_BUTTON;
     tbb[13].dwData = 0;
     tbb[13].iString = 0;
 
-    tbb[14].iBitmap = 14;
-    tbb[14].idCommand = ID_VIEW_TRILINEAR;
+    tbb[14].iBitmap = 8;
+    tbb[14].idCommand = ID_SELECTION_SELECTPARTIALTALL;
     tbb[14].fsState = TBSTATE_ENABLED;
     tbb[14].fsStyle = TBSTYLE_BUTTON;
     tbb[14].dwData = 0;
     tbb[14].iString = 0;
 
-    SendMessage(hwndTB, TB_ADDBUTTONS, (WPARAM)NUMBUTTONS,
-        (LPARAM) (LPTBBUTTON) &tbb);
+    tbb[15].iBitmap = 9;
+    tbb[15].idCommand = ID_SELECTION_SELECTINSIDE;
+    tbb[15].fsState = TBSTATE_ENABLED;
+    tbb[15].fsStyle = TBSTYLE_BUTTON;
+    tbb[15].dwData = 0;
+    tbb[15].iString = 0;
+
+    tbb[16].iBitmap = 0;
+    tbb[16].idCommand = 0;
+    tbb[16].fsState = TBSTATE_ENABLED;
+    tbb[16].fsStyle = TBSTYLE_SEP;
+    tbb[16].dwData = 0;
+    tbb[16].iString = 0;
+
+    tbb[17].iBitmap = 10;
+    tbb[17].idCommand = ID_SELECTION_CSGSUBTRACT;
+    tbb[17].fsState = TBSTATE_ENABLED;
+    tbb[17].fsStyle = TBSTYLE_BUTTON;
+    tbb[17].dwData = 0;
+    tbb[17].iString = 0;
+
+    tbb[18].iBitmap = 11;
+    tbb[18].idCommand = ID_SELECTION_MAKEHOLLOW;
+    tbb[18].fsState = TBSTATE_ENABLED;
+    tbb[18].fsStyle = TBSTYLE_BUTTON;
+    tbb[18].dwData = 0;
+    tbb[18].iString = 0;
+
+    tbb[19].iBitmap = 0;
+    tbb[19].idCommand = 0;
+    tbb[19].fsState = TBSTATE_ENABLED;
+    tbb[19].fsStyle = TBSTYLE_SEP;
+    tbb[19].dwData = 0;
+    tbb[19].iString = 0;
+
+    tbb[20].iBitmap = 12;
+    tbb[20].idCommand = ID_TEXTURES_WIREFRAME;
+    tbb[20].fsState = TBSTATE_ENABLED;
+    tbb[20].fsStyle = TBSTYLE_BUTTON;
+    tbb[20].dwData = 0;
+    tbb[20].iString = 0;
+
+    tbb[21].iBitmap = 13;
+    tbb[21].idCommand = ID_TEXTURES_FLATSHADE;
+    tbb[21].fsState = TBSTATE_ENABLED;
+    tbb[21].fsStyle = TBSTYLE_BUTTON;
+    tbb[21].dwData = 0;
+    tbb[21].iString = 0;
+
+    tbb[22].iBitmap = 14;
+    tbb[22].idCommand = ID_VIEW_TRILINEAR;
+    tbb[22].fsState = TBSTATE_ENABLED;
+    tbb[22].fsStyle = TBSTYLE_BUTTON;
+    tbb[22].dwData = 0;
+    tbb[22].iString = 0;
+
+    SendMessage(hwndTB, TB_ADDBUTTONS, (WPARAM)NUMBUTTONS, (LPARAM) (LPTBBUTTON) &tbb);
 
     ShowWindow(hwndTB, SW_SHOW);
 

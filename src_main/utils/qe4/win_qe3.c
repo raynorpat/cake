@@ -31,6 +31,7 @@ int	update_bits;
 
 HANDLE	bsp_process;
 
+void SaveAsDialog (void);
 void DoProject (int first);
 BOOL LoadRegistryInfo(const char *pszName, void *pvBuf, long *plSize);
 
@@ -38,7 +39,18 @@ BOOL LoadRegistryInfo(const char *pszName, void *pvBuf, long *plSize);
 
 void Sys_SetTitle (char *text)
 {
-	SetWindowText (g_qeglobals.d_hwndMain, text);
+	char	buf[512];
+	int		i, len;
+
+	len = sprintf(buf, "QuakeEd 4 [%s]", text);
+	for(i = 0; i < len; i++)
+	{
+ 		// make pathnames look more nicer
+		if(buf[i] == '/')
+			buf[i] = '\\';
+	}
+
+	SetWindowText (g_qeglobals.d_hwndMain, buf);
 }
 
 HCURSOR	waitcursor;
@@ -85,12 +97,28 @@ void Sys_Beep (void)
 
 char	*TranslateString (char *buf)
 {
-	static	char	buf2[32768];
-	int		i, l;
+	static	char	*buf2 = NULL;
+	int		i, l, l2 = 1;
 	char	*out;
 
+	if(!buf)
+		return "\r\n";
+
 	l = strlen(buf);
-	out = buf2;
+	if(!l)
+		return "\r\n";
+
+	for (i=0 ; i<l ; i++)
+	{
+		if (buf[i] == '\n')
+			l2++;
+	}
+
+	if(buf2)
+		free(buf2);
+
+	out = buf2 = (char *)malloc(l2 + l);
+
 	for (i=0 ; i<l ; i++)
 	{
 		if (buf[i] == '\n')
@@ -131,12 +159,10 @@ void Sys_Printf (char *text, ...)
 	out = TranslateString (buf);
 
 #ifdef LATER
-	Sys_Status(out);
+	Sys_Status(0, out);
 #else
-	SendMessage (g_qeglobals.d_hwndEdit,
-		EM_REPLACESEL,
-		0,
-		(LPARAM)out);
+	SendMessage (g_qeglobals.d_hwndEdit, EM_REPLACESEL, 0, (LPARAM)out);
+	SendMessage (g_qeglobals.d_hwndEdit, EM_SCROLLCARET, 0, 0);
 #endif
 
 }
@@ -145,26 +171,6 @@ double Sys_DoubleTime (void)
 {
 	return clock()/ 1000.0;
 }
-
-void PrintPixels (HDC hDC)
-{
-	int		i;
-	PIXELFORMATDESCRIPTOR p[64];
-
-	printf ("### flags color layer\n");
-	for (i=1 ; i<64 ; i++)
-	{
-		if (!DescribePixelFormat ( hDC, i, sizeof(p[0]), &p[i]))
-			break;
-		printf ("%3i %5i %5i %5i\n", i,
-			p[i].dwFlags,
-			p[i].cColorBits,
-			p[i].bReserved);
-	}
-	printf ("%i modes\n", i-1);
-}
-
-
 
 //==========================================================================
 
@@ -236,9 +242,13 @@ void Error (char *error, ...)
 	va_end (argptr);
 
 	sprintf (text2, "%s\nGetLastError() = %i", text, err);
-    MessageBox(g_qeglobals.d_hwndMain, text2, "Error", 0 /* MB_OK */ );
+	if (MessageBox(g_qeglobals.d_hwndMain, text2, "Error", MB_OKCANCEL | MB_ICONERROR /* MB_OK */) == IDOK)
+	{
+		if (modified && MessageBox(g_qeglobals.d_hwndMain, "Map has been modified. Do you want to save your changes?", "Error", MB_YESNO | MB_ICONQUESTION) == IDYES)
+			SaveAsDialog();
 
-	exit (1);
+		exit(1);
+	}
 }
 
 /*

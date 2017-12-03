@@ -97,11 +97,11 @@ void QE_CheckAutoSave( void )
 	if ( now - s_start > ( CLOCKS_PER_SEC * 60 * QE_AUTOSAVE_INTERVAL ) )
 	{
 		Sys_Printf ("Autosaving...\n");
-		Sys_Status ("Autosaving...", 0 );
+		Sys_Status (0, "Autosaving...");
 
 		Map_SaveFile (ValueForKey(g_qeglobals.d_project_entity, "autosave"), false);
 
-		Sys_Status ("Autosaving...Saved.", 0 );
+		Sys_Status (0, "Autosaving...Saved.");
 		modified = 2;
 		s_start = now;
 	}
@@ -303,7 +303,7 @@ void ConnectEntities (void)
 
 	if (g_qeglobals.d_select_count != 2)
 	{
-		Sys_Status ("Must have two brushes selected.", 0);
+		Sys_Status (0, "Must have two brushes selected.");
 		Sys_Beep ();
 		return;
 	}
@@ -313,14 +313,14 @@ void ConnectEntities (void)
 
 	if (e1 == world_entity || e2 == world_entity)
 	{
-		Sys_Status ("Can't connect to the world.", 0);
+		Sys_Status (0, "Can't connect to the world.");
 		Sys_Beep ();
 		return;
 	}
 
 	if (e1 == e2)
 	{
-		Sys_Status ("Brushes are from same entity.", 0);
+		Sys_Status (0, "Brushes are from same entity.");
 		Sys_Beep ();
 		return;
 	}

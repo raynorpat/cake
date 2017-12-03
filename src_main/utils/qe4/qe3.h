@@ -99,7 +99,7 @@ void    Sys_SetCursorPos (int x, int y);
 void    Sys_SetTitle (char *text);
 void    Sys_BeginWait (void);
 void    Sys_EndWait (void);
-void    Sys_Status(const char *psz, int part);
+void	Sys_Status(int part, char *format, ...);
 
 /*
 ** most of the QE globals are stored in this structure

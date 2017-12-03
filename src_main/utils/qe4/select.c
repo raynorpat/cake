@@ -656,7 +656,7 @@ void  Select_Ungroup (void)
 
 	if (!e || e == world_entity || e->eclass->fixedsize)
 	{
-		Sys_Status ("Not a grouped entity.", 0);
+		Sys_Status (0, "Not a grouped entity.");
 		return;
 	}
 

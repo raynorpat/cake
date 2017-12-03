@@ -560,7 +560,7 @@ void	Texture_ShowDirectory (int menunum)
 	strcpy (texture_directory, texture_menunames[menunum-CMD_TEXTUREWAD]);
 
 	g_qeglobals.d_texturewin.originy = 0;
-	Sys_Status("loading all textures\n", 0);
+	Sys_Status(0, "loading all textures\n");
 
 	// load all .wal files
 	sprintf (dirstring, "%s/textures/%s*.wal",
@@ -610,7 +610,7 @@ void	Texture_ShowInuse (void)
 	texture_showinuse = true;
 
 	g_qeglobals.d_texturewin.originy = 0;
-	Sys_Status("Selecting active textures\n", 0);
+	Sys_Status(0, "Selecting active textures\n");
 	Texture_ClearInuse ();
 
 	for (b=active_brushes.next ; b != NULL && b != &active_brushes ; b=b->next)
@@ -716,14 +716,14 @@ void Texture_SetTexture (texdef_t *texdef)
 
 	if (texdef->name[0] == '(')
 	{
-		Sys_Status("Can't select an entity texture\n", 0);
+		Sys_Status(0, "Can't select an entity texture\n");
 		return;
 	}
 	g_qeglobals.d_texturewin.texdef = *texdef;
 
 	Sys_UpdateWindows (W_TEXTURE);
 	sprintf(sz, "Selected texture: %s\n", texdef->name);
-	Sys_Status(sz, 0);
+	Sys_Status(0, sz);
 	Select_SetTexture(texdef);
 
 // scroll origin so the texture is completely on screen
@@ -791,7 +791,7 @@ void SelectTexture (int mx, int my)
 		}
 	}
 
-	Sys_Status("Did not select a texture\n", 0);
+	Sys_Status(0, "Did not select a texture\n");
 }
 
 /*

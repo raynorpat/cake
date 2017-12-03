@@ -93,7 +93,7 @@ void Drag_Setup (int x, int y, int buttons,
 
 	if (selected_brushes.next == &selected_brushes)
 	{
-		Sys_Status("No selection to drag\n", 0);
+		Sys_Status(0, "No selection to drag\n");
 		return;
 	}
 
@@ -433,7 +433,7 @@ void Drag_MouseMoved (int x, int y, int buttons)
 	}
 
 	sprintf (movestring, "drag (%i %i %i)", (int)move[0], (int)move[1], (int)move[2]);
-	Sys_Status (movestring, 0);
+	Sys_Status (0, movestring);
 
 	VectorSubtract (move, pressdelta, delta);
 	MoveSelection (delta);
@@ -447,7 +447,7 @@ Drag_MouseUp
 */
 void Drag_MouseUp (void)
 {
-	Sys_Status ("drag completed.", 0);
+	Sys_Status (0, "drag completed.");
 	if (g_qeglobals.d_select_translate[0] || g_qeglobals.d_select_translate[1] || g_qeglobals.d_select_translate[2])
 	{
 		Select_Move (g_qeglobals.d_select_translate);

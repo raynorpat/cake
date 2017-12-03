@@ -45,7 +45,7 @@ void Pointfile_Next (void)
 
 	if (s_check_point >= s_num_points-2)
 	{
-		Sys_Status ("End of pointfile", 0);
+		Sys_Status (0, "End of pointfile");
 		return;
 	}
 	s_check_point++;
@@ -66,7 +66,7 @@ void Pointfile_Prev (void)
 
 	if ( s_check_point == 0)
 	{
-		Sys_Status ("Start of pointfile", 0);
+		Sys_Status (0, "Start of pointfile");
 		return;
 	}
 	s_check_point--;

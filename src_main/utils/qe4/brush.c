@@ -949,13 +949,13 @@ void Brush_MakeSided (int sides)
 
 	if (sides < 3)
 	{
-		Sys_Status ("Bad sides number", 0);
+		Sys_Status (0, "Bad sides number");
 		return;
 	}
 
 	if (!QE_SingleBrush ())
 	{
-		Sys_Status ("Must have a single brush selected", 0 );
+		Sys_Status (0, "Must have a single brush selected");
 		return;
 	}
 
