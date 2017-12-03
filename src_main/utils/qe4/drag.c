@@ -431,8 +431,9 @@ void Drag_MouseMoved (int x, int y, int buttons)
 	Sys_Status (0, movestring);
 
 	VectorSubtract (move, pressdelta, delta);
-	MoveSelection (delta);
 	VectorCopy (move, pressdelta);
+
+	MoveSelection (delta);
 }
 
 /*
@@ -442,7 +443,9 @@ Drag_MouseUp
 */
 void Drag_MouseUp (void)
 {
-	Sys_Status (0, "drag completed.");
+	if (drag_ok)
+		Sys_Status (0, "Drag completed.");
+
 	if (g_qeglobals.d_select_translate[0] || g_qeglobals.d_select_translate[1] || g_qeglobals.d_select_translate[2])
 	{
 		Select_Move (g_qeglobals.d_select_translate);
