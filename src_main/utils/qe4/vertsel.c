@@ -36,7 +36,8 @@ int	FindPoint (vec3_t point)
 	}
 
 	VectorCopy (point, g_qeglobals.d_points[g_qeglobals.d_numpoints]);
-	g_qeglobals.d_numpoints++;
+	if (g_qeglobals.d_numpoints < MAX_POINTS - 1)
+		g_qeglobals.d_numpoints++;
 
 	return g_qeglobals.d_numpoints-1;
 }
@@ -55,7 +56,8 @@ int FindEdge (int p1, int p2, face_t *f)
 	g_qeglobals.d_edges[g_qeglobals.d_numedges].p1 = p1;
 	g_qeglobals.d_edges[g_qeglobals.d_numedges].p2 = p2;
 	g_qeglobals.d_edges[g_qeglobals.d_numedges].f1 = f;
-	g_qeglobals.d_numedges++;
+	if (g_qeglobals.d_numedges < MAX_EDGES - 1)
+		g_qeglobals.d_numedges++;
 
 	return g_qeglobals.d_numedges-1;
 }
