@@ -104,21 +104,17 @@ void SortTextures(void)
 			}
 
 			// Move on
-
 			qprev = qcur;
 			qcur = qcur->next;
 
 
 			// is this one at the end?
-
 			if (qcur == NULL)
 			{
 				qprev->next = qtemp;
 				qtemp->next = NULL;
 			}
 		}
-
-
 	}
 
 	g_qeglobals.d_qtextures = qhead;
@@ -259,9 +255,9 @@ void Texture_SetMode(int iMenu)
 		Map_BuildBrushData();
 		Sys_UpdateWindows (W_ALL);
 		return;
-
-	} else if ( !texturing && iMenu == ID_TEXTURES_FLATSHADE) {
-
+	}
+	else if ( !texturing && iMenu == ID_TEXTURES_FLATSHADE)
+	{
 		camera.draw_mode = cd_solid;
 		Map_BuildBrushData();
 		Sys_UpdateWindows (W_ALL);
@@ -320,7 +316,6 @@ qtexture_t *Texture_LoadTexture (miptex_t *qtex)
 
 	// The dib is upside down so we want to copy it into
 	// the buffer bottom up.
-
 	total[0] = total[1] = total[2] = 0;
     for (i=0 ; i<count ; i++)
 	{
@@ -479,7 +474,6 @@ qtexture_t *Texture_ForName (char *name)
 /*
 ==================
 FillTextureMenu
-
 ==================
 */
 void FillTextureMenu (void)
@@ -541,7 +535,6 @@ void Texture_ClearInuse (void)
 		q->inuse = false;
 	}
 }
-
 
 
 /*
@@ -610,7 +603,7 @@ void	Texture_ShowInuse (void)
 	texture_showinuse = true;
 
 	g_qeglobals.d_texturewin.originy = 0;
-	Sys_Status(0, "Selecting active textures\n");
+	Sys_Status(0, "Selecting active textures");
 	Texture_ClearInuse ();
 
 	for (b=active_brushes.next ; b != NULL && b != &active_brushes ; b=b->next)
@@ -662,7 +655,7 @@ qtexture_t *Texture_NextPos (int *x, int *y)
 		if (q->name[0] == '(')	// fake color texture
 			continue;
 		if (q->inuse)
-			break;			// allways show in use
+			break;			// always show in use
 		if (!texture_showinuse && strncmp (q->name, texture_directory, strlen(texture_directory)))
 			continue;
 		break;
@@ -680,7 +673,6 @@ qtexture_t *Texture_NextPos (int *x, int *y)
 
 	// Is our texture larger than the row? If so, grow the
 	// row height to match it
-
     if (current_row < q->height)
 		current_row = q->height;
 
@@ -701,11 +693,9 @@ qtexture_t *Texture_NextPos (int *x, int *y)
 
 static	int	textures_cursorx, textures_cursory;
 
-
 /*
 ============
 Texture_SetTexture
-
 ============
 */
 void Texture_SetTexture (texdef_t *texdef)
@@ -809,7 +799,6 @@ void Texture_MouseDown (int x, int y, int buttons)
 		SelectTexture (x, g_qeglobals.d_texturewin.height - 1 - y);
 		return;
 	}
-
 }
 
 /*
@@ -1055,7 +1044,6 @@ LONG WINAPI WTex_WndProc (
 
     return DefWindowProc (hWnd, uMsg, wParam, lParam);
 }
-
 
 
 /*

@@ -75,7 +75,6 @@ void	AxializeVector (vec3_t v)
 		v[i] = -1;
 	else
 		v[i] = 1;
-
 }
 
 
@@ -304,7 +303,7 @@ void Drag_Begin (int x, int y, int buttons,
 			}
 		}
 		else
-			Sys_Printf ("Didn't hit a btrush\n");
+			Sys_Printf ("Didn't hit a brush\n");
 		return;
 	}
 
@@ -324,10 +323,9 @@ void Drag_Begin (int x, int y, int buttons,
 			}
 		}
 		else
-			Sys_Printf ("Didn't hit a btrush\n");
+			Sys_Printf ("Didn't hit a brush\n");
 		return;
 	}
-
 }
 
 
@@ -366,7 +364,7 @@ void MoveSelection (vec3_t move)
 		}
 
 		// if any of the brushes were crushed out of existance
-		// calcel the entire move
+		// cancel the entire move
 		if (b != &selected_brushes)
 		{
 			Sys_Printf ("Brush dragged backwards, move canceled\n");
@@ -376,7 +374,6 @@ void MoveSelection (vec3_t move)
 			for (b=selected_brushes.next ; b != &selected_brushes ; b=b->next)
 				Brush_Build( b );
 		}
-
 	}
 	else
 	{
@@ -424,15 +421,13 @@ void Drag_MouseMoved (int x, int y, int buttons)
 			x = pressx;
 	}
 
-
 	for (i=0 ; i<3 ; i++)
 	{
-		move[i] = drag_xvec[i]*(x - pressx)
-				+ drag_yvec[i]*(y - pressy);
+		move[i] = drag_xvec[i]*(x - pressx)	+ drag_yvec[i]*(y - pressy);
 		move[i] = floor(move[i]/g_qeglobals.d_gridsize+0.5)*g_qeglobals.d_gridsize;
 	}
 
-	sprintf (movestring, "drag (%i %i %i)", (int)move[0], (int)move[1], (int)move[2]);
+	sprintf (movestring, "Drag: (%i %i %i)", (int)move[0], (int)move[1], (int)move[2]);
 	Sys_Status (0, movestring);
 
 	VectorSubtract (move, pressdelta, delta);

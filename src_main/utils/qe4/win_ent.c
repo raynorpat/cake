@@ -1013,7 +1013,6 @@ BOOL CALLBACK EntityWndProc(
 		}
 		return 0;
 
-
 	case WM_COMMAND:
 		switch (LOWORD(wParam)) {
 		case IDC_E_DELPROP:

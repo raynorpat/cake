@@ -756,7 +756,7 @@ brush_t *Brush_Parse (void)
 			if (i != 0)
 				GetToken (true);
 			if (strcmp (token, "(") )
-				Error ("parsing brush");
+				Error ("Parsing Brush: Unexpected \"(\"");
 
 			for (j=0 ; j<3 ; j++)
 			{
@@ -766,7 +766,7 @@ brush_t *Brush_Parse (void)
 
 			GetToken (false);
 			if (strcmp (token, ")") )
-				Error ("parsing brush");
+				Error ("Parsing Brush: Unexpected \")\"");
 
 		}
 

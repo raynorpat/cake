@@ -420,7 +420,7 @@ Entity_LinkBrush
 void Entity_LinkBrush (entity_t *e, brush_t *b)
 {
 	if (b->oprev || b->onext)
-		Error ("Entity_LinkBrush: Allready linked");
+		Error ("Entity_LinkBrush: Already linked");
 	b->owner = e;
 
 	b->onext = e->brushes.onext;

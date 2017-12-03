@@ -98,6 +98,7 @@ LONG WINAPI WCam_WndProc (
 			Sys_Printf ("GL_VERSION: %s\n", glGetString (GL_VERSION));
 		}
 		return 0;
+
 	case WM_PAINT:
         {
 			PAINTSTRUCT	ps;
@@ -145,7 +146,7 @@ LONG WINAPI WCam_WndProc (
 			glDrawBuffer (GL_BACK);
 			end = Sys_DoubleTime ();
 			EndPaint(hWnd, &ps);
-			Sys_Printf ("%5.2f seconds\n", end-start);
+			Sys_Printf ("Benchmark: %5.2f seconds\n", end-start);
 
 			SetWindowPlacement( g_qeglobals.d_hwndCamera, &wp );
         }
@@ -259,7 +260,6 @@ void WCam_Create (HINSTANCE hInstance)
 		20,
 		(int)(screen_width*CWIN_SIZE),
 		(int)(screen_height*CWIN_SIZE),	// size
-
 		g_qeglobals.d_hwndMain,	// parent window
 		0,		// no menu
 		hInstance,

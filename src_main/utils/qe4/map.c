@@ -345,7 +345,7 @@ void Map_SaveFile (char *filename, qboolean use_region )
 	f = fopen(filename, "w");
 	if (!f)
 	{
-		Sys_Printf ("ERROR!!!! Couldn't open %s\n", filename);
+		Sys_Printf ("ERROR: Couldn't open %s\n", filename);
 		return;
 	}
 

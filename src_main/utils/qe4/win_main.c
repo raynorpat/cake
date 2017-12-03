@@ -939,8 +939,6 @@ LONG WINAPI WMAIN_WndProc (
 }
 
 
-
-
 /*
 ==============
 Main_Create

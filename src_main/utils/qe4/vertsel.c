@@ -242,4 +242,3 @@ void SelectVertexByRay (vec3_t org, vec3_t dir)
 }
 
 
-
