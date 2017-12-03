@@ -256,7 +256,7 @@ extern BOOL SaveWindowState(HWND hWnd, const char *pszName);
 extern BOOL LoadWindowState(HWND hWnd, const char *pszName);
 
 extern BOOL SaveRegistryInfo(const char *pszName, void *pvBuf, long lSize);
-extern BOOL loadRegistryInfo(const char *pszName, void *pvBuf, long *plSize);
+extern BOOL LoadRegistryInfo(const char *pszName, void *pvBuf, long *plSize);
 
 //
 // entityw.c
