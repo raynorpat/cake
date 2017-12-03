@@ -35,12 +35,12 @@ cvar_t	*zombietime;			// seconds to sink messages after disconnect
 cvar_t	*rcon_password;			// password for remote server commands
 
 cvar_t	*allow_download;
-cvar_t *allow_download_players;
-cvar_t *allow_download_models;
-cvar_t *allow_download_sounds;
-cvar_t *allow_download_maps;
+cvar_t	*allow_download_players;
+cvar_t	*allow_download_models;
+cvar_t	*allow_download_sounds;
+cvar_t	*allow_download_maps;
 
-cvar_t *sv_airaccelerate;
+cvar_t	*sv_airaccelerate;
 
 cvar_t	*sv_noreload;			// don't reload level state when reentering
 

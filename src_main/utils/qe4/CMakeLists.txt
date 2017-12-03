@@ -6,9 +6,8 @@ file(GLOB QE4_SOURCES ./*.c)
 source_group("qe4" FILES ${QE4_INCLUDES})
 source_group("qe4" FILES ${QE4_SOURCES})
 
-
 #
-# QuakeEd 4 tool
+# QuakeEd 4 map editor tool
 #
 
 # set include directories

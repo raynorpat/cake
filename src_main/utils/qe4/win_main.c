@@ -47,6 +47,7 @@ void OpenDialog (void);
 void SaveAsDialog (void);
 qboolean ConfirmModified (void);
 void  Select_Ungroup (void);
+void DoProject(int first);
 
 void QE_ExpandBspString (char *bspaction, char *out, char *mapname)
 {
@@ -325,6 +326,12 @@ LONG WINAPI CommandHandler (
 			if (!ConfirmModified())
 				return TRUE;
 			ProjectDialog ();
+			break;
+
+		case ID_FILE_EDITPROJECT:
+			if (!ConfirmModified())
+				return TRUE;
+			DoProject(false);
 			break;
 
 		case ID_FILE_POINTFILE:

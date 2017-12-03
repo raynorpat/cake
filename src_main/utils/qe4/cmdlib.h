@@ -86,6 +86,10 @@ int		LittleLong (int l);
 float	BigFloat (float l);
 float	LittleFloat (float l);
 
+int		setstr (char *dest, ...);
+int		setdirstr (char *dest, ...);
+int		setdirstr2 (char *dest, ...);
+char	*get_token (char **src, char *token_sep);
 
 char *COM_Parse (char *data);
 

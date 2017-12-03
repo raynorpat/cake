@@ -684,3 +684,157 @@ float	LittleFloat (float l)
 
 #endif
 
+
+#if 0
+int setstr(char *dest, char *s1, char *s2, char *s3, char *s4)
+{
+	int		i, i2, len;
+	char	*s, *sa[5] = { s1, s2, s3, s4, NULL };
+
+	for (i = len = 0; (s = sa[i]); i++)
+	{
+		for (i2 = 0; *s; i2++)
+		{
+			*dest++ = *s++;
+			len++;
+		}
+	}
+	*dest = 0;
+	return len + 1;
+}
+#else
+int setstr(char *dest, ...)
+{
+	va_list	list;
+	char	*s;
+	int		len = 0;
+
+	va_start(list, dest);
+
+	while (s = va_arg(list, char *))
+	{
+		while (*s)
+		{
+			*dest++ = *s++;
+			len++;
+		}
+	}
+	*dest = 0;
+	va_end(list);
+	return len + 1;
+}
+#endif
+
+/*
+==============
+setdirstr:
+copy up to 4 strings into one while stripping out multiple consecutive path separators.
+also convert "/" to "\\"
+==============
+*/
+int setdirstr(char *dest, ...)
+{
+	va_list	list;
+	char	*s, last = 0;
+	int		len = 0;
+
+	va_start(list, dest);
+
+	while (s = va_arg(list, char *))
+	{
+		while (*s)
+		{
+			if (*s == '/' || *s == '\\')
+			{
+				if (last != '\\')
+				{
+					len++;
+					last = *dest++ = '\\';
+				}
+
+				while (*s == '/' || *s == '\\') // skip consecutive path separators
+					s++;
+			}
+			else
+			{
+				len++;
+				last = *dest++ = *s++;
+			}
+		}
+	}
+	*dest = 0;
+	va_end(list);
+	return len + 1;
+}
+
+int setdirstr2(char *dest, ...)
+{
+	va_list	list;
+	char	*s, last = 0;
+	int		len = 0;
+
+	va_start(list, dest);
+
+	while (s = va_arg(list, char *))
+	{
+		while (*s)
+		{
+			if (*s == '/' || *s == '\\')
+			{
+				if (last != '/')
+				{
+					len++;
+					last = *dest++ = '/';
+				}
+
+				while (*s == '/' || *s == '\\') // skip consecutive path separators
+					s++;
+			}
+			else
+			{
+				len++;
+				last = *dest++ = *s++;
+			}
+		}
+	}
+	*dest = 0;
+	va_end(list);
+	return len + 1;
+}
+
+char	*get_token(char **src, char *token_sep)
+/*
+* Just a little more convenient than strtok()
+* This function returns a pointer to the first token
+* in src, and makes src point to the "new string".
+*
+*/
+{
+	char	*tok;
+
+	if (!(src && *src && **src))
+		return NULL;
+
+	/* first, removes leading token_sep's */
+	while (**src && strchr(token_sep, **src))
+		(*src)++;
+
+	/* first non token_sep */
+	if (**src)
+		tok = *src;
+	else
+		return NULL;
+
+	/* Make *src point after token */
+	*src = strpbrk(*src, token_sep);
+	if (*src)
+	{
+		**src = '\0';
+		(*src)++;
+		while (**src && strchr(token_sep, **src))
+			(*src)++;
+	}
+	else
+		*src = "";
+	return tok;
+}

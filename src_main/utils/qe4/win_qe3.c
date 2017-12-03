@@ -31,6 +31,9 @@ int	update_bits;
 
 HANDLE	bsp_process;
 
+void DoProject (int first);
+BOOL LoadRegistryInfo(const char *pszName, void *pvBuf, long *plSize);
+
 //===========================================
 
 void Sys_SetTitle (char *text)
@@ -504,6 +507,7 @@ int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance
 
 	screen_width = GetSystemMetrics (SM_CXFULLSCREEN);
 	screen_height = GetSystemMetrics (SM_CYFULLSCREEN);
+	GetCurrentDirectory(512, g_qeglobals.workingdir);
 
 	// hack for broken NT 4.0 dual screen
 	if (screen_width > 2*screen_height)
@@ -529,8 +533,13 @@ int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance
 		if (!QE_LoadProject(argv[1]))
 			Error ("Couldn't load %s project file", argv[1]);
 	}
-	else if (!QE_LoadProject("scripts/quake.qe4"))
-		Error ("Couldn't load scripts/quake.qe4 project file");
+	else if (!QE_LoadProject("quake.qe4"))
+	{
+		// assume its a first time run
+		DoProject(true);
+		if (!QE_LoadProject("quake.qe4"))
+			Error("Couldn't load quake.qe4 project file"); // jeez somethings wrong here...
+	}
 
 	QE_Init ();
 
@@ -552,8 +561,7 @@ int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance
 			if (msg.message == WM_QUIT)
 				have_quit = true;
 		}
-
-
+		
 		CheckBspProcess ();
 
 		time = Sys_DoubleTime ();
@@ -595,7 +603,6 @@ int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance
 		{	// if not driving in the camera view, block
 			WaitMessage ();
 		}
-
 	}
 
     /* return success of application */

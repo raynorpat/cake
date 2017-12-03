@@ -1,27 +1,5 @@
-/*
-===========================================================================
-Copyright (C) 1997-2006 Id Software, Inc.
-
-This file is part of Quake 2 Tools source code.
-
-Quake 2 Tools source code is free software; you can redistribute it
-and/or modify it under the terms of the GNU General Public License as
-published by the Free Software Foundation; either version 2 of the License,
-or (at your option) any later version.
-
-Quake 2 Tools source code is distributed in the hope that it will be
-useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with Quake 2 Tools source code; if not, write to the Free Software
-Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
-===========================================================================
-*/
-
 //{{NO_DEPENDENCIES}}
-// Microsoft Developer Studio generated include file.
+// Microsoft Visual C++ generated include file.
 // Used by win_qe3.rc
 //
 #define IDAPPLY                         3
@@ -42,6 +20,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define IDD_ABOUT                       123
 #define IDB_BITMAP1                     127
 #define IDD_SURFACE                     129
+#define IDD_PROJECTDIALOG               130
 #define IDC_ENTITY_COMMENT              1018
 #define IDC_VALUE                       1021
 #define IDC_KEY                         1022
@@ -185,6 +164,47 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define IDC_ABOUT_GLRENDERER            1114
 #define IDC_TEXTURE                     1114
 #define IDC_ABOUT_GLEXTENSIONS          1115
+#define IDC_CLIP_EDIT                   1116
+#define IDC_STEPHEIGHT_EDIT             1117
+#define IDC_TEXTURECOMBO                1119
+#define IDC_VALUEEDIT                   1122
+#define IDC_KEYEDIT                     1123
+#define IDC_GAMETYPEGROUPBOX            1124
+#define IDC_GAMETYPE_QUAKE1             1125
+#define IDC_GAMETYPE_QUAKE2             1126
+#define IDC_GAMETYPE_HALFLIFE           1127
+#define IDC_EDIT_PROJECTDIRECTORY       1135
+#define IDC_BUTTON_PROJECTDIRECTORY     1136
+#define IDC_STATIC_AUTOSAVEMAP          1137
+#define IDC_STATIC_PROJECTDIRECTORY     1138
+#define IDC_EDIT_AUTOSAVEMAP            1139
+#define IDC_BUTTON_AUTOSAVEMAP          1140
+#define IDC_STATIC_ENTITYFILES          1141
+#define IDC_EDIT_ENTITYFILES            1142
+#define IDC_BUTTON_ENTITYFILES          1143
+#define IDC_STATIC_TEXTUREDIRECTORY     1144
+#define IDC_EDIT_TEXTUREDIRECTORY       1145
+#define IDC_BUTTON_TEXTUREDIRECTORY     1146
+#define IDC_STATIC_DEFAULTWADS          1147
+#define IDC_EDIT_DEFAULTWADS            1148
+#define IDC_BUTTON_DEFAULTWADS          1149
+#define IDC_EDIT_MODDIRECTORY           1150
+#define IDC_EDIT_DEFAULTSKY             1151
+#define IDC_STATIC_DEFAULTSKY           1152
+#define IDC_SELECTDIR_COMBO             1153
+#define IDC_BUTTON_MODDIRECTORY         1153
+#define IDC_STATIC_MODDIRECTORY         1154
+#define IDC_SELECTDIR_LIST              1155
+#define IDC_SELECTDIR_STATIC            1156
+#define IDC_BSP_STATIC                  1157
+#define IDC_BSPNAME_COMBO               1159
+#define IDC_BSPCOMMAND_EDIT             1162
+#define IDC_BSPNEW_BUTTON               1163
+#define IDC_BSPDELETE_BUTTON            1164
+#define IDC_BSPACCEPT_BUTTON            1165
+#define IDC_EDIT_REMOTEBASEPATH         1166
+#define IDC_BUTTON_REMOTEBASEPATH       1167
+#define IDC_STATIC_REMOTEBASEPATH       1168
 #define ID_FILE_EXIT                    40002
 #define ID_FILE_SAVEAS                  40004
 #define ID_VIEW_CENTER                  40005
@@ -295,12 +315,13 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define ID_SELECTION_MAKE_STRUCTURAL    40140
 #define ID_REGION_SETSELECTION          40142
 #define ID_VIEW_SHOWBLOCKS              40143
+#define ID_FILE_EDITPROJECT             40144
 
 // Next default values for new objects
-//
+// 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        130
+#define _APS_NEXT_RESOURCE_VALUE        131
 #define _APS_NEXT_COMMAND_VALUE         40144
 #define _APS_NEXT_CONTROL_VALUE         1115
 #define _APS_NEXT_SYMED_VALUE           101
