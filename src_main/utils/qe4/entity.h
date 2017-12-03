@@ -22,6 +22,8 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 // entity.h
 
+#ifndef __ENTITY_H__
+#define __ENTITY_H__
 
 #define DlgXBorder 5
 #define DlgYBorder 5
@@ -123,3 +125,4 @@ entity_t *FindEntityInt(char *pszKey, int iValue);
 
 int GetUniqueTargetId(int iHint);
 
+#endif
