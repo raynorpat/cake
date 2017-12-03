@@ -34,7 +34,6 @@ char			spritename[1024];
 
 
 void FinishSprite (void);
-void Cmd_Spritename (void);
 
 
 
