@@ -1,6 +1,7 @@
 {
 // maps will be loaded and saved from <basepath>/maps
 "basepath"                      "d:\cake\baseq2"
+"modpath" 						"d:\cake\baseq2"
 
 // you are using your local machine to bsp, set rshcmd to ""
 // and remotebasebath to the same thing as basepath.

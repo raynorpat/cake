@@ -344,17 +344,14 @@ BOOL CALLBACK AboutDlgProc( HWND hwndDlg,
 			char renderer[1024];
 			char version[1024];
 			char vendor[1024];
-			char extensions[4096];
 
 			sprintf( renderer, "Renderer:\t%s", glGetString( GL_RENDERER ) );
 			sprintf( version, "Version:\t\t%s", glGetString( GL_VERSION ) );
 			sprintf( vendor, "Vendor:\t\t%s", glGetString( GL_VENDOR ) );
-			sprintf( extensions, "\n%s", glGetString( GL_EXTENSIONS ) );
 
 			SetWindowText( GetDlgItem( hwndDlg, IDC_ABOUT_GLRENDERER ),   renderer );
 			SetWindowText( GetDlgItem( hwndDlg, IDC_ABOUT_GLVERSION ),    version );
 			SetWindowText( GetDlgItem( hwndDlg, IDC_ABOUT_GLVENDOR ),     vendor );
-			SetWindowText( GetDlgItem( hwndDlg, IDC_ABOUT_GLEXTENSIONS ), extensions );
 		}
 		return TRUE;
 
@@ -555,17 +552,17 @@ void UpdateSpinners(unsigned uMsg, WPARAM wParam, LPARAM lParam)
 	else if (hwnd == GetDlgItem(g_surfwin, IDC_HSCALEA))
 	{
 		if (nScrollCode == SB_LINEDOWN)
-			pt->scale[0] -= 0.1;
+			pt->scale[0] -= 0.1f;
 		else
-			pt->scale[0] += 0.1;
+			pt->scale[0] += 0.1f;
 	}
 
 	else if (hwnd == GetDlgItem(g_surfwin, IDC_VSCALEA))
 	{
 		if (nScrollCode == SB_LINEUP)
-			pt->scale[1] += 0.1;
+			pt->scale[1] += 0.1f;
 		else
-			pt->scale[1] -= 0.1;
+			pt->scale[1] -= 0.1f;
 	}
 
 	else if (hwnd == GetDlgItem(g_surfwin, IDC_HSHIFTA))
@@ -611,20 +608,20 @@ BOOL CALLBACK SurfaceDlgProc (
 		case IDOK:
 			GetTexMods ();
 			EndDialog(hwndDlg, 1);
-		break;
+			break;
 
 		case IDAPPLY:
 			GetTexMods ();
 			InvalidateRect(g_qeglobals.d_hwndCamera, NULL, false);
 			UpdateWindow (g_qeglobals.d_hwndCamera);
-		break;
+			break;
 
 		case IDCANCEL:
 			g_qeglobals.d_texturewin.texdef = g_old_texdef;
 			if (g_changed_surface)
 				Select_SetTexture(&g_qeglobals.d_texturewin.texdef);
 			EndDialog(hwndDlg, 0);
-		break;
+			break;
 		}
 		break;
 
@@ -633,7 +630,7 @@ BOOL CALLBACK SurfaceDlgProc (
 		UpdateSpinners(uMsg, wParam, lParam);
 		InvalidateRect(g_qeglobals.d_hwndCamera, NULL, false);
 		UpdateWindow (g_qeglobals.d_hwndCamera);
-		return 0;
+		return FALSE;
 
 	default:
 		return FALSE;

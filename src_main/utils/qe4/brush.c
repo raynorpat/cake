@@ -272,7 +272,7 @@ void TextureAxisFromPlane(plane_t *pln, vec3_t xv, vec3_t yv)
 }
 
 
-float	lightaxis[3] = {0.6, 0.8, 1.0};
+float	lightaxis[3] = {0.6f, 0.8f, 1.0f};
 /*
 ================
 SetShadeForPlane

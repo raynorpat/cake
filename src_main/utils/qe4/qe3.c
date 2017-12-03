@@ -117,8 +117,11 @@ QE_LoadProject
 qboolean QE_LoadProject (char *projectfile)
 {
 	char	*data;
+	char	buf[256];
 
 	Sys_Printf ("QE_LoadProject (%s)\n", projectfile);
+	GetCurrentDirectory(255, buf);
+	Sys_Printf("Current Directory: %s\n", buf);
 
 	if ( LoadFileNoCrash (projectfile, (void *)&data) == -1)
 		return false;

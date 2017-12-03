@@ -45,9 +45,9 @@ void Cam_Init (void)
 	camera.origin[1] = 20;
 	camera.origin[2] = 46;
 
-	camera.color[0] = 0.3;
-	camera.color[1] = 0.3;
-	camera.color[2] = 0.3;
+	camera.color[0] = 0.3f;
+	camera.color[1] = 0.3f;
+	camera.color[2] = 0.3f;
 }
 
 
@@ -191,13 +191,13 @@ void Cam_MouseControl (float dtime)
 		xf *= 1.0 - fabs(yf);
 		if (xf < 0)
 		{
-			xf += 0.1;
+			xf += 0.1f;
 			if (xf > 0)
 				xf = 0;
 		}
 		else
 		{
-			xf -= 0.1;
+			xf -= 0.1f;
 			if (xf < 0)
 				xf = 0;
 		}
@@ -260,7 +260,7 @@ void Cam_MouseDown (int x, int y, int buttons)
 
 	if (buttons == MK_RBUTTON)
 	{
-		Cam_MouseControl (0.1);
+		Cam_MouseControl (0.1f);
 		return;
 	}
 }
@@ -515,7 +515,7 @@ void Cam_Draw (void)
 	// blend on top
 	glMatrixMode(GL_PROJECTION);
 
-	glColor4f(1.0, 0.0, 0.0, 0.3);
+	glColor4f(1.0f, 0.0f, 0.0f, 0.3f);
 	glEnable (GL_BLEND);
 	glPolygonMode (GL_FRONT_AND_BACK, GL_FILL);
 	glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);

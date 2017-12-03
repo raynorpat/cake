@@ -163,6 +163,10 @@ typedef struct
 	int          d_parsed_brushes;
 
 	qboolean	show_blocks;
+
+	char		workingdir[512];
+	char		basepath[512];
+	char		modpath[512];
 } QEGlobals_t;
 
 void *qmalloc (int size);
@@ -174,8 +178,7 @@ void Pointfile_Check (void);
 void Pointfile_Next (void);
 void Pointfile_Prev (void);
 void Pointfile_Clear (void);
-void Pointfile_Draw( void );
-void Pointfile_Load( void );
+void Pointfile_Draw (void);
 
 //
 // drag.c
@@ -266,7 +269,6 @@ int DrawTexControls(HWND hWnd);
 void SetSpawnFlags(void);
 void GetSpawnFlags(void);
 void SetKeyValuePairs(void);
-extern void BuildGammaTable(float g);
 
 
 // win_dlg.c

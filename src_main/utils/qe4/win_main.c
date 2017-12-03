@@ -352,15 +352,15 @@ LONG WINAPI CommandHandler (
 			Sys_UpdateWindows (W_XY|W_XY_OVERLAY);
 			break;
 		case ID_VIEW_ZOOMIN:
-			g_qeglobals.d_xy.scale *= 5.0/4;
+			g_qeglobals.d_xy.scale *= 5.0f/4;
 			if (g_qeglobals.d_xy.scale > 16)
 				g_qeglobals.d_xy.scale = 16;
 			Sys_UpdateWindows (W_XY|W_XY_OVERLAY);
 			break;
 		case ID_VIEW_ZOOMOUT:
-			g_qeglobals.d_xy.scale *= 4.0/5;
-			if (g_qeglobals.d_xy.scale < 0.1)
-				g_qeglobals.d_xy.scale = 0.1;
+			g_qeglobals.d_xy.scale *= 4.0f/5;
+			if (g_qeglobals.d_xy.scale < 0.1f)
+				g_qeglobals.d_xy.scale = 0.1f;
 			Sys_UpdateWindows (W_XY|W_XY_OVERLAY);
 			break;
 
@@ -375,9 +375,9 @@ LONG WINAPI CommandHandler (
 			Sys_UpdateWindows (W_Z|W_Z_OVERLAY);
 			break;
 		case ID_VIEW_ZZOOMOUT:
-			z.scale *= 4.0/5;
-			if (z.scale < 0.125)
-				z.scale = 0.125;
+			z.scale *= 4.0f/5;
+			if (z.scale < 0.125f)
+				z.scale = 0.125f;
 			Sys_UpdateWindows (W_Z|W_Z_OVERLAY);
 			break;
 
