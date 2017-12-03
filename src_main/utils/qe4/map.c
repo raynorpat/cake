@@ -37,7 +37,7 @@ brush_t	filtered_brushes;	// brushes that have been filtered or regioned
 
 entity_t	entities;		// head/tail of doubly linked list
 
-entity_t	*world_entity;
+entity_t	*world_entity = NULL;
 
 void AddRegionBrushes (void);
 void RemoveRegionBrushes (void);
@@ -373,7 +373,6 @@ void Map_SaveFile (char *filename, qboolean use_region )
 	if (use_region)
 		RemoveRegionBrushes ();
 
-	Sys_Printf ("Saved.\n");
 	modified = false;
 
 	if ( !strstr( temp, "autosave" ) )
@@ -383,10 +382,15 @@ void Map_SaveFile (char *filename, qboolean use_region )
 	{
 		time_t	timer;
 		FILE	*f;
+		char	logname[1024];
+
+		strcpy (logname, filename);
+		StripExtension (logname);
+		strcat (logname, ".log");
 
 		time (&timer);
 		MessageBeep (MB_ICONEXCLAMATION);
-		f = fopen ("c:/tstamps.log", "a");
+		f = fopen (logname, "a");
 		if (f)
 		{
 			fprintf (f, "%4i : %35s : %s", g_qeglobals.d_workcount, filename, ctime(&timer));
@@ -394,8 +398,9 @@ void Map_SaveFile (char *filename, qboolean use_region )
 			g_qeglobals.d_workcount = 0;
 		}
 		fclose (f);
-		Sys_Status (0, "Saved.\n");
 	}
+	Sys_Printf ("Saved.\n");
+	Sys_Status (0, "Saved.");
 }
 
 /*
