@@ -52,8 +52,8 @@ qboolean	texture_showinuse;
 qtexture_t	*current_texture;
 int			current_x, current_y, current_row;
 
-int			texture_nummenus;
-#define		MAX_TEXTUREDIRS	100
+int			texture_nummenus = 0;
+#define		MAX_TEXTUREDIRS	128
 char		texture_menunames[MAX_TEXTUREDIRS][64];
 
 qboolean	g_dontuse;		// set to true to load the texture but not flag as used
@@ -418,6 +418,27 @@ void Texture_MakeNotexture (void)
 }
 
 
+/*
+===============
+Texture_LoadFile
+===============
+*/
+BOOL Texture_LoadFile(byte **lump, char *name)
+{
+	char filename[512];
+
+	sprintf(filename, "%s/%s.wal", ValueForKey(g_qeglobals.d_project_entity, "texturepath"), name);
+
+	Sys_Printf ("Loading %s\n", name);
+	if (LoadFile(filename, lump) == -1)
+	{
+		Sys_Printf ("     load failed!\n");
+		return false;
+	}
+
+	return true;
+}
+
 
 /*
 ===============
@@ -428,7 +449,9 @@ qtexture_t *Texture_ForName (char *name)
 {
     byte    *lump;
 	qtexture_t	*q;
-	char	filename[1024];
+
+	if(!name || !*name)
+		return notexture;
 
 	for (q=g_qeglobals.d_qtextures ; q ; q=q->next)
     {
@@ -436,6 +459,7 @@ qtexture_t *Texture_ForName (char *name)
 		{
 			if (!g_dontuse)
 				q->inuse = true;
+			strcpy(name, q->name);
 		    return q;
 		}
     }
@@ -448,19 +472,17 @@ qtexture_t *Texture_ForName (char *name)
 	else
 	{
 		// load the file
-		sprintf (filename, "%s/%s.wal",
-			ValueForKey (g_qeglobals.d_project_entity, "texturepath"),
-			name);
-		Sys_Printf ("Loading %s\n", name);
-		if (LoadFile (filename, &lump) == -1)
-		{
-			Sys_Printf ("     load failed!\n");
+		if(!Texture_LoadFile(&lump, name))
 			return notexture;
-		}
+
+		// load file into texture
 		q = Texture_LoadTexture ((miptex_t *)lump);
 		free (lump);
+		if(!q)
+			return notexture;
 		strncpy (q->name, name, sizeof(q->name)-1);
 		StripExtension (q->name);
+		setdirstr2(q->name, q->name, NULL);
 	}
 
 	if (!g_dontuse)
