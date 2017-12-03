@@ -60,8 +60,8 @@ LONG WINAPI WCam_WndProc (
 			// create GL font
 			//
 			hfont = CreateFont(
-				10,	// logical height of font
-				7,	// logical average character width
+				12,	// logical height of font
+				6,	// logical average character width
 				0,	// angle of escapement
 				0,	// base-line orientation angle
 				0,	// font weight
@@ -73,7 +73,7 @@ LONG WINAPI WCam_WndProc (
 				0,	// clipping precision
 				0,	// output quality
 				0,	// pitch and family
-				0 	// pointer to typeface name string
+				"system font" // pointer to typeface name string
 				);
 
 			if ( !hfont )

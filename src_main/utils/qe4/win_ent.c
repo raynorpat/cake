@@ -995,7 +995,7 @@ BOOL CALLBACK EntityWndProc(
 
 			lpmmi = (LPMINMAXINFO) lParam;
 			lpmmi->ptMinTrackSize.x = 320;
-			lpmmi->ptMinTrackSize.y = 500;
+			lpmmi->ptMinTrackSize.y = 480;
 		}
 		return 0;
 
