@@ -542,7 +542,11 @@ void Brush_MakeFacePlanes (brush_t *b)
 
 		CrossProduct(t1,t2, f->plane.normal);
 		if (VectorCompare (f->plane.normal, vec3_origin))
-			printf ("WARNING: brush plane with no normal\n");
+		{
+			Sys_Printf ("WARNING: brush plane with no normal\n");
+			Brush_RemoveFromList(b);
+			Brush_AddToList(b, &selected_brushes);
+		}
 		VectorNormalize (f->plane.normal);
 		f->plane.dist = DotProduct (t3, f->plane.normal);
 	}
