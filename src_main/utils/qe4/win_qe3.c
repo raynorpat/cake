@@ -74,9 +74,7 @@ void Sys_SetCursorPos (int x, int y)
 
 void Sys_UpdateWindows (int bits)
 {
-//	Sys_Printf("updating 0x%X\n", bits);
 	update_bits |= bits;
-//update_bits = -1;
 }
 
 
@@ -600,7 +598,8 @@ int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance
 		update_bits = 0;
 
 		if (!cambuttonstate && !have_quit)
-		{	// if not driving in the camera view, block
+		{
+			// if not driving in the camera view, block
 			WaitMessage ();
 		}
 	}

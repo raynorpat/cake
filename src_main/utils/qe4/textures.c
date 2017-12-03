@@ -39,8 +39,8 @@ static HDC	 s_hdcTexture;
 //int		texture_mode = GL_NEAREST_MIPMAP_NEAREST;
 //int		texture_mode = GL_NEAREST_MIPMAP_LINEAR;
 //int		texture_mode = GL_LINEAR;
-//int		texture_mode = GL_LINEAR_MIPMAP_NEAREST;
-int		texture_mode = GL_LINEAR_MIPMAP_LINEAR;
+int			texture_mode = GL_LINEAR_MIPMAP_NEAREST;
+//int		texture_mode = GL_LINEAR_MIPMAP_LINEAR;
 
 int		texture_extension_number = 1;
 
@@ -235,7 +235,6 @@ void Texture_SetMode(int iMenu)
 		iMode = 0;
 		texturing = false;
 		break;
-
 	}
 
 	CheckMenuItem(hMenu, ID_VIEW_NEAREST, MF_BYCOMMAND | MF_UNCHECKED);
@@ -436,7 +435,6 @@ qtexture_t *Texture_ForName (char *name)
 	qtexture_t	*q;
 	char	filename[1024];
 
-//return notexture;
 	for (q=g_qeglobals.d_qtextures ; q ; q=q->next)
     {
 		if (!strcmp(name,  q->name))
