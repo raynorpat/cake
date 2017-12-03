@@ -156,18 +156,21 @@ void Texture_InitPalette (byte *pal)
 		}
 	}
 
-    for (i=0 ; i<256 ; i++)
-    {
-		r = gammatable[pal[0]];
-		g = gammatable[pal[1]];
-		b = gammatable[pal[2]];
-		pal += 3;
+	if(pal)
+	{
+  	  for (i=0 ; i<256 ; i++)
+  	  {
+			r = gammatable[pal[0]];
+			g = gammatable[pal[1]];
+			b = gammatable[pal[2]];
+			pal += 3;
 
-		v = (r<<24) + (g<<16) + (b<<8) + 255;
-		v = BigLong (v);
+			v = (r<<24) + (g<<16) + (b<<8) + 255;
+			v = BigLong (v);
 
-		tex_palette[i] = v;
-    }
+			tex_palette[i] = v;
+    	}
+	}
 }
 
 void SetTexParameters (void)
