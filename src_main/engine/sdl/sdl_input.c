@@ -1150,7 +1150,6 @@ void IN_ControllerMove(usercmd_t *cmd)
 	vec3_t leftPos, rightPos;
 	vec_t *view, *move;
 	float speed, aspeed;
-
 	float pitchInvert = (m_pitch->value < 0.0) ? -1 : 1;
 
 	if (cls.key_dest == key_menu)
@@ -1161,7 +1160,7 @@ void IN_ControllerMove(usercmd_t *cmd)
 	else
 		speed = 1;
 
-	aspeed = cls.nframetime;
+	aspeed = cls.rframetime;
 	if (autosensitivity->value)
 		aspeed *= (cl.refdef.fov_x / 90.0);
 
