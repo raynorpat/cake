@@ -101,6 +101,7 @@ cvar_t	*gl_lockfrustum;
 
 cvar_t	*vid_fullscreen;
 cvar_t	*vid_gamma;
+cvar_t	*vid_contrast;
 cvar_t	*r_lightscale;
 
 
@@ -534,6 +535,7 @@ static void R_Register (void)
 
 	vid_fullscreen = Cvar_Get ("vid_fullscreen", "0", CVAR_ARCHIVE);
 	vid_gamma = Cvar_Get ("vid_gamma", "1.0", CVAR_ARCHIVE);
+	vid_contrast = Cvar_Get("vid_contrast", "1.0", CVAR_ARCHIVE);
 	r_lightscale = Cvar_Get ("r_lightscale", "1.0", CVAR_ARCHIVE);
 
 	RPostProcess_Init();
@@ -753,7 +755,6 @@ int RE_GL_Init (void)
 	RMain_CheckExtension ("GL_ARB_vertex_array_object ");
 	RMain_CheckExtension ("GL_ARB_texture_non_power_of_two ");
 	RMain_CheckExtension ("GL_ARB_framebuffer_object ");
-	RMain_CheckExtension ("GL_ARB_framebuffer_sRGB ");
 	RMain_CheckExtension ("GL_ARB_instanced_arrays ");
 	RMain_CheckExtension ("GL_ARB_base_instance ");
 	RMain_CheckExtension ("GL_ARB_map_buffer_range ");

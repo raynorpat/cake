@@ -37,6 +37,7 @@ GLuint u_postsurfcolor = 0;
 GLuint u_postExposure = 0;
 GLuint u_postBlurAmount = 0;
 GLuint u_postBrightnessAmount = 0;
+GLuint u_postContrastAmount = 0;
 GLuint u_postTexScale = 0;
 GLuint u_postwaterwarpparam = 0;
 GLuint u_postwaterwarp = 0;
@@ -244,6 +245,7 @@ void RPostProcess_CreatePrograms(void)
 	u_postsurfcolor = glGetUniformLocation (gl_postprog, "surfcolor");
 	u_postBlurAmount = glGetUniformLocation (gl_postprog, "blurAmount");
 	u_postBrightnessAmount = glGetUniformLocation (gl_postprog, "brightnessAmount");
+	u_postContrastAmount = glGetUniformLocation (gl_postprog, "contrastAmount");
 	u_postExposure = glGetUniformLocation (gl_postprog, "exposure");
 	u_postTexScale = glGetUniformLocation (gl_postprog, "texScale");
 	u_postwaterwarpparam = glGetUniformLocation (gl_postprog, "waterwarpParam");
@@ -437,8 +439,9 @@ static void RPostProcess_DoBloomAndTonemap(void)
 		glProgramUniform1i(gl_postprog, u_postwaterwarp, 0);
 	}
 
-	// set brightness level
+	// set brightness and contrast level
 	glProgramUniform1f(gl_postprog, u_postBrightnessAmount, vid_gamma->value);
+	glProgramUniform1f(gl_postprog, u_postContrastAmount, vid_contrast->value);
 
 	GL_Enable(BLEND_BIT);
 

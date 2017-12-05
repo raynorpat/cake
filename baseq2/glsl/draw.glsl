@@ -21,6 +21,7 @@ void DrawVS ()
 #ifdef FRAGMENTSHADER
 uniform sampler2D diffuse;
 uniform float brightnessAmount;
+uniform float contrastAmount;
 uniform float texturecolormix;
 
 out vec4 fragColor;
@@ -28,8 +29,7 @@ out vec4 fragColor;
 void DrawFS ()
 {
 	fragColor = mix (texture (diffuse, texcoords.st), iocolor, texturecolormix);
-	fragColor.rgb = doBrightness(fragColor.rgb, brightnessAmount);
-	fragColor.rgb = toLinear(fragColor.rgb);
+	fragColor.rgb = doBrightnessAndContrast(fragColor.rgb, brightnessAmount, contrastAmount);
 }
 #endif
 

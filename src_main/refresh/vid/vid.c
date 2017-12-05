@@ -28,6 +28,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
 // Console variables that we need to access from this module
 cvar_t		*vid_gamma;
+cvar_t		*vid_contrast;
 cvar_t		*vid_ref;			// Name of Refresh currently loaded
 cvar_t		*vid_fullscreen;
 
@@ -388,6 +389,7 @@ void VID_Init (void)
 	vid_ref = Cvar_Get ("vid_ref", "gl", CVAR_ARCHIVE);
 	vid_fullscreen = Cvar_Get ("vid_fullscreen", "0", CVAR_ARCHIVE);
 	vid_gamma = Cvar_Get ("vid_gamma", "1.0", CVAR_ARCHIVE);
+	vid_contrast = Cvar_Get("vid_contrast", "1.0", CVAR_ARCHIVE);
 
 	// Add some console commands that we want to handle
 	Cmd_AddCommand ("vid_restart", VID_Restart_f);

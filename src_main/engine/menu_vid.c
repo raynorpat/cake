@@ -35,6 +35,7 @@ static cvar_t *sw_mode;
 static cvar_t *fov;
 extern cvar_t *vid_ref;
 extern cvar_t *vid_gamma;
+extern cvar_t *vid_contrast;
 extern cvar_t *vid_fullscreen;
 static cvar_t *gl_swapinterval;
 static cvar_t *gl_textureanisotropy;
@@ -45,6 +46,7 @@ static menuframework_s	s_opengl_menu;
 static menulist_s		s_renderer_list;
 static menulist_s		s_mode_list;
 static menuslider_s		s_brightness_slider;
+static menuslider_s		s_contrast_slider;
 static menuslider_s		s_fov_slider;
 static menulist_s 		s_fs_box;
 static menulist_s 		s_vsync_list;
@@ -97,8 +99,16 @@ static void BrightnessCallback (void *s)
 {
 	menuslider_s *slider = (menuslider_s *) s;
 
-	float gamma = 1.3 - (slider->curvalue / 20.0);
+	float gamma = 1.3f - (slider->curvalue / 20.0f);
 	Cvar_SetValue ("vid_gamma", gamma);
+}
+
+static void ContrastCallback(void *s)
+{
+	menuslider_s *slider = (menuslider_s *)s;
+
+	float contrast = slider->curvalue * 0.5f;
+	Cvar_SetValue("vid_contrast", contrast);
 }
 
 static void FOVCallback(void *s)
@@ -301,13 +311,15 @@ void VID_MenuInit (void)
 	};
 
 	if (!gl_mode)
-		gl_mode = Cvar_Get ("gl_mode", "10", 0);
+		gl_mode = Cvar_Get("gl_mode", "10", 0);
 	if (!sw_mode)
 		sw_mode = Cvar_Get("sw_mode", "10", 0);
 	if (!fov)
 		fov = Cvar_Get("fov", "90",  CVAR_USERINFO | CVAR_ARCHIVE);
 	if (!vid_gamma)
 		vid_gamma = Cvar_Get("vid_gamma", "1.0", CVAR_ARCHIVE);
+	if (!vid_contrast)
+		vid_contrast = Cvar_Get("vid_contrast", "1.0", CVAR_ARCHIVE);
 	if (!gl_swapinterval)
 		gl_swapinterval = Cvar_Get("gl_swapinterval", "1", CVAR_ARCHIVE);
 	if (!gl_textureanisotropy)
@@ -373,16 +385,26 @@ void VID_MenuInit (void)
 	s_brightness_slider.generic.type = MTYPE_SLIDER;
 	s_brightness_slider.generic.name = "brightness";
 	s_brightness_slider.generic.x = 0;
-	s_brightness_slider.generic.y = (y += 20);
+	s_brightness_slider.generic.y = (y += 10);
 	s_brightness_slider.generic.callback = BrightnessCallback;
 	s_brightness_slider.minvalue = 0;
 	s_brightness_slider.maxvalue = 20;
 	s_brightness_slider.curvalue = (1.3 - Cvar_VariableValue("vid_gamma")) * 20;
 
+	// contrast
+	s_contrast_slider.generic.type = MTYPE_SLIDER;
+	s_contrast_slider.generic.name = "contrast";
+	s_contrast_slider.generic.x = 0;
+	s_contrast_slider.generic.y = (y += 10);
+	s_contrast_slider.generic.callback = ContrastCallback;
+	s_contrast_slider.minvalue = 1;
+	s_contrast_slider.maxvalue = 5;
+	s_contrast_slider.curvalue = vid_contrast->value * 2.0f;
+
 	// field of view
 	s_fov_slider.generic.type = MTYPE_SLIDER;
 	s_fov_slider.generic.x = 0;
-	s_fov_slider.generic.y = (y += 10);
+	s_fov_slider.generic.y = (y += 20);
 	s_fov_slider.generic.name = "field of view";
 	s_fov_slider.generic.callback = FOVCallback;
 	s_fov_slider.minvalue = 60;
@@ -441,6 +463,7 @@ void VID_MenuInit (void)
 	Menu_AddItem (&s_opengl_menu, (void *) &s_mode_list);
 	Menu_AddItem (&s_opengl_menu, (void *) &s_fs_box);
 	Menu_AddItem (&s_opengl_menu, (void *) &s_brightness_slider);
+	Menu_AddItem (&s_opengl_menu, (void *) &s_contrast_slider);
 	Menu_AddItem (&s_opengl_menu, (void *) &s_fov_slider);
 	if (GetRefresh() > 0)
 	{

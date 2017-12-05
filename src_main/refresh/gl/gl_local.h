@@ -265,6 +265,7 @@ extern  cvar_t  *gl_lockpvs;
 
 extern	cvar_t	*vid_fullscreen;
 extern	cvar_t	*vid_gamma;
+extern	cvar_t	*vid_contrast;
 extern	cvar_t	*r_lightscale;
 
 extern	glmatrix	r_drawmatrix;

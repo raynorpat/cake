@@ -139,6 +139,7 @@ cvar_t	*r_lightlevel;	//FIXME HACK
 
 cvar_t	*vid_fullscreen;
 cvar_t	*vid_gamma;
+cvar_t	*vid_contrast;
 
 //PGM
 cvar_t	*sw_lockpvs;
@@ -274,6 +275,7 @@ static void R_Register (void)
 
 	vid_fullscreen = Cvar_Get( "vid_fullscreen", "0", CVAR_ARCHIVE );
 	vid_gamma = Cvar_Get( "vid_gamma", "1.0", CVAR_ARCHIVE );
+	vid_contrast = Cvar_Get("vid_contrast", "1.0", CVAR_ARCHIVE);
 
 	Cmd_AddCommand("modellist", SW_Mod_Modellist_f);
 	Cmd_AddCommand("screenshot", R_ScreenShot_f);
@@ -1083,12 +1085,13 @@ void RE_SW_BeginFrame( float camera_separation )
 	/*
 	** rebuild the gamma correction palette if necessary
 	*/
-	if ( vid_gamma->modified )
+	if ( vid_gamma->modified || vid_contrast->modified )
 	{
 		Draw_BuildGammaTable();
 		R_GammaCorrectAndSetPalette((const unsigned char * )d_8to24table);
 
 		vid_gamma->modified = false;
+		vid_contrast->modified = false;
 	}
 
 	while (sw_mode->modified || vid_fullscreen->modified)
@@ -1196,22 +1199,35 @@ Draw_BuildGammaTable
 void Draw_BuildGammaTable (void)
 {
 	int i;
-	float	g;
+	float g, c;
 
 	g = vid_gamma->value;
+	c = vid_contrast->value;
 
-	if (g == 1.0)
+	// clamp contrast to be between 1 and 2
+	if (c < 1.0f)
 	{
-		for (i=0 ; i<256 ; i++)
+		c = 1.0f;
+	}
+	else if (c > 2.0f)
+	{
+		c = 2.0f;
+	}
+
+	// early out if gamma and contrast is set to 1
+	if (g == 1.0f && c == 1.0f)
+	{
+		for (i = 0; i < 256; i++)
 			sw_state.gammatable[i] = i;
 		return;
 	}
 
-	for (i=0 ; i<256 ; i++)
+	// set gamma and contrast
+	for (i = 0; i < 256; i++)
 	{
 		int inf;
 
-		inf = 255 * pow ( (i+0.5)/255.5 , g ) + 0.5;
+		inf = 255 * pow ( (i + 0.5) / 255.5, g ) + 0.5 * c;
 		if (inf < 0)
 			inf = 0;
 		if (inf > 255)

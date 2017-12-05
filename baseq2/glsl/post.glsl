@@ -30,6 +30,7 @@ uniform sampler2D AOTex;
 uniform float blurAmount;
 uniform float exposure;
 uniform float brightnessAmount;
+uniform float contrastAmount;
 
 uniform int waterwarppost;
 
@@ -144,9 +145,9 @@ void PostFS ()
 	color = mix(color, surfcolor, surfcolor.a);
 
 	// brightness
-	fragColor.rgb = doBrightness(fragColor.rgb, brightnessAmount);
-
-	// gamma correct
-	fragColor = toLinear(color);
+	color.rgb = doBrightnessAndContrast(color.rgb, brightnessAmount, contrastAmount);
+	
+	// send it out to the screen
+	fragColor = color;
 }
 #endif

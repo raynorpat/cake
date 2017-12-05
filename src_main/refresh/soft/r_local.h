@@ -525,10 +525,10 @@ extern cvar_t   *r_speeds;
 extern cvar_t   *r_lightlevel;  //FIXME HACK
 
 extern cvar_t	*vid_fullscreen;
-extern	cvar_t	*vid_gamma;
+extern cvar_t	*vid_gamma;
+extern cvar_t	*vid_contrast;
 
-
-extern  clipplane_t     view_clipplanes[4];
+extern clipplane_t     view_clipplanes[4];
 extern int              *pfrustum_indexes[4];
 
 

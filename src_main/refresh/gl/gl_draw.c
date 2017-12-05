@@ -30,6 +30,7 @@ static image_t *draw_chars;
 
 GLuint gl_drawprog = 0;
 GLuint u_drawBrightnessAmount = 0;
+GLuint u_drawContrastAmount = 0;
 GLuint u_drawtexturecolormix = 0;
 
 #define MAX_DRAW_QUADS	2048
@@ -54,6 +55,7 @@ typedef struct drawstate_s
 	GLuint currentsampler;
 	float texturecolormix;
 	float brightness;
+	float contrast;
 	int firstquad;
 	int numquads;
 } drawstate_t;
@@ -109,6 +111,7 @@ void RDraw_CreatePrograms (void)
 
 	u_drawtexturecolormix = glGetUniformLocation (gl_drawprog, "texturecolormix");
 	u_drawBrightnessAmount = glGetUniformLocation (gl_drawprog, "brightnessAmount");
+	u_drawContrastAmount = glGetUniformLocation (gl_drawprog, "contrastAmount");
 
 	glGenVertexArrays (1, &gl_drawvao);
 
@@ -192,7 +195,7 @@ void Draw_End2D (void)
 }
 
 
-void Draw_GenericRect (GLuint texture, GLuint sampler, float texturecolormix, float brightness, float x, float y, float w, float h, unsigned color, float sl, float tl, float sh, float th)
+void Draw_GenericRect (GLuint texture, GLuint sampler, float texturecolormix, float brightness, float contrast, float x, float y, float w, float h, unsigned color, float sl, float tl, float sh, float th)
 {
 	drawvert_t *dv = NULL;
 
@@ -214,6 +217,15 @@ void Draw_GenericRect (GLuint texture, GLuint sampler, float texturecolormix, fl
 		glProgramUniform1f(gl_drawprog, u_drawBrightnessAmount, brightness);
 
 		gl_drawstate.brightness = brightness;
+	}
+
+	if (contrast != gl_drawstate.contrast)
+	{
+		Draw_Flush();
+
+		glProgramUniform1f(gl_drawprog, u_drawContrastAmount, contrast);
+
+		gl_drawstate.contrast = contrast;
 	}
 
 	if (texture != gl_drawstate.currenttexture || sampler != gl_drawstate.currentsampler)
@@ -259,14 +271,14 @@ void Draw_GenericRect (GLuint texture, GLuint sampler, float texturecolormix, fl
 
 void Draw_TexturedRect (GLuint texnum, GLuint sampler, float x, float y, float w, float h, float sl, float tl, float sh, float th)
 {
-	Draw_GenericRect (texnum, sampler, 0.0f, vid_gamma->value, x, y, w, h, 0xffffffff, sl, tl, sh, th);
+	Draw_GenericRect (texnum, sampler, 0.0f, vid_gamma->value, vid_contrast->value, x, y, w, h, 0xffffffff, sl, tl, sh, th);
 }
 
 
 void Draw_ColouredRect (float x, float y, float w, float h, unsigned color)
 {
 	// prevent a texture change here
-	Draw_GenericRect (gl_drawstate.currenttexture, gl_drawstate.currentsampler, 1.0f, vid_gamma->value, x, y, w, h, color, 0, 0, 0, 0);
+	Draw_GenericRect (gl_drawstate.currenttexture, gl_drawstate.currentsampler, 1.0f, vid_gamma->value, vid_contrast->value, x, y, w, h, color, 0, 0, 0, 0);
 }
 
 
