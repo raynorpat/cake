@@ -708,20 +708,22 @@ void D_FlushCaches(void);
 void	R_ScreenShot_f( void );
 void    RE_SW_BeginRegistration (char *map);
 struct model_s  *RE_SW_RegisterModel (char *name);
+struct image_s *RE_SW_RegisterSkin (char *name);
 void    RE_SW_EndRegistration (void);
 
 void    RE_SW_RenderFrame(refdef_t *fd);
 
 struct image_s  *RE_SW_Draw_RegisterPic(char *name);
 
-void    Draw_GetPicSize (int *w, int *h, char *name);
-void    Draw_PicScaled (int x, int y, char *name, float factor);
-void    Draw_StretchPic (int x, int y, int w, int h, char *name);
-void    Draw_StretchRaw (int x, int y, int w, int h, int cols, int rows, byte *data);
-void    Draw_CharScaled (int x, int y, int c, float scale);
-void    Draw_TileClear (int x, int y, int w, int h, char *name);
+void	RE_SW_Draw_StretchRaw (int x, int y, int w, int h, int cols, int rows, byte *data);
+void	RE_SW_Draw_FadeScreen (void);
+void	RE_SW_Draw_Fill (int x, int y, int w, int h, int c);
+void	RE_SW_Draw_TileClear (int x, int y, int w, int h, char *name);
+void	RE_SW_Draw_CharScaled (int x, int y, int num, float scale);
+void	RE_SW_Draw_StretchPic (int x, int y, int w, int h, char *name);
+void	RE_SW_Draw_PicScaled (int x, int y, char *name, float scale);
+void	RE_SW_Draw_GetPicSize (int *w, int *h, char *name);
 void    RE_SW_Draw_Fill (int x, int y, int w, int h, int c);
-void    Draw_FadeScreen (void);
 
 void    SW_Draw_GetPalette (void);
 

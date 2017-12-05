@@ -58,4 +58,8 @@ extern int RE_gfxVal;
 void GFX_CoreInit (char *name);
 void GFX_CoreShutdown (void);
 
+// refresh entry points
+void GL_GFX_CoreInit (void);
+void SW_GFX_CoreInit (void);
+
 #endif

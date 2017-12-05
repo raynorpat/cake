@@ -906,3 +906,41 @@ void RE_GL_SetPalette (const unsigned char *palette)
 	GL_Clear (GL_COLOR_BUFFER_BIT);
 	glClearColor (1, 0, 0.5, 0.5);
 }
+
+/*
+============
+GL_GFX_CoreInit
+
+OpenGL refresh core entry point
+============
+*/
+void GL_GFX_CoreInit(void)
+{
+	RE_BeginFrame = RE_GL_BeginFrame;
+	RE_RenderFrame = RE_GL_RenderFrame;
+	RE_EndFrame = RE_GL_EndFrame;
+
+	RE_SetPalette = RE_GL_SetPalette;
+
+	RE_Init = RE_GL_Init;
+	RE_Shutdown = RE_GL_Shutdown;
+
+	RE_Draw_StretchRaw = RE_GL_Draw_StretchRaw;
+	RE_Draw_FadeScreen = RE_GL_Draw_FadeScreen;
+	RE_Draw_Fill = RE_GL_Draw_Fill;
+	RE_Draw_TileClear = RE_GL_Draw_TileClear;
+	RE_Draw_CharScaled = RE_GL_Draw_CharScaled;
+	RE_Draw_Char = RE_GL_Draw_Char;
+	RE_Draw_StretchPic = RE_GL_Draw_StretchPic;
+	RE_Draw_PicScaled = RE_GL_Draw_PicScaled;
+	RE_Draw_Pic = RE_GL_Draw_Pic;
+	RE_Draw_GetPicSize = RE_GL_Draw_GetPicSize;
+
+	RE_BeginRegistration = RE_GL_BeginRegistration;
+	RE_RegisterModel = RE_GL_RegisterModel;
+	RE_RegisterSkin = RE_GL_RegisterSkin;
+	RE_Draw_RegisterPic = RE_GL_Draw_RegisterPic;
+	RE_SetSky = RE_GL_SetSky;
+	RE_EndRegistration = RE_GL_EndRegistration;
+}
+

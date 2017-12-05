@@ -55,126 +55,6 @@ int				RE_gfxVal;
 
 /*
 ============
-GFX_GL_CoreInit
-
-OpenGL refresh core
-============
-*/
-void RE_GL_BeginFrame(float camera_separation);
-void RE_GL_RenderFrame(refdef_t *fd);
-void RE_GL_EndFrame(void);
-void RE_GL_SetPalette(const unsigned char *palette);
-int RE_GL_Init(void);
-void RE_GL_Shutdown(void);
-void RE_GL_Draw_StretchRaw(int x, int y, int w, int h, int cols, int rows, byte *data);
-void RE_GL_Draw_FadeScreen(void);
-void RE_GL_Draw_Fill(int x, int y, int w, int h, int c);
-void RE_GL_Draw_TileClear(int x, int y, int w, int h, char *name);
-void RE_GL_Draw_CharScaled(int x, int y, int num, float scale);
-void RE_GL_Draw_Char(int x, int y, int c);
-void RE_GL_Draw_StretchPic(int x, int y, int w, int h, char *name);
-void RE_GL_Draw_PicScaled(int x, int y, char *name, float scale);
-void RE_GL_Draw_Pic(int x, int y, char *name);
-void RE_GL_Draw_GetPicSize(int *w, int *h, char *name);
-void RE_GL_BeginRegistration(char *model);
-struct model_s *RE_GL_RegisterModel(char *name);
-struct image_s *RE_GL_RegisterSkin(char *name);
-struct image_s *RE_GL_Draw_RegisterPic(char *name);
-void RE_GL_SetSky(char *name, float rotate, vec3_t axis);
-void RE_GL_EndRegistration(void);
-
-static void GFX_GL_CoreInit (void)
-{
-	RE_BeginFrame = RE_GL_BeginFrame;
-	RE_RenderFrame = RE_GL_RenderFrame;
-	RE_EndFrame = RE_GL_EndFrame;
-
-	RE_SetPalette = RE_GL_SetPalette;
-
-	RE_Init = RE_GL_Init;
-	RE_Shutdown = RE_GL_Shutdown;
-
-	RE_Draw_StretchRaw = RE_GL_Draw_StretchRaw;
-	RE_Draw_FadeScreen = RE_GL_Draw_FadeScreen;
-	RE_Draw_Fill = RE_GL_Draw_Fill;
-	RE_Draw_TileClear = RE_GL_Draw_TileClear;
-	RE_Draw_CharScaled = RE_GL_Draw_CharScaled;
-	RE_Draw_Char = RE_GL_Draw_Char;
-	RE_Draw_StretchPic = RE_GL_Draw_StretchPic;
-	RE_Draw_PicScaled = RE_GL_Draw_PicScaled;
-	RE_Draw_Pic = RE_GL_Draw_Pic;
-	RE_Draw_GetPicSize = RE_GL_Draw_GetPicSize;
-    
-	RE_BeginRegistration = RE_GL_BeginRegistration;
-	RE_RegisterModel = RE_GL_RegisterModel;
-	RE_RegisterSkin = RE_GL_RegisterSkin;
-	RE_Draw_RegisterPic = RE_GL_Draw_RegisterPic;
-	RE_SetSky = RE_GL_SetSky;
-	RE_EndRegistration = RE_GL_EndRegistration;
-}
-
-
-/*
-============
-GFX_SOFT_CoreInit
-
-Software refresh core
-============
-*/
-void RE_SW_BeginFrame(float camera_separation);
-void RE_SW_RenderFrame(refdef_t *fd);
-void RE_SW_EndFrame(void);
-void RE_SW_SetPalette(const unsigned char *palette);
-int RE_SW_Init(void);
-void RE_SW_Shutdown(void);
-void RE_SW_Draw_StretchRaw(int x, int y, int w, int h, int cols, int rows, byte *data);
-void RE_SW_Draw_FadeScreen(void);
-void RE_SW_Draw_Fill(int x, int y, int w, int h, int c);
-void RE_SW_Draw_TileClear(int x, int y, int w, int h, char *name);
-void RE_SW_Draw_CharScaled(int x, int y, int num, float scale);
-void RE_SW_Draw_StretchPic(int x, int y, int w, int h, char *name);
-void RE_SW_Draw_PicScaled(int x, int y, char *name, float scale);
-void RE_SW_Draw_GetPicSize(int *w, int *h, char *name);
-void RE_SW_BeginRegistration(char *model);
-struct model_s *RE_SW_RegisterModel(char *name);
-struct image_s *RE_SW_RegisterSkin(char *name);
-struct image_s *RE_SW_Draw_RegisterPic(char *name);
-void RE_SW_SetSky(char *name, float rotate, vec3_t axis);
-void RE_SW_EndRegistration(void);
-
-static void GFX_SOFT_CoreInit (void)
-{
-	RE_BeginFrame = RE_SW_BeginFrame;
-	RE_RenderFrame = RE_SW_RenderFrame;
-	RE_EndFrame = RE_SW_EndFrame;
-
-	RE_SetPalette = RE_SW_SetPalette;
-
-	RE_Init = RE_SW_Init;
-	RE_Shutdown = RE_SW_Shutdown;
-
-	RE_Draw_StretchRaw = RE_SW_Draw_StretchRaw;
-	RE_Draw_FadeScreen = RE_SW_Draw_FadeScreen;
-	RE_Draw_Fill = RE_SW_Draw_Fill;
-	RE_Draw_TileClear = RE_SW_Draw_TileClear;
-	RE_Draw_CharScaled = RE_SW_Draw_CharScaled;
-	RE_Draw_Char = NULL;
-	RE_Draw_StretchPic = RE_SW_Draw_StretchPic;
-	RE_Draw_PicScaled = RE_SW_Draw_PicScaled;
-	RE_Draw_Pic = NULL;
-	RE_Draw_GetPicSize = RE_SW_Draw_GetPicSize;
-
-	RE_BeginRegistration = RE_SW_BeginRegistration;
-	RE_RegisterModel = RE_SW_RegisterModel;
-	RE_RegisterSkin = RE_SW_RegisterSkin;
-	RE_Draw_RegisterPic = RE_SW_Draw_RegisterPic;
-	RE_SetSky = RE_SW_SetSky;
-	RE_EndRegistration = RE_SW_EndRegistration;
-}
-
-
-/*
-============
 GFX_CoreInit
 
 Figures out which refresh core to startup and init based on the vid_ref cvar
@@ -197,10 +77,10 @@ void GFX_CoreInit (char *name)
 	switch (RE_gfxVal)
 	{
 	case REF_API_SOFT:
-		GFX_SOFT_CoreInit ();
+		SW_GFX_CoreInit ();
 		break;
 	case REF_API_OPENGL:
-		GFX_GL_CoreInit ();
+		GL_GFX_CoreInit ();
 		break;
 	case REF_API_DIRECT3D_9:
 		break;
@@ -223,7 +103,7 @@ void GFX_CoreShutdown (void)
 	switch (RE_gfxVal)
 	{
 	case REF_API_SOFT:
-		// software shutdown works fine with call to RE_Shutdown
+		// software shutdown works fine with call to RE_Shutdown, no context to clear
 		break;
 	case REF_API_OPENGL:
 		// OpenGL needs to destroy everything, including the context, hence this extra call

@@ -333,6 +333,13 @@ void RE_GL_BeginFrame (float camera_separation);
 void RE_GL_EndFrame (void);
 void RE_GL_SetPalette (const unsigned char *palette);
 
+void RE_GL_BeginRegistration(char *model);
+struct model_s *RE_GL_RegisterModel(char *name);
+struct image_s *RE_GL_RegisterSkin(char *name);
+struct image_s *RE_GL_Draw_RegisterPic(char *name);
+void RE_GL_SetSky(char *name, float rotate, vec3_t axis);
+void RE_GL_EndRegistration(void);
+
 int	Draw_GetPalette (void);
 
 void GL_ResampleTexture (unsigned *in, int inwidth, int inheight, unsigned *out, int outwidth, int outheight);

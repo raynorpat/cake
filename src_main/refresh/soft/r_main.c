@@ -1854,3 +1854,42 @@ void R_ScreenShot_f(void)
 
 	free(buffer);
 }
+
+
+
+/*
+============
+SW_GFX_CoreInit
+
+Software refresh core
+============
+*/
+void SW_GFX_CoreInit(void)
+{
+	RE_BeginFrame = RE_SW_BeginFrame;
+	RE_RenderFrame = RE_SW_RenderFrame;
+	RE_EndFrame = RE_SW_EndFrame;
+
+	RE_SetPalette = RE_SW_SetPalette;
+
+	RE_Init = RE_SW_Init;
+	RE_Shutdown = RE_SW_Shutdown;
+
+	RE_Draw_StretchRaw = RE_SW_Draw_StretchRaw;
+	RE_Draw_FadeScreen = RE_SW_Draw_FadeScreen;
+	RE_Draw_Fill = RE_SW_Draw_Fill;
+	RE_Draw_TileClear = RE_SW_Draw_TileClear;
+	RE_Draw_CharScaled = RE_SW_Draw_CharScaled;
+	RE_Draw_Char = NULL;
+	RE_Draw_StretchPic = RE_SW_Draw_StretchPic;
+	RE_Draw_PicScaled = RE_SW_Draw_PicScaled;
+	RE_Draw_Pic = NULL;
+	RE_Draw_GetPicSize = RE_SW_Draw_GetPicSize;
+
+	RE_BeginRegistration = RE_SW_BeginRegistration;
+	RE_RegisterModel = RE_SW_RegisterModel;
+	RE_RegisterSkin = RE_SW_RegisterSkin;
+	RE_Draw_RegisterPic = RE_SW_Draw_RegisterPic;
+	RE_SetSky = RE_SW_SetSky;
+	RE_EndRegistration = RE_SW_EndRegistration;
+}
