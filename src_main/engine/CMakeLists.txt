@@ -50,7 +50,7 @@ else (MODPLUG_FOUND)
 endif (MODPLUG_FOUND)
 
 # libgamespy
-find_package(GAMESPY)
+#find_package(GAMESPY)
 if (GAMESPY_FOUND)
     include_directories(${GAMESPY_INCLUDE_DIRS})
     set(GAMESPY_LIBRARY ${GAMESPY_LIBRARIES})
