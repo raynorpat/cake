@@ -114,7 +114,6 @@ LIGHT SAMPLING
 */
 
 vec3_t	pointcolor;
-mplane_t	*lightplane; // used as shadow plane
 vec3_t		lightspot;
 
 static int RecursiveLightPoint (mnode_t *node, vec3_t start, vec3_t end)
@@ -163,10 +162,8 @@ static int RecursiveLightPoint (mnode_t *node, vec3_t start, vec3_t end)
 		return -1;	// didn't hit anything
 
 	// check for impact on this node
-	VectorCopy (mid, lightspot);
-	lightplane = plane;
-
 	surf = r_worldmodel->surfaces + node->firstsurface;
+
 	for (i=0 ; i<node->numsurfaces ; i++, surf++)
 	{
 		if (surf->flags&(SURF_DRAWTURB|SURF_DRAWSKY))
@@ -208,6 +205,8 @@ static int RecursiveLightPoint (mnode_t *node, vec3_t start, vec3_t end)
 						((surf->extents[1]>>4)+1);
 			}
 		}
+
+		VectorCopy(mid, lightspot);
 
 		return 1;
 	}

@@ -369,6 +369,7 @@ void R_DrawAliasModel (entity_t *e)
 	float		an;
 	vec3_t		bbox[8];
 	image_t		*skin;
+	float		lightspot[3];
 
 	if (!(e->flags & RF_WEAPONMODEL))
 	{
@@ -413,7 +414,7 @@ void R_DrawAliasModel (entity_t *e)
 	}
 	else
 	{
-		R_LightPoint (e->currorigin, gl_meshuboupdate.shadelight);
+		R_LightPoint (e->currorigin, gl_meshuboupdate.shadelight, lightspot);
 
 		// player lighting hack for communication back to server
 		// big hack!

@@ -110,10 +110,7 @@ LIGHT SAMPLING
 =============================================================================
 */
 
-cplane_t		*lightplane;		// used as shadow plane
-vec3_t			lightspot;
-
-static int RecursiveLightPoint (mnode_t *node, vec3_t start, vec3_t end, float *pointcolor)
+static int RecursiveLightPoint (mnode_t *node, vec3_t start, vec3_t end, float *pointcolor, float *lightspot)
 {
 	float		front, back, frac;
 	int			side;
@@ -138,7 +135,7 @@ static int RecursiveLightPoint (mnode_t *node, vec3_t start, vec3_t end, float *
 	side = front < 0;
 
 	if ((back < 0) == side)
-		return RecursiveLightPoint (node->children[side], start, end, pointcolor);
+		return RecursiveLightPoint (node->children[side], start, end, pointcolor, lightspot);
 
 	frac = front / (front - back);
 	mid[0] = start[0] + (end[0] - start[0]) * frac;
@@ -146,7 +143,7 @@ static int RecursiveLightPoint (mnode_t *node, vec3_t start, vec3_t end, float *
 	mid[2] = start[2] + (end[2] - start[2]) * frac;
 
 	// go down front side
-	r = RecursiveLightPoint (node->children[side], start, mid, pointcolor);
+	r = RecursiveLightPoint (node->children[side], start, mid, pointcolor, lightspot);
 
 	if (r >= 0)
 		return r;		// hit something
@@ -155,9 +152,6 @@ static int RecursiveLightPoint (mnode_t *node, vec3_t start, vec3_t end, float *
 		return -1;		// didn't hit anuthing
 
 	// check for impact on this node
-	VectorCopy (mid, lightspot);
-	lightplane = plane;
-
 	surf = r_worldmodel->surfaces + node->firstsurface;
 
 	for (i = 0; i < node->numsurfaces; i++, surf++)
@@ -207,11 +201,13 @@ static int RecursiveLightPoint (mnode_t *node, vec3_t start, vec3_t end, float *
 			}
 		}
 
+		VectorCopy(lightspot, mid);
+
 		return 1;
 	}
 
 	// go down back side
-	return RecursiveLightPoint (node->children[!side], mid, end, pointcolor);
+	return RecursiveLightPoint (node->children[!side], mid, end, pointcolor, lightspot);
 }
 
 /*
@@ -219,7 +215,7 @@ static int RecursiveLightPoint (mnode_t *node, vec3_t start, vec3_t end, float *
 R_LightPoint
 ===============
 */
-void R_LightPoint (vec3_t p, vec3_t color)
+void R_LightPoint (vec3_t p, vec3_t color, float *lightspot)
 {
 	vec3_t		end;
 	float		r;
@@ -241,7 +237,7 @@ void R_LightPoint (vec3_t p, vec3_t color)
 	end[1] = p[1];
 	end[2] = r_worldmodel->mins[2] - 10.0f;
 
-	if ((r = RecursiveLightPoint (r_worldmodel->nodes, p, end, pointcolor)) == -1)
+	if ((r = RecursiveLightPoint (r_worldmodel->nodes, p, end, pointcolor, lightspot)) == -1)
 		VectorCopy (vec3_origin, color);
 	else
 		VectorCopy (pointcolor, color);

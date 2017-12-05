@@ -70,10 +70,11 @@ R_DrawNullModel
 void R_DrawNullModel (entity_t *e)
 {
 	vec3_t	shadelight;
+	float	lightspot[3];
 
 	if (e->flags & RF_FULLBRIGHT)
 		shadelight[0] = shadelight[1] = shadelight[2] = 1.0f;
-	else R_LightPoint (e->currorigin, shadelight);
+	else R_LightPoint (e->currorigin, shadelight, lightspot);
 
 	GL_LoadMatrix (&e->matrix, &r_mvpmatrix);
 

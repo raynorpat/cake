@@ -459,12 +459,13 @@ R_SetLightLevel
 static void R_SetLightLevel (void)
 {
 	vec3_t		shadelight;
+	float		lightspot[3];
 
 	if (r_newrefdef.rdflags & RDF_NOWORLDMODEL)
 		return;
 
 	// save off light value for server to look at (BIG HACK!)
-	R_LightPoint (r_newrefdef.vieworg, shadelight);
+	R_LightPoint (r_newrefdef.vieworg, shadelight, lightspot);
 
 	// pick the greatest component, which should be the same
 	// as the mono value returned by software
