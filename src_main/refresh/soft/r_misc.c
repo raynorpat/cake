@@ -246,14 +246,14 @@ Called every time the vid structure or r_refdef changes.
 Guaranteed to be called before the first refresh
 ===============
 */
-void R_ViewChanged (vrect_t *vr)
+void R_ViewChanged (vrect_t *vr, float aspect)
 {
 	int		i;
+	float	screenAspect, pixelAspect;
 
 	r_refdef.vrect = *vr;
 
-	r_refdef.horizontalFieldOfView = 2*tan((float)r_newrefdef.fov_x/360*M_PI);;
-	verticalFieldOfView = 2*tan((float)r_newrefdef.fov_y/360*M_PI);
+	r_refdef.horizontalFieldOfView = 2.0 * tan((float)r_newrefdef.fov_x / 360 * M_PI);
 
 	r_refdef.fvrectx = (float)r_refdef.vrect.x;
 	r_refdef.fvrectx_adj = (float)r_refdef.vrect.x - 0.5;
@@ -278,6 +278,21 @@ void R_ViewChanged (vrect_t *vr)
 	r_refdef.aliasvrectbottom = r_refdef.aliasvrect.y +
 			r_refdef.aliasvrect.height;
 
+	// 320 * 200 1.0 pixelAspect = 1.6 screenAspect
+	// 320 * 240 1.0 pixelAspect = 1.3333 screenAspect
+	// proper 320 * 200 pixelAspect = 0.8333333
+	if (r_newrefdef.rdflags & RDF_FOVADAPT)
+	{
+		pixelAspect = 1;
+		verticalFieldOfView = 2.0 * tan((float)r_newrefdef.fov_y / 360 * M_PI);
+	}
+	else
+	{
+		pixelAspect = aspect;
+		screenAspect = r_refdef.vrect.width * pixelAspect / r_refdef.vrect.height;
+		verticalFieldOfView = r_refdef.horizontalFieldOfView / screenAspect;
+	}
+
 	xOrigin = r_refdef.xOrigin;
 	yOrigin = r_refdef.yOrigin;
 
@@ -298,11 +313,11 @@ void R_ViewChanged (vrect_t *vr)
 	aliasxscale = xscale * r_aliasuvscale;
 	xscaleinv = 1.0 / xscale;
 
-	yscale = xscale;
+	yscale = (r_newrefdef.rdflags & RDF_FOVADAPT) ? r_refdef.vrect.height / verticalFieldOfView : xscale * pixelAspect;
 	aliasyscale = yscale * r_aliasuvscale;
 	yscaleinv = 1.0 / yscale;
 	xscaleshrink = (r_refdef.vrect.width-6)/r_refdef.horizontalFieldOfView;
-	yscaleshrink = xscaleshrink;
+	yscaleshrink = xscaleshrink * pixelAspect;
 
 	// left side clip
 	screenedge[0].normal[0] = -1.0 / (xOrigin*r_refdef.horizontalFieldOfView);
@@ -344,6 +359,7 @@ R_SetupFrame
 void R_SetupFrame (void)
 {
 	int			i;
+	float		aspect;
 	vrect_t		vrect;
 
 	if (r_fullbright->modified)
@@ -373,14 +389,44 @@ void R_SetupFrame (void)
 	else
 		r_dowarp = false;
 
+	// compute screen aspect ratio
+	aspect = ((float)r_newrefdef.height / (float)r_newrefdef.width) * (320.0f / 240.0f);
+
 	if (r_dowarp)
 	{
 		// warp into off screen buffer
-		vrect.x = 0;
-		vrect.y = 0;
-		vrect.width = r_newrefdef.width < WARP_WIDTH ? r_newrefdef.width : WARP_WIDTH;
-		vrect.height = r_newrefdef.height < WARP_HEIGHT ? r_newrefdef.height : WARP_HEIGHT;
+		if (r_newrefdef.width <= WARP_WIDTH && r_newrefdef.height <= WARP_HEIGHT)
+		{
+			// shortcut for 320x240 and lower
+			vrect.x = 0;
+			vrect.y = 0;
+			vrect.width = r_newrefdef.width;
+			vrect.height = r_newrefdef.height;
+		}
+		else
+		{
+			// the not so fast path
+			float w = r_newrefdef.width;
+			float h = r_newrefdef.height;
 
+			if (w > WARP_WIDTH)
+			{
+				h *= (float)WARP_WIDTH / w;
+				w = WARP_WIDTH;
+			}
+			if (h > WARP_HEIGHT)
+			{
+				h = WARP_HEIGHT;
+				w *= (float)WARP_HEIGHT / h;
+			}
+
+			vrect.x = 0;
+			vrect.y = 0;
+			vrect.width = (int)w;
+			vrect.height = (int)h;
+			aspect *= (h / w);
+			aspect *= ((float)r_newrefdef.width / (float)r_newrefdef.height);
+		}
 		d_viewbuffer = r_warpbuffer;
 		r_screenwidth = WARP_WIDTH;
 	}
@@ -395,7 +441,7 @@ void R_SetupFrame (void)
 		r_screenwidth = vid.width;
 	}
 
-	R_ViewChanged (&vrect);
+	R_ViewChanged (&vrect, aspect);
 
 	// start off with just the four screen edge clip planes
 	R_TransformFrustum ();
