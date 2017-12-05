@@ -150,10 +150,10 @@ void V_AddLightStyle (int style, float r, float g, float b)
 
 	ls = &r_lightstyles[style];
 
-	ls->white = r + g + b;
-	ls->rgb[0] = r;
-	ls->rgb[1] = g;
-	ls->rgb[2] = b;
+	ls->white = (r + g + b) * 0.0078125f;
+	ls->rgb[0] = r* 0.0078125f;
+	ls->rgb[1] = g* 0.0078125f;
+	ls->rgb[2] = b* 0.0078125f;
 }
 
 /*
