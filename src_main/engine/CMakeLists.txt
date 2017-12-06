@@ -29,6 +29,14 @@ else()
 	set(SDLx_LIBRARY ${SDL_LIBRARY})
 endif()
 
+# directx
+find_package(DIRECTX)
+if (DirectX_D3DX9_FOUND)
+	include_directories (BEFORE SYSTEM ${DirectX_D3D9_INCLUDE_FOUND})
+	include_directories (BEFORE SYSTEM ${DirectX_D3DX9_INCLUDE_DIR})
+	add_definitions(-DREF_D3D9)
+endif()
+
 # libmad
 find_package(MAD)
 if (MAD_FOUND)
@@ -306,6 +314,9 @@ if(MSVC)
 		${CMAKE_DL_LIBS}
 		refresh
 		)
+	if (DirectX_D3D9_FOUND)
+		target_link_libraries (cake PRIVATE ${DirectX_D3D9_LIBRARY} ${DirectX_D3DX9_LIBRARY})
+	endif()
 	
 	set_target_properties(cake PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}/..")
 	

@@ -57,6 +57,7 @@ QMATRIX* QXMatrixInverse(QXMATRIX *pout, float *pdeterminant, const QXMATRIX *pm
 glmatrix *GL_TranslateMatrix (glmatrix *m, float x, float y, float z);
 glmatrix *GL_ScaleMatrix (glmatrix *m, float x, float y, float z);
 glmatrix *GL_RotateMatrix (glmatrix *m, float a, float x, float y, float z);
+glmatrix *GL_RadianRotateMatrix (glmatrix *m, float y, float p, float r);
 glmatrix *GL_LoadMatrix (glmatrix *dst, glmatrix *src);
 glmatrix *GL_OrthoMatrix (glmatrix *m, float left, float right, float bottom, float top, float zNear, float zFar);
 glmatrix *GL_PerspectiveMatrix (glmatrix *m, float fovy, float aspect, float zNear, float zFar);
@@ -138,6 +139,7 @@ typedef struct
 
 typedef struct
 {
+	float		color[3];
 	float		rgb[3];			// 0.0 - 2.0
 	float		white;			// highest of rgb
 } lightstyle_t;

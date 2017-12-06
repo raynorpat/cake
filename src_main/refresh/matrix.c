@@ -191,8 +191,6 @@ QXMATRIX * QXMatrixRotationAxis(QXMATRIX *out, const QXVECTOR3 *v, float angle)
 	QXVECTOR3 nv;
 	float sangle, cangle, cdiff;
 
-	//TRACE("out %p, v %p, angle %f\n", out, v, angle);
-
 	QXVec3Normalize(&nv, v);
 	sangle = sinf(angle);
 	cangle = cosf(angle);
@@ -331,6 +329,37 @@ glmatrix *GL_RotateMatrix (glmatrix *m, float a, float x, float y, float z)
 	return GL_MultMatrix (m, QXMatrixRotationAxis (&tmp, &v, (a * M_PI) / 180.0), m);
 }
 
+#define QToRadian( degree ) ((degree) * (M_PI / 180.0f))
+
+glmatrix *GL_RadianRotateMatrix (glmatrix *m, float y, float p, float r)
+{
+	float sr, sp, sy, cr, cp, cy;
+
+	Q_sincos(QToRadian(y), &sy, &cy);
+	Q_sincos(QToRadian(p), &sp, &cp);
+	Q_sincos(QToRadian(r), &sr, &cr);
+
+	glmatrix tmp[] = {
+		(cp * cy),
+		(cp * sy),
+		-sp,
+		0.0f,
+		(cr * -sy) + (sr * sp * cy),
+		(cr * cy) + (sr * sp * sy),
+		(sr * cp),
+		0.0f,
+		(sr * sy) + (cr * sp * cy),
+		(-sr * cy) + (cr * sp * sy),
+		(cr * cp),
+		0.0f,
+		0.0f,
+		0.0f,
+		0.0f,
+		1.0f
+	};
+	
+	return GL_MultMatrix(m, tmp, m);
+}
 
 
 void GL_TransformPoint (glmatrix *m, float *in, float *out)

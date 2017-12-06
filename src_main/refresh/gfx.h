@@ -61,5 +61,6 @@ void GFX_CoreShutdown (void);
 // refresh entry points
 void GL_GFX_CoreInit (void);
 void SW_GFX_CoreInit (void);
+void D3D9_GFX_CoreInit (void);
 
 #endif

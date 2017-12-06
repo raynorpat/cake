@@ -84,28 +84,47 @@ void V_AddEntity (entity_t *ent)
 	r_entities[r_numentities++] = *ent;
 }
 
+#ifdef WIN32
+#ifndef _PALETTEENTRY_DEFINED
+#define _PALETTEENTRY_DEFINED
+typedef struct tagPALETTEENTRY {
+	byte        peRed;
+	byte        peGreen;
+	byte        peBlue;
+	byte        peFlags;
+} PALETTEENTRY, *PPALETTEENTRY;
+#endif // !_PALETTEENTRY_DEFINED
+#endif
 
 /*
 =====================
 V_AddParticle
-
 =====================
 */
-void V_AddParticle (vec3_t org, int color, float alpha)
+void V_AddParticle(vec3_t org, int color, float alpha)
 {
 	particle_t *p;
-	extern unsigned d_8to24table_rgba[];
 
 	if (r_numparticles >= MAX_PARTICLES)
 		return;
 
 	p = &r_particles[r_numparticles++];
 
-	VectorCopy (org, p->origin);
+	VectorCopy(org, p->origin);
 
 	// transform 8bit colors into RGBA
-	p->color = d_8to24table_rgba[color & 255];
-	((byte *) &p->color)[3] = (alpha > 1) ? 255 : ((alpha < 0) ? 0 : alpha * 255);
+	if (RE_gfxVal == REF_API_DIRECT3D_9)
+	{
+		// HACK!
+		extern PALETTEENTRY d_8to24table[];
+		p->color = *((unsigned *)&d_8to24table[color & 255]);
+	}
+	else
+	{
+		extern unsigned d_8to24table_rgba[];
+		p->color = d_8to24table_rgba[color & 255];
+		((byte *)&p->color)[3] = (alpha > 1) ? 255 : ((alpha < 0) ? 0 : alpha * 255);
+	}
 
 	// these are leftover for software refresh
 	p->soft_color = color;
@@ -116,44 +135,60 @@ void V_AddParticle (vec3_t org, int color, float alpha)
 /*
 =====================
 V_AddLight
-
 =====================
 */
 void V_AddLight (vec3_t org, float intensity, float r, float g, float b)
 {
 	dlight_t	*dl;
+	float scaler = 1.0f;
 
 	if (r_numdlights >= MAX_DLIGHTS)
 		return;
 
 	dl = &r_dlights[r_numdlights++];
 	VectorCopy (org, dl->origin);
-	dl->intensity = intensity;
-	dl->color[0] = r;
-	dl->color[1] = g;
-	dl->color[2] = b;
+	dl->intensity = intensity * Cvar_VariableValue("gl_dynamic");
+
+	// HACK: ugly for D3D :(
+	if (RE_gfxVal == REF_API_DIRECT3D_9)
+		scaler = 0.0078125f;
+
+	dl->color[0] = r * scaler;
+	dl->color[1] = g * scaler;
+	dl->color[2] = b * scaler;
 }
 
+static void HackLightstylesForD3D(lightstyle_t *ls, float r, float g, float b)
+{
+	// scale styles for overbright range
+	ls->color[0] = (((r - 1.0f) * Cvar_VariableValue("gl_dynamic")) + 1.0f) * 0.0078125f;
+	ls->color[1] = (((r - 1.0f) * Cvar_VariableValue("gl_dynamic")) + 1.0f) * 0.0078125f;
+	ls->color[2] = (((r - 1.0f) * Cvar_VariableValue("gl_dynamic")) + 1.0f) * 0.0078125f;
+}
 
 /*
 =====================
 V_AddLightStyle
-
 =====================
 */
 void V_AddLightStyle (int style, float r, float g, float b)
 {
-	lightstyle_t	*ls;
-
 	if (style < 0 || style >= MAX_LIGHTSTYLES)
 		Com_Error (ERR_DROP, "Bad light style %i", style);
 
-	ls = &r_lightstyles[style];
-
-	ls->white = (r + g + b) * 0.0078125f;
-	ls->rgb[0] = r* 0.0078125f;
-	ls->rgb[1] = g* 0.0078125f;
-	ls->rgb[2] = b* 0.0078125f;
+	// HACK: ugly for D3D :(
+	if (RE_gfxVal == REF_API_DIRECT3D_9)
+	{
+		HackLightstylesForD3D(&r_lightstyles[style], r, g, b);
+	}
+	else
+	{
+		lightstyle_t *ls = &r_lightstyles[style];
+		ls->white = r + g + b;
+		ls->rgb[0] = r;
+		ls->rgb[1] = g;
+		ls->rgb[2] = b;
+	}
 }
 
 /*

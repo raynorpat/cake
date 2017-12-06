@@ -83,6 +83,14 @@ void GFX_CoreInit (char *name)
 		GL_GFX_CoreInit ();
 		break;
 	case REF_API_DIRECT3D_9:
+#ifdef REF_D3D9
+		D3D9_GFX_CoreInit ();
+#else
+		Com_Printf ("Direct3D 9 refresh disabled at compile time. Switching to OpenGL refresh!\n");
+		Cvar_Set ("vid_ref", "gl");
+		RE_gfxVal = REF_API_OPENGL;
+		GL_GFX_CoreInit ();
+#endif
 		break;
 	case REF_API_UNDETERMINED:
 	default:

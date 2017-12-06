@@ -105,8 +105,8 @@ void R_BeginWaterPolys (glmatrix *matrix, float alpha);
 
 static vec3_t	modelorg;		// relative to viewpoint
 
-msurface_t	*r_alpha_surfaces;
-msurface_t	*r_sky_surfaces;
+static msurface_t *r_alpha_surfaces;
+static msurface_t *r_sky_surfaces;
 
 
 // the great thing about standards is that there are so many of them.
@@ -124,10 +124,6 @@ typedef struct brushpolyvert_s
 
 
 static gllightmapstate_t gl_lms;
-
-static void		LM_BeginBlock (void);
-static void		LM_FinishBlock (void);
-static qboolean	LM_AllocBlock (int w, int h, int *x, int *y);
 
 extern void R_SetCacheState (msurface_t *surf);
 extern void R_BuildLightMap (msurface_t *surf, unsigned *dest, int stride);
@@ -964,12 +960,12 @@ void GL_BuildPolygonFromSurface (model_t *mod, msurface_t *surf)
 */
 
 
-static void LM_BeginBlock (void)
+static void LM_GL_BeginBlock (void)
 {
 	memset (gl_lms.allocated, 0, sizeof (gl_lms.allocated));
 }
 
-static void LM_FinishBlock (void)
+static void LM_GL_FinishBlock (void)
 {
 	gl_lms.lightrect[gl_lms.current_lightmap_texture].left = LIGHTMAP_SIZE;
 	gl_lms.lightrect[gl_lms.current_lightmap_texture].right = 0;
@@ -979,11 +975,11 @@ static void LM_FinishBlock (void)
 	gl_lms.modified[gl_lms.current_lightmap_texture] = false;
 
 	if (++gl_lms.current_lightmap_texture == MAX_LIGHTMAPS)
-		VID_Error (ERR_DROP, "LM_FinishBlock() - MAX_LIGHTMAPS exceeded\n");
+		VID_Error (ERR_DROP, "LM_GL_FinishBlock() - MAX_LIGHTMAPS exceeded\n");
 }
 
 // returns a texture number and the position inside it
-static qboolean LM_AllocBlock (int w, int h, int *x, int *y)
+static qboolean LM_GL_AllocBlock (int w, int h, int *x, int *y)
 {
 	int		i, j;
 	int		best, best2;
@@ -1040,14 +1036,14 @@ void GL_CreateSurfaceLightmap (msurface_t *surf)
 	smax = (surf->extents[0] >> 4) + 1;
 	tmax = (surf->extents[1] >> 4) + 1;
 
-	if (!LM_AllocBlock (smax, tmax, &surf->light_s, &surf->light_t))
+	if (!LM_GL_AllocBlock(smax, tmax, &surf->light_s, &surf->light_t))
 	{
-		LM_FinishBlock ();
-		LM_BeginBlock ();
+		LM_GL_FinishBlock ();
+		LM_GL_BeginBlock ();
 
-		if (!LM_AllocBlock (smax, tmax, &surf->light_s, &surf->light_t))
+		if (!LM_GL_AllocBlock(smax, tmax, &surf->light_s, &surf->light_t))
 		{
-			VID_Error (ERR_FATAL, "Consecutive calls to LM_AllocBlock(%d,%d) failed\n", smax, tmax);
+			VID_Error (ERR_FATAL, "Consecutive calls to LM_GL_AllocBlock(%d, %d) failed\n", smax, tmax);
 		}
 	}
 
@@ -1126,7 +1122,7 @@ void GL_EndBuildingLightmaps (void)
 {
 	int i;
 
-	LM_FinishBlock ();
+	LM_GL_FinishBlock ();
 
 	// respecify lightmap texture objects
 	glDeleteTextures (1, &gl_state.lightmap_textures);

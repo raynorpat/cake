@@ -31,7 +31,7 @@ typedef struct vidmode_s
 
 typedef struct
 {
-	unsigned		width, height;		// coordinates from main game
+	int				width, height;		// coordinates from main game
 } viddef_t;
 extern	viddef_t	viddef;				// global video state
 
