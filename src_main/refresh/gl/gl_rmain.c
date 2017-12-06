@@ -527,7 +527,7 @@ static void R_Register (void)
 	gl_clear = Cvar_Get ("gl_clear", "0", 0);
 	gl_cull = Cvar_Get ("gl_cull", "1", 0);
 	gl_monolightmap = Cvar_Get ("gl_monolightmap", "0", 0);
-	gl_texturemode = Cvar_Get ("gl_texturemode", "GL_NEAREST_MIPMAP_LINEAR", CVAR_ARCHIVE);
+	gl_texturemode = Cvar_Get ("gl_texturemode", "GL_NEAREST_MIPMAP_NEAREST", CVAR_ARCHIVE);
 	gl_textureanisotropy = Cvar_Get ("gl_textureanisotropy", "1", CVAR_ARCHIVE);
 	gl_lockpvs = Cvar_Get ("gl_lockpvs", "0", 0);
 	gl_lockfrustum = Cvar_Get ("gl_lockfrustum", "0", 0);
