@@ -167,6 +167,28 @@ qboolean VID_GetModeInfo (int *width, int *height, int mode)
 
 /*
 ==============
+VID_IsVSyncActive
+==============
+*/
+qboolean VID_IsVSyncActive(void)
+{
+	return viddef.vsyncActive;
+}
+
+/*
+==============
+VID_GetRefreshRate
+
+Returns the current display refresh rate.
+==============
+*/
+int VID_GetRefreshRate(void)
+{
+	return GFX_Core_GetRefreshRate();
+}
+
+/*
+==============
 VID_NewWindow
 ==============
 */

@@ -33,8 +33,6 @@ extern "C" {
 
 #include "d3d_matrix.h"
 
-float *MakeFloat4 (float a, float b, float c, float d);
-
 #include <windows.h>
 #include <d3d9.h>
 #include <d3dx9.h>
@@ -116,6 +114,7 @@ typedef struct image_s
 void GL_BeginRendering (int *x, int *y, int *width, int *height);
 void GL_EndRendering (void);
 
+void D3D9_UpdateSwapInterval (void);
 void D3D9_SetDefaultState (void);
 
 extern	float	gldepthmin, gldepthmax;
@@ -178,6 +177,7 @@ extern	cvar_t	*gl_poly;
 extern	cvar_t	*gl_texsort;
 extern	cvar_t	*gl_polyblend;
 extern	cvar_t	*gl_lightmaptype;
+extern	cvar_t	*gl_swapinterval;
 extern	cvar_t	*gl_texturemode;
 extern	cvar_t	*gl_textureanisotropy;
 extern  cvar_t  *gl_lockpvs;

@@ -124,3 +124,39 @@ void GFX_CoreShutdown (void)
 		break;
 	}
 }
+
+/*
+============
+GFX_Core_GetRefreshRate
+
+Grabs current refresh rate from core
+============
+*/
+int GFX_Core_GetRefreshRate (void)
+{
+	int refreshRate = 0;
+
+	switch (RE_gfxVal)
+	{
+	case REF_API_SOFT:
+		return 60; // software will always be hardcoded to 60
+		break;
+	case REF_API_OPENGL:
+		refreshRate = VID_GL_GetRefreshRate ();
+		break;
+	case REF_API_DIRECT3D_9:
+#ifdef REF_D3D9
+		refreshRate = VID_D3D9_GetRefreshRate ();
+#else
+		// wtf
+		return 60;
+#endif
+		break;
+	case REF_API_UNDETERMINED:
+	default:
+		// should never get here
+		break;
+	}
+
+	return refreshRate;
+}

@@ -82,6 +82,7 @@ cvar_t	*gl_finish;
 cvar_t	*gl_clear;
 cvar_t	*gl_cull;
 cvar_t	*gl_polyblend;
+cvar_t	*gl_swapinterval;
 cvar_t	*gl_texturemode;
 cvar_t	*gl_textureanisotropy;
 cvar_t	*gl_lockpvs;
@@ -477,6 +478,8 @@ void R_Register (void)
 	gl_lockpvs = Cvar_Get ("gl_lockpvs", "0", 0);
 	gl_lockfrustum = Cvar_Get ("gl_lockfrustum", "0", 0);
 
+	gl_swapinterval = Cvar_Get("gl_swapinterval", "1", CVAR_ARCHIVE);
+
 	gl_testnullmodels = Cvar_Get ("gl_testnullmodels", "0", 0);
 
 	vid_fullscreen = Cvar_Get ("vid_fullscreen", "0", CVAR_ARCHIVE);
@@ -678,6 +681,8 @@ void R_BeginFrame (float camera_separation)
 		gl_texturemode->modified = false;
 		gl_textureanisotropy->modified = false;
 	}
+
+	D3D9_UpdateSwapInterval ();
 
 	GLimp_BeginFrame (camera_separation);
 }

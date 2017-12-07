@@ -49,8 +49,7 @@ D3DDISPLAYMODE d3d_DesktopMode;
 
 CRenderToTexture rtt_Brightpass;
 
-cvar_t *vid_lastwindowedmode;
-cvar_t *vid_lastfullscreenmode;
+extern cvar_t *gl_swapinterval;
 
 struct vidhandler_t
 {
@@ -113,6 +112,34 @@ void D3D_GetPresentParameters (void)
 	else Com_Error (ERR_FATAL, "D3D_GetPresentParameters: could not get present parameters for the swapchain!");
 }
 
+/*
+==============
+VID_D3D9_GetRefreshRate
+
+Returns the current display refresh rate.
+==============
+*/
+int VID_D3D9_GetRefreshRate(void)
+{
+	if (viddef.refreshRate == -1)
+	{
+		SDL_DisplayMode mode;
+
+		int i = SDL_GetWindowDisplayIndex(window);
+		if (i >= 0 && SDL_GetCurrentDisplayMode(i, &mode) == 0)
+		{
+			viddef.refreshRate = mode.refresh_rate;
+		}
+
+		if (viddef.refreshRate <= 0)
+		{
+			// apparently the stuff above failed, use default
+			viddef.refreshRate = 60;
+		}
+	}
+
+	return viddef.refreshRate;
+}
 
 static D3DFORMAT PixelFormatToD3DFMT(Uint32 format)
 {
@@ -158,9 +185,16 @@ D3DPRESENT_PARAMETERS *D3D_GetPresentParameters (int fullscreen, int width, int 
 	d3d_PP.MultiSampleQuality = 0;
 	d3d_PP.MultiSampleType = D3DMULTISAMPLE_NONE;
 
-	//if (gl_swapinterval->value)
+	if (gl_swapinterval->value)
+	{
 		d3d_PP.PresentationInterval = D3DPRESENT_INTERVAL_ONE;
-	//else d3d_PP.PresentationInterval = D3DPRESENT_INTERVAL_IMMEDIATE;
+		viddef.vsyncActive = true;
+	}
+	else
+	{
+		d3d_PP.PresentationInterval = D3DPRESENT_INTERVAL_IMMEDIATE;
+		viddef.vsyncActive = false;
+	}
 
 	return &d3d_PP;
 }
@@ -443,6 +477,9 @@ void GLimp_Shutdown (void)
 	}
 
 	window = NULL;
+
+	// make sure that after vid_restart the refresh rate will be queried from SDL again.
+	viddef.refreshRate = -1;
 
 	if (SDL_WasInit(SDL_INIT_EVERYTHING) == SDL_INIT_VIDEO) {
 		SDL_Quit();

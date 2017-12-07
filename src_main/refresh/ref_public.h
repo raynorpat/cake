@@ -184,6 +184,48 @@ int FS_LoadFile (char *path, void **buffer);
 void FS_FreeFile (void *buffer);
 char *FS_Gamedir (void);
 
-#include "gfx.h"
+// ref export functions
+extern void(*RE_BeginFrame)(float camera_separation);
+extern void(*RE_RenderFrame)(refdef_t *fd);
+extern void(*RE_EndFrame)(void);
+
+extern void(*RE_SetPalette)(const unsigned char *palette);
+
+extern int(*RE_Init)(void);
+extern void(*RE_Shutdown)(void);
+
+extern void(*RE_Draw_StretchRaw)(int x, int y, int w, int h, int cols, int rows, byte *data);
+extern void(*RE_Draw_FadeScreen)(void);
+extern void(*RE_Draw_Fill)(int x, int y, int w, int h, int c);
+extern void(*RE_Draw_TileClear)(int x, int y, int w, int h, char *pic);
+extern void(*RE_Draw_CharScaled)(int x, int y, int num, float scale);
+extern void(*RE_Draw_Char)(int x, int y, int num);
+extern void(*RE_Draw_StretchPic)(int x, int y, int w, int h, char *pic);
+extern void(*RE_Draw_PicScaled)(int x, int y, char *pic, float scale);
+extern void(*RE_Draw_Pic)(int x, int y, char *pic);
+extern void(*RE_Draw_GetPicSize)(int *w, int *h, char *pic);
+
+extern void(*RE_BeginRegistration)(char *model);
+extern struct model_s * (*RE_RegisterModel)(char *name);
+extern struct image_s * (*RE_RegisterSkin)(char *name);
+extern struct image_s * (*RE_Draw_RegisterPic)(char *name);
+extern void(*RE_SetSky)(char *name, float rotate, vec3_t axis);
+extern void(*RE_EndRegistration)(void);
+
+#define REF_API_UNDETERMINED	1
+#define REF_API_SOFT	 		2
+#define REF_API_OPENGL			3
+#define REF_API_DIRECT3D_9 		4
+extern int RE_gfxVal;
+
+// ref entry points
+void GL_GFX_CoreInit(void);
+void SW_GFX_CoreInit(void);
+void D3D9_GFX_CoreInit(void);
+
+// gfx core functions
+void GFX_CoreInit(char *name);
+void GFX_CoreShutdown(void);
+int GFX_Core_GetRefreshRate(void);
 
 #endif // __REF_H

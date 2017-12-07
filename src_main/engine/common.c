@@ -73,7 +73,7 @@ int		curtime;
 
 // HACK!
 #ifndef DEDICATED_ONLY
-int VID_GetRefreshRate(void);
+int GFX_Core_GetRefreshRate(void);
 qboolean VID_IsVSyncActive(void);
 #endif
 
@@ -1601,7 +1601,7 @@ void Qcommon_Frame (int msec)
 	// calculate target packet and render framerate.
 	if (VID_IsVSyncActive())
 	{
-		rfps = VID_GetRefreshRate ();		
+		rfps = GFX_Core_GetRefreshRate ();
 		if (rfps > r_maxfps->value)
 		{
 			rfps = (int)r_maxfps->value;

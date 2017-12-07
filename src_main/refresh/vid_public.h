@@ -32,6 +32,8 @@ typedef struct vidmode_s
 typedef struct
 {
 	int				width, height;		// coordinates from main game
+	qboolean		vsyncActive;
+	int				refreshRate;
 } viddef_t;
 extern	viddef_t	viddef;				// global video state
 
@@ -53,8 +55,12 @@ qboolean VID_InitWindow(int fullscreen, int *pwidth, int *pheight);
 // OpenGL specific functions
 qboolean VID_Init_GL(void);
 void	VID_Shutdown_GL(qboolean contextOnly);
+int		VID_GL_GetRefreshRate(void);
 void	VID_GL_BeginFrame(float camera_separation);
 void	VID_GL_EndFrame(void);
+
+// Direct3D 9 specific functions
+int		VID_D3D9_GetRefreshRate(void);
 
 // Video menu
 void	VID_MenuInit(void);

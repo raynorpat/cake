@@ -21,20 +21,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "d3d_local.h"
 
-
-float *MakeFloat4 (float a, float b, float c, float d)
-{
-	static float float4[4];
-
-	float4[0] = a;
-	float4[1] = b;
-	float4[2] = c;
-	float4[3] = d;
-
-	return float4;
-}
-
-
 /*
 ==================
 R_InitTextures
@@ -183,20 +169,6 @@ void GL_ScreenShot_f (void)
 }
 
 
-void D3D9_SetDefaultState (void)
-{
-	if (!gl_texturemode) gl_texturemode = Cvar_Get ("gl_texturemode", "GL_LINEAR_MIPMAP_LINEAR", CVAR_ARCHIVE);
-	if (!gl_textureanisotropy) gl_textureanisotropy = Cvar_Get ("gl_textureanisotropy", "1", CVAR_ARCHIVE);
 
-	GL_TextureMode (gl_texturemode->string, (int) gl_textureanisotropy->value);
-
-	d3d_Device->SetRenderState (D3DRS_LIGHTING, FALSE);
-	d3d_Device->SetRenderState (D3DRS_ZENABLE, D3DZB_FALSE);
-	d3d_Device->SetRenderState (D3DRS_ALPHATESTENABLE, FALSE);
-	d3d_Device->SetRenderState (D3DRS_CULLMODE, D3DCULL_CCW);
-	d3d_Device->SetRenderState (D3DRS_ALPHABLENDENABLE, FALSE);
-	d3d_Device->SetRenderState (D3DRS_FILLMODE, D3DFILL_SOLID);
-	d3d_Device->SetRenderState (D3DRS_SHADEMODE, D3DSHADE_FLAT);
-}
 
 

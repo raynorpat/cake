@@ -34,9 +34,6 @@ extern cvar_t *gl_swapinterval;
 static SDL_Window* window = NULL;
 static SDL_GLContext context = NULL;
 
-static qboolean vsyncActive = false;
-int vid_refreshRate = -1;
-
 void VID_ShutdownWindow(void);
 
 static int IsFullscreen()
@@ -81,7 +78,6 @@ static qboolean GetWindowSize(int* w, int* h)
 static int PrepareForWindow(void)
 {
 	unsigned int flags = 0;
-	int msaa_samples = 0;
 
 	 // Default OpenGL is fine.
 	if (SDL_GL_LoadLibrary(NULL) < 0) {
@@ -112,11 +108,41 @@ static int PrepareForWindow(void)
 }
 
 
+/*
+==============
+VID_GL_GetRefreshRate
+
+Returns the current display refresh rate.
+==============
+*/
+int VID_GL_GetRefreshRate(void)
+{
+	if (viddef.refreshRate == -1)
+	{
+		SDL_DisplayMode mode;
+
+		int i = SDL_GetWindowDisplayIndex(window);
+		if (i >= 0 && SDL_GetCurrentDisplayMode(i, &mode) == 0)
+		{
+			viddef.refreshRate = mode.refresh_rate;
+		}
+
+		if (viddef.refreshRate <= 0)
+		{
+			// apparently the stuff above failed, use default
+			viddef.refreshRate = 60;
+		}
+	}
+
+	return viddef.refreshRate;
+}
+
+
 static void SetSwapInterval(void)
 {
 	// Set vsync - TODO: -1 could be set for "late swap tearing"
 	SDL_GL_SetSwapInterval(gl_swapinterval->value ? 1 : 0);
-	vsyncActive = SDL_GL_GetSwapInterval() != 0;
+	viddef.vsyncActive = SDL_GL_GetSwapInterval() != 0;
 }
 
 
@@ -301,7 +327,7 @@ void VID_ShutdownWindow(void)
 	window = NULL;
 
 	// make sure that after vid_restart the refresh rate will be queried from SDL again.
-	vid_refreshRate = -1;
+	viddef.refreshRate = -1;
 
 	if (SDL_WasInit(SDL_INIT_EVERYTHING) == SDL_INIT_VIDEO)	{
 		SDL_Quit();
@@ -329,42 +355,6 @@ qboolean VID_Init_GL (void)
 	}
 
 	return true;
-}
-
-
-/*
-VID_IsVSyncActive
-*/
-qboolean VID_IsVSyncActive(void)
-{
-	return vsyncActive;
-}
-
-/*
-VID_GetRefreshRate
-
-Returns the current display refresh rate.
-*/
-int VID_GetRefreshRate(void)
-{
-	if (vid_refreshRate == -1)
-	{
-		SDL_DisplayMode mode;
-
-		int i = SDL_GetWindowDisplayIndex(window);
-		if (i >= 0 && SDL_GetCurrentDisplayMode(i, &mode) == 0)
-		{
-			vid_refreshRate = mode.refresh_rate;
-		}
-
-		if (vid_refreshRate <= 0)
-		{
-			// apparently the stuff above failed, use default
-			vid_refreshRate = 60;
-		}
-	}
-
-	return vid_refreshRate;
 }
 
 
