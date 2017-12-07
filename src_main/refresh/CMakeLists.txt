@@ -55,7 +55,7 @@ set(RENDERER_INCLUDES
 	)	
 set(RENDERER_SOURCES
 	../refresh/matrix.c
-	../refresh/gfx.c
+	../refresh/ref.c
 	)
 source_group("refresh" FILES ${RENDERER_INCLUDES})
 source_group("refresh" FILES ${RENDERER_SOURCES})
