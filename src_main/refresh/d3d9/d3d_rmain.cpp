@@ -649,6 +649,10 @@ R_Shutdown
 */
 void R_Shutdown (void)
 {
+	Cmd_RemoveCommand("modellist");
+	Cmd_RemoveCommand("screenshot");
+	Cmd_RemoveCommand("imagelist");
+
 	Mod_FreeAll ();
 	GL_ShutdownImages ();
 	GLimp_Shutdown ();
