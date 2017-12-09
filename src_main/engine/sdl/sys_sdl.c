@@ -36,6 +36,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #include <io.h>
 #include <conio.h>
 #else
+#define WANT_MMAP 0 // HACK!!!
 #if defined(__linux__) && !defined(_GNU_SOURCE)
 #define _GNU_SOURCE // for mremap() - must be before sys/mman.h include!
 #endif
@@ -52,7 +53,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #define MAP_ANONYMOUS MAP_ANON
 #endif
 #endif
-
 
 unsigned int sys_frame_time;
 
@@ -88,16 +88,27 @@ void *Hunk_Begin(int maxsize)
 	if (!membase)
 		Sys_Error("unable to virtual allocate %d bytes", maxhunksize);
 #else
+#ifdef WANT_MMAP
 	membase = mmap(0, maxhunksize, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
 	if ((membase == NULL) || (membase == (byte *)-1))
 		Sys_Error("unable to virtual allocate %d bytes", maxhunksize);
+#else
+	maxhunksize = maxsize;
+	membase = malloc(maxhunksize);
+	if (membase == NULL)
+		Sys_Error("unable to allocate %d bytes", maxsize);
+#endif
 #endif
 
 #ifdef _WIN32
 	return (void *)membase;
 #else
+#ifdef WANT_MMAP
 	*((int *)membase) = curhunksize;
 	return membase + sizeof(int);
+#else
+	return (void *)membase;
+#endif
 #endif
 }
 
@@ -128,8 +139,13 @@ void *Hunk_Alloc(int size)
 	if (curhunksize + size > maxhunksize)
 		Sys_Error("Hunk_Alloc overflow");
 
+#ifdef WANT_MMAP
 	buf = membase + sizeof(int) + curhunksize;
 	curhunksize += size;
+#else
+	buf = membase + curhunksize;
+	curhunksize += size;
+#endif
 	return buf;
 #endif
 }
@@ -139,6 +155,7 @@ int Hunk_End(void)
 #ifdef _WIN32
 	return curhunksize;
 #else
+#ifdef WANT_MMAP
 	byte *n = NULL;
 
 #if defined( __linux__ )
@@ -197,6 +214,15 @@ int Hunk_End(void)
 	*((int *)membase) = curhunksize + sizeof(int);
 
 	return curhunksize;
+#else
+	byte *n;
+
+	n = realloc(membase, curhunksize);
+	if (n != membase)
+		Sys_Error("Hunk_End:  Could not remap virtual block (%d)", errno);
+
+	return curhunksize;
+#endif
 #endif
 }
 
@@ -206,6 +232,7 @@ void Hunk_Free(void *base)
 	if (base)
 		VirtualFree(base, 0, MEM_RELEASE);
 #else
+#ifdef WANT_MMAP
 	byte *m;
 	if (base)
 	{
@@ -214,6 +241,10 @@ void Hunk_Free(void *base)
 		if (munmap(m, *((int *)m)))
 			Sys_Error("Hunk_Free: munmap failed (%d)", errno);
 	}
+#else
+	if (base)
+		free(base);
+#endif
 #endif
 }
 
