@@ -8,7 +8,7 @@ of the License, or (at your option) any later version.
 
 This program is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
 See the GNU General Public License for more details.
 
@@ -66,7 +66,7 @@ typedef struct
 typedef struct
 {
 	void	(*print)(char *str, ...) __fp_attribute__((__format__(__printf__,1,2)));
-	void	(*dprint)(char *str, ...) __fp_attribute__((__format__(__printf__,2,3)));
+	void	(*dprint)(char *str, ...) __fp_attribute__((__format__(__printf__,1,2)));
 	void	(*error)(char *error, ...) __fp_attribute__((__noreturn__, __format__(__printf__,1,2)));
 	cvar_t	*(*cvar)(char *name, char *value, int flags);
 	cvar_t	*(*cvar_set)(char *name, char *value);
