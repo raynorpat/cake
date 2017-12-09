@@ -775,7 +775,7 @@ void *Sys_GetGameAPI (void *parms)
 		Com_Error(ERR_FATAL, "Sys_GetGameAPI without Sys_UnloadingGame");
 
 	// check the current directory for other development purposes
-	_getcwd(cwd, sizeof(cwd));
+	Q_getwd(cwd);
 	Com_sprintf(name, sizeof(name), "%s/%s", cwd, gamename);
 	game_library = SDL_LoadObject(name);
 	if (!game_library)

@@ -44,6 +44,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #include <stdint.h>
 #include <time.h>
 
+#ifdef _WIN32
+#include <direct.h>
+#endif
+
 #if (defined _M_IX86 || defined __i386__) && !defined C_ONLY && !defined __sun__
 #define id386	1
 #else
@@ -297,6 +301,8 @@ void Com_strcat (char *dest, int destSize, const char *src);
 void Com_PageInMemory (byte *buffer, int size);
 
 //=============================================
+
+void Q_getwd (char *out);
 
 // portable case insensitive compare
 int Q_stricmp (char *s1, char *s2);

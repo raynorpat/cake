@@ -1237,16 +1237,26 @@ void Com_PageInMemory (byte *buffer, int size)
 ============================================================================
 */
 
+void Q_getwd(char *out)
+{
+#ifdef _WIN32
+	_getcwd(out, sizeof(out));
+	strcat(out, "\\");
+#else
+	getwd(out);
+	strcat(out, "/");
+#endif
+}
+
 // FIXME: replace all Q_stricmp with Q_strcasecmp
 int Q_stricmp (char *s1, char *s2)
 {
-#if defined(WIN32)
+#if defined(_WIN32)
 	return _stricmp (s1, s2);
 #else
 	return strcasecmp (s1, s2);
 #endif
 }
-
 
 int Q_strncasecmp (char *s1, char *s2, int n)
 {
