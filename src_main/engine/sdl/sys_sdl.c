@@ -889,7 +889,7 @@ int main(int argc, char **argv)
 {
 	long long oldtime, newtime;
 
-	printf("\n Cake v%4.2f\n", VERSION);
+	printf("\nCake v%4.2f\n", VERSION);
 	printf("=====================\n\n");
 
 	Qcommon_Init(argc, argv);

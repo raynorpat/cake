@@ -955,10 +955,9 @@ COM_DefaultExtension
 void COM_DefaultExtension (char *path, char *extension)
 {
 	char  *src;
-	//
+
 	// if path doesn't have a .EXT, append extension
 	// (extension should include the .)
-	//
 	if (!*path)
 		return;
 
@@ -1214,7 +1213,6 @@ skipwhite:
 /*
 ===============
 Com_PageInMemory
-
 ===============
 */
 int	paged_total;
