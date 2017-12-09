@@ -24,30 +24,35 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
 #include "SDL.h"
 
+#include <errno.h>
+#include <float.h>
+#include <fcntl.h>
+#include <stdio.h>
+
 #ifdef _WIN32
 #include <windows.h>
 #include "winsock.h"
 #include <direct.h>
 #include <io.h>
 #include <conio.h>
+#else
+#if defined(__linux__) && !defined(_GNU_SOURCE)
+#define _GNU_SOURCE // for mremap() - must be before sys/mman.h include!
 #endif
-
-#include <errno.h>
-#include <float.h>
-#include <fcntl.h>
-#include <stdio.h>
-
-#if defined( __linux__ )
-#define _GNU_SOURCE
 #include <sys/mman.h>
 #include <sys/time.h>
 #include <dirent.h>
-#endif
-
-#if defined( __FreeBSD__ )
+#include <unistd.h>
+#if defined(__FreeBSD__) || defined(__OpenBSD__)
 #include <machine/param.h>
 #define MAP_ANONYMOUS MAP_ANON
 #endif
+#if defined(__APPLE__)
+#include <sys/types.h>
+#define MAP_ANONYMOUS MAP_ANON
+#endif
+#endif
+
 
 unsigned int sys_frame_time;
 
@@ -64,34 +69,35 @@ SYSTEM MEMORY
 */
 
 byte	*membase;
-int		hunkmaxsize;
-int		cursize;
+int		maxhunksize;
+int		curhunksize;
 
 void *Hunk_Begin(int maxsize)
 {
 	// reserve a huge chunk of memory, but don't commit any yet
-	cursize = 0;
 #ifdef _WIN32
-	hunkmaxsize = maxsize;
+	maxhunksize = maxsize;
 #else
-	hunkmaxsize = maxsize + sizeof(int);
+	maxhunksize = maxsize + sizeof(int);
 #endif
+	curhunksize = 0;
 
+	// do the allocation
 #ifdef _WIN32
-	membase = VirtualAlloc(NULL, maxsize, MEM_RESERVE, PAGE_NOACCESS);
+	membase = VirtualAlloc(NULL, maxhunksize, MEM_RESERVE, PAGE_NOACCESS);
 	if (!membase)
-		Sys_Error("unable to virtual allocate %d bytes", maxsize);
+		Sys_Error("unable to virtual allocate %d bytes", maxhunksize);
 #else
-	membase = mmap(0, hunkmaxsize, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+	membase = mmap(0, maxhunksize, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
 	if ((membase == NULL) || (membase == (byte *)-1))
-		Sys_Error("unable to virtual allocate %d bytes", maxsize);
+		Sys_Error("unable to virtual allocate %d bytes", maxhunksize);
 #endif
 
 #ifdef _WIN32
 	return (void *)membase;
 #else
-	*((int *)membase) = cursize;
-	return (membase + sizeof(int));
+	*((int *)membase) = curhunksize;
+	return membase + sizeof(int);
 #endif
 }
 
@@ -104,7 +110,7 @@ void *Hunk_Alloc(int size)
 
 #ifdef _WIN32
 	// commit pages as needed
-	buf = VirtualAlloc(membase + cursize, size, MEM_COMMIT, PAGE_READWRITE);
+	buf = VirtualAlloc(membase + curhunksize, size, MEM_COMMIT, PAGE_READWRITE);
 
 	if (!buf)
 	{
@@ -112,34 +118,34 @@ void *Hunk_Alloc(int size)
 		Sys_Error("VirtualAlloc commit failed.\n%s", buf);
 	}
 
-	cursize += size;
+	curhunksize += size;
 
-	if (cursize > hunkmaxsize)
+	if (curhunksize > maxhunksize)
 		Sys_Error("Hunk_Alloc overflow");
 
-	return (void *)(membase + cursize - size);
+	return (void *)(membase + curhunksize - size);
 #else
-	if (cursize + size > hunkmaxsize)
+	if (curhunksize + size > maxhunksize)
 		Sys_Error("Hunk_Alloc overflow");
 
-	buf = membase + sizeof(int) + cursize;
-	cursize += size;
-	return (buf);
+	buf = membase + sizeof(int) + curhunksize;
+	curhunksize += size;
+	return buf;
 #endif
 }
 
 int Hunk_End(void)
 {
 #ifdef _WIN32
-	return cursize;
+	return curhunksize;
 #else
 	byte *n = NULL;
 
 #if defined( __linux__ )
-	n = (byte *)mremap(membase, hunkmaxsize, cursize + sizeof(int), 0);
+	n = (byte *)mremap(membase, maxhunksize, curhunksize + sizeof(int), 0);
 #elif defined( __FreeBSD__ )
-	size_t old_size = hunkmaxsize;
-	size_t new_size = cursize + sizeof(int);
+	size_t old_size = maxhunksize;
+	size_t new_size = curhunksize + sizeof(int);
 	void *unmap_base;
 	size_t unmap_len;
 
@@ -160,8 +166,8 @@ int Hunk_End(void)
 #ifndef round_page
 	#define round_page(x) (((size_t)(x) + (page_size - 1)) / page_size) * page_size
 #endif
-	size_t old_size = hunkmaxsize;
-	size_t new_size = cursize + sizeof(int);
+	size_t old_size = maxhunksize;
+	size_t new_size = curhunksize + sizeof(int);
 	void *unmap_base;
 	size_t unmap_len;
 	long page_size;
@@ -188,9 +194,9 @@ int Hunk_End(void)
 	if (n != membase)
 		Sys_Error("Hunk_End: Could not remap virtual block (%d)", errno);
 
-	*((int *)membase) = cursize + sizeof(int);
+	*((int *)membase) = curhunksize + sizeof(int);
 
-	return (cursize);
+	return curhunksize;
 #endif
 }
 
