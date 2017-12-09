@@ -19,6 +19,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 */
 // GL_RSURF.C: surface-related refresh code
 #include <assert.h>
+#ifndef _WIN32
+#include <sys/mman.h>
+#endif
 #include "gl_local.h"
 
 GLenum gl_index_type = GL_UNSIGNED_INT;
@@ -1057,8 +1060,18 @@ void GL_CreateSurfaceLightmap (msurface_t *surf)
 
 	if (!gl_lms.lightmap_data[surf->lightmaptexturenum])
 	{
+#ifdef _WIN32
 		gl_lms.lightmap_data[surf->lightmaptexturenum] = VirtualAlloc (
 			gl_lms.lmhunkbase + gl_lms.lmhunkmark, LIGHTMAP_SIZE * LIGHTMAP_SIZE * 4, MEM_COMMIT, PAGE_READWRITE);
+#else
+		gl_lms.lightmap_data[surf->lightmaptexturenum] = mmap (
+							gl_lms.lmhunkbase + gl_lms.lmhunkmark,
+              LIGHTMAP_SIZE * LIGHTMAP_SIZE * 4,
+              PROT_READ | PROT_WRITE,
+              MAP_ANONYMOUS | MAP_PRIVATE,
+              -1,
+              0);
+#endif
 
 		gl_lms.lmhunkmark += LIGHTMAP_SIZE * LIGHTMAP_SIZE * 4;
 	}
@@ -1088,8 +1101,26 @@ void GL_BeginBuildingLightmaps (model_t *m)
 
 	// decommit or free as needed
 	if (gl_lms.lmhunkbase)
+	{
+#ifdef _WIN32
 		VirtualFree (gl_lms.lmhunkbase, MAX_LIGHTMAPS * LIGHTMAP_SIZE * LIGHTMAP_SIZE * 4, MEM_DECOMMIT);
-	else gl_lms.lmhunkbase = VirtualAlloc (NULL, MAX_LIGHTMAPS * LIGHTMAP_SIZE * LIGHTMAP_SIZE * 4, MEM_RESERVE, PAGE_READWRITE);
+#else
+		munmap(gl_lms.lmhunkbase, MAX_LIGHTMAPS * LIGHTMAP_SIZE * LIGHTMAP_SIZE * 4);
+#endif
+	}
+	else
+	{
+#ifdef _WIN32
+		gl_lms.lmhunkbase = VirtualAlloc (NULL, MAX_LIGHTMAPS * LIGHTMAP_SIZE * LIGHTMAP_SIZE * 4, MEM_RESERVE, PAGE_READWRITE);
+#else
+		gl_lms.lmhunkbase = mmap (0,
+					MAX_LIGHTMAPS * LIGHTMAP_SIZE * LIGHTMAP_SIZE * 4,
+					PROT_READ | PROT_WRITE,
+					MAP_ANONYMOUS | MAP_PRIVATE,
+					-1,
+					0);
+#endif
+	}
 
 	// beginning again at zero
 	gl_lms.lmhunkmark = 0;
@@ -1145,4 +1176,3 @@ void GL_EndBuildingLightmaps (void)
 
 	glPixelStorei (GL_UNPACK_ROW_LENGTH, 0);
 }
-

@@ -19,13 +19,15 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 */
 
 #ifdef _WIN32
-# include <windows.h>
+#include <windows.h>
 #endif
 
 #include <stdio.h>
 
 #include <GL/glew.h>
+#ifdef _WIN32
 #include <GL/wglew.h>
+#endif
 #include <GL/gl.h>
 #include <GL/glu.h>
 #include <math.h>
@@ -35,6 +37,15 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
 #define	LIGHTMAP_SIZE	128
 #define	MAX_LIGHTMAPS	128
+
+#ifndef _WIN32
+typedef struct _RECT {
+  long left;
+  long top;
+  long right;
+  long bottom;
+} RECT, *PRECT;
+#endif
 
 typedef struct gllightmapstate_s
 {
@@ -88,8 +99,6 @@ void RPostProcess_CreatePrograms(void);
 void RPostProcess_Begin (void);
 void RPostProcess_FinishToScreen (void);
 void RPostProcess_MenuBackground (void);
-
-void R_DrawSurfaceChain (struct msurface_s *chain, int numindexes);
 
 void LoadTGAFile (char *name, byte **pic, int *width, int *height);
 
@@ -315,6 +324,7 @@ void R_DrawNullModel (entity_t *e);
 void R_DrawParticles (void);
 
 void R_DrawSkyChain (msurface_t *surf);
+void R_DrawSurfaceChain (msurface_t *chain, int numindexes);
 
 void RE_GL_Draw_GetPicSize (int *w, int *h, char *name);
 void RE_GL_Draw_Pic (int x, int y, char *name);
@@ -343,8 +353,6 @@ void RE_GL_EndRegistration(void);
 int	Draw_GetPalette (void);
 
 void GL_ResampleTexture (unsigned *in, int inwidth, int inheight, unsigned *out, int outwidth, int outheight);
-
-struct image_s *RE_GL_RegisterSkin (char *name);
 
 image_t *GL_LoadPic (char *name, byte *pic, int width, int height, imagetype_t type, int bits);
 image_t	*GL_FindImage (char *name, imagetype_t type);

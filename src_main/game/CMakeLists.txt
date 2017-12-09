@@ -5,7 +5,7 @@ set(SHARED_INCLUDES
 	../shared/game.h
 	../shared/q_shared.h
 	../shared/qfiles.h
-	)	
+	)
 set(SHARED_SOURCES
 	../shared/m_flash.c
 	../shared/q_shared.c
@@ -29,4 +29,4 @@ include_directories(
 add_library(game SHARED ${SHARED_INCLUDES} ${SHARED_SOURCES} ${GAME_INCLUDES} ${GAME_SOURCES})
 target_link_libraries(game PRIVATE)
 q_set_output_dir(game ${Q_GAME_DIR})
-install(TARGETS game RUNTIME DESTINATION ${Q_GAME_DIR})
+install(TARGETS game RUNTIME DESTINATION ${Q_GAME_DIR} LIBRARY DESTINATION ${Q_GAME_DIR})
