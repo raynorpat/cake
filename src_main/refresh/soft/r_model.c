@@ -153,17 +153,17 @@ model_t *SW_Mod_ForName(char *name, qboolean crash)
 	switch (LittleLong(*(unsigned *)buf))
 	{
 	case IDALIASHEADER:
-		loadmodel->extradata = Hunk_Begin (0x200000);
+		loadmodel->extradata = Hunk_Begin (0x800000);
 		SW_Mod_LoadAliasModel(mod, buf);
 		break;
 
 	case IDSPRITEHEADER:
-		loadmodel->extradata = Hunk_Begin (0x10000);
+		loadmodel->extradata = Hunk_Begin (0x40000);
 		SW_Mod_LoadSpriteModel(mod, buf);
 		break;
 
 	case IDBSPHEADER:
-		loadmodel->extradata = Hunk_Begin (0x1000000);
+		loadmodel->extradata = Hunk_Begin (0x4000000);
 		SW_Mod_LoadBrushModel(mod, buf);
 		break;
 
