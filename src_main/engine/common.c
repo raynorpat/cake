@@ -20,7 +20,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 // common.c -- misc functions used in client and server
 #include "qcommon.h"
 #include <setjmp.h>
+#ifdef _WIN32
 #include <windows.h>
+#endif
 
 #define	MAXPRINTMSG	4096
 
@@ -1242,7 +1244,7 @@ Z_TagMalloc
 void *Z_TagMalloc (int size, int tag)
 {
 	zhead_t	*z;
-	
+
 	size = size + sizeof(zhead_t);
 	z = malloc(size);
 	if (!z)
@@ -1522,13 +1524,13 @@ void Qcommon_Frame (int msec)
 	static int packetdelta = 1000000; // time since last packetframe in microsec.
 	static int renderdelta = 1000000; // time since last renderframe in microsec.
 	static int clienttimedelta = 0; // accumulated time since last client run.
-	static int servertimedelta = 0; // accumulated time since last server run.	
-	qboolean packetframe = true;	
+	static int servertimedelta = 0; // accumulated time since last server run.
+	qboolean packetframe = true;
 	qboolean renderframe = true;
-	
+
 	// an ERR_DROP was thrown, so get out of this frame
 	if (setjmp (abortframe))
-		return;	
+		return;
 
 	if (log_stats->modified)
 	{
@@ -1610,7 +1612,7 @@ void Qcommon_Frame (int msec)
 	else
 	{
 		rfps = (int)r_maxfps->value;
-	}	
+	}
 	pfps = (cl_maxfps->value > rfps) ? rfps : cl_maxfps->value;
 
 	// calculate timings.
@@ -1618,7 +1620,7 @@ void Qcommon_Frame (int msec)
 	renderdelta += msec;
 	clienttimedelta += msec;
 	servertimedelta += msec;
-	
+
 	if (!cl_timedemo->value)
 	{
 		if (cl_async->value)
@@ -1699,7 +1701,7 @@ void Qcommon_Frame (int msec)
 	if (packetframe) {
 		packetdelta = 0;
 	}
-	
+
 	if (renderframe) {
 		renderdelta = 0;
 	}
@@ -1707,16 +1709,16 @@ void Qcommon_Frame (int msec)
 #else
 void Qcommon_Frame(int msec)
 {
-	char *s;	
+	char *s;
 	int pfps; // target packetframerate
 	static int packetdelta = 1000000; // time since last packetframe in microsec.
 	static int servertimedelta = 0;	// accumulated time since last server run.
 	qboolean packetframe = true;
-	
+
 	// an ERR_DROP was thrown, so get out of this frame
 	if (setjmp(abortframe))
 		return;
-	
+
 	// timing debug
 	if (fixedtime->value)
 	{
@@ -1729,34 +1731,34 @@ void Qcommon_Frame(int msec)
 
 	// save global time for network and input code
 	curtime = Sys_Milliseconds();
-	
+
 	// target framerate
 	pfps = (int)cl_maxfps->value;
-	
+
 	// calculate timings.
 	packetdelta += msec;
 	servertimedelta += msec;
-	
+
 	// network frame time.
 	if (packetdelta < (1000000.0f / pfps)) {
-		packetframe = false;	
+		packetframe = false;
 	}
-	
+
 	// dedicated server terminal console.
 	do {
 		s = Sys_ConsoleInput();
-		
+
 		if (s)
 			Cbuf_AddText(va("%s\n", s));
 	} while (s);
 	Cbuf_Execute();
-	
+
 	// run the serverframe.
 	if (packetframe) {
 		SV_Frame(servertimedelta);
 		servertimedelta = 0;
 	}
-	
+
 	// reset deltas if necessary.
 	if (packetframe) {
 		packetdelta = 0;
@@ -1773,4 +1775,3 @@ void Qcommon_Shutdown (void)
 {
 	Cvar_Shutdown ();
 }
-
