@@ -107,7 +107,7 @@ qboolean	NET_CompareAdr (netadr_t a, netadr_t b)
 		return false;
 
 	if (a.type == NA_LOOPBACK)
-		return TRUE;
+		return true;
 
 	if (a.type == NA_IP)
 	{
@@ -134,7 +134,7 @@ qboolean	NET_CompareBaseAdr (netadr_t a, netadr_t b)
 		return false;
 
 	if (a.type == NA_LOOPBACK)
-		return TRUE;
+		return true;
 
 	if (a.type == NA_IP)
 	{
@@ -274,7 +274,6 @@ qboolean	NET_GetLoopPacket (netsrc_t sock, netadr_t *net_from, sizebuf_t *net_me
 	memset (net_from, 0, sizeof (*net_from));
 	net_from->type = NA_LOOPBACK;
 	return true;
-
 }
 
 
