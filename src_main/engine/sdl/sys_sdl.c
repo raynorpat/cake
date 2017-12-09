@@ -41,6 +41,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #define _GNU_SOURCE
 #include <sys/mman.h>
 #include <sys/time.h>
+#include <dirent.h>
 #endif
 
 #if defined( __FreeBSD__ )
@@ -130,8 +131,8 @@ int Hunk_End(void)
 	byte *n = NULL;
 
 #if defined( __FreeBSD__ )
-	size_t old_size = maxhunksize;
-	size_t new_size = curhunksize + sizeof(int);
+	size_t old_size = hunkmaxsize;
+	size_t new_size = cursize + sizeof(int);
 	void *unmap_base;
 	size_t unmap_len;
 
@@ -149,15 +150,15 @@ int Hunk_End(void)
 		n = munmap(unmap_base, unmap_len) + membase;
 	}
 #elif defined( __linux__ )
-	n = (byte *)mremap(membase, maxhunksize, curhunksize + sizeof(int), 0);
+	n = (byte *)mremap(membase, hunkmaxsize, cursize + sizeof(int), 0);
 #endif
 
 	if (n != membase)
 		Sys_Error("Hunk_End: Could not remap virtual block (%d)", errno);
 
-	*((int *)membase) = curhunksize + sizeof(int);
+	*((int *)membase) = cursize + sizeof(int);
 
-	return (curhunksize);
+	return (cursize);
 #endif
 }
 
