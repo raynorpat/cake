@@ -27,15 +27,15 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #ifdef _WIN32
 #include <windows.h>
 #include "winsock.h"
+#include <direct.h>
+#include <io.h>
+#include <conio.h>
 #endif
 
 #include <errno.h>
 #include <float.h>
 #include <fcntl.h>
 #include <stdio.h>
-#include <direct.h>
-#include <io.h>
-#include <conio.h>
 
 #if defined( __linux__ )
 #define _GNU_SOURCE
@@ -349,7 +349,7 @@ char *Sys_FindFirst(char *path, unsigned musthave, unsigned canthave)
 	{
 		if (!*findpattern || glob_match(findpattern, d->d_name))
 		{
-			if (CompareAttributes(findbase, d->d_name, musthave, canhave))
+			if (CompareAttributes(findbase, d->d_name, musthave, canthave))
 			{
 				sprintf(findpath, "%s/%s", findbase, d->d_name);
 				return findpath;
@@ -387,7 +387,7 @@ char *Sys_FindNext(unsigned musthave, unsigned canthave)
 	{
 		if (!*findpattern || glob_match(findpattern, d->d_name))
 		{
-			if (CompareAttributes(findbase, d->d_name, musthave, canhave))
+			if (CompareAttributes(findbase, d->d_name, musthave, canthave))
 			{
 				sprintf(findpath, "%s/%s", findbase, d->d_name);
 				return findpath;
@@ -464,15 +464,15 @@ void Sys_Nanosleep(int nanosec)
 #ifdef WIN32
 	HANDLE timer;
 	LARGE_INTEGER li;
-	
+
 	timer = CreateWaitableTimer(NULL, TRUE, NULL);
-	
+
 	// Windows has a max resolution of 100ns
 	li.QuadPart = -nanosec / 100;
-	
+
 	SetWaitableTimer(timer, &li, 0, NULL, NULL, FALSE);
 	WaitForSingleObject(timer, INFINITE);
-	
+
 	CloseHandle(timer);
 #endif
 }
@@ -498,7 +498,7 @@ void Sys_SetIcon(void)
 	gmask = 0x00ff0000 >> shift;
 	bmask = 0x0000ff00 >> shift;
 	amask = 0x000000ff >> shift;
-#else 
+#else
 	// little endian, like x86
 	rmask = 0x000000ff;
 	gmask = 0x0000ff00;
@@ -534,23 +534,23 @@ void Sys_SetHighDPIMode(void)
 {
 	// For Vista, Win7 and Win8
 	BOOL(WINAPI *SetProcessDPIAware)(void) = NULL;
-	
+
 	// Win8.1 and later
 	HRESULT(WINAPI *SetProcessDpiAwareness)(Q2_PROCESS_DPI_AWARENESS dpiAwareness) = NULL;
-	
+
 	HINSTANCE userDLL = LoadLibrary("USER32.DLL");
 	if (userDLL)
 	{
 		SetProcessDPIAware = (BOOL(WINAPI *)(void)) GetProcAddress(userDLL, "SetProcessDPIAware");
 	}
-	
+
 	HINSTANCE shcoreDLL = LoadLibrary("SHCORE.DLL");
 	if (shcoreDLL)
 	{
 		SetProcessDpiAwareness = (HRESULT(WINAPI *)(Q2_PROCESS_DPI_AWARENESS))
 		GetProcAddress(shcoreDLL, "SetProcessDpiAwareness");
 	}
-	
+
 	if (SetProcessDpiAwareness) {
 		SetProcessDpiAwareness(Q2_PROCESS_PER_MONITOR_DPI_AWARE);
 	} else if (SetProcessDPIAware) {
@@ -573,12 +573,12 @@ void Sys_SetupFPU (void)
 	volatile unsigned short old_cw = 0;
 	asm("fstcw %0" : : "m" (*&old_cw));
 	unsigned short new_cw = old_cw;
-	
+
 	// the precision is set through bit 8 and 9
 	// for double precision bit 8 must unset and bit 9 set
 	new_cw &= ~(1 << 8);
 	new_cw |= (1 << 9);
-	
+
 	// setting the control word is expensive since it
 	// resets the FPU state, so do it if neccessary
 	if (new_cw != old_cw) {
