@@ -20,9 +20,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #ifndef __R_LOCAL__
 #define __R_LOCAL__
-
 #include <stdio.h>
 #include <ctype.h>
+#include <stdint.h>
 #include <math.h>
 
 #include "ref_public.h"
@@ -403,7 +403,6 @@ extern affinetridesc_t  r_affinetridesc;
 extern vec3_t   r_pright, r_pup, r_ppn;
 
 void D_DrawSurfaces (void);
-void R_DrawParticle( void );
 void D_ViewChanged (void);
 void D_WarpScreen (void);
 void R_PolysetUpdateTables (void);
