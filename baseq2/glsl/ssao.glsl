@@ -1,6 +1,4 @@
 
-#extension GL_ARB_texture_gather : require
-
 // common
 INOUTTYPE vec4 texcoords;
 INOUTTYPE vec3 unprojectionParams;

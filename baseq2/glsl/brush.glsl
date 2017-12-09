@@ -22,8 +22,6 @@ void LightmappedVS ()
 
 
 #ifdef FRAGMENTSHADER
-#extension GL_EXT_texture_array : enable
-
 uniform sampler2D diffuse;
 uniform sampler2DArray lightmap;
 uniform float surfalpha;
