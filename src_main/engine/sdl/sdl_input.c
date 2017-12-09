@@ -19,9 +19,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 */
 // sys_input.c -- SDL mouse, keyboard, and controller code
 #include "client.h"
-
+#ifdef _WIN32
 #include <direct.h>
-
+#endif
 #include <SDL.h>
 
 /* SDL 1.2 <-> 2.0 compatiblity cruft */
@@ -515,7 +515,7 @@ void IN_Update(void)
 		}
 	}
 
-	/* Grab and ungrab the mouse if the console or the menu is opened 
+	/* Grab and ungrab the mouse if the console or the menu is opened
 	 * calling VID_GrabInput() each is a but ugly but simple and should work.
 	 * + the called SDL functions return after a cheap check, if there's
 	 * nothing to do, anyway
@@ -779,7 +779,7 @@ void IN_ControllerInit(void)
 	}
 
 	SDL_GameControllerEventState(SDL_IGNORE);
-	
+
 	// load additional controller bindings
 	// this will attempt to load them from 'controllers.cfg' and 'gamecontrollerdb.txt'
 	// by default, this will ship with a copy of 'controllers.cfg' in the vrquake2.pk3 file
@@ -792,7 +792,7 @@ void IN_ControllerInit(void)
 		p = name[i];
 
 		Com_Printf("Loading controller mappings from '%s':\n", p);
-		
+
 		size = FS_LoadFile(p, &buffer);
 		if (buffer)
 		{
@@ -1038,7 +1038,7 @@ void IN_ControllerCommands(void)
 
 		Gamepad_ParseThumbStick(newAxisState[SDL_CONTROLLER_AXIS_RIGHTX], newAxisState[SDL_CONTROLLER_AXIS_RIGHTY], RIGHT_THUMB_DEADZONE, newStick);
 		Gamepad_ParseThumbStick(oldAxisState[SDL_CONTROLLER_AXIS_RIGHTX], oldAxisState[SDL_CONTROLLER_AXIS_RIGHTY], RIGHT_THUMB_DEADZONE, oldStick);
-		
+
 		Gamepad_ParseDirection(newStick, &newDir);
 		Gamepad_ParseDirection(oldStick, &oldDir);
 
@@ -1075,7 +1075,7 @@ void IN_ControllerCommands(void)
 				Key_Event(K_GAMEPAD_UP + k, false, true);
 		}
 	}
-	
+
 	// gamepad buttons
 	for (i = SDL_CONTROLLER_BUTTON_A; i <= SDL_CONTROLLER_BUTTON_START; i++)
 	{
@@ -1116,7 +1116,7 @@ void IN_ControllerCommands(void)
 			}
 		}
 	}
-	
+
 	// left shoulder
 	for (i = SDL_CONTROLLER_BUTTON_LEFTSHOULDER; i <= SDL_CONTROLLER_BUTTON_RIGHTSHOULDER; i++)
 	{
