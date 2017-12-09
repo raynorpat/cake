@@ -762,8 +762,8 @@ int RE_GL_Init (void)
 	RMain_CheckExtension ("GL_ARB_texture_storage ");
 	RMain_CheckExtension ("GL_ARB_seamless_cube_map ");
 	RMain_CheckExtension ("GL_ARB_uniform_buffer_object ");
-	RMain_CheckExtension ("GL_EXT_direct_state_access ");
 	RMain_CheckExtension ("GL_ARB_separate_shader_objects ");
+	RMain_CheckExtension ("GL_EXT_direct_state_access ");
 
 	// and now invalidate the cached state to force everything to recache
 	RMain_InvalidateCachedState ();

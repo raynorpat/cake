@@ -71,16 +71,21 @@ void *Hunk_Begin(int maxsize)
 {
 	// reserve a huge chunk of memory, but don't commit any yet
 	cursize = 0;
+#ifdef _WIN32
 	hunkmaxsize = maxsize;
+#else
+	hunkmaxsize = maxsize + sizeof(int);
+#endif
 
 #ifdef _WIN32
 	membase = VirtualAlloc(NULL, maxsize, MEM_RESERVE, PAGE_NOACCESS);
-#else
-	membase = mmap(0, hunkmaxsize, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
-#endif
-
 	if (!membase)
 		Sys_Error("unable to virtual allocate %d bytes", maxsize);
+#else
+	membase = mmap(0, hunkmaxsize, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+	if ((membase == NULL) || (membase == (byte *)-1))
+		Sys_Error("unable to virtual allocate %d bytes", maxsize);
+#endif
 
 #ifdef _WIN32
 	return (void *)membase;
@@ -130,7 +135,9 @@ int Hunk_End(void)
 #else
 	byte *n = NULL;
 
-#if defined( __FreeBSD__ )
+#if defined( __linux__ )
+	n = (byte *)mremap(membase, hunkmaxsize, cursize + sizeof(int), 0);
+#elif defined( __FreeBSD__ )
 	size_t old_size = hunkmaxsize;
 	size_t new_size = cursize + sizeof(int);
 	void *unmap_base;
@@ -149,8 +156,33 @@ int Hunk_End(void)
 		unmap_len = old_size - new_size;
 		n = munmap(unmap_base, unmap_len) + membase;
 	}
-#elif defined( __linux__ )
-	n = (byte *)mremap(membase, hunkmaxsize, cursize + sizeof(int), 0);
+#else
+#ifndef round_page
+	#define round_page(x) (((size_t)(x) + (page_size - 1)) / page_size) * page_size
+#endif
+	size_t old_size = hunkmaxsize;
+	size_t new_size = cursize + sizeof(int);
+	void *unmap_base;
+	size_t unmap_len;
+	long page_size;
+
+	page_size = sysconf(_SC_PAGESIZE);
+	if (page_size == -1)
+		Sys_Error("Hunk_End: sysconf _SC_PAGESIZE failed (%d)", errno);
+
+	new_size = round_page(new_size);
+	old_size = round_page(old_size);
+
+	if (new_size > old_size)
+	{
+		n = 0; // error
+	}
+	else if (new_size < old_size)
+	{
+		unmap_base = (caddr_t)(membase + new_size);
+		unmap_len = old_size - new_size;
+		n = munmap(unmap_base, unmap_len) + membase;
+	}
 #endif
 
 	if (n != membase)
