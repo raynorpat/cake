@@ -84,7 +84,7 @@ void V_AddEntity (entity_t *ent)
 	r_entities[r_numentities++] = *ent;
 }
 
-#ifdef WIN32
+#ifdef _WIN32
 #ifndef _PALETTEENTRY_DEFINED
 #define _PALETTEENTRY_DEFINED
 typedef struct tagPALETTEENTRY {
@@ -113,6 +113,7 @@ void V_AddParticle(vec3_t org, int color, float alpha)
 	VectorCopy(org, p->origin);
 
 	// transform 8bit colors into RGBA
+#ifdef _WIN32
 	if (RE_gfxVal == REF_API_DIRECT3D_9)
 	{
 		// HACK!
@@ -120,6 +121,7 @@ void V_AddParticle(vec3_t org, int color, float alpha)
 		p->color = *((unsigned *)&d_8to24table[color & 255]);
 	}
 	else
+#endif
 	{
 		extern unsigned d_8to24table_rgba[];
 		p->color = d_8to24table_rgba[color & 255];
