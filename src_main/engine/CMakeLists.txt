@@ -30,7 +30,7 @@ else()
 endif()
 
 # directx
-find_package(DIRECTX)
+find_package(DirectX)
 if (DirectX_D3DX9_FOUND)
 	include_directories (BEFORE SYSTEM ${DirectX_D3D9_INCLUDE_FOUND})
 	include_directories (BEFORE SYSTEM ${DirectX_D3DX9_INCLUDE_DIR})
@@ -103,10 +103,10 @@ set(CLIENT_SOURCES
 	)
 source_group("client" FILES ${CLIENT_INCLUDES})
 source_group("client" FILES ${CLIENT_SOURCES})
-	
+
 set(MENU_INCLUDES
 	qmenu.h
-	)	
+	)
 set(MENU_SOURCES
 	qmenu.c
 	menu.c
@@ -122,7 +122,7 @@ set(SOUND_INCLUDES
 	snd_wave.h
 	snd_mp3.h
 	snd_modplug.h
-	)	
+	)
 set(SOUND_SOURCES
 	snd_codec.c
 	snd_dma.c
@@ -138,7 +138,7 @@ source_group("client\\sound" FILES ${SOUND_SOURCES})
 set(COMMON_INCLUDES
 	crc.h
 	qcommon.h
-	)	
+	)
 set(COMMON_SOURCES
 	cmd.c
 	common.c
@@ -152,10 +152,10 @@ set(COMMON_SOURCES
 	)
 source_group("common" FILES ${COMMON_INCLUDES})
 source_group("common" FILES ${COMMON_SOURCES})
-	
+
 set(SERVER_INCLUDES
 	server.h
-	)	
+	)
 set(SERVER_SOURCES
 	sv_ccmds.c
 	sv_cmodel.c
@@ -169,7 +169,7 @@ set(SERVER_SOURCES
 	)
 source_group("server" FILES ${SERVER_INCLUDES})
 source_group("server" FILES ${SERVER_SOURCES})
-	
+
 set(SYSTEM_INCLUDES
 	sdl/q2icon64.h
 	)
@@ -186,7 +186,7 @@ set(SHARED_INCLUDES
 	../shared/game.h
 	../shared/q_shared.h
 	../shared/qfiles.h
-	)	
+	)
 set(SHARED_SOURCES
 	../shared/m_flash.c
 	../shared/q_shared.c
@@ -262,7 +262,7 @@ set(CAKE_INCLUDES
 			${MAD_INCLUDES}
 			${MODPLUG_INCLUDES}
 			${GAMESPY_INCLUDES}
-			)			
+			)
 set(CAKE_SOURCES
 			${CLIENT_SOURCES}
 			${MENU_SOURCES}
@@ -271,16 +271,16 @@ set(CAKE_SOURCES
 			${SERVER_SOURCES}
 			${SYSTEM_SOURCES}
 			${SHARED_SOURCES}
-			
+
 			${MAD_SOURCES}
 			${MODPLUG_SOURCES}
 			${GAMESPY_SOURCES}
 			)
-	
+
 if(MONOLITH)
 	list(APPEND CAKE_INCLUDES
 		${GAME_INCLUDES}
-		)		
+		)
 	list(APPEND CAKE_SOURCES
 		${GAME_SOURCES}
 		)
@@ -298,9 +298,9 @@ include_directories(
 # build it
 if(MSVC)
 
-	list(APPEND CAKE_SOURCES ${WIN32_RESOURCES})	
+	list(APPEND CAKE_SOURCES ${WIN32_RESOURCES})
 	list(REMOVE_DUPLICATES CAKE_SOURCES)
-	
+
 	# build the engine
 	add_executable(cake WIN32 ${CAKE_INCLUDES} ${CAKE_SOURCES})
 	target_link_libraries(cake PRIVATE
@@ -317,9 +317,9 @@ if(MSVC)
 	if (DirectX_D3D9_FOUND)
 		target_link_libraries (cake PRIVATE ${DirectX_D3D9_LIBRARY} ${DirectX_D3DX9_LIBRARY})
 	endif()
-	
+
 	set_target_properties(cake PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}/..")
-	
+
 else()
 
 	find_package(OpenGL REQUIRED)

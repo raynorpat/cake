@@ -33,11 +33,11 @@ endif()
 #
 # Options
 #
-		
+
 option(MONOLITH "Embed game logic into main executable" OFF)
-option(SDL2 "Use SDL2 instead of SDL1.2" ON)	
+option(SDL2 "Use SDL2 instead of SDL1.2" ON)
 option(ONATIVE "Optimize for the host CPU" OFF)
-option(UTILS "Build utilities and tools" ON)	
+option(UTILS "Build utilities and tools" ON)
 
 option(USE_SYSTEM_LIBMAD "Use the system libmad instead of the bundled one" OFF)
 option(USE_SYSTEM_LIBMODPLUG "Use the system libmodplug instead of the bundled one" OFF)
@@ -72,7 +72,7 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
 	else()
 		set (Q_WINDOWS_ARCH "x86")
 	endif()
-	
+
 	if (MSVC)
 		if (CMAKE_CL_64 OR ${Q_WINDOWS_ARCH} EQUAL "x64")
 			set (Q_WINDOWS_ARCH "x64")
@@ -86,7 +86,7 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
 			set (Q_WINDOWS_ARCH "x86")
 		endif()
 	endif ()
-	
+
 	set(CMAKE_EXECUTABLE_SUFFIX "_${Q_WINDOWS_ARCH}${CMAKE_EXECUTABLE_SUFFIX}")
 	set(CMAKE_SHARED_LIBRARY_PREFIX "")
 	set(CMAKE_SHARED_LIBRARY_SUFFIX "_${Q_WINDOWS_ARCH}${CMAKE_SHARED_LIBRARY_SUFFIX}")
@@ -102,11 +102,11 @@ if(CMAKE_COMPILER_IS_GNUCC OR CMAKE_C_COMPILER_ID STREQUAL "Clang")
 	endif()
 	if (USE_INTRINSICS)
 		add_definitions(-DUSE_INTRINSICS)
-	endif()	
+	endif()
 	#if(NOT ANDROID)
 		add_definitions(-DUSE_EXCEPTIONS)
 	#endif()
-	
+
 	# If we're building with gcc for i386 let's define -ffloat-store.
 	# This helps the old and crappy x87 FPU to produce correct values.
 	# Would be nice if Clang had something comparable.
@@ -115,16 +115,16 @@ if(CMAKE_COMPILER_IS_GNUCC OR CMAKE_C_COMPILER_ID STREQUAL "Clang")
 			set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -ffloat-store")
 		endif()
 	endif()
-	
+
 	# the warnings are used for every profile anyway, so put them in a variable
 	set(my_warn_flags "-Wno-pragmas -Wno-unused-variable -Wno-switch -Wno-unused-value -Winvalid-pch -Wno-multichar")
-	
+
 	if(CMAKE_C_COMPILER_ID STREQUAL "Clang")
 		# append clang-specific settings for warnings (the second one make sure clang doesn't complain
 		# about unknown -W flags, like -Wno-unused-but-set-variable)
 		set(my_warn_flags "${my_warn_flags} -Wno-local-type-template-args -Wno-unknown-warning-option -Wno-inline-new-delete -Wno-switch-enum")
 	endif()
-	
+
 	if(NOT CMAKE_CROSSCOMPILING AND ONATIVE)
 		add_definitions(-march=native)
 	endif()
@@ -135,34 +135,34 @@ if(CMAKE_COMPILER_IS_GNUCC OR CMAKE_C_COMPILER_ID STREQUAL "Clang")
 	set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -O3 -ffast-math -fno-unsafe-math-optimizations -fomit-frame-pointer -fno-strict-aliasing ${my_warn_flags}")
 	set(CMAKE_C_FLAGS_RELWITHDEBINFO "${CMAKE_C_FLAGS_RELWITHDEBINFO} -g -O3 -ffast-math -fno-unsafe-math-optimizations -fomit-frame-pointer -fno-strict-aliasing ${my_warn_flags}")
 	set(CMAKE_C_FLAGS_MINSIZEREL "${CMAKE_C_FLAGS_MINSIZEREL} -Os -ffast-math -fno-unsafe-math-optimizations -fomit-frame-pointer -fno-strict-aliasing ${my_warn_flags}")
-	
+
 	set(CMAKE_CXX_FLAGS_DEBUG ${CMAKE_C_FLAGS_DEBUG})
 	#set(CMAKE_CXX_FLAGS_DEBUGALL ${CMAKE_C_FLAGS_DEBUGALL})
 	#set(CMAKE_CXX_FLAGS_PROFILE ${CMAKE_C_FLAGS_PROFILE})
 	set(CMAKE_CXX_FLAGS_RELEASE ${CMAKE_C_FLAGS_RELEASE})
 	set(CMAKE_CXX_FLAGS_RELWITHDEBINFO ${CMAKE_C_FLAGS_RELWITHDEBINFO})
 	set(CMAKE_CXX_FLAGS_MINSIZEREL ${CMAKE_C_FLAGS_MINSIZEREL})
-	
+
 	if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
 		set(CMAKE_EXECUTABLE_SUFFIX ".${CMAKE_SYSTEM_PROCESSOR}${CMAKE_EXECUTABLE_SUFFIX}")
 		set(CMAKE_SHARED_LIBRARY_SUFFIX "_${CMAKE_SYSTEM_PROCESSOR}${CMAKE_SHARED_LIBRARY_SUFFIX}")
 	endif()
-	
+
 	if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 		set(CMAKE_SHARED_LIBRARY_SUFFIX "_mac${CMAKE_SHARED_LIBRARY_SUFFIX}")
 	endif()
 
-elseif(MSVC)	
+elseif(MSVC)
 	set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} /D _DEBUG /MP /MTd")
 	set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} /MP /Oi /Oy /MT")
 	set(CMAKE_C_FLAGS_RELWITHDEBINFO "${CMAKE_C_FLAGS_RELWITHDEBINFO} /MP /Oi /MTd")
 	set(CMAKE_C_FLAGS_MINSIZEREL "${CMAKE_C_FLAGS_MINSIZEREL} /MP /Oi /Oy /MT")
-		
+
 	set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /MP /MTd")
 	set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MP /Oi /Oy /MT")
 	set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} /MP /MTd")
 	set(CMAKE_CXX_FLAGS_MINSIZEREL "${CMAKE_CXX_FLAGS_MINSIZEREL} /MP /Oi /Oy /MT")
-		
+
 	# RB: without /SAFESEH:NO we can't link against ffmpeg libs and VS2013 or we have to build our own
 	# libs for newer compilers
 	set(CMAKE_EXE_LINKER_FLAGS_DEBUG "${CMAKE_EXE_LINKER_FLAGS_DEBUG} /SAFESEH:NO")
@@ -170,7 +170,7 @@ elseif(MSVC)
 	set(CMAKE_EXE_LINKER_FLAGS_RELEASE "${CMAKE_EXE_LINKER_FLAGS_RELEASE} /SAFESEH:NO")
 	set(CMAKE_EXE_LINKER_FLAGS_RELWITHDEBINFO "${CMAKE_EXE_LINKER_FLAGS_RELWITHDEBINFO} /SAFESEH:NO")
 
-	add_definitions(-DWIN32 
+	add_definitions(-DWIN32
 					-D_WINDOWS
 					-D_CRT_SECURE_NO_DEPRECATE
 					-D_CRT_NONSTDC_NO_DEPRECATE
@@ -179,16 +179,16 @@ elseif(MSVC)
 
 	if( ${CMAKE_SYSTEM_VERSION} EQUAL 6.2 OR ${CMAKE_SYSTEM_VERSION} EQUAL 6.3 ) # Windows 8 or 8.1
 		add_definitions(-DUSE_WINRT)
-    elseif( ${CMAKE_SYSTEM_VERSION} EQUAL 10 ) # Windows 10
+  elseif( ${CMAKE_SYSTEM_VERSION} EQUAL 10 ) # Windows 10
 		add_definitions(-DUSE_WINRT)
-    endif()
-    if (USE_INTRINSICS)
+  endif()
+  if (USE_INTRINSICS)
 		add_definitions(-DUSE_INTRINSICS)
-    endif()
-	
-    set_property(DIRECTORY PROPERTY VS_STARTUP_PROJECT "cake")
-    set(CMAKE_VS_INCLUDE_INSTALL_TO_DEFAULT_BUILD 1)
-	
+  endif()
+
+  set_property(DIRECTORY PROPERTY VS_STARTUP_PROJECT "cake")
+  set(CMAKE_VS_INCLUDE_INSTALL_TO_DEFAULT_BUILD 1)
+
 endif()
 
 # add projects
