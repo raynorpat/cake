@@ -69,6 +69,7 @@ inline void ProcessPlugins(int n) {}
 #ifdef HAVE_MALLOC_H
 #include <malloc.h>
 #endif
+#include <stdint.h>
 
 typedef int8_t CHAR;
 typedef uint8_t UCHAR;
