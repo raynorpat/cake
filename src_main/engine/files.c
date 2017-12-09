@@ -188,7 +188,7 @@ int file_from_pak = 0;
 
 int pakfilecmpfnc (const packfile_t *a, const packfile_t *b)
 {
-	return stricmp (a->name, b->name);
+	return Q_stricmp (a->name, b->name);
 }
 
 
@@ -203,7 +203,7 @@ packfile_t *FS_FindFileInPak (packfile_t *files, int numfiles, char *filename)
 		if (imax < imin) break;
 
 		imid = (imax + imin) >> 1;
-		comp = stricmp (files[imid].name, filename);
+		comp = Q_stricmp (files[imid].name, filename);
 
 		if (comp < 0)
 			imin = imid + 1;
@@ -422,7 +422,7 @@ pack_t *FS_LoadPackFile (char *packfile)
 	for (i = 0; i < numpackfiles; i++)
 	{
 		strcpy (newfiles[i].name, info[i].name);
-		strlwr (newfiles[i].name);
+		Q_strlwr (newfiles[i].name);
 		newfiles[i].filepos = LittleLong (info[i].filepos);
 		newfiles[i].filelen = LittleLong (info[i].filelen);
 	}
@@ -596,7 +596,7 @@ char **FS_ListFiles (char *findname, int *numfiles, unsigned musthave, unsigned 
 		{
 			list[nfiles] = strdup (s);
 #ifdef _WIN32
-			strlwr (list[nfiles]);
+			Q_strlwr (list[nfiles]);
 #endif
 			nfiles++;
 		}

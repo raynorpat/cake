@@ -91,7 +91,6 @@ void GL_GetShaderInfoLog(GLuint s, char *src, qboolean isprog)
 	if (outlen && infolog[0])
 	{
 		VID_Printf(PRINT_ALL, "%s", infolog);
-		OutputDebugString(infolog);
 	}
 }
 
@@ -210,7 +209,6 @@ GLuint GL_CreateShaderFromName(char *name, char *vsentry, char *fsentry)
 		// make it active for any further work we may be doing
 		glUseProgram(progid);
 		gl_state.currentprogram = progid;
-
 		return progid;
 	}
 }
@@ -268,7 +266,6 @@ GLuint GL_CreateComputeShaderFromName(char *name)
 		// make it active for any further work we may be doing
 		glUseProgram(progid);
 		gl_state.currentprogram = progid;
-
 		return progid;
 	}
 }

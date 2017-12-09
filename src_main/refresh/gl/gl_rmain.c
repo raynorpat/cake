@@ -742,10 +742,10 @@ int RE_GL_Init (void)
 	VID_Printf (PRINT_ALL, "GL_VERSION: %s\n", gl_config.version_string);
 
 	strcpy (renderer_buffer, gl_config.renderer_string);
-	strlwr (renderer_buffer);
+	Q_strlwr (renderer_buffer);
 
 	strcpy (vendor_buffer, gl_config.vendor_string);
-	strlwr (vendor_buffer);
+	Q_strlwr (vendor_buffer);
 
 	// check for required feature support
 	// GLEW isn't always reliable so check them manually (it's assumed in 2012 that if an extension is present in the

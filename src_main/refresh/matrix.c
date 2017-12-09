@@ -20,17 +20,17 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 // matrix.c -- matrix math functionality
 #include "ref_public.h"
 
-inline float QXVec3Length(const QXVECTOR3 *pv)
+static float QXVec3Length(const QXVECTOR3 *pv)
 {
-	if (!pv) return 0.0f;
+	if (!pv)
+		return 0.0f;
+
 	return sqrtf(pv->x * pv->x + pv->y * pv->y + pv->z * pv->z);
 }
 
 QXVECTOR3 * QXVec3Normalize(QXVECTOR3 *pout, const QXVECTOR3 *pv)
 {
 	float norm;
-
-	//TRACE("pout %p, pv %p\n", pout, pv);
 
 	norm = QXVec3Length(pv);
 	if (!norm)
@@ -76,8 +76,6 @@ QXMATRIX* QXMatrixMultiply(QXMATRIX *pout, const QXMATRIX *pm1, const QXMATRIX *
 	QXMATRIX out;
 	int i, j;
 
-	//TRACE("pout %p, pm1 %p, pm2 %p\n", pout, pm1, pm2);
-
 	for (i = 0; i<4; i++)
 	{
 		for (j = 0; j<4; j++)
@@ -94,8 +92,6 @@ QMATRIX* QXMatrixInverse(QXMATRIX *pout, float *pdeterminant, const QXMATRIX *pm
 {
 	float det, t[3], v[16];
 	unsigned int i, j;
-
-	//TRACE("pout %p, pdeterminant %p, pm %p\n", pout, pdeterminant, pm);
 
 	t[0] = pm->m[2][2] * pm->m[3][3] - pm->m[2][3] * pm->m[3][2];
 	t[1] = pm->m[1][2] * pm->m[3][3] - pm->m[1][3] * pm->m[3][2];
@@ -166,8 +162,6 @@ QMATRIX* QXMatrixInverse(QXMATRIX *pout, float *pdeterminant, const QXMATRIX *pm
 
 QXMATRIX* QXMatrixTranslation(QXMATRIX *pout, float x, float y, float z)
 {
-	//TRACE("pout %p, x %f, y %f, z %f\n", pout, x, y, z);
-
 	QXMatrixIdentity(pout);
 	pout->m[3][0] = x;
 	pout->m[3][1] = y;
@@ -177,8 +171,6 @@ QXMATRIX* QXMatrixTranslation(QXMATRIX *pout, float x, float y, float z)
 
 QXMATRIX* QXMatrixScaling(QXMATRIX *pout, float sx, float sy, float sz)
 {
-	//TRACE("pout %p, sx %f, sy %f, sz %f\n", pout, sx, sy, sz);
-
 	QXMatrixIdentity(pout);
 	pout->m[0][0] = sx;
 	pout->m[1][1] = sy;

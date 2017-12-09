@@ -30,7 +30,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #pragma warning(disable : 4051)   // ALPHA
 
 #pragma warning(disable : 4018)   // signed/unsigned mismatch
-#pragma warning(disable : 4305)		// truncation from const double to float
+#pragma warning(disable : 4305)	  // truncation from const double to float
 #endif
 
 #include <assert.h>
@@ -58,11 +58,17 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
 typedef unsigned char 		byte;
 #if defined(__cplusplus)
-typedef int			qboolean;
+typedef int					qboolean;
 #else
 typedef enum {false, true}	qboolean;
 #endif
 
+#ifndef max
+#define max(a,b) (((a) > (b)) ? (a) : (b))
+#endif
+#ifndef min
+#define min(a,b) (((a) < (b)) ? (a) : (b))
+#endif
 
 #ifndef NULL
 #define NULL ((void *)0)
@@ -94,6 +100,12 @@ typedef enum {false, true}	qboolean;
 #  define Q_DLL_EXPORT
 #  define Q_DLL_LOCAL
 # endif
+#endif
+
+#ifdef _WIN32
+#define Q_alloca _alloca
+#else
+#define Q_alloca alloca
 #endif
 
 #if defined(__DJGPP__) || defined(_WIN32)
