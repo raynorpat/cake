@@ -242,9 +242,15 @@ model_t *SW_Mod_ForName(char *name, qboolean crash);
 mleaf_t *SW_Mod_PointInLeaf(float *p, model_t *model);
 byte	*SW_Mod_ClusterPVS(int cluster, model_t *model);
 
-void SW_Mod_Modellist_f (void);
-void SW_Mod_FreeAll (void);
-void SW_Mod_Free (model_t *mod);
+void	SW_Mod_Modellist_f (void);
+
+void	*Hunk_Begin (int maxsize);
+void	*Hunk_Alloc (int size);
+int		Hunk_End (void);
+void	Hunk_Free (void *base);
+
+void	SW_Mod_FreeAll (void);
+void	SW_Mod_Free (model_t *mod);
 
 extern	int		registration_sequence;
 
