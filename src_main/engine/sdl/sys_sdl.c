@@ -36,7 +36,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #include <io.h>
 #include <conio.h>
 #else
-#define WANT_MMAP 0 // HACK!!!
+//#define WANT_MMAP 0 // HACK!!!
 #if defined(__linux__) && !defined(_GNU_SOURCE)
 #define _GNU_SOURCE // for mremap() - must be before sys/mman.h include!
 #endif
