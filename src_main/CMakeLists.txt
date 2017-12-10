@@ -114,6 +114,12 @@ if(CMAKE_COMPILER_IS_GNUCC OR CMAKE_C_COMPILER_ID STREQUAL "Clang")
 		endif()
 	endif()
 
+  # -MMD to generate header dependencies. (They cannot be
+  #  generated if building universal binaries on OSX)
+  if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+    set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -MMD")
+  endif()
+
 	# the warnings are used for every profile anyway, so put them in a variable
 	set(my_warn_flags "-Wno-pragmas -Wno-unused-variable -Wno-switch -Wno-unused-value -Winvalid-pch -Wno-multichar")
 
@@ -127,10 +133,10 @@ if(CMAKE_COMPILER_IS_GNUCC OR CMAKE_C_COMPILER_ID STREQUAL "Clang")
 		add_definitions(-march=native)
 	endif()
 
-	set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -D_DEBUG -O0 -ggdb -fno-strict-aliasing -fwrapv ${my_warn_flags}")
-	set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -O2 -fomit-frame-pointer -fno-strict-aliasing -fwrapv ${my_warn_flags}")
-	set(CMAKE_C_FLAGS_RELWITHDEBINFO "${CMAKE_C_FLAGS_RELWITHDEBINFO} -g -O2 -fomit-frame-pointer -fno-strict-aliasing -fwrapv ${my_warn_flags}")
-	set(CMAKE_C_FLAGS_MINSIZEREL "${CMAKE_C_FLAGS_MINSIZEREL} -Os -fomit-frame-pointer -fno-strict-aliasing -fwrapv ${my_warn_flags}")
+	set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -D_DEBUG -O0 -ggdb -fno-strict-aliasing -fomit-frame-pointer -fwrapv ${my_warn_flags}")
+	set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -O2 -fomit-frame-pointer -fno-strict-aliasing -fomit-frame-pointer -fwrapv ${my_warn_flags}")
+	set(CMAKE_C_FLAGS_RELWITHDEBINFO "${CMAKE_C_FLAGS_RELWITHDEBINFO} -g -O2 -fomit-frame-pointer -fno-strict-aliasing -fomit-frame-pointer -fwrapv ${my_warn_flags}")
+	set(CMAKE_C_FLAGS_MINSIZEREL "${CMAKE_C_FLAGS_MINSIZEREL} -Os -fomit-frame-pointer -fno-strict-aliasing -fomit-frame-pointer -fwrapv ${my_warn_flags}")
 
 	set(CMAKE_CXX_FLAGS_DEBUG ${CMAKE_C_FLAGS_DEBUG})
 	set(CMAKE_CXX_FLAGS_RELEASE ${CMAKE_C_FLAGS_RELEASE})
