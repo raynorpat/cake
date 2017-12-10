@@ -35,7 +35,6 @@ endif()
 #
 
 option(MONOLITH "Embed game logic into main executable" OFF)
-option(SDL2 "Use SDL2 instead of SDL1.2" ON)
 option(ONATIVE "Optimize for the host CPU" OFF)
 option(UTILS "Build utilities and tools" ON)
 
@@ -45,7 +44,6 @@ option(USE_SYSTEM_LIBGLEW "Use the system libglew instead of the bundled one" OF
 option(USE_SYSTEM_SDL2 "Use the system SDL2 instead of the bundled one" OFF)
 
 set(CPU_OPTIMIZATION "-mmmx -msse -msse2" CACHE STRING "Which CPU specific optimitations should be used beside the compiler's default?")
-option(USE_INTRINSICS "Compile using intrinsics (e.g mmx, sse, msse2)" ON)
 
 #
 # Compiler settings
@@ -92,18 +90,13 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
 	set(CMAKE_SHARED_LIBRARY_SUFFIX "_${Q_WINDOWS_ARCH}${CMAKE_SHARED_LIBRARY_SUFFIX}")
 endif()
 
+# GCC and Clang settings
 if(CMAKE_COMPILER_IS_GNUCC OR CMAKE_C_COMPILER_ID STREQUAL "Clang")
 	add_definitions(-pipe)
 	add_definitions(-Wall)
 	if (CPU_OPTIMIZATION)
 		add_definitions(${CPU_OPTIMIZATION})
 	endif()
-	if (USE_INTRINSICS)
-		add_definitions(-DUSE_INTRINSICS)
-	endif()
-	#if(NOT ANDROID)
-		add_definitions(-DUSE_EXCEPTIONS)
-	#endif()
 
 	# If we're building with gcc for i386 let's define -ffloat-store.
 	# This helps the old and crappy x87 FPU to produce correct values.
@@ -152,6 +145,7 @@ if(CMAKE_COMPILER_IS_GNUCC OR CMAKE_C_COMPILER_ID STREQUAL "Clang")
 		set(CMAKE_SHARED_LIBRARY_SUFFIX "_mac${CMAKE_SHARED_LIBRARY_SUFFIX}")
 	endif()
 
+# MSVC settings
 elseif(MSVC)
 	set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} /D _DEBUG /MP /MTd")
 	set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} /MP /Oi /Oy /MT")

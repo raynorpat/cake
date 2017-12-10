@@ -19,15 +19,9 @@ endif (GLEW_FOUND)
 if(NOT USE_SYSTEM_SDL2)
 	SET(SDL2_PATH ../libs/SDL2)
 endif()
-if(SDL2)
-	find_package(SDL2 REQUIRED)
-	include_directories(${SDL2_INCLUDE_DIR})
-	set(SDLx_LIBRARY ${SDL2_LIBRARY})
-else()
-	find_package(SDL REQUIRED)
-	include_directories(${SDL_INCLUDE_DIR})
-	set(SDLx_LIBRARY ${SDL_LIBRARY})
-endif()
+find_package(SDL2 REQUIRED)
+include_directories(${SDL2_INCLUDE_DIR})
+set(SDLx_LIBRARY ${SDL2_LIBRARY})
 
 # directx
 find_package(DirectX)
@@ -209,6 +203,17 @@ source_group("system\\win32\\Resources" FILES ${WIN32_RESOURCES})
 
 # libs
 
+# glew
+if (NOT GLEW_FOUND)
+	file(GLOB GLEW_INCLUDES ../libs/glew/include/GL/*.h)
+	file(GLOB GLEW_SOURCES ../libs/glew/src/*.c)
+else (NOT GLEW_FOUND)
+    set(GLEW_INCLUDES "")
+    set(GLEW_SOURCES "")
+endif (NOT GLEW_FOUND)
+source_group("libs\\glew" FILES ${GLEW_INCLUDES})
+source_group("libs\\glew" FILES ${GLEW_SOURCES})
+
 # libmad
 if (NOT MAD_FOUND)
 	file(GLOB MAD_INCLUDES ../libs/mad/include/*.h)
@@ -310,7 +315,7 @@ if(MSVC)
 		dbghelp
 		iphlpapi
 		wsock32.lib
-        ${GLEW_LIBRARY}
+        	${GLEW_LIBRARY}
 		${CMAKE_DL_LIBS}
 		refresh
 		)
@@ -338,13 +343,13 @@ else()
 			set(RT_LIBRARY rt)
 		endif()
 		target_link_libraries(cake PRIVATE
-			${OPENGL_LIBRARIES}
+			refresh
 			pthread
 			${RT_LIBRARY}
 			${SDLx_LIBRARY}
-            ${GLEW_LIBRARY}
+            		${GLEW_LIBRARY}
+			${OPENGL_LIBRARY}
 			${CMAKE_DL_LIBS}
-			refresh
 			)
 	endif()
 
