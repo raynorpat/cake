@@ -370,6 +370,7 @@ typedef struct
 	const char *renderer_string;
 	const char *vendor_string;
 	const char *version_string;
+	const char *extension_string;
 } glconfig_t;
 
 typedef struct

@@ -676,26 +676,88 @@ void RMain_InvalidateCachedState (void)
 	glFinish ();
 }
 
+/*
+================
+R_PrintLongString
 
-void RMain_CheckExtension (char *ext)
+Workaround for Com_Printf's 1024 characters buffer limit.
+================
+*/
+static void R_PrintLongString (const char *string)
+{
+	char buffer[1024];
+	const char *p;
+	int size = strlen (string);
+
+	p = string;
+	while (size > 0)
+	{
+		Q_strlcpy (buffer, p, sizeof(buffer));
+		VID_Printf (PRINT_ALL, "%s", buffer);
+		p += 1023;
+		size -= 1023;
+	}
+}
+
+static void RMain_PrintSetExtensionList (void)
+{
+	GLint n = 0;
+
+	VID_Printf (PRINT_ALL, "GL_EXTENSIONS: ");
+
+	if (glGetStringi)
+	{
+		int buffer_size = 1024;
+		int buffer_pos = 0;
+		char *ext_strings_buffer = (char *)malloc(buffer_size * sizeof(char));
+
+		// grab number of extensions supported
+		glGetIntegerv(GL_NUM_EXTENSIONS, &n);
+		for (int i = 0; i < n; i++)
+		{
+			const char * extension_string = (char *)glGetStringi(GL_EXTENSIONS, i);
+
+			// print this guy out
+			VID_Printf (PRINT_ALL, "%s ", extension_string);
+
+			// set full extension string, thanks OpenGL 3...
+			int extension_string_length = strlen(extension_string);
+			if (buffer_pos + extension_string_length + 1 > buffer_size)
+			{
+				buffer_size += 1024;
+				ext_strings_buffer = (char *)realloc(ext_strings_buffer, buffer_size * sizeof(char));
+			}
+			strcpy(ext_strings_buffer + buffer_pos, extension_string);
+			buffer_pos += extension_string_length;
+			ext_strings_buffer[buffer_pos++] = ' '; // space separated, overwrites NULL
+		}
+
+		// finally set the string
+		ext_strings_buffer[++buffer_pos] = '\0'; // NULL terminate
+		gl_config.extension_string = ext_strings_buffer;
+	}
+	else
+	{
+		// the old-fashioned way of setting the extension string
+		Q_strlcpy ((char *)gl_config.extension_string, (const char *)glGetString(GL_EXTENSIONS), sizeof(gl_config.extension_string));
+		R_PrintLongString (gl_config.extension_string);
+	}
+
+	VID_Printf(PRINT_ALL, "\n");
+}
+
+static void RMain_CheckExtension (char *ext)
 {
 	// check in glew first...
 	if (!glewIsSupported(ext))
 	{
-		// lets double check the actual extension list,
+		// lets double check the actual extension list we grabbed earlier,
 		// glew is known to be buggy checking for extensions...
-		GLint n = 0;
-
-		glGetIntegerv (GL_NUM_EXTENSIONS, &n);
-		for (GLint i = 0; i < n; i++)
+		if (!strcmp(ext, gl_config.extension_string))
 		{
-			const char* extension =	(const char*)glGetStringi(GL_EXTENSIONS, i);
-			if (!strcmp(ext, extension))
-			{
-				return;
-			}
+			return;
 		}
-
+	
 		VID_Error (ERR_FATAL, "RMain_CheckExtension : could not find %s", ext);
 		return;
 	}
@@ -747,9 +809,10 @@ int RE_GL_Init (void)
 	strcpy (vendor_buffer, gl_config.vendor_string);
 	Q_strlwr (vendor_buffer);
 
+	RMain_PrintSetExtensionList ();
+
 	// check for required feature support
-	// GLEW isn't always reliable so check them manually (it's assumed in 2012 that if an extension is present in the
-	// string then all entry points/etc are present too so that we don't need to cross-check those)
+	// GLEW isn't always reliable so check them manually
 	RMain_CheckExtension ("GL_ARB_multitexture ");
 	RMain_CheckExtension ("GL_ARB_sampler_objects ");
 	RMain_CheckExtension ("GL_ARB_vertex_buffer_object ");
