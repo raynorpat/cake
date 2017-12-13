@@ -21,111 +21,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 // gl_state_dsa.cpp - direct state access emulation
 #include "gl_state_dsa.h"
 
-#if defined ( OGL_DSA_DEFINE_INTERFACE_POINTERS )
-/* transform feedback */
-PFNGLCREATETRANSFORMFEEDBACKSPROC RemapGLName( glCreateTransformFeedbacks );
-PFNGLTRANSFORMFEEDBACKBUFFERBASEPROC RemapGLName( glTransformFeedbackBufferBase );
-PFNGLTRANSFORMFEEDBACKBUFFERRANGEPROC RemapGLName( glTransformFeedbackBufferRange );
-PFNGLGETTRANSFORMFEEDBACKIVPROC RemapGLName( glGetTransformFeedbackiv );
-PFNGLGETTRANSFORMFEEDBACKI_VPROC RemapGLName( glGetTransformFeedbacki_v );
-PFNGLGETTRANSFORMFEEDBACKI64_VPROC RemapGLName( glGetTransformFeedbacki64_v );
-/* vertex buffer object */
-PFNGLCREATEBUFFERSPROC RemapGLName( glCreateBuffers );
-PFNGLNAMEDBUFFERSTORAGEPROC RemapGLName( glNamedBufferStorage );
-PFNGLNAMEDBUFFERDATAPROC RemapGLName( glNamedBufferData );
-PFNGLNAMEDBUFFERSUBDATAPROC RemapGLName( glNamedBufferSubData );
-PFNGLCOPYNAMEDBUFFERSUBDATAPROC RemapGLName( glCopyNamedBufferSubData );
-PFNGLCLEARNAMEDBUFFERDATAPROC RemapGLName( glClearNamedBufferData );
-PFNGLCLEARNAMEDBUFFERSUBDATAPROC RemapGLName( glClearNamedBufferSubData );
-PFNGLMAPNAMEDBUFFERPROC RemapGLName( glMapNamedBuffer );
-PFNGLMAPNAMEDBUFFERRANGEPROC RemapGLName( glMapNamedBufferRange );
-PFNGLUNMAPNAMEDBUFFERPROC RemapGLName( glUnmapNamedBuffer );
-PFNGLFLUSHMAPPEDNAMEDBUFFERRANGEPROC RemapGLName( glFlushMappedNamedBufferRange );
-PFNGLGETNAMEDBUFFERPARAMETERIVPROC RemapGLName( glGetNamedBufferParameteriv );
-PFNGLGETNAMEDBUFFERPARAMETERI64VPROC RemapGLName( glGetNamedBufferParameteri64v );
-PFNGLGETNAMEDBUFFERPOINTERVPROC RemapGLName( glGetNamedBufferPointerv );
-PFNGLGETNAMEDBUFFERSUBDATAPROC RemapGLName( glGetNamedBufferSubData );
-/* framebuffer object */
-PFNGLCREATEFRAMEBUFFERSPROC RemapGLName( glCreateFramebuffers );
-PFNGLNAMEDFRAMEBUFFERRENDERBUFFERPROC RemapGLName( glNamedFramebufferRenderbuffer );
-PFNGLNAMEDFRAMEBUFFERPARAMETERIPROC RemapGLName( glNamedFramebufferParameteri );
-PFNGLNAMEDFRAMEBUFFERTEXTUREPROC RemapGLName( glNamedFramebufferTexture );
-PFNGLNAMEDFRAMEBUFFERTEXTURELAYERPROC RemapGLName( glNamedFramebufferTextureLayer );
-PFNGLNAMEDFRAMEBUFFERDRAWBUFFERPROC RemapGLName( glNamedFramebufferDrawBuffer );
-PFNGLNAMEDFRAMEBUFFERDRAWBUFFERSPROC RemapGLName( glNamedFramebufferDrawBuffers );
-PFNGLNAMEDFRAMEBUFFERREADBUFFERPROC RemapGLName( glNamedFramebufferReadBuffer );
-PFNGLINVALIDATENAMEDFRAMEBUFFERDATAPROC RemapGLName( glInvalidateNamedFramebufferData );
-PFNGLINVALIDATENAMEDFRAMEBUFFERSUBDATAPROC RemapGLName( glInvalidateNamedFramebufferSubData );
-PFNGLCLEARNAMEDFRAMEBUFFERIVPROC RemapGLName( glClearNamedFramebufferiv );
-PFNGLCLEARNAMEDFRAMEBUFFERUIVPROC RemapGLName( glClearNamedFramebufferuiv );
-PFNGLCLEARNAMEDFRAMEBUFFERFVPROC RemapGLName( glClearNamedFramebufferfv );
-PFNGLCLEARNAMEDFRAMEBUFFERFIPROC RemapGLName( glClearNamedFramebufferfi );
-PFNGLBLITNAMEDFRAMEBUFFERPROC RemapGLName( glBlitNamedFramebuffer );
-PFNGLCHECKNAMEDFRAMEBUFFERSTATUSPROC RemapGLName( glCheckNamedFramebufferStatus );
-PFNGLGETNAMEDFRAMEBUFFERPARAMETERIVPROC RemapGLName( glGetNamedFramebufferParameteriv );
-PFNGLGETNAMEDFRAMEBUFFERATTACHMENTPARAMETERIVPROC RemapGLName( glGetNamedFramebufferAttachmentParameteriv );
-/* Renderbuffer object functions */
-PFNGLCREATERENDERBUFFERSPROC RemapGLName( glCreateRenderbuffers );
-PFNGLNAMEDRENDERBUFFERSTORAGEPROC RemapGLName( glNamedRenderbufferStorage );
-PFNGLNAMEDRENDERBUFFERSTORAGEMULTISAMPLEPROC RemapGLName( glNamedRenderbufferStorageMultisample );
-PFNGLGETNAMEDRENDERBUFFERPARAMETERIVPROC RemapGLName( glGetNamedRenderbufferParameteriv );
-/* Sampler object functions */
-PFNGLCREATESAMPLERSPROC RemapGLName( glCreateSamplers );
-/* Program Pipeline object functions */
-PFNGLCREATEPROGRAMPIPELINESPROC RemapGLName( glCreateProgramPipelines );
-/* Query object functions */
-PFNGLCREATEQUERIESPROC RemapGLName( glCreateQueries );
-/* Vertex Array object functions */
-PFNGLCREATEVERTEXARRAYSPROC RemapGLName( glCreateVertexArrays );
-PFNGLDISABLEVERTEXARRAYATTRIBPROC RemapGLName( glDisableVertexArrayAttrib );
-PFNGLENABLEVERTEXARRAYATTRIBPROC RemapGLName( glEnableVertexArrayAttrib );
-PFNGLVERTEXARRAYELEMENTBUFFERPROC RemapGLName( glVertexArrayElementBuffer );
-PFNGLVERTEXARRAYVERTEXBUFFERPROC RemapGLName( glVertexArrayVertexBuffer );
-PFNGLVERTEXARRAYVERTEXBUFFERSPROC RemapGLName( glVertexArrayVertexBuffers );
-PFNGLVERTEXARRAYATTRIBFORMATPROC RemapGLName( glVertexArrayAttribFormat );
-PFNGLVERTEXARRAYATTRIBIFORMATPROC RemapGLName( glVertexArrayAttribIFormat );
-PFNGLVERTEXARRAYATTRIBLFORMATPROC RemapGLName( glVertexArrayAttribLFormat );
-PFNGLVERTEXARRAYATTRIBBINDINGPROC RemapGLName( glVertexArrayAttribBinding );
-PFNGLVERTEXARRAYBINDINGDIVISORPROC RemapGLName( glVertexArrayBindingDivisor );
-PFNGLGETVERTEXARRAYIVPROC RemapGLName( glGetVertexArrayiv );
-PFNGLGETVERTEXARRAYINDEXEDIVPROC RemapGLName( glGetVertexArrayIndexediv );
-PFNGLGETVERTEXARRAYINDEXED64IVPROC RemapGLName( glGetVertexArrayIndexed64iv );
-/* Texture object functions */
-PFNGLCREATETEXTURESPROC RemapGLName( glCreateTextures );
-PFNGLTEXTUREBUFFEREXTPROC RemapGLName( glTextureBufferEXT );
-PFNGLTEXTUREBUFFERRANGEEXTPROC RemapGLName( glTextureBufferRangeEXT );
-PFNGLTEXTURESTORAGE1DEXTPROC RemapGLName( glTextureStorage1DEXT );
-PFNGLTEXTURESTORAGE2DEXTPROC RemapGLName( glTextureStorage2DEXT );
-PFNGLTEXTURESTORAGE3DEXTPROC RemapGLName( glTextureStorage3DEXT );
-PFNGLTEXTURESTORAGE2DMULTISAMPLEEXTPROC RemapGLName( glTextureStorage2DMultisampleEXT );
-PFNGLTEXTURESTORAGE3DMULTISAMPLEEXTPROC RemapGLName( glTextureStorage3DMultisampleEXT );
-PFNGLTEXTURESUBIMAGE1DEXTPROC RemapGLName( glTextureSubImage1DEXT );
-PFNGLTEXTURESUBIMAGE2DEXTPROC RemapGLName( glTextureSubImage2DEXT );
-PFNGLTEXTURESUBIMAGE3DEXTPROC RemapGLName( glTextureSubImage3DEXT );
-PFNGLCOMPRESSEDTEXTURESUBIMAGE1DEXTPROC RemapGLName( glCompressedTextureSubImage1DEXT );
-PFNGLCOMPRESSEDTEXTURESUBIMAGE2DEXTPROC RemapGLName( glCompressedTextureSubImage2DEXT );
-PFNGLCOMPRESSEDTEXTURESUBIMAGE3DEXTPROC RemapGLName( glCompressedTextureSubImage3DEXT );
-PFNGLCOPYTEXTURESUBIMAGE1DEXTPROC RemapGLName( glCopyTextureSubImage1DEXT );
-PFNGLCOPYTEXTURESUBIMAGE2DEXTPROC RemapGLName( glCopyTextureSubImage2DEXT );
-PFNGLCOPYTEXTURESUBIMAGE3DEXTPROC RemapGLName( glCopyTextureSubImage3DEXT );
-PFNGLTEXTUREPARAMETERFEXTPROC RemapGLName( glTextureParameterfEXT );
-PFNGLTEXTUREPARAMETERFVEXTPROC RemapGLName( glTextureParameterfvEXT );
-PFNGLTEXTUREPARAMETERIEXTPROC RemapGLName( glTextureParameteriEXT );
-PFNGLTEXTUREPARAMETERIVEXTPROC RemapGLName( glTextureParameterivEXT );
-PFNGLTEXTUREPARAMETERIIVEXTPROC RemapGLName( glTextureParameterIivEXT );
-PFNGLTEXTUREPARAMETERIUIVEXTPROC RemapGLName( glTextureParameterIuivEXT );
-PFNGLGENERATETEXTUREMIPMAPEXTPROC RemapGLName( glGenerateTextureMipmapEXT );
-PFNGLBINDMULTITEXTUREEXTPROC RemapGLName( glBindMultiTextureEXT );
-PFNGLGETTEXTUREIMAGEEXTPROC RemapGLName( glGetTextureImageEXT );
-PFNGLGETCOMPRESSEDTEXTUREIMAGEEXTPROC RemapGLName( glGetCompressedTextureImageEXT );
-PFNGLGETTEXTURELEVELPARAMETERFVEXTPROC RemapGLName( glGetTextureLevelParameterfvEXT );
-PFNGLGETTEXTURELEVELPARAMETERIVEXTPROC RemapGLName( glGetTextureLevelParameterivEXT );
-PFNGLGETTEXTUREPARAMETERFVEXTPROC RemapGLName( glGetTextureParameterfvEXT );
-PFNGLGETTEXTUREPARAMETERIVEXTPROC RemapGLName( glGetTextureParameterivEXT );
-PFNGLGETTEXTUREPARAMETERIIVEXTPROC RemapGLName( glGetTextureParameterIivEXT );
-PFNGLGETTEXTUREPARAMETERIUIVEXTPROC RemapGLName( glGetTextureParameterIuivEXT );
-#endif
-
 using namespace std;
 
 /**
@@ -424,7 +319,7 @@ void APIENTRY glGetTextureParameterIivEXT_ARB( GLuint texture, GLenum target, GL
 void APIENTRY glGetTextureParameterIuivEXT_ARB( GLuint texture, GLenum target, GLenum pname, GLuint *params );
 
 
-int init_dsa( bool inject_always_ /*= false*/, bool allow_arb_dsa_ /*= true*/, bool allow_ext_dsa_ /*= true*/ ) {
+int GL_Init_DSA_Emulation( bool inject_always_ /*= false*/, bool allow_arb_dsa_ /*= true*/, bool allow_ext_dsa_ /*= true*/ ) {
     bool arb_used = true;
     bool ext_used = true;
 

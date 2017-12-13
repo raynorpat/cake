@@ -77,13 +77,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 //#define GL_DSA_SUPPRESS_64BIT_WARNINGS
 
-/**
- * If this is defined, ogl_dsa.cpp contains
- * definition of all interface pointers
- * provided by ogl_dsa.h.
- */
-//#define OGL_DSA_DEFINE_INTERFACE_POINTERS
-
 /** 
  * Change this to match the target system
  */
@@ -120,7 +113,7 @@ typedef enum dsa_level_e {
  *                       If false, then the EXT_direct_state_access extensions will not be used.
  * @return Returns the initialized direct state mode.
 */
-extern "C" int init_dsa( bool inject_always_, bool allow_arb_dsa_, bool allow_ext_dsa_ );
+extern "C" int GL_Init_DSA_Emulation( bool inject_always_, bool allow_arb_dsa_, bool allow_ext_dsa_ );
 
 /* transform feedback */
 extern PFNGLCREATETRANSFORMFEEDBACKSPROC RemapGLName( glCreateTransformFeedbacks );

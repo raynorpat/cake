@@ -763,9 +763,7 @@ static void RMain_CheckExtension (char *ext)
 	}
 }
 
-//#include "gl_state_dsa.h"
-extern int init_dsa(qboolean inject_always_, qboolean allow_arb_dsa_, qboolean allow_ext_dsa_);
-
+extern int GL_Init_DSA_Emulation(qboolean inject_always_, qboolean allow_arb_dsa_, qboolean allow_ext_dsa_);
 static void RMain_CheckFor_DirectStateAccess(void)
 {
 	VID_Printf(PRINT_ALL, "RMain_CheckExtension : checking for GL_EXT_direct_state_access\n");
@@ -778,7 +776,6 @@ static void RMain_CheckFor_DirectStateAccess(void)
 		if (!strcmp("GL_EXT_direct_state_access ", gl_config.extension_string))
 		{
 			// found it in our list
-			gl_config.direct_state_access = true;
 			VID_Printf(PRINT_ALL, " ...found GL_EXT_direct_state_access\n");
 			return;
 		}
@@ -786,17 +783,15 @@ static void RMain_CheckFor_DirectStateAccess(void)
 	else
 	{
 		// found it in glew's list
-		gl_config.direct_state_access = true;
 		VID_Printf(PRINT_ALL, " ...found GL_EXT_direct_state_access\n");
 		return;
 	}
 
-	gl_config.direct_state_access = false;
 	VID_Printf (PRINT_ALL, " ...could not find GL_EXT_direct_state_access, emulating functionality\n");
 
 	// okay, we don't have direct state access, so we need to wrap the functions
 	// and emulate what they actually do...
-	if (init_dsa(true, false, true) != 1)
+	if (GL_Init_DSA_Emulation(true, false, true) != 1)
 	{
 		// we are buggggggged
 		VID_Error(ERR_FATAL, "RMain_CheckExtension : unable to emulate GL_EXT_direct_state_access\n");
