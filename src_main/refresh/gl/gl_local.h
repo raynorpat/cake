@@ -371,6 +371,8 @@ typedef struct
 	const char *vendor_string;
 	const char *version_string;
 	const char *extension_string;
+
+	qboolean direct_state_access;
 } glconfig_t;
 
 typedef struct

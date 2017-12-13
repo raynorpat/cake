@@ -763,6 +763,40 @@ static void RMain_CheckExtension (char *ext)
 	}
 }
 
+//#include "gl_state_dsa.h"
+extern int init_dsa(qboolean inject_always_, qboolean allow_arb_dsa_, qboolean allow_ext_dsa_);
+
+static void RMain_CheckFor_DirectStateAccess(void)
+{
+	// check in glew first...
+	if (!glewIsSupported("GL_EXT_direct_state_access "))
+	{
+		// lets double check the actual extension list we grabbed earlier,
+		// glew is known to be buggy checking for extensions...
+		if (!strcmp("GL_EXT_direct_state_access ", gl_config.extension_string))
+		{
+			gl_config.direct_state_access = true;
+			VID_Printf(PRINT_ALL, "RMain_CheckExtension : found GL_EXT_direct_state_access\n");
+			return;
+		}
+	}
+	else
+	{
+//		return;
+	}
+
+	gl_config.direct_state_access = false;
+	VID_Printf (PRINT_ALL, "RMain_CheckExtension : could not find GL_EXT_direct_state_access, emulating functionality\n");
+
+	// okay, we don't have direct state access, so we need to wrap the functions
+	// and emulate what they actually do...
+	if (init_dsa(true, false, true) != 1)
+	{
+		VID_Error(ERR_FATAL, "RMain_CheckExtension : unable to emulate GL_EXT_direct_state_access\n");
+		return;
+	}
+}
+
 
 /*
 ===============
@@ -779,9 +813,8 @@ int RE_GL_Init (void)
 	R_Register ();
 
 	// initialize OS-specific parts of OpenGL
-	if (!VID_Init_GL()) {
+	if (!VID_Init_GL())
 		return -1;
-	}
 
 	// set our "safe" modes
 	gl_state.prev_mode = 10;
@@ -826,9 +859,12 @@ int RE_GL_Init (void)
 	RMain_CheckExtension ("GL_ARB_seamless_cube_map ");
 	RMain_CheckExtension ("GL_ARB_uniform_buffer_object ");
 	RMain_CheckExtension ("GL_ARB_separate_shader_objects ");
-	RMain_CheckExtension ("GL_EXT_direct_state_access ");
+	
+	// we have to check for direct state access separate from the others
+	// due to weird issues across GPUs
+	RMain_CheckFor_DirectStateAccess ();
 
-	// and now invalidate the cached state to force everything to recache
+	// now invalidate the cached state to force everything to recache
 	RMain_InvalidateCachedState ();
 
 	// clear all errors

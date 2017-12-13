@@ -88,6 +88,7 @@ source_group("refresh\\soft" FILES ${RENDERER_SOFT_SOURCES})
 set(RENDERER_GL_INCLUDES
 	../refresh/gl/gl_model.h
 	../refresh/gl/gl_local.h
+	../refresh/gl/gl_state_dsa.h
 	)
 set(RENDERER_GL_SOURCES
 	../refresh/gl/gl_beam.c
@@ -107,6 +108,7 @@ set(RENDERER_GL_SOURCES
 	../refresh/gl/gl_sprite.c
 	../refresh/gl/gl_state.c
 	../refresh/gl/gl_warp.c
+	../refresh/gl/gl_state_dsa.cpp
 	)
 source_group("refresh\\gl" FILES ${RENDERER_GL_INCLUDES})
 source_group("refresh\\gl" FILES ${RENDERER_GL_SOURCES})
