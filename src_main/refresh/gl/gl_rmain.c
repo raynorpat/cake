@@ -768,6 +768,8 @@ extern int init_dsa(qboolean inject_always_, qboolean allow_arb_dsa_, qboolean a
 
 static void RMain_CheckFor_DirectStateAccess(void)
 {
+	VID_Printf(PRINT_ALL, "RMain_CheckExtension : checking for GL_EXT_direct_state_access\n");
+
 	// check in glew first...
 	if (!glewIsSupported("GL_EXT_direct_state_access "))
 	{
@@ -775,23 +777,28 @@ static void RMain_CheckFor_DirectStateAccess(void)
 		// glew is known to be buggy checking for extensions...
 		if (!strcmp("GL_EXT_direct_state_access ", gl_config.extension_string))
 		{
+			// found it in our list
 			gl_config.direct_state_access = true;
-			VID_Printf(PRINT_ALL, "RMain_CheckExtension : found GL_EXT_direct_state_access\n");
+			VID_Printf(PRINT_ALL, " ...found GL_EXT_direct_state_access\n");
 			return;
 		}
 	}
 	else
 	{
-//		return;
+		// found it in glew's list
+		gl_config.direct_state_access = true;
+		VID_Printf(PRINT_ALL, " ...found GL_EXT_direct_state_access\n");
+		return;
 	}
 
 	gl_config.direct_state_access = false;
-	VID_Printf (PRINT_ALL, "RMain_CheckExtension : could not find GL_EXT_direct_state_access, emulating functionality\n");
+	VID_Printf (PRINT_ALL, " ...could not find GL_EXT_direct_state_access, emulating functionality\n");
 
 	// okay, we don't have direct state access, so we need to wrap the functions
 	// and emulate what they actually do...
 	if (init_dsa(true, false, true) != 1)
 	{
+		// we are buggggggged
 		VID_Error(ERR_FATAL, "RMain_CheckExtension : unable to emulate GL_EXT_direct_state_access\n");
 		return;
 	}
