@@ -157,6 +157,9 @@ PFNGLBINDTRANSFORMFEEDBACKPROC glBindTransformFeedback_original;
 PFNGLBINDSAMPLERPROC glBindSampler_original;
 PFNGLBINDPROGRAMPIPELINEPROC glBindProgramPipeline_original;
 PFNGLBINDVERTEXARRAYPROC glBindVertexArray_original;
+#ifndef PFNGLBINDTEXTUREPROC
+typedef void (GLAPIENTRY *PFNGLBINDTEXTUREPROC) (GLenum target, GLuint texture);
+#endif
 PFNGLBINDTEXTUREPROC glBindTexture_original;
 PFNGLACTIVETEXTUREPROC glActiveTexture_original;
 /* binding point injectors */
