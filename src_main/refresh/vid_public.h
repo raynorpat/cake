@@ -29,11 +29,21 @@ typedef struct vidmode_s
 	int mode;
 } vidmode_t;
 
+typedef enum {
+	RSERR_OK,
+
+	RSERR_INVALID_FULLSCREEN,
+	RSERR_INVALID_MODE,
+
+	RSERR_UNKNOWN
+} vidrserr_t;
+
 typedef struct
 {
 	int				width, height;		// coordinates from main game
-	qboolean		vsyncActive;
 	int				refreshRate;
+	float			displayAspect;
+	qboolean		vsyncActive;
 } viddef_t;
 extern	viddef_t	viddef;				// global video state
 
@@ -50,7 +60,7 @@ void	VID_CheckChanges(void);
 qboolean VID_GetModeInfo(int *width, int *height, int mode);
 void	VID_NewWindow(int width, int height);
 
-qboolean VID_InitWindow(int fullscreen, int *pwidth, int *pheight);
+vidrserr_t VID_InitWindow(int mode, int fullscreen);
 
 // OpenGL specific functions
 qboolean VID_Init_GL(void);

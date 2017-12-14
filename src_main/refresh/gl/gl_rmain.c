@@ -87,6 +87,7 @@ cvar_t	*gl_shadows;
 cvar_t	*gl_mode;
 cvar_t  *gl_customwidth;
 cvar_t  *gl_customheight;
+cvar_t	*gl_customPixelAspect;
 cvar_t	*gl_dynamic;
 cvar_t  *gl_monolightmap;
 cvar_t	*gl_showtris;
@@ -519,6 +520,7 @@ static void R_Register (void)
 	gl_mode = Cvar_Get ("gl_mode", "8", CVAR_ARCHIVE);
 	gl_customwidth = Cvar_Get("gl_customwidth", "1024", CVAR_ARCHIVE);
 	gl_customheight = Cvar_Get("gl_customheight", "768", CVAR_ARCHIVE);
+	gl_customPixelAspect = Cvar_Get("gl_customPixelAspect", "1", CVAR_ARCHIVE);
 	gl_lightmap = Cvar_Get ("gl_lightmap", "0", 0);
 	gl_shadows = Cvar_Get ("gl_shadows", "0", CVAR_ARCHIVE);
 	gl_dynamic = Cvar_Get ("gl_dynamic", "1", 0);
@@ -547,109 +549,77 @@ static void R_Register (void)
 	Cmd_AddCommand ("fbolist", R_FBOList_f);
 }
 
-// the following is only used in the next to functions,
-// no need to put it in a header
-enum
+/*
+** R_GetModeInfo
+*/
+typedef struct glvidmode_s
 {
-	rserr_ok,
+	const char *description;
+	int width, height;
+	float pixelAspect;		// pixel width / height
+} glvidmode_t;
 
-	rserr_invalid_fullscreen,
-	rserr_invalid_mode,
-
-	rserr_unknown
+glvidmode_t r_vidModes[] =
+{
+	{ "Mode  0:  320x240", 320, 240, 1 },
+	{ "Mode  1:  400x300", 400, 300, 1 },
+	{ "Mode  2:  512x384", 512, 384, 1 },
+	{ "Mode  3:  640x400", 640, 400, 1 },
+	{ "Mode  4:  640x480", 640, 480, 1 },
+	{ "Mode  5:  800x500", 800, 500, 1 },
+	{ "Mode  6:  800x600", 800, 600, 1 },
+	{ "Mode  7:  960x720", 960, 720, 1 },
+	{ "Mode  8: 1024x480", 1024, 480, 1 },
+	{ "Mode  9: 1024x640", 1024, 640, 1 },
+	{ "Mode 10: 1024x768", 1024, 768, 1 },
+	{ "Mode 11: 1152x768", 1152, 768, 1 },
+	{ "Mode 12: 1152x864", 1152, 864, 1 },
+	{ "Mode 13: 1280x800", 1280, 800, 1 },
+	{ "Mode 14: 1280x720", 1280, 720, 1 },
+	{ "Mode 15: 1280x960", 1280, 960, 1 },
+	{ "Mode 16: 1280x1024", 1280, 1024, 1 },
+	{ "Mode 17: 1366x768", 1366, 768, 1 },
+	{ "Mode 18: 1440x900", 1440, 900, 1 },
+	{ "Mode 19: 1600x1200", 1600, 1200, 1 },
+	{ "Mode 20: 1680x1050", 1680, 1050, 1 },
+	{ "Mode 21: 1920x1080", 1920, 1080, 1 },
+	{ "Mode 22: 1920x1200", 1920, 1200, 1 },
+	{ "Mode 23: 2048x1536", 2048, 1536, 1 },
+	{ "Mode 24: 3440x1440", 3440, 1440, 1 },
+	{ "Mode 25: 3840x2160", 3840, 2160, 1 },
 };
+static int	s_numVidModes = ARRAY_LEN(r_vidModes);
 
-static int SetMode_impl(int *pwidth, int *pheight, int mode, int fullscreen)
+qboolean R_GetModeInfo(int *width, int *height, float *windowAspect, int mode)
 {
-	VID_Printf(PRINT_ALL, "setting mode %d:", mode);
+	glvidmode_t	*vm;
+	float		pixelAspect;
 
-	// mode -1 is not in the vid mode table - so we keep the values in pwidth
-	// and pheight and don't even try to look up the mode info
-	if ((mode != -1) && !VID_GetModeInfo(pwidth, pheight, mode))
+	if (mode < -1)
 	{
-		VID_Printf(PRINT_ALL, " invalid mode\n");
-		return rserr_invalid_mode;
+		return false;
+	}
+	if (mode >= s_numVidModes)
+	{
+		return false;
 	}
 
-	VID_Printf(PRINT_ALL, " %d x %d", *pwidth, *pheight);
-	if (fullscreen)
+	if (mode == -1)
 	{
-		VID_Printf(PRINT_ALL, " (fullscreen)\n");
+		*width = gl_customwidth->integer;
+		*height = gl_customheight->integer;
+		pixelAspect = gl_customPixelAspect->value;
 	}
 	else
 	{
-		VID_Printf(PRINT_ALL, " (windowed)\n");
+		vm = &r_vidModes[mode];
+
+		*width = vm->width;
+		*height = vm->height;
+		pixelAspect = vm->pixelAspect;
 	}
 
-	if (!VID_InitWindow(fullscreen, pwidth, pheight))
-	{
-		return rserr_invalid_mode;
-	}
-
-	return rserr_ok;
-}
-
-static qboolean R_SetMode(void)
-{
-	int err;
-	int fullscreen;
-
-	fullscreen = (int)vid_fullscreen->value;
-
-	vid_fullscreen->modified = false;
-	gl_mode->modified = false;
-
-	// a bit hackish approach to enable custom resolutions:
-	// Glimp_SetMode needs these values set for mode -1
-	vid.width = gl_customwidth->value;
-	vid.height = gl_customheight->value;
-
-	if ((err = SetMode_impl(&vid.width, &vid.height, gl_mode->value, fullscreen)) == rserr_ok)
-	{
-		if (gl_mode->value == -1)
-		{
-			gl_state.prev_mode = 10; // safe default for custom mode
-		}
-		else
-		{
-			gl_state.prev_mode = gl_mode->value;
-		}
-	}
-	else
-	{
-		if (err == rserr_invalid_fullscreen)
-		{
-			Cvar_SetValue("vid_fullscreen", 0);
-			vid_fullscreen->modified = false;
-			VID_Printf(PRINT_ALL, "ref_gl::R_SetMode() - fullscreen unavailable in this mode\n");
-
-			if ((err = SetMode_impl(&vid.width, &vid.height, gl_mode->value, 0)) == rserr_ok)
-			{
-				return true;
-			}
-		}
-		else if (err == rserr_invalid_mode)
-		{
-			VID_Printf(PRINT_ALL, "ref_gl::R_SetMode() - invalid mode\n");
-
-			if (gl_mode->value == gl_state.prev_mode)
-			{
-				// trying again would result in a crash anyway, give up already
-				// (this would happen if your initing fails at all and your resolution already was 640x480)
-				return false;
-			}
-
-			Cvar_SetValue("gl_mode", gl_state.prev_mode);
-			gl_mode->modified = false;
-		}
-
-		// try setting it back to something safe
-		if ((err = SetMode_impl(&vid.width, &vid.height, gl_state.prev_mode, 0)) != rserr_ok)
-		{
-			VID_Printf(PRINT_ALL, "ref_gl::R_SetMode() - could not revert to safe mode\n");
-			return false;
-		}
-	}
+	*windowAspect = (float)*width / (*height * pixelAspect);
 
 	return true;
 }
@@ -764,9 +734,9 @@ static void RMain_CheckExtension (char *ext)
 }
 
 extern int GL_Init_DSA_Emulation(qboolean inject_always_, qboolean allow_arb_dsa_, qboolean allow_ext_dsa_);
-static void RMain_CheckFor_DirectStateAccess(void)
+static qboolean RMain_CheckFor_DirectStateAccess(void)
 {
-	VID_Printf(PRINT_ALL, "RMain_CheckExtension : checking for GL_EXT_direct_state_access\n");
+	VID_Printf(PRINT_ALL, "RMain_CheckExtension : checking for GL_EXT_direct_state_access...\n");
 
 	// check in glew first...
 	if (!glewIsSupported("GL_EXT_direct_state_access "))
@@ -777,28 +747,126 @@ static void RMain_CheckFor_DirectStateAccess(void)
 		{
 			// found it in our list
 			VID_Printf(PRINT_ALL, " ...found GL_EXT_direct_state_access\n");
-			return;
+			return true;
 		}
 	}
 	else
 	{
 		// found it in glew's list
 		VID_Printf(PRINT_ALL, " ...found GL_EXT_direct_state_access\n");
-		return;
+		return true;
 	}
-
-	VID_Printf (PRINT_ALL, " ...could not find GL_EXT_direct_state_access, emulating functionality\n");
 
 	// okay, we don't have direct state access, so we need to wrap the functions
 	// and emulate what they actually do...
 	if (GL_Init_DSA_Emulation(true, false, true) != 1)
 	{
-		// we are buggggggged
-		VID_Error(ERR_FATAL, "RMain_CheckExtension : unable to emulate GL_EXT_direct_state_access\n");
-		return;
+		// we got a buggy driver here or something is fucked...
+		return false;
 	}
+
+	VID_Printf(PRINT_ALL, " ...emulating GL_EXT_direct_state_access\n");
+	return true;
 }
 
+#define R_MODE_FALLBACK 6 // 1024x768
+
+static int SetMode_impl(int mode, int fullscreen)
+{
+	vidrserr_t err;
+
+	err = VID_InitWindow(mode, fullscreen);
+	switch (err)
+	{
+		case RSERR_INVALID_FULLSCREEN:
+			VID_Printf(PRINT_ALL, "...WARNING: fullscreen unavailable in this mode\n");
+			return false;
+		case RSERR_INVALID_MODE:
+			VID_Printf(PRINT_ALL, "...WARNING: could not set the given mode (%d)\n", mode);
+			return false;
+		default:
+			break;
+	}
+
+	return true;
+}
+
+static qboolean R_SetMode(void)
+{
+	char renderer_buffer[1000];
+	char vendor_buffer[1000];
+
+	vid_fullscreen->modified = false;
+	gl_mode->modified = false;
+
+	// create the window and set up the context
+	if (SetMode_impl(gl_mode->integer, vid_fullscreen->integer))
+		goto success;
+
+	// try again, with the default screen resolution
+	if (gl_mode->integer != R_MODE_FALLBACK)
+	{
+		VID_Printf(PRINT_ALL, "Setting gl_mode %d failed, falling back on gl_mode %d\n", gl_mode->integer, R_MODE_FALLBACK);
+		if (SetMode_impl(R_MODE_FALLBACK, false))
+			goto success;
+	}
+
+	// yea this failed... fallback to software or something else
+	VID_Printf(PRINT_ALL, "GLimp_Init() - could not load OpenGL subsystem");
+	return false;
+
+success:
+	vid.displayAspect = viddef.displayAspect;
+	vid.height = viddef.height;
+	vid.width = viddef.width;
+	vid.refreshRate = viddef.refreshRate;
+	vid.vsyncActive = viddef.vsyncActive;
+
+	// get our various GL strings
+	gl_config.vendor_string = glGetString(GL_VENDOR);
+	VID_Printf(PRINT_ALL, "GL_VENDOR: %s\n", gl_config.vendor_string);
+
+	gl_config.renderer_string = glGetString(GL_RENDERER);
+	VID_Printf(PRINT_ALL, "GL_RENDERER: %s\n", gl_config.renderer_string);
+
+	gl_config.version_string = glGetString(GL_VERSION);
+	VID_Printf(PRINT_ALL, "GL_VERSION: %s\n", gl_config.version_string);
+
+	strcpy(renderer_buffer, gl_config.renderer_string);
+	Q_strlwr(renderer_buffer);
+
+	strcpy(vendor_buffer, gl_config.vendor_string);
+	Q_strlwr(vendor_buffer);
+
+	RMain_PrintSetExtensionList();
+
+	// check for required feature support
+	// GLEW isn't always reliable so check them manually
+	RMain_CheckExtension("GL_ARB_multitexture ");
+	RMain_CheckExtension("GL_ARB_sampler_objects ");
+	RMain_CheckExtension("GL_ARB_vertex_buffer_object ");
+	RMain_CheckExtension("GL_ARB_vertex_array_object ");
+	RMain_CheckExtension("GL_ARB_texture_non_power_of_two ");
+	RMain_CheckExtension("GL_ARB_framebuffer_object ");
+	RMain_CheckExtension("GL_ARB_instanced_arrays ");
+	RMain_CheckExtension("GL_ARB_base_instance ");
+	RMain_CheckExtension("GL_ARB_map_buffer_range ");
+	RMain_CheckExtension("GL_ARB_texture_storage ");
+	RMain_CheckExtension("GL_ARB_seamless_cube_map ");
+	RMain_CheckExtension("GL_ARB_uniform_buffer_object ");
+	RMain_CheckExtension("GL_ARB_separate_shader_objects ");
+
+	// we have to check for direct state access separate from the others
+	// due to weird issues across GPUs
+	if (!RMain_CheckFor_DirectStateAccess())
+	{
+		// we are buggggggged, get out of here and fallback to like software or something
+		VID_Printf(PRINT_ALL, "RMain_CheckExtension : unable to emulate GL_EXT_direct_state_access\n");
+		return false;
+	}
+
+	return true;
+}
 
 /*
 ===============
@@ -807,9 +875,6 @@ RE_Init
 */
 int RE_GL_Init (void)
 {
-	char renderer_buffer[1000];
-	char vendor_buffer[1000];
-
 	Draw_GetPalette ();
 
 	R_Register ();
@@ -818,53 +883,12 @@ int RE_GL_Init (void)
 	if (!VID_Init_GL())
 		return -1;
 
-	// set our "safe" modes
-	gl_state.prev_mode = 10;
-
 	// create the window and set up the context
 	if (!R_SetMode ())
 	{
 		VID_Printf (PRINT_ALL, "ref_gl::RE_GL_Init() - could not R_SetMode()\n");
 		return -1;
 	}
-
-	// get our various GL strings
-	gl_config.vendor_string = glGetString (GL_VENDOR);
-	VID_Printf (PRINT_ALL, "GL_VENDOR: %s\n", gl_config.vendor_string);
-
-	gl_config.renderer_string = glGetString (GL_RENDERER);
-	VID_Printf (PRINT_ALL, "GL_RENDERER: %s\n", gl_config.renderer_string);
-
-	gl_config.version_string = glGetString (GL_VERSION);
-	VID_Printf (PRINT_ALL, "GL_VERSION: %s\n", gl_config.version_string);
-
-	strcpy (renderer_buffer, gl_config.renderer_string);
-	Q_strlwr (renderer_buffer);
-
-	strcpy (vendor_buffer, gl_config.vendor_string);
-	Q_strlwr (vendor_buffer);
-
-	RMain_PrintSetExtensionList ();
-
-	// check for required feature support
-	// GLEW isn't always reliable so check them manually
-	RMain_CheckExtension ("GL_ARB_multitexture ");
-	RMain_CheckExtension ("GL_ARB_sampler_objects ");
-	RMain_CheckExtension ("GL_ARB_vertex_buffer_object ");
-	RMain_CheckExtension ("GL_ARB_vertex_array_object ");
-	RMain_CheckExtension ("GL_ARB_texture_non_power_of_two ");
-	RMain_CheckExtension ("GL_ARB_framebuffer_object ");
-	RMain_CheckExtension ("GL_ARB_instanced_arrays ");
-	RMain_CheckExtension ("GL_ARB_base_instance ");
-	RMain_CheckExtension ("GL_ARB_map_buffer_range ");
-	RMain_CheckExtension ("GL_ARB_texture_storage ");
-	RMain_CheckExtension ("GL_ARB_seamless_cube_map ");
-	RMain_CheckExtension ("GL_ARB_uniform_buffer_object ");
-	RMain_CheckExtension ("GL_ARB_separate_shader_objects ");
-	
-	// we have to check for direct state access separate from the others
-	// due to weird issues across GPUs
-	RMain_CheckFor_DirectStateAccess ();
 
 	// now invalidate the cached state to force everything to recache
 	RMain_InvalidateCachedState ();
@@ -906,7 +930,10 @@ int RE_GL_Init (void)
 	RPostProcess_CreatePrograms ();
 
 	// create framebuffer objects
-	R_InitFBOs();
+	R_InitFBOs ();
+
+	// we don't the user to be able to change the list of modes
+	Cvar_Get("r_availableModes", "", CVAR_NOSET);
 
 	return 1;
 }

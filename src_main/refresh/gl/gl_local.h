@@ -375,10 +375,6 @@ typedef struct
 
 typedef struct
 {
-	qboolean fullscreen;
-
-	int   prev_mode;
-
 	GLuint	lightmap_textures;
 
 	FBO_t	*currentFBO;

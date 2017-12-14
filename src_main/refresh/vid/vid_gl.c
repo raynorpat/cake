@@ -36,77 +36,127 @@ static SDL_GLContext context = NULL;
 
 void VID_ShutdownWindow(void);
 
-static int IsFullscreen()
+// used for grabbing the OpenGL mode info
+extern qboolean R_GetModeInfo(int *width, int *height, float *windowAspect, int mode);
+
+// used for buffer swap
+extern void Draw_End2D(void);
+extern void GL_UseProgram(GLuint progid);
+
+/*
+===============
+VID_CompareModes
+===============
+*/
+static int VID_CompareModes(const void *a, const void *b)
 {
-	if (SDL_GetWindowFlags(window) & SDL_WINDOW_FULLSCREEN_DESKTOP) {
+	const float ASPECT_EPSILON = 0.001f;
+	SDL_Rect *modeA = (SDL_Rect *)a;
+	SDL_Rect *modeB = (SDL_Rect *)b;
+	float aspectA = (float)modeA->w / (float)modeA->h;
+	float aspectB = (float)modeB->w / (float)modeB->h;
+	int areaA = modeA->w * modeA->h;
+	int areaB = modeB->w * modeB->h;
+	float aspectDiffA = fabs(aspectA - viddef.displayAspect);
+	float aspectDiffB = fabs(aspectB - viddef.displayAspect);
+	float aspectDiffsDiff = aspectDiffA - aspectDiffB;
+
+	if (aspectDiffsDiff > ASPECT_EPSILON)
 		return 1;
-	} else if (SDL_GetWindowFlags(window) & SDL_WINDOW_FULLSCREEN) {
-		return 2;
-	} else {
-		return 0;
-	}
-}
-
-static qboolean CreateSDLWindow(int flags, int w, int h)
-{
-	int windowPos = SDL_WINDOWPOS_UNDEFINED;
-	// TODO: support fullscreen on different displays with SDL_WINDOWPOS_UNDEFINED_DISPLAY(displaynum)
-	window = SDL_CreateWindow("Quake II", windowPos, windowPos, w, h, flags);
-
-	return window != NULL;
-}
-
-static qboolean GetWindowSize(int* w, int* h)
-{
-	if (window == NULL || w == NULL || h == NULL)
-		return false;
-
-	SDL_DisplayMode m;
-	if (SDL_GetWindowDisplayMode(window, &m) != 0) {
-		Com_Printf("Can't get Displaymode: %s\n", SDL_GetError());
-		return false;
-	}
-	*w = m.w;
-	*h = m.h;
-
-	return true;
-}
-
-
-// called by VID_InitWindow() before creating window,
-// returns flags for SDL window creation, -1 on error
-static int PrepareForWindow(void)
-{
-	unsigned int flags = 0;
-
-	 // Default OpenGL is fine.
-	if (SDL_GL_LoadLibrary(NULL) < 0) {
-		// TODO: is there a better way?
-		Sys_Error("Couldn't load libGL: %s!", SDL_GetError());
+	else if (aspectDiffsDiff < -ASPECT_EPSILON)
 		return -1;
-	}
-
-	SDL_GL_SetAttribute(SDL_GL_RED_SIZE, 8);
-	SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE, 8);
-	SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE, 8);
-	SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
-	SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
-	SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 8);
-
-	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
-	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
-	SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
-	int contextFlags = SDL_GL_CONTEXT_FORWARD_COMPATIBLE_FLAG;
-	if (contextFlags != 0) {
-		SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, contextFlags);
-	}
-
-	// Initiate the flags
-	flags = SDL_WINDOW_OPENGL;
-
-	return flags;
+	else
+		return areaA - areaB;
 }
 
+/*
+===============
+VID_DetectAvailableModes
+===============
+*/
+static void VID_DetectAvailableModes(void)
+{
+	int i, j;
+	char buf[MAX_STRING_CHARS] = { 0 };
+	int numSDLModes;
+	SDL_Rect *modes;
+	int numModes = 0;
+
+	SDL_DisplayMode windowMode;
+	int display = SDL_GetWindowDisplayIndex(window);
+	if (display < 0)
+	{
+		VID_Printf(PRINT_DEVELOPER, "Couldn't get window display index, no resolutions detected: %s\n", SDL_GetError());
+		return;
+	}
+	numSDLModes = SDL_GetNumDisplayModes(display);
+
+	if (SDL_GetWindowDisplayMode(window, &windowMode) < 0 || numSDLModes <= 0)
+	{
+		VID_Printf(PRINT_DEVELOPER, "Couldn't get window display mode, no resolutions detected: %s\n", SDL_GetError());
+		return;
+	}
+
+	modes = SDL_calloc((size_t)numSDLModes, sizeof(SDL_Rect));
+	if (!modes)
+	{
+		VID_Error(ERR_FATAL, "Out of memory");
+	}
+
+	for (i = 0; i < numSDLModes; i++)
+	{
+		SDL_DisplayMode mode;
+
+		if (SDL_GetDisplayMode(display, i, &mode) < 0)
+			continue;
+
+		if (!mode.w || !mode.h)
+		{
+			VID_Printf(PRINT_ALL, "Display supports any resolution\n");
+			SDL_free(modes);
+			return;
+		}
+
+		if (windowMode.format != mode.format)
+			continue;
+
+		// SDL can give the same resolution with different refresh rates.
+		// Only list resolution once.
+		for (j = 0; j < numModes; j++)
+		{
+			if (mode.w == modes[j].w && mode.h == modes[j].h)
+				break;
+		}
+
+		if (j != numModes)
+			continue;
+
+		modes[numModes].w = mode.w;
+		modes[numModes].h = mode.h;
+		numModes++;
+	}
+
+	if (numModes > 1)
+		qsort(modes, numModes, sizeof(SDL_Rect), VID_CompareModes);
+
+	for (i = 0; i < numModes; i++)
+	{
+		const char *newModeString = va("%ux%u ", modes[i].w, modes[i].h);
+
+		if (strlen(newModeString) < (int)sizeof(buf) - strlen(buf))
+			strcat(buf, newModeString);
+		else
+			VID_Printf(PRINT_DEVELOPER, "Skipping mode %ux%u, buffer too small\n", modes[i].w, modes[i].h);
+	}
+
+	if (*buf)
+	{
+		buf[strlen(buf) - 1] = 0;
+		VID_Printf(PRINT_ALL, "Available modes: '%s'\n", buf);
+		Cvar_Set("r_availableModes", buf);
+	}
+	SDL_free(modes);
+}
 
 /*
 ==============
@@ -138,70 +188,12 @@ int VID_GL_GetRefreshRate(void)
 }
 
 
-static void SetSwapInterval(void)
-{
-	// Set vsync - TODO: -1 could be set for "late swap tearing"
-	SDL_GL_SetSwapInterval(gl_swapinterval->value ? 1 : 0);
-	viddef.vsyncActive = SDL_GL_GetSwapInterval() != 0;
-}
-
-
-static int Init_GL_Context(void* win)
-{
-	char title[40] = { 0 };
-
-	if (win == NULL) {
-		Sys_Error("Init_GL_Context() must not be called with NULL argument!");
-		return false;
-	}
-	window = (SDL_Window*)win;
-
-	context = SDL_GL_CreateContext(window);
-	if (context == NULL) {
-		VID_Printf(PRINT_ALL, "Init_GL_Context(): Creating OpenGL Context failed: %s\n", SDL_GetError());
-		window = NULL;
-		return false;
-	}
-
-	// this must be done after creating the window
-	SetSwapInterval();
-
-	// init glew
-	glewExperimental = true;
-	if (GLEW_OK != glewInit()) {
-		VID_Printf(PRINT_ALL, "Init_GL_Context(): loading OpenGL function pointers failed!\n");
-		return false;
-	} else {
-		VID_Printf(PRINT_ALL, "Successfully loaded OpenGL function pointers using glew!\n");
-	}
-
-	// set the window title
-	SDL_SetWindowTitle(window, va("Quake II %d", VERSION));
-
-	return true;
-}
-
 /*
 * Shuts the OpenGL backend down
 */
-void VID_Shutdown_GL(qboolean contextOnly)
+void VID_Shutdown_GL(qboolean destroyWindow)
 {
-	// Clear the backbuffer and make it current. 
-	// Only do this if we have a context, though.
-	if (window) {
-		if (context) {
-			glClearColor(0.0, 0.0, 0.0, 0.0);
-			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-			SDL_GL_SwapWindow(window);
-
-			SDL_GL_DeleteContext(context);
-			context = NULL;
-		}
-	}
-
-	window = NULL;
-
-	if (!contextOnly) {
+	if (destroyWindow) {
 		VID_ShutdownWindow();
 	}
 }
@@ -210,88 +202,334 @@ void VID_Shutdown_GL(qboolean contextOnly)
 /*
 * Initializes the OpenGL window
 */
-qboolean VID_InitWindow(int fullscreen, int *pwidth, int *pheight)
+vidrserr_t VID_InitWindow(int mode, int fullscreen)
 {
-	int flags;
-	int curWidth, curHeight;
-	int width = *pwidth;
-	int height = *pheight;
-	unsigned int fs_flag = 0;
+	Uint32 flags = SDL_WINDOW_SHOWN | SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE;
+	SDL_DisplayMode desktopMode;
+	int i = 0;
+	int display = 0;
+	int x = SDL_WINDOWPOS_UNDEFINED, y = SDL_WINDOWPOS_UNDEFINED;
 
-	if (fullscreen == 1) {
-		fs_flag = SDL_WINDOW_FULLSCREEN_DESKTOP;
-	} else if (fullscreen == 2) {
-		fs_flag = SDL_WINDOW_FULLSCREEN;
-	}
+	VID_Printf(PRINT_ALL, "Initializing OpenGL display\n");
 
-	if (GetWindowSize(&curWidth, &curHeight) && (curWidth == width) && (curHeight == height)) {
-		// If we want fullscreen, but aren't
-		if (fullscreen != IsFullscreen()) {
-			SDL_SetWindowFullscreen(window, fs_flag);
-			Cvar_SetValue("vid_fullscreen", fullscreen);
-		}
-
-		// Are we now?
-		if (fullscreen == IsFullscreen()) {
-			return true;
+	// if a window exists, note its display index
+	if (window != NULL)
+	{
+		display = SDL_GetWindowDisplayIndex(window);
+		if (display < 0)
+		{
+			VID_Printf(PRINT_DEVELOPER, "SDL_GetWindowDisplayIndex() failed: %s\n", SDL_GetError());
 		}
 	}
 
-	// Is the window surface used?
-	if (window) {
-		VID_Shutdown_GL(true);
+	if (display >= 0 && SDL_GetDesktopDisplayMode(display, &desktopMode) == 0)
+	{
+		viddef.displayAspect = (float)desktopMode.w / (float)desktopMode.h;
+		VID_Printf(PRINT_ALL, "Display aspect: %.3f\n", viddef.displayAspect);
+	}
+	else
+	{
+		memset(&desktopMode, 0, sizeof(SDL_DisplayMode));
+		viddef.displayAspect = 1.333f;
+		VID_Printf(PRINT_ALL, "Cannot determine display aspect, assuming 1.333\n");
+	}
+
+	VID_Printf(PRINT_ALL, "...setting mode %d:", mode);
+
+	if (mode == -2)
+	{
+		// use desktop video resolution
+		if (desktopMode.h > 0)
+		{
+			viddef.width = desktopMode.w;
+			viddef.height = desktopMode.h;
+		}
+		else
+		{
+			viddef.width = 1024;
+			viddef.height = 768;
+			VID_Printf(PRINT_ALL, "Cannot determine display resolution, assuming 1024x768\n");
+		}
+
+		viddef.displayAspect = (float)viddef.width / (float)viddef.height;
+	}
+	else if (!R_GetModeInfo(&viddef.width, &viddef.height, &viddef.displayAspect, mode))
+	{
+		VID_Printf(PRINT_ALL, " invalid mode\n");
+		return RSERR_INVALID_MODE;
+	}
+	VID_Printf(PRINT_ALL, " %d %d\n", viddef.width, viddef.height);
+
+	viddef.refreshRate = -1;
+
+#if 0
+	// center window if not fullscreen
+	if (!fullscreen)
+	{
+		x = (desktopMode.w / 2) - (viddef.width / 2);
+		y = (desktopMode.h / 2) - (viddef.height / 2);
+	}
+#endif
+
+	// destroy existing state if it exists
+	if (context)
+	{
+		SDL_GL_DeleteContext(context);
+		context = NULL;
+	}
+
+	if (window != NULL)
+	{
+		SDL_GetWindowPosition(window, &x, &y);
+		VID_Printf(PRINT_DEVELOPER, "Existing window at %dx%d before being destroyed\n", x, y);
 		SDL_DestroyWindow(window);
 		window = NULL;
 	}
 
-	// Create the window
-	VID_NewWindow(width, height);
-
-	// let renderer prepare things (set OpenGL attributes)
-	flags = PrepareForWindow();
-	if (flags == -1) {
-		// hopefully PrepareForWindow() logged an error
-		return false;
+	// set fullscreen flag
+	if (fullscreen)
+	{
+		flags |= SDL_WINDOW_FULLSCREEN;
 	}
 
-	if (fs_flag) {
-		flags |= fs_flag;
-	}
+	// create the window
+	VID_NewWindow(viddef.width, viddef.height);
 
-	while (1) {
-		if (!CreateSDLWindow(flags, width, height)) {
-			if (width != 640 || height != 480 || (flags & fs_flag)) {
-				Com_Printf("SDL SetVideoMode failed: %s\n", SDL_GetError());
-				Com_Printf("Reverting to windowed gl_mode 5 (640x480).\n");
+	int perChannelColorBits;
+	int colorBits = 24;
+	int depthBits = 24;
+	int stencilBits = 8;
+	int samples = 0;
 
-				// Try to recover
-				Cvar_SetValue("gl_mode", 5);
-				Cvar_SetValue("vid_fullscreen", 0);
-				VID_NewWindow(width, height);
-				*pwidth = width = 640;
-				*pheight = height = 480;
-				flags &= ~fs_flag;
-			} else {
-				Com_Error(ERR_FATAL, "Failed to revert to gl_mode 5. Exiting...\n");
-				return false;
+	for (i = 0; i < 16; i++)
+	{
+		int testColorBits, testDepthBits, testStencilBits;
+
+		// 0 - default
+		// 1 - minus colorBits
+		// 2 - minus depthBits
+		// 3 - minus stencil
+		if ((i % 4) == 0 && i)
+		{
+			// one pass, reduce
+			switch (i / 4)
+			{
+			case 2:
+				if (colorBits == 24)
+					colorBits = 16;
+				break;
+			case 1:
+				if (depthBits == 24)
+					depthBits = 16;
+				else if (depthBits == 16)
+					depthBits = 8;
+			case 3:
+				if (stencilBits == 24)
+					stencilBits = 16;
+				else if (stencilBits == 16)
+					stencilBits = 8;
 			}
-		} else {
-			break;
 		}
+
+		testColorBits = colorBits;
+		testDepthBits = depthBits;
+		testStencilBits = stencilBits;
+
+		if ((i % 4) == 3)
+		{
+			// reduce colorBits
+			if (testColorBits == 24)
+				testColorBits = 16;
+		}
+
+		if ((i % 4) == 2)
+		{
+			// reduce depthBits
+			if (testDepthBits == 24)
+				testDepthBits = 16;
+			else if (testDepthBits == 16)
+				testDepthBits = 8;
+		}
+
+		if ((i % 4) == 1)
+		{
+			// reduce stencilBits
+			if (testStencilBits == 24)
+				testStencilBits = 16;
+			else if (testStencilBits == 16)
+				testStencilBits = 8;
+			else
+				testStencilBits = 0;
+		}
+
+		if (testColorBits == 24)
+			perChannelColorBits = 8;
+		else
+			perChannelColorBits = 4;
+
+#ifdef __sgi // Fix for SGIs grabbing too many bits of color
+		if (perChannelColorBits == 4)
+			perChannelColorBits = 0; // Use minimum size for 16-bit color
+		// Need alpha or else SGIs choose 36+ bit RGB mode
+		SDL_GL_SetAttribute(SDL_GL_ALPHA_SIZE, 1);
+#endif
+
+		SDL_GL_SetAttribute(SDL_GL_RED_SIZE, perChannelColorBits);
+		SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE, perChannelColorBits);
+		SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE, perChannelColorBits);
+		SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, testDepthBits);
+		SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, testStencilBits);
+
+		SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, samples ? 1 : 0);
+		SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, samples);
+
+		SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
+		
+		if ((window = SDL_CreateWindow("Quake II", x, y, viddef.width, viddef.height, flags)) == NULL)
+		{
+			VID_Printf(PRINT_DEVELOPER, "SDL_CreateWindow failed: %s\n", SDL_GetError());
+			continue;
+		}
+
+		if (fullscreen)
+		{
+			SDL_DisplayMode mode;
+
+			switch (testColorBits)
+			{
+			case 16: mode.format = SDL_PIXELFORMAT_RGB565; break;
+			case 24: mode.format = SDL_PIXELFORMAT_RGB24;  break;
+			default: VID_Printf(PRINT_DEVELOPER, "testColorBits is %d, can't fullscreen\n", testColorBits); continue;
+			}
+
+			mode.w = viddef.width;
+			mode.h = viddef.height;
+			mode.refresh_rate = VID_GL_GetRefreshRate();
+			mode.driverdata = NULL;
+
+			if (SDL_SetWindowDisplayMode(window, &mode) < 0)
+			{
+				VID_Printf(PRINT_DEVELOPER, "SDL_SetWindowDisplayMode failed: %s\n", SDL_GetError());
+				continue;
+			}
+		}
+
+		// try for OpenGL core context vs legacy OpenGL context
+		GLenum err = 0;
+		if (1)
+		{
+			int profileMask, majorVersion, minorVersion;
+			SDL_GL_GetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, &profileMask);
+			SDL_GL_GetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, &majorVersion);
+			SDL_GL_GetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, &minorVersion);
+
+			VID_Printf(PRINT_ALL, "Trying to get an OpenGL 3.3 core context\n");
+			SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
+			SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
+			SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
+			int contextFlags = SDL_GL_CONTEXT_FORWARD_COMPATIBLE_FLAG;
+			if (contextFlags != 0) {
+				SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, contextFlags);
+			}
+
+			if ((context = SDL_GL_CreateContext(window)) == NULL)
+			{
+				VID_Printf(PRINT_ALL, "SDL_GL_CreateContext failed: %s\n", SDL_GetError());
+				VID_Printf(PRINT_ALL, "Reverting to default context\n");
+				SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, profileMask);
+				SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, majorVersion);
+				SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, minorVersion);
+			}
+			else
+			{
+				const char *renderer;
+
+				VID_Printf(PRINT_ALL, "SDL_GL_CreateContext succeeded.\n");
+
+				err = glewInit();
+				if (GLEW_OK == err) {
+					renderer = (const char *)glGetString(GL_RENDERER);
+				} else {
+					VID_Printf(PRINT_ALL, "glewInit() core context failed: %s\n", glewGetErrorString(err));
+					renderer = NULL;
+				}
+								
+				if (!renderer || (strstr(renderer, "Software Renderer") || strstr(renderer, "Software Rasterizer")))
+				{
+					if (renderer)
+						VID_Printf(PRINT_ALL, "GL_RENDERER is %s, rejecting context\n", renderer);
+
+					SDL_GL_DeleteContext(context);
+					context = NULL;
+
+					SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, profileMask);
+					SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, majorVersion);
+					SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, minorVersion);
+				}
+			}
+		}
+		else
+		{
+			context = NULL;
+		}
+
+		if (!context)
+		{
+			if ((context = SDL_GL_CreateContext(window)) == NULL)
+			{
+				VID_Printf(PRINT_DEVELOPER, "SDL_GL_CreateContext failed: %s\n", SDL_GetError());
+				continue;
+			}
+
+			err = glewInit();
+			if (GLEW_OK != err)
+			{
+				VID_Printf(PRINT_ALL, "glewInit() failed: %s\n", glewGetErrorString(err));
+
+				SDL_GL_DeleteContext(context);
+				context = NULL;
+
+				SDL_DestroyWindow(window);
+				window = NULL;
+				continue;
+			}
+		}
+
+		// clear to black
+		glClearColor(0, 0, 0, 1);
+		glClear(GL_COLOR_BUFFER_BIT);
+		SDL_GL_SwapWindow(window);
+
+		if (SDL_GL_SetSwapInterval(gl_swapinterval->integer) == -1)
+		{
+			VID_Printf(PRINT_DEVELOPER, "SDL_GL_SetSwapInterval failed: %s\n", SDL_GetError());
+			viddef.vsyncActive = false;
+		}
+		else
+		{
+			viddef.vsyncActive = SDL_GL_GetSwapInterval() != 0;
+		}
+
+		VID_Printf(PRINT_ALL, "Using %d color bits, %d depth, %d stencil display.\n", testColorBits, testDepthBits, testStencilBits);
+		break;
 	}
 
-	if (!Init_GL_Context(window)) {
-		// Init_GL_Context() should have logged an error
-		return false;
+	if (!window)
+	{
+		VID_Printf(PRINT_ALL, "Couldn't get a visual\n");
+		return RSERR_INVALID_MODE;
 	}
 
-	// Set the window icon, this must be done after creating the window
+	// detect available modes and throw them into a CVar for the video menu
+	VID_DetectAvailableModes();
+
+	// set the window icon, this must be done after creating the window
 	Sys_SetIcon();
 
-	// No cursor
+	// no cursor
 	SDL_ShowCursor(0);
 
-	return true;
+	return RSERR_OK;
 }
 
 
@@ -318,22 +556,13 @@ This routine does all OS specific shutdown procedures for the OpenGL subsystem.
 */
 void VID_ShutdownWindow(void)
 {
-	if (window) {
-		// cleanly ungrab input (needs window)
-		VID_GrabInput(false);
-		SDL_DestroyWindow(window);
-	}
-
-	window = NULL;
+	// cleanly ungrab input (needs window)
+	VID_GrabInput(false);
 
 	// make sure that after vid_restart the refresh rate will be queried from SDL again.
 	viddef.refreshRate = -1;
 
-	if (SDL_WasInit(SDL_INIT_EVERYTHING) == SDL_INIT_VIDEO)	{
-		SDL_Quit();
-	} else {
-		SDL_QuitSubSystem(SDL_INIT_VIDEO);
-	}
+	SDL_QuitSubSystem(SDL_INIT_VIDEO);
 }
 
 
@@ -344,8 +573,10 @@ This routine is responsible for initializing the OS specific portions of OpenGL.
 */
 qboolean VID_Init_GL (void)
 {
-	if (!SDL_WasInit(SDL_INIT_VIDEO)) {
-		if (SDL_Init(SDL_INIT_VIDEO) == -1) {
+	if (!SDL_WasInit(SDL_INIT_VIDEO))
+	{
+		if (SDL_Init(SDL_INIT_VIDEO) == -1)
+		{
 			Com_Printf("Couldn't init SDL video: %s.\n", SDL_GetError());
 			return false;
 		}
@@ -371,9 +602,6 @@ VID_GL_EndFrame
 
 Responsible for doing a swapbuffer.
 */
-extern void Draw_End2D(void);
-extern void GL_UseProgram(GLuint progid);
-
 void VID_GL_EndFrame (void)
 {
 	Draw_End2D ();
@@ -381,4 +609,32 @@ void VID_GL_EndFrame (void)
 	GL_UseProgram (0);
 
 	SDL_GL_SwapWindow(window);
+
+#if 0
+	if (vid_fullscreen->modified)
+	{
+		int         fullscreen;
+		qboolean    needToToggle;
+		qboolean    sdlToggled = false;
+
+		// Find out the current state
+		fullscreen = !!(SDL_GetWindowFlags(window) & SDL_WINDOW_FULLSCREEN);
+
+		// Is the state we want different from the current state?
+		needToToggle = !!vid_fullscreen->integer != fullscreen;
+
+		if (needToToggle)
+		{
+			sdlToggled = SDL_SetWindowFullscreen(window, vid_fullscreen->integer) >= 0;
+
+			// SDL_WM_ToggleFullScreen didn't work, so do it the slow way
+			if (!sdlToggled)
+				Cmd_ExecuteText(EXEC_APPEND, "vid_restart\n");
+
+			IN_Restart();
+		}
+
+		vid_fullscreen->modified = false;
+	}
+#endif
 }
