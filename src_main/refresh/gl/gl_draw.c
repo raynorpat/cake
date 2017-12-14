@@ -149,6 +149,8 @@ void Draw_Begin2D (void)
 
 		// force a recache on first hit
 		gl_drawstate.texturecolormix = -1.0f;
+		gl_drawstate.brightness = -1.0f;
+		gl_drawstate.contrast = -1.0f;
 
 		// program is always active
 		GL_UseProgram (gl_drawprog);
