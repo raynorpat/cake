@@ -200,6 +200,11 @@ void VID_NewWindow (int width, int height)
 	cl.force_refdef = true;		// can't use a paused refdef
 }
 
+/*
+==============
+VID_FreeReflib
+==============
+*/
 static void VID_FreeReflib (void)
 {
 	reflib_active = false;

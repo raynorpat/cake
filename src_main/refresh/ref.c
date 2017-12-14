@@ -134,12 +134,12 @@ Grabs current refresh rate from core
 */
 int GFX_Core_GetRefreshRate (void)
 {
-	int refreshRate = 0;
+	int refreshRate = 60;
 
 	switch (RE_gfxVal)
 	{
 	case REF_API_SOFT:
-		return 60; // software will always be hardcoded to 60
+		return refreshRate; // software will always be hardcoded to 60
 		break;
 	case REF_API_OPENGL:
 		refreshRate = VID_GL_GetRefreshRate ();
@@ -149,7 +149,7 @@ int GFX_Core_GetRefreshRate (void)
 		refreshRate = VID_D3D9_GetRefreshRate ();
 #else
 		// wtf
-		return 60;
+		return refreshRate;
 #endif
 		break;
 	case REF_API_UNDETERMINED:
