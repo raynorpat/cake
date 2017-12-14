@@ -116,11 +116,12 @@ typedef enum {false, true}	qboolean;
 char *strtok_r(char *s, const char *delim, char **last);
 #endif
 
+#define ARRAY_LEN(x)		(sizeof(x) / sizeof(*(x)))
 
-#define CL_MASTER_ADDR	"maraakate.org" /* FS: master.gamespy.com & co are dead */
-#define CL_MASTER_PORT	"28900"
-#define SV_MASTER_IP	"maraakate.org" /* FS: master.gamespy.com & co are dead */
-#define SV_MASTER_PORT	"27900"
+#define CL_MASTER_ADDR		"maraakate.org" /* FS: master.gamespy.com & co are dead */
+#define CL_MASTER_PORT		"28900"
+#define SV_MASTER_IP		"maraakate.org" /* FS: master.gamespy.com & co are dead */
+#define SV_MASTER_PORT		"27900"
 
 
 // angle indexes
