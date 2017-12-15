@@ -35,9 +35,7 @@ GLuint u_compositeBrightParam = 0;
 GLuint gl_postprog = 0;
 GLuint u_postsurfcolor = 0;
 GLuint u_postExposure = 0;
-GLuint u_postBlurAmount = 0;
-GLuint u_postBrightnessAmount = 0;
-GLuint u_postContrastAmount = 0;
+GLuint u_postBrightnessContrastBlurSSAOAmount = 0;
 GLuint u_postTexScale = 0;
 GLuint u_postwaterwarpparam = 0;
 GLuint u_postwaterwarp = 0;
@@ -243,9 +241,7 @@ void RPostProcess_CreatePrograms(void)
 	u_compositeBrightParam = glGetUniformLocation(gl_compositeprog, "brightParam");
 
 	u_postsurfcolor = glGetUniformLocation (gl_postprog, "surfcolor");
-	u_postBlurAmount = glGetUniformLocation (gl_postprog, "blurAmount");
-	u_postBrightnessAmount = glGetUniformLocation (gl_postprog, "brightnessAmount");
-	u_postContrastAmount = glGetUniformLocation (gl_postprog, "contrastAmount");
+	u_postBrightnessContrastBlurSSAOAmount = glGetUniformLocation (gl_postprog, "brightnessContrastBlurSSAOAmount");
 	u_postExposure = glGetUniformLocation (gl_postprog, "exposure");
 	u_postTexScale = glGetUniformLocation (gl_postprog, "texScale");
 	u_postwaterwarpparam = glGetUniformLocation (gl_postprog, "waterwarpParam");
@@ -295,7 +291,7 @@ void RPostProcess_Init(void)
 
 	r_postprocessing = Cvar_Get("r_postprocessing", "1", CVAR_ARCHIVE);
 	r_ssao = Cvar_Get("r_ssao", "1", CVAR_ARCHIVE);
-	r_fxaa = Cvar_Get("r_fxaa", "1", CVAR_ARCHIVE);
+	r_fxaa = Cvar_Get("r_fxaa", "0", CVAR_ARCHIVE);
 }
 
 void RPostProcess_ComputeShader_CalculateLuminance(void)
@@ -418,7 +414,6 @@ static void RPostProcess_DoBloomAndTonemap(void)
 	texScale[0] = 1.0f / vid.width;
 	texScale[1] = 1.0f / vid.height;
 	glProgramUniform2f(gl_postprog, u_postTexScale, texScale[0], texScale[1]);
-	glProgramUniform1f(gl_postprog, u_postBlurAmount, r_hdrBlurAmount->value);
 
 	// adaptive exposure adjustment in log space
 	float newExp = r_hdrExposureCompensation->value * log(r_hdrExposureAdjust->value + 0.0001f);
@@ -439,9 +434,8 @@ static void RPostProcess_DoBloomAndTonemap(void)
 		glProgramUniform1i(gl_postprog, u_postwaterwarp, 0);
 	}
 
-	// set brightness and contrast level
-	glProgramUniform1f(gl_postprog, u_postBrightnessAmount, vid_gamma->value);
-	glProgramUniform1f(gl_postprog, u_postContrastAmount, vid_contrast->value);
+	// set brightness, contrast, and blur levels along with SSAO value
+	glProgramUniform4f(gl_postprog, u_postBrightnessContrastBlurSSAOAmount, vid_gamma->value, vid_contrast->value, r_hdrBlurAmount->value, r_ssao->value);
 
 	GL_Enable(BLEND_BIT);
 

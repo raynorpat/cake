@@ -27,19 +27,16 @@ uniform sampler2D warpgradient;
 uniform sampler2D lumTex;
 uniform sampler2D AOTex;
 
-uniform float blurAmount;
 uniform float exposure;
-uniform float brightnessAmount;
-uniform float contrastAmount;
-
 uniform int waterwarppost;
 
 uniform vec4 surfcolor;
+uniform vec4 brightnessContrastBlurSSAOAmount;
 uniform vec2 rescale;
 uniform vec2 texScale;
 
 #define USE_TONEMAP						1
-float Uncharted2WhitePoint				= 11.2; // linear white point
+float Uncharted2WhitePoint = 11.2; // linear white point
 	
 vec3 ACESFilmRec2020( vec3 x )
 {
@@ -114,12 +111,15 @@ void PostFS ()
 	}
 	
 	// multiply scene with ambient occlusion
-	vec4 AOScene = texture(AOTex, st);
-	scene *= AOScene;
+	if (brightnessContrastBlurSSAOAmount.w > 0)
+	{
+		vec4 AOScene = texture(AOTex, st);
+		scene *= AOScene;
+	}
 	
 	// then mix in the previously generated bloom
 	vec4 hdrScene = texture(diffuse, st);
-	vec4 color = mix(scene, hdrScene, blurAmount);
+	vec4 color = mix(scene, hdrScene, brightnessContrastBlurSSAOAmount.z);
 
 	// vignette effect
 #if USE_VIGNETTE
@@ -145,7 +145,7 @@ void PostFS ()
 	color = mix(color, surfcolor, surfcolor.a);
 
 	// brightness
-	color.rgb = doBrightnessAndContrast(color.rgb, brightnessAmount, contrastAmount);
+	color.rgb = doBrightnessAndContrast(color.rgb, brightnessContrastBlurSSAOAmount.x, brightnessContrastBlurSSAOAmount.y);
 	
 	// send it out to the screen
 	fragColor = color;
