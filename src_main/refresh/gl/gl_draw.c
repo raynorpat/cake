@@ -60,7 +60,7 @@ typedef struct drawstate_s
 	int numquads;
 } drawstate_t;
 
-drawstate_t gl_drawstate = {false, 0xffffffff, 0, 0};
+drawstate_t gl_drawstate = {false, 0xffffffff, 0, 0, 0, 0};
 drawvert_t gl_drawquads[MAX_DRAW_QUADS * 4];
 
 GLuint gl_drawvbo = 0;
