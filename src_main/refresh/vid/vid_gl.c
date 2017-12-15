@@ -609,32 +609,4 @@ void VID_GL_EndFrame (void)
 	GL_UseProgram (0);
 
 	SDL_GL_SwapWindow(window);
-
-#if 0
-	if (vid_fullscreen->modified)
-	{
-		int         fullscreen;
-		qboolean    needToToggle;
-		qboolean    sdlToggled = false;
-
-		// Find out the current state
-		fullscreen = !!(SDL_GetWindowFlags(window) & SDL_WINDOW_FULLSCREEN);
-
-		// Is the state we want different from the current state?
-		needToToggle = !!vid_fullscreen->integer != fullscreen;
-
-		if (needToToggle)
-		{
-			sdlToggled = SDL_SetWindowFullscreen(window, vid_fullscreen->integer) >= 0;
-
-			// SDL_WM_ToggleFullScreen didn't work, so do it the slow way
-			if (!sdlToggled)
-				Cmd_ExecuteText(EXEC_APPEND, "vid_restart\n");
-
-			IN_Restart();
-		}
-
-		vid_fullscreen->modified = false;
-	}
-#endif
 }
