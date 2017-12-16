@@ -35,6 +35,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #include <direct.h>
 #include <io.h>
 #include <conio.h>
+
+// for enabling the high performance GPU by default in Windows
+extern _declspec(dllexport) DWORD NvOptimusEnablement = 0x00000001;
+extern _declspec(dllexport) int AmdPowerXpressRequestHighPerformance = 1;
 #else
 //#define WANT_MMAP 0 // HACK!!!
 #if defined(__linux__) && !defined(_GNU_SOURCE)
