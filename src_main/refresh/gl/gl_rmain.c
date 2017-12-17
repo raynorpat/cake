@@ -769,7 +769,7 @@ static qboolean RMain_CheckFor_DirectStateAccess(void)
 	return true;
 }
 
-#define R_MODE_FALLBACK 6 // 1024x768
+#define R_MODE_FALLBACK 10 // 1024x768
 
 static int SetMode_impl(int mode, int fullscreen)
 {
@@ -884,7 +884,7 @@ int RE_GL_Init (void)
 		return -1;
 
 	// create the window and set up the context
-	if (!R_SetMode ())
+	if (!R_SetMode())
 	{
 		VID_Printf (PRINT_ALL, "ref_gl::RE_GL_Init() - could not R_SetMode()\n");
 		return -1;
