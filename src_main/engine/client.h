@@ -590,12 +590,27 @@ void CL_GameSpy_Init (void);
 //
 // menus
 //
+extern char *menu_in_sound;
+extern char *menu_move_sound;
+extern char *menu_out_sound;
+
+extern char *m_popup_string;
+extern int m_popup_endtime;
+
 void M_Init (void);
 void M_Keydown (int key);
 void M_Draw (void);
+
+void M_DrawTextBox (int x, int y, int width, int lines);
+
 void M_Menu_Main_f (void);
+
+void M_Banner (char *name);
 void M_ForceMenuOff (void);
 void M_PopMenu (void);
+void M_PushMenu (void(*draw) (void), const char * (*key) (int k));
+void M_Popup (void);
+
 void M_AddToServerList (netadr_t adr, char *info);
 
 //

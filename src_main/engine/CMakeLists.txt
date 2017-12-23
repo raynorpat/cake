@@ -104,6 +104,9 @@ set(MENU_INCLUDES
 set(MENU_SOURCES
 	qmenu.c
 	menu.c
+	menu_multiplayer.c
+	menu_singleplayer.c
+	menu_options.c
 	menu_vid.c
 	)
 source_group("client\\menu" FILES ${MENU_INCLUDES})

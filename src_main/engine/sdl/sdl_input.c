@@ -747,13 +747,6 @@ static void IN_Haptic_Shutdown(void)
 
 // =====================================================================================
 
-static float ClampCvar(float min, float max, float value)
-{
-	if (value < min) return min;
-	if (value > max) return max;
-	return value;
-}
-
 void IN_ControllerInit(void)
 {
 	int32_t i;
@@ -950,7 +943,7 @@ void IN_ControllerCommands(void)
 
 	uint32_t i = 0;
 
-	int16_t triggerThreshold = ClampCvar(0.04, 0.96, gamepad_trigger_threshold->value) * 255.0f;
+	int16_t triggerThreshold = Q_Clamp (0.04, 0.96, gamepad_trigger_threshold->value) * 255.0f;
 
 	// let the user know that a controller was disconnected
 	if (currentController && SDL_GameControllerGetAttached(currentController) != SDL_TRUE)

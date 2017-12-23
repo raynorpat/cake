@@ -23,12 +23,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 /*
 ====================================================================
 
-VIDEO MENU INTERACTION
+VIDEO MENU
 
 ====================================================================
 */
-
-extern void M_ForceMenuOff (void);
 
 static cvar_t *gl_mode;
 static cvar_t *sw_mode;
@@ -41,7 +39,7 @@ static cvar_t *gl_swapinterval;
 static cvar_t *gl_textureanisotropy;
 static cvar_t *r_fxaa;
 
-static menuframework_s	s_opengl_menu;
+static menuframework_s	s_video_menu;
 
 static menulist_s		s_renderer_list;
 static menulist_s		s_mode_list;
@@ -332,8 +330,8 @@ void VID_MenuInit (void)
 	else
 		s_mode_list.curvalue = gl_mode->value;
 
-	s_opengl_menu.x = viddef.width * 0.50;
-	s_opengl_menu.nitems = 0;
+	s_video_menu.x = viddef.width * 0.50;
+	s_video_menu.nitems = 0;
 
 	// refresh list
 	s_renderer_list.generic.type = MTYPE_SPINCONTROL;
@@ -459,23 +457,23 @@ void VID_MenuInit (void)
 	s_apply_action.generic.y = (y += 10);
 	s_apply_action.generic.callback = ApplyChanges;
 
-	Menu_AddItem (&s_opengl_menu, (void *) &s_renderer_list);
-	Menu_AddItem (&s_opengl_menu, (void *) &s_mode_list);
-	Menu_AddItem (&s_opengl_menu, (void *) &s_fs_box);
-	Menu_AddItem (&s_opengl_menu, (void *) &s_brightness_slider);
-	Menu_AddItem (&s_opengl_menu, (void *) &s_contrast_slider);
-	Menu_AddItem (&s_opengl_menu, (void *) &s_fov_slider);
+	Menu_AddItem (&s_video_menu, (void *) &s_renderer_list);
+	Menu_AddItem (&s_video_menu, (void *) &s_mode_list);
+	Menu_AddItem (&s_video_menu, (void *) &s_fs_box);
+	Menu_AddItem (&s_video_menu, (void *) &s_brightness_slider);
+	Menu_AddItem (&s_video_menu, (void *) &s_contrast_slider);
+	Menu_AddItem (&s_video_menu, (void *) &s_fov_slider);
 	if (GetRefresh() > 0)
 	{
-		Menu_AddItem(&s_opengl_menu, (void *)&s_vsync_list);
-		Menu_AddItem(&s_opengl_menu, (void *)&s_af_list);
-		Menu_AddItem(&s_opengl_menu, (void *)&s_fxaa_list);
+		Menu_AddItem(&s_video_menu, (void *)&s_vsync_list);
+		Menu_AddItem(&s_video_menu, (void *)&s_af_list);
+		Menu_AddItem(&s_video_menu, (void *)&s_fxaa_list);
 	}
-	Menu_AddItem (&s_opengl_menu, (void *) &s_defaults_action);
-	Menu_AddItem (&s_opengl_menu, (void *) &s_apply_action);
+	Menu_AddItem (&s_video_menu, (void *) &s_defaults_action);
+	Menu_AddItem (&s_video_menu, (void *) &s_apply_action);
 
-	Menu_Center (&s_opengl_menu);
-	s_opengl_menu.x -= 8;
+	Menu_Center (&s_video_menu);
+	s_video_menu.x -= 8;
 }
 
 /*
@@ -493,10 +491,10 @@ void VID_MenuDraw (void)
 	RE_Draw_PicScaled (viddef.width / 2 - (w * scale) / 2, viddef.height / 2 - (110 * scale), "m_banner_video", scale);
 
 	// move cursor to a reasonable starting position
-	Menu_AdjustCursor (&s_opengl_menu, 1);
+	Menu_AdjustCursor (&s_video_menu, 1);
 
 	// draw the menu
-	Menu_Draw (&s_opengl_menu);
+	Menu_Draw (&s_video_menu);
 }
 
 /*
@@ -506,7 +504,7 @@ VID_MenuKey
 */
 const char *VID_MenuKey (int key)
 {
-	menuframework_s *m = &s_opengl_menu;
+	menuframework_s *m = &s_video_menu;
 	static const char *sound = "misc/menu1.wav";
 
 	switch (key)
@@ -558,3 +556,8 @@ const char *VID_MenuKey (int key)
 	return sound;
 }
 
+void M_Menu_Video_f (void)
+{
+	VID_MenuInit ();
+	M_PushMenu (VID_MenuDraw, VID_MenuKey);
+}
