@@ -114,7 +114,7 @@ source_group("refresh\\gl" FILES ${RENDERER_GL_INCLUDES})
 source_group("refresh\\gl" FILES ${RENDERER_GL_SOURCES})
 
 # D3D9 refresh backend sources
-if (DirectX_D3D9_FOUND)
+if (DirectX_D3DX9_FOUND)
 	set(RENDERER_D3D9_INCLUDES
 		../refresh/d3d9/d3d_model.h
 		../refresh/d3d9/d3d_local.h
@@ -156,7 +156,7 @@ set(RENDERER_VID_SOURCES
 	../refresh/vid/vid.c
 	../refresh/vid/vid_gl.c
 	)
-if (DirectX_D3D9_FOUND)
+if (DirectX_D3DX9_FOUND)
 	list(APPEND RENDERER_VID_SOURCES ../refresh/vid/vid_d3d9.cpp)
 endif()
 source_group("refresh\\vid" FILES ${RENDERER_VID_INCLUDES})

@@ -11,7 +11,7 @@ if (GLEW_FOUND)
     set(GLEW_LIBRARY ${GLEW_LIBRARIES})
 else (GLEW_FOUND)
     include_directories("../libs/glew/include")
-    set(GLEW_LIBRARY "" )
+    set(GLEW_LIBRARY "")
     add_definitions(-DGLEW_STATIC)
 endif (GLEW_FOUND)
 
@@ -29,7 +29,10 @@ if (DirectX_D3DX9_FOUND)
 	include_directories (BEFORE SYSTEM ${DirectX_D3D9_INCLUDE_FOUND})
 	include_directories (BEFORE SYSTEM ${DirectX_D3DX9_INCLUDE_DIR})
 	add_definitions(-DREF_D3D9)
-endif()
+else (DirectX_D3DX9_FOUND)
+	set(DirectX_D3D9_LIBRARY "")
+	set(DirectX_D3DX9_LIBRARY "")
+endif (DirectX_D3DX9_FOUND)
 
 # libmad
 find_package(MAD)
@@ -318,14 +321,12 @@ if(MSVC)
 		dbghelp
 		iphlpapi
 		wsock32.lib
-        	${GLEW_LIBRARY}
+        ${GLEW_LIBRARY}
+		${DirectX_D3D9_LIBRARY}
+		${DirectX_D3DX9_LIBRARY}
 		${CMAKE_DL_LIBS}
 		refresh
 		)
-	if (DirectX_D3D9_FOUND)
-		target_link_libraries (cake PRIVATE ${DirectX_D3D9_LIBRARY} ${DirectX_D3DX9_LIBRARY})
-	endif()
-
 	set_target_properties(cake PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}/..")
 
 else()
@@ -350,7 +351,7 @@ else()
 			pthread
 			${RT_LIBRARY}
 			${SDLx_LIBRARY}
-            		${GLEW_LIBRARY}
+            ${GLEW_LIBRARY}
 			${OPENGL_LIBRARY}
 			${CMAKE_DL_LIBS}
 			)
