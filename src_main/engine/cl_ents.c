@@ -190,7 +190,7 @@ void CL_AddProjectiles (void)
 		}
 
 		if (pr->effects & EF_BLASTER)
-			CL_BlasterTrail (pr->oldorigin, ent.currorigin);
+			CL_BlasterTrail (pr->oldorigin, ent.currorigin, 0xe0);
 
 		V_AddLight (pr->origin, 200, 1, 1, 0);
 
@@ -1271,29 +1271,37 @@ void CL_AddPacketEntities (frame_t *frame)
 				CL_RocketTrail (cent->lerp_origin, ent.currorigin, cent);
 				V_AddLight (ent.currorigin, 200, 1, 1, 0);
 			}
-			// PGM - Do not reorder EF_BLASTER and EF_HYPERBLASTER.
-			// EF_BLASTER | EF_TRACKER is a special case for EF_BLASTER2... Cheese!
 			else if (effects & EF_BLASTER)
 			{
-				//				CL_BlasterTrail (cent->lerp_origin, ent.currorigin);
-				//PGM
-				if (effects & EF_TRACKER)	// lame... problematic?
+//PGM
+				if (effects & EF_TRACKER)
 				{
-					CL_BlasterTrail2 (cent->lerp_origin, ent.currorigin);
-					V_AddLight (ent.currorigin, 200, 0, 1, 0);
+					CL_BlasterTrail (cent->lerp_origin, ent.currorigin, 0xd0);
+					V_AddLight (ent.currorigin, 200, 0, 1, 0);		
+				}
+				else if (effects & EF_BLUEHYPERBLASTER)
+				{
+					CL_BlasterTrail (cent->lerp_origin, ent.currorigin, 0x74);
+					V_AddLight (ent.currorigin, 200, 0.15, 0.15, 1);		
+				}
+				else if (effects & EF_IONRIPPER)
+				{
+					CL_BlasterTrail (cent->lerp_origin, ent.currorigin, 0xe4);
+					V_AddLight (ent.currorigin, 200, 1, 0.15, 0.15);		
 				}
 				else
 				{
-					CL_BlasterTrail (cent->lerp_origin, ent.currorigin);
+					CL_BlasterTrail (cent->lerp_origin, ent.currorigin, 0xe0);
 					V_AddLight (ent.currorigin, 200, 1, 1, 0);
 				}
-
-				//PGM
+//PGM
 			}
 			else if (effects & EF_HYPERBLASTER)
 			{
 				if (effects & EF_TRACKER)						// PGM	overloaded for blaster2.
 					V_AddLight (ent.currorigin, 200, 0, 1, 0);		// PGM
+				else if (effects & EF_IONRIPPER)				// overloaded for EF_REDHYPERBLASTER
+					V_AddLight (ent.currorigin, 200, 1, 0.15, 0.15);
 				else											// PGM
 					V_AddLight (ent.currorigin, 200, 1, 1, 0);
 			}
@@ -1335,8 +1343,16 @@ void CL_AddPacketEntities (frame_t *frame)
 			}
 			else if (effects & EF_FLAG1)
 			{
-				CL_FlagTrail (cent->lerp_origin, ent.currorigin, 242);
-				V_AddLight (ent.currorigin, 225, 1, 0.1, 0.1);
+				if (effects & EF_FLAG2)
+				{
+					CL_FlagTrail (cent->lerp_origin, ent.currorigin, 208);
+					V_AddLight (ent.currorigin, 255, 0.1, 1, 0.1);
+				}
+				else
+				{
+					CL_FlagTrail (cent->lerp_origin, ent.currorigin, 242);
+					V_AddLight (ent.currorigin, 225, 1, 0.1, 0.1);
+				}
 			}
 			else if (effects & EF_FLAG2)
 			{
@@ -1391,7 +1407,7 @@ void CL_AddPacketEntities (frame_t *frame)
 			{
 				if (effects & EF_ANIM_ALLFAST)
 				{
-					CL_BlasterTrail (cent->lerp_origin, ent.currorigin);
+					CL_BlasterTrail (cent->lerp_origin, ent.currorigin, 0xe0);
 				}
 
 				V_AddLight (ent.currorigin, 130, 1, 0.5, 0.5);

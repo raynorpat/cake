@@ -389,7 +389,6 @@ void CL_GenericParticleEffect (vec3_t org, vec3_t dir, int color, int count, int
 /*
 ===============
 CL_BubbleTrail2 (lets you control the # of bubbles by setting the distance between the spawns)
-
 ===============
 */
 void CL_BubbleTrail2 (vec3_t start, vec3_t end, int dist)
@@ -1130,7 +1129,6 @@ void CL_Tracker_Explode (vec3_t	origin)
 /*
 ===============
 CL_TagTrail
-
 ===============
 */
 void CL_TagTrail (vec3_t start, vec3_t end, float color)
@@ -1259,104 +1257,5 @@ void CL_ParticleSmokeEffect (vec3_t org, vec3_t dir, int color, int count, int m
 		p->alpha = 1.0;
 
 		p->alphavel = -1.0 / (0.5 + frand () * 0.3);
-	}
-}
-
-/*
-===============
-CL_BlasterParticles2
-
-Wall impact puffs (Green)
-===============
-*/
-void CL_BlasterParticles2 (vec3_t org, vec3_t dir, unsigned int color)
-{
-	int			i, j;
-	cparticle_t	*p;
-	float		d;
-	int			count;
-
-	count = 40;
-
-	for (i = 0; i < count; i++)
-	{
-		if (!free_particles)
-			return;
-
-		p = free_particles;
-		free_particles = p->next;
-		p->next = active_particles;
-		active_particles = p;
-
-		p->time = cl.time;
-		p->color = color + (rand () & 7);
-
-		d = rand () & 15;
-
-		for (j = 0; j < 3; j++)
-		{
-			p->org[j] = org[j] + ((rand () & 7) - 4) + d * dir[j];
-			p->vel[j] = dir[j] * 30 + crand () * 40;
-		}
-
-		p->accel[0] = p->accel[1] = 0;
-		p->accel[2] = -PARTICLE_GRAVITY;
-		p->alpha = 1.0;
-
-		p->alphavel = -1.0 / (0.5 + frand () * 0.3);
-	}
-}
-
-/*
-===============
-CL_BlasterTrail2
-
-Green!
-===============
-*/
-void CL_BlasterTrail2 (vec3_t start, vec3_t end)
-{
-	vec3_t		move;
-	vec3_t		vec;
-	float		len;
-	int			j;
-	cparticle_t	*p;
-	int			dec;
-
-	VectorCopy (start, move);
-	VectorSubtract (end, start, vec);
-	len = VectorNormalize (vec);
-
-	dec = 5;
-	VectorScale (vec, 5, vec);
-
-	// FIXME: this is a really silly way to have a loop
-	while (len > 0)
-	{
-		len -= dec;
-
-		if (!free_particles)
-			return;
-
-		p = free_particles;
-		free_particles = p->next;
-		p->next = active_particles;
-		active_particles = p;
-		VectorClear (p->accel);
-
-		p->time = cl.time;
-
-		p->alpha = 1.0;
-		p->alphavel = -1.0 / (0.3 + frand () * 0.2);
-		p->color = 0xd0;
-
-		for (j = 0; j < 3; j++)
-		{
-			p->org[j] = move[j] + crand ();
-			p->vel[j] = crand () * 5;
-			p->accel[j] = 0;
-		}
-
-		VectorAdd (move, vec, move);
 	}
 }

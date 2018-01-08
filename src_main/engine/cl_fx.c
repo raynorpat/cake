@@ -1240,7 +1240,7 @@ CL_BlasterParticles
 Wall impact puffs
 ===============
 */
-void CL_BlasterParticles (vec3_t org, vec3_t dir)
+void CL_BlasterParticles (vec3_t org, vec3_t dir, unsigned int color)
 {
 	int			i, j;
 	cparticle_t	*p;
@@ -1260,7 +1260,7 @@ void CL_BlasterParticles (vec3_t org, vec3_t dir)
 		active_particles = p;
 
 		p->time = cl.time;
-		p->color = 0xe0 + (rand () & 7);
+		p->color = color + (rand () & 7);
 
 		d = rand () & 15;
 
@@ -1282,10 +1282,9 @@ void CL_BlasterParticles (vec3_t org, vec3_t dir)
 /*
 ===============
 CL_BlasterTrail
-
 ===============
 */
-void CL_BlasterTrail (vec3_t start, vec3_t end)
+void CL_BlasterTrail (vec3_t start, vec3_t end, float color)
 {
 	vec3_t		move;
 	vec3_t		vec;
@@ -1319,7 +1318,7 @@ void CL_BlasterTrail (vec3_t start, vec3_t end)
 
 		p->alpha = 1.0;
 		p->alphavel = -1.0 / (0.3 + frand () * 0.2);
-		p->color = 0xe0;
+		p->color = color;
 
 		for (j = 0; j < 3; j++)
 		{
