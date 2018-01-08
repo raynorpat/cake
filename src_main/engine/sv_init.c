@@ -407,11 +407,10 @@ void SV_Map (qboolean attractloop, char *levelstring, qboolean loadgame)
 	if (sv.state == ss_dead && !sv.loadgame)
 		SV_InitGame ();	// the game is just starting
 
-	strcpy (level, levelstring);
+	strncpy (level, levelstring, sizeof(level) - 1);
 
 	// if there is a + in the map, set nextserver to the remainder
 	ch = strstr (level, "+");
-
 	if (ch)
 	{
 		*ch = 0;
@@ -426,7 +425,6 @@ void SV_Map (qboolean attractloop, char *levelstring, qboolean loadgame)
 
 	// if there is a $, use the remainder as a spawnpoint
 	ch = strstr (level, "$");
-
 	if (ch)
 	{
 		*ch = 0;
@@ -440,7 +438,6 @@ void SV_Map (qboolean attractloop, char *levelstring, qboolean loadgame)
 		strcpy (level, level + 1);
 
 	l = strlen (level);
-
 	if (l > 4 && !strcmp (level + l - 4, ".cin"))
 	{
 		SCR_BeginLoadingPlaque ();			// for local system
