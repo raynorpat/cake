@@ -133,13 +133,14 @@ typedef struct
 		unsigned int color;
 		byte rgba[4];
 	};
+
+	// leftover values for the software refresh
 	int		soft_color;
 	float	alpha;
 } particle_t;
 
 typedef struct
 {
-	float		color[3];
 	float		rgb[3];			// 0.0 - 2.0
 	float		white;			// highest of rgb
 } lightstyle_t;
@@ -156,7 +157,7 @@ typedef struct
 
 	byte		*areabits;			// if not NULL, only areas with set bits will be drawn
 
-	lightstyle_t	*lightstyles;	// [MAX_LIGHTSTYLES]
+	lightstyle_t *lightstyles;	// [MAX_LIGHTSTYLES]
 
 	int			num_entities;
 	entity_t	*entities;
