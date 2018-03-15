@@ -35,14 +35,6 @@ include_directories(${SDL2_INCLUDE_DIR})
 set(SDLx_LIBRARY ${SDL2_LIBRARY})
 
 
-# directx sdk
-find_package(DirectX)
-if (DirectX_D3DX9_FOUND)
-	include_directories (BEFORE SYSTEM ${DirectX_D3D9_INCLUDE_DIR})
-	include_directories (BEFORE SYSTEM ${DirectX_D3DX9_INCLUDE_DIR})
-	add_definitions(-DREF_D3D9)
-endif()
-
 # refresh sources
 set(RENDERER_INCLUDES
 	../refresh/ref_public.h
@@ -113,40 +105,6 @@ set(RENDERER_GL_SOURCES
 source_group("refresh\\gl" FILES ${RENDERER_GL_INCLUDES})
 source_group("refresh\\gl" FILES ${RENDERER_GL_SOURCES})
 
-# D3D9 refresh backend sources
-if (DirectX_D3DX9_FOUND)
-	set(RENDERER_D3D9_INCLUDES
-		../refresh/d3d9/d3d_model.h
-		../refresh/d3d9/d3d_local.h
-		)
-	set(RENDERER_D3D9_SOURCES
-		../refresh/d3d9/d3d_beam.cpp
-		../refresh/d3d9/d3d_draw.cpp
-		../refresh/d3d9/d3d_image.cpp
-		../refresh/d3d9/d3d_imagefiles.cpp
-		../refresh/d3d9/d3d_imagefilters.cpp
-		../refresh/d3d9/d3d_imagescrap.cpp
-		../refresh/d3d9/d3d_light.cpp
-		../refresh/d3d9/d3d_matrix.cpp
-		../refresh/d3d9/d3d_mesh.cpp
-		../refresh/d3d9/d3d_model.cpp
-		../refresh/d3d9/d3d_nullmodel.cpp
-		../refresh/d3d9/d3d_part.cpp
-		../refresh/d3d9/d3d_rmain.cpp
-		../refresh/d3d9/d3d_rmisc.cpp
-		../refresh/d3d9/d3d_rsurf.cpp
-		../refresh/d3d9/d3d_shader.cpp
-		../refresh/d3d9/d3d_sky.cpp
-		../refresh/d3d9/d3d_sprite.cpp
-		../refresh/d3d9/d3d_state.cpp
-		../refresh/d3d9/d3d_warp.cpp
-		)
-	source_group("refresh\\d3d9" FILES ${RENDERER_D3D9_INCLUDES})
-	source_group("refresh\\d3d9" FILES ${RENDERER_D3D9_SOURCES})
-else()
-	set(RENDERER_D3D9_INCLUDES "")
-	set(RENDERER_D3D9_SOURCES "")
-endif()
 
 # video backend sources
 set(RENDERER_VID_INCLUDES
@@ -156,9 +114,6 @@ set(RENDERER_VID_SOURCES
 	../refresh/vid/vid.c
 	../refresh/vid/vid_gl.c
 	)
-if (DirectX_D3DX9_FOUND)
-	list(APPEND RENDERER_VID_SOURCES ../refresh/vid/vid_d3d9.cpp)
-endif()
 source_group("refresh\\vid" FILES ${RENDERER_VID_INCLUDES})
 source_group("refresh\\vid" FILES ${RENDERER_VID_SOURCES})
 
@@ -184,8 +139,6 @@ add_library(refresh STATIC ${GLEW_INCLUDES}
 	${RENDERER_SOFT_SOURCES}
 	${RENDERER_GL_INCLUDES}
 	${RENDERER_GL_SOURCES}
-	${RENDERER_D3D9_INCLUDES}
-	${RENDERER_D3D9_SOURCES}
 	${RENDERER_VID_INCLUDES}
 	${RENDERER_VID_SOURCES}
 	)

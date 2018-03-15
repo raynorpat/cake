@@ -215,13 +215,11 @@ extern void(*RE_EndRegistration)(void);
 #define REF_API_UNDETERMINED	1
 #define REF_API_SOFT	 		2
 #define REF_API_OPENGL			3
-#define REF_API_DIRECT3D_9 		4
 extern int RE_gfxVal;
 
 // ref entry points
 void GL_GFX_CoreInit(void);
 void SW_GFX_CoreInit(void);
-void D3D9_GFX_CoreInit(void);
 
 // gfx core functions
 void GFX_CoreInit(char *name);

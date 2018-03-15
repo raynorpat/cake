@@ -23,17 +23,6 @@ find_package(SDL2 REQUIRED)
 include_directories(${SDL2_INCLUDE_DIR})
 set(SDLx_LIBRARY ${SDL2_LIBRARY})
 
-# directx
-find_package(DirectX)
-if (DirectX_D3DX9_FOUND)
-	include_directories (BEFORE SYSTEM ${DirectX_D3D9_INCLUDE_FOUND})
-	include_directories (BEFORE SYSTEM ${DirectX_D3DX9_INCLUDE_DIR})
-	add_definitions(-DREF_D3D9)
-else (DirectX_D3DX9_FOUND)
-	set(DirectX_D3D9_LIBRARY "")
-	set(DirectX_D3DX9_LIBRARY "")
-endif (DirectX_D3DX9_FOUND)
-
 # libmad
 find_package(MAD)
 if (MAD_FOUND)
@@ -322,8 +311,6 @@ if(MSVC)
 		iphlpapi
 		wsock32.lib
         ${GLEW_LIBRARY}
-		${DirectX_D3D9_LIBRARY}
-		${DirectX_D3DX9_LIBRARY}
 		${CMAKE_DL_LIBS}
 		refresh
 		)

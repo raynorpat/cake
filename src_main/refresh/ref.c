@@ -69,8 +69,6 @@ void GFX_CoreInit (char *name)
 			RE_gfxVal = REF_API_SOFT;
 		else if (!strcmp(vid_ref->string, "gl"))
 			RE_gfxVal = REF_API_OPENGL;
-		else if (!strcmp(vid_ref->string, "d3d9"))
-			RE_gfxVal = REF_API_DIRECT3D_9;
 	}
 
 	// init function pointers according to vid_ref cvar
@@ -81,16 +79,6 @@ void GFX_CoreInit (char *name)
 		break;
 	case REF_API_OPENGL:
 		GL_GFX_CoreInit ();
-		break;
-	case REF_API_DIRECT3D_9:
-#ifdef REF_D3D9
-		D3D9_GFX_CoreInit ();
-#else
-		Com_Printf ("Direct3D 9 refresh disabled at compile time. Switching to OpenGL refresh!\n");
-		Cvar_Set ("vid_ref", "gl");
-		RE_gfxVal = REF_API_OPENGL;
-		GL_GFX_CoreInit ();
-#endif
 		break;
 	case REF_API_UNDETERMINED:
 	default:
@@ -117,8 +105,6 @@ void GFX_CoreShutdown (void)
 		// OpenGL needs to destroy everything, including the context, hence this extra call
 		VID_Shutdown_GL (false);
 		break;
-	case REF_API_DIRECT3D_9:
-		break;
 	case REF_API_UNDETERMINED:
 	default:
 		break;
@@ -143,14 +129,6 @@ int GFX_Core_GetRefreshRate (void)
 		break;
 	case REF_API_OPENGL:
 		refreshRate = VID_GL_GetRefreshRate ();
-		break;
-	case REF_API_DIRECT3D_9:
-#ifdef REF_D3D9
-		refreshRate = VID_D3D9_GetRefreshRate ();
-#else
-		// wtf
-		return refreshRate;
-#endif
 		break;
 	case REF_API_UNDETERMINED:
 	default:
