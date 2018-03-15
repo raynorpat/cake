@@ -24,7 +24,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 using namespace std;
 
 /**
- * This contains all posible vertex buffer targets ordered by thier id
+ * This contains all possible vertex buffer targets ordered by their id
  * If you insert a new target, keep the order intact or lower_bound
  * will be not able to find the correct target.
  */
