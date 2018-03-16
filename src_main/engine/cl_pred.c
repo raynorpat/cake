@@ -275,7 +275,7 @@ void CL_PredictMovement (void)
 	}
 
 	step = pm.s.origin[2] - (int)(cl.predicted_origin[2] * 8);
-	VectorCopy(tmp, pm.s.velocity);
+	VectorCopy(pm.s.velocity, tmp);
 
 	if (((step > 126 && step < 130)) && !VectorCompare(tmp, vec3_origin) && (pm.s.pm_flags & PMF_ON_GROUND))
 	{
