@@ -1012,7 +1012,7 @@ void SCR_ExecuteLayoutString (char *s)
 			if (value == cl.playernum)
 				DrawAltStringScaled (x, y, block, scale);
 			else
-				DrawAltStringScaled (x, y, block, scale);
+				DrawStringScaled (x, y, block, scale);
 
 			continue;
 		}
