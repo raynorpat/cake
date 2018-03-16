@@ -306,70 +306,7 @@ char	findbase[MAX_OSPATH];
 char	findpath[MAX_OSPATH];
 int		findhandle;
 
-#ifdef _WIN32
-static qboolean CompareAttributes(unsigned found, unsigned musthave, unsigned canthave)
-{
-	if ((found & _A_RDONLY) && (canthave & SFF_RDONLY))
-		return false;
-	if ((found & _A_HIDDEN) && (canthave & SFF_HIDDEN))
-		return false;
-	if ((found & _A_SYSTEM) && (canthave & SFF_SYSTEM))
-		return false;
-	if ((found & _A_SUBDIR) && (canthave & SFF_SUBDIR))
-		return false;
-	if ((found & _A_ARCH) && (canthave & SFF_ARCH))
-		return false;
-
-	if ((musthave & SFF_RDONLY) && !(found & _A_RDONLY))
-		return false;
-	if ((musthave & SFF_HIDDEN) && !(found & _A_HIDDEN))
-		return false;
-	if ((musthave & SFF_SYSTEM) && !(found & _A_SYSTEM))
-		return false;
-	if ((musthave & SFF_SUBDIR) && !(found & _A_SUBDIR))
-		return false;
-	if ((musthave & SFF_ARCH) && !(found & _A_ARCH))
-		return false;
-
-	return true;
-}
-#else
-static char findpattern[MAX_OSPATH];
-static DIR  *fdir;
-
-static qboolean CompareAttributes(char *path, char *name, unsigned musthave, unsigned canthave)
-{
-	struct stat st;
-	char fn[MAX_OSPATH];
-
-	// . and .. never match
-	if ((strcmp(name, ".") == 0) || (strcmp(name, "..") == 0))
-	{
-		return false;
-	}
-
-	return true;
-
-	if (stat(fn, &st) == -1)
-	{
-		return false; // shouldn't happen
-	}
-
-	if ((st.st_mode & S_IFDIR) && (canthave & SFF_SUBDIR))
-	{
-		return false;
-	}
-
-	if ((musthave & SFF_SUBDIR) && !(st.st_mode & S_IFDIR))
-	{
-		return false;
-	}
-
-	return true;
-}
-#endif
-
-char *Sys_FindFirst(char *path, unsigned musthave, unsigned canthave)
+char *Sys_FindFirst(char *path)
 {
 #ifdef _WIN32
 	struct _finddata_t findinfo;
@@ -383,9 +320,6 @@ char *Sys_FindFirst(char *path, unsigned musthave, unsigned canthave)
 	findhandle = _findfirst(path, &findinfo);
 
 	if (findhandle == -1)
-		return NULL;
-
-	if (!CompareAttributes(findinfo.attrib, musthave, canthave))
 		return NULL;
 
 	Com_sprintf(findpath, sizeof(findpath), "%s/%s", findbase, findinfo.name);
@@ -423,7 +357,7 @@ char *Sys_FindFirst(char *path, unsigned musthave, unsigned canthave)
 	{
 		if (!*findpattern || glob_match(findpattern, d->d_name))
 		{
-			if (CompareAttributes(findbase, d->d_name, musthave, canthave))
+			if ((strcmp(d->d_name, ".") != 0) || (strcmp(d->d_name, "..") != 0))
 			{
 				sprintf(findpath, "%s/%s", findbase, d->d_name);
 				return findpath;
@@ -435,7 +369,7 @@ char *Sys_FindFirst(char *path, unsigned musthave, unsigned canthave)
 #endif
 }
 
-char *Sys_FindNext(unsigned musthave, unsigned canthave)
+char *Sys_FindNext(void)
 {
 #ifdef _WIN32
 	struct _finddata_t findinfo;
@@ -444,9 +378,6 @@ char *Sys_FindNext(unsigned musthave, unsigned canthave)
 		return NULL;
 
 	if (_findnext(findhandle, &findinfo) == -1)
-		return NULL;
-
-	if (!CompareAttributes(findinfo.attrib, musthave, canthave))
 		return NULL;
 
 	Com_sprintf(findpath, sizeof(findpath), "%s/%s", findbase, findinfo.name);
@@ -461,7 +392,7 @@ char *Sys_FindNext(unsigned musthave, unsigned canthave)
 	{
 		if (!*findpattern || glob_match(findpattern, d->d_name))
 		{
-			if (CompareAttributes(findbase, d->d_name, musthave, canthave))
+			if ((strcmp(d->d_name, ".") != 0) || (strcmp(d->d_name, "..") != 0))
 			{
 				sprintf(findpath, "%s/%s", findbase, d->d_name);
 				return findpath;

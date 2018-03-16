@@ -364,19 +364,9 @@ void	Hunk_Free (void *buf);
 int		Hunk_End (void);
 
 // directory searching
-#define SFF_ARCH  0x01
-#define SFF_HIDDEN 0x02
-#define SFF_RDONLY 0x04
-#define SFF_SUBDIR 0x08
-#define SFF_SYSTEM 0x10
-
-/*
-pass in an attribute mask of things you wish to REJECT
-*/
-char	*Sys_FindFirst (char *path, unsigned musthave, unsigned canthave);
-char	*Sys_FindNext (unsigned musthave, unsigned canthave);
+char	*Sys_FindFirst (char *path);
+char	*Sys_FindNext (void);
 void	Sys_FindClose (void);
-
 
 // this is only here so the functions in q_shared.c can link
 void Sys_Error (char *error, ...);

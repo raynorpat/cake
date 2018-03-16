@@ -560,20 +560,20 @@ void FS_SetGamedir (char *dir)
 /*
 FS_ListFiles
 */
-char **FS_ListFiles (char *findname, int *numfiles, unsigned musthave, unsigned canthave)
+char **FS_ListFiles (char *findname, int *numfiles)
 {
 	char *s;
 	int nfiles = 0;
 	char **list = 0;
 
-	s = Sys_FindFirst (findname, musthave, canthave);
+	s = Sys_FindFirst (findname);
 
 	while (s)
 	{
 		if (s[strlen (s)-1] != '.')
 			nfiles++;
 
-		s = Sys_FindNext (musthave, canthave);
+		s = Sys_FindNext ();
 	}
 
 	Sys_FindClose ();
@@ -587,7 +587,7 @@ char **FS_ListFiles (char *findname, int *numfiles, unsigned musthave, unsigned 
 	list = malloc (sizeof (char *) * nfiles);
 	memset (list, 0, sizeof (char *) * nfiles);
 
-	s = Sys_FindFirst (findname, musthave, canthave);
+	s = Sys_FindFirst (findname);
 	nfiles = 0;
 
 	while (s)
@@ -601,7 +601,7 @@ char **FS_ListFiles (char *findname, int *numfiles, unsigned musthave, unsigned 
 			nfiles++;
 		}
 
-		s = Sys_FindNext (musthave, canthave);
+		s = Sys_FindNext ();
 	}
 
 	Sys_FindClose ();
@@ -642,7 +642,7 @@ void FS_Dir_f (void)
 		Com_Printf ("Directory of %s\n", findname);
 		Com_Printf ("----\n");
 
-		if ((dirnames = FS_ListFiles (findname, &ndirs, 0, 0)) != 0)
+		if ((dirnames = FS_ListFiles (findname, &ndirs)) != 0)
 		{
 			int i;
 

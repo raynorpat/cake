@@ -1782,7 +1782,7 @@ static qboolean PlayerConfig_ScanDirectories (void)
 	char *path = NULL;
 	int i;
 
-	extern char **FS_ListFiles (char *, int *, unsigned, unsigned);
+	extern char **FS_ListFiles (char *, int *);
 
 	s_numplayermodels = 0;
 
@@ -1792,7 +1792,7 @@ static qboolean PlayerConfig_ScanDirectories (void)
 		path = FS_NextPath (path);
 		Com_sprintf (findname, sizeof (findname), "%s/players/*.*", path);
 
-		if ((dirnames = FS_ListFiles (findname, &ndirs, SFF_SUBDIR, 0)) != 0)
+		if ((dirnames = FS_ListFiles (findname, &ndirs)) != 0)
 			break;
 	}
 	while (path);
@@ -1822,7 +1822,7 @@ static qboolean PlayerConfig_ScanDirectories (void)
 		strcpy (scratch, dirnames[i]);
 		strcat (scratch, "/tris.md2");
 
-		if (!Sys_FindFirst (scratch, 0, SFF_SUBDIR | SFF_HIDDEN | SFF_SYSTEM))
+		if (!Sys_FindFirst (scratch))
 		{
 			free (dirnames[i]);
 			dirnames[i] = 0;
@@ -1835,7 +1835,7 @@ static qboolean PlayerConfig_ScanDirectories (void)
 		// verify the existence of at least one pcx skin
 		strcpy (scratch, dirnames[i]);
 		strcat (scratch, "/*.pcx");
-		pcxnames = FS_ListFiles (scratch, &npcxfiles, 0, SFF_SUBDIR | SFF_HIDDEN | SFF_SYSTEM);
+		pcxnames = FS_ListFiles (scratch, &npcxfiles);
 
 		if (!pcxnames)
 		{
