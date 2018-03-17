@@ -58,6 +58,10 @@ SW_Draw_InitLocal
 void SW_Draw_InitLocal (void)
 {
 	draw_chars = RE_SW_Draw_RegisterPic ("conchars");
+	if (!draw_chars)
+	{
+		Com_Error(ERR_FATAL, "Couldn't load pics/conchars.pcx");
+	}
 }
 
 

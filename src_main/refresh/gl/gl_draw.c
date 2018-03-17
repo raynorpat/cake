@@ -293,6 +293,10 @@ void Draw_InitLocal (void)
 {
 	// load console characters (don't bilerp characters)
 	draw_chars = GL_FindImage ("pics/conchars.pcx", it_pic);
+	if (!draw_chars)
+	{
+		Com_Error(ERR_FATAL, "Couldn't load pics/conchars.pcx");
+	}
 }
 
 
