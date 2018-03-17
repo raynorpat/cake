@@ -1,4 +1,5 @@
 cmake_minimum_required(VERSION 2.8)
+
 set(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake)
 set(CMAKE_INSTALL_PREFIX "${CMAKE_SOURCE_DIR}/..")
 
@@ -38,6 +39,7 @@ endif()
 
 option(MONOLITH "Embed game logic into main executable" OFF)
 option(ONATIVE "Optimize for the host CPU" OFF)
+option(WIN_UWP "Build for Microsoft Universal Windows Platform" OFF)
 option(UTILS "Build utilities and tools" ON)
 
 option(USE_SYSTEM_LIBMAD "Use the system libmad instead of the bundled one" OFF)
@@ -174,15 +176,17 @@ elseif(MSVC)
 					-D_CRT_SECURE_NO_WARNINGS
 					-DUSE_EXCEPTIONS)
 
-	# for MSVC 2015+, If we want UWP support
-	if (NOT(MSVC_VERSION LESS 1900))
-		if( ${CMAKE_SYSTEM_VERSION} EQUAL 6.2 OR ${CMAKE_SYSTEM_VERSION} EQUAL 6.3 ) # Windows 8 or 8.1
-			add_definitions(-DUSE_WINRT)
-		elseif( ${CMAKE_SYSTEM_VERSION} EQUAL 10 ) # Windows 10
-			add_definitions(-DUSE_WINRT)
+	# for MSVC 2015+, if we want UWP support
+	if (WIN_UWP)
+		if (NOT(MSVC_VERSION LESS 1900))
+			if( ${CMAKE_SYSTEM_VERSION} EQUAL 6.2 OR ${CMAKE_SYSTEM_VERSION} EQUAL 6.3 ) # Windows 8 or 8.1
+				add_definitions(-DWIN_UWP)
+			elseif( ${CMAKE_SYSTEM_VERSION} EQUAL 10 ) # Windows 10
+				add_definitions(-DWIN_UWP)
+			endif()
 		endif()
 	endif()
-	
+
 	# if we want compiler intrinsics
 	if (USE_INTRINSICS)
 		add_definitions(-DUSE_INTRINSICS)
