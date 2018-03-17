@@ -167,6 +167,11 @@ Returns the current display refresh rate.
 */
 int VID_GL_GetRefreshRate(void)
 {
+	if (vid_refreshrate->value > -1)
+	{
+		viddef.refreshRate = ceil(vid_refreshrate->value);
+	}
+
 	if (viddef.refreshRate == -1)
 	{
 		SDL_DisplayMode mode;
@@ -183,6 +188,10 @@ int VID_GL_GetRefreshRate(void)
 			viddef.refreshRate = 60;
 		}
 	}
+
+	// HACK: The refresh rate returned from SDL may be a frame too low.
+	// Since it doesn't really hurt if we are a frame ahead, add an extra frame here.
+	viddef.refreshRate++;
 
 	return viddef.refreshRate;
 }

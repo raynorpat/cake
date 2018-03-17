@@ -31,6 +31,7 @@ cvar_t		*vid_gamma;
 cvar_t		*vid_contrast;
 cvar_t		*vid_ref;			// Name of Refresh currently loaded
 cvar_t		*vid_fullscreen;
+cvar_t		*vid_refreshrate;
 
 // Global variables used internally by this module
 viddef_t	viddef;				// global video state; used by other modules
@@ -417,6 +418,7 @@ void VID_Init (void)
 	vid_fullscreen = Cvar_Get ("vid_fullscreen", "0", CVAR_ARCHIVE);
 	vid_gamma = Cvar_Get ("vid_gamma", "1.0", CVAR_ARCHIVE);
 	vid_contrast = Cvar_Get("vid_contrast", "1.0", CVAR_ARCHIVE);
+	vid_refreshrate = Cvar_Get("vid_refreshrate", "-1", CVAR_ARCHIVE);
 
 	// Add some console commands that we want to handle
 	Cmd_AddCommand ("vid_restart", VID_Restart_f);
