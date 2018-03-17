@@ -595,6 +595,8 @@ extern char *menu_out_sound;
 extern char *m_popup_string;
 extern int m_popup_endtime;
 
+#define NUM_ADDRESSBOOK_ENTRIES 9
+
 void M_Init (void);
 void M_Keydown (int key);
 void M_Draw (void);

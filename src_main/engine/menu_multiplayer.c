@@ -1609,8 +1609,6 @@ ADDRESS BOOK MENU
 =============================================================================
 */
 
-#define NUM_ADDRESSBOOK_ENTRIES 9
-
 static menuframework_s	s_addressbook_menu;
 static menufield_s		s_addressbook_fields[NUM_ADDRESSBOOK_ENTRIES];
 
