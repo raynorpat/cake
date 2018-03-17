@@ -51,7 +51,7 @@ set(CPU_OPTIMIZATION "-mmmx -msse -msse2" CACHE STRING "Which CPU specific optim
 # Compiler settings
 #
 
-# Options settings
+# System Library defines if using system libs (most likely for Linux or BSD)
 if (USE_SYSTEM_LIBMAD)
 	add_definitions(-DUSE_SYSTEM_LIBMAD)
 endif()
@@ -92,8 +92,9 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
 	set(CMAKE_SHARED_LIBRARY_SUFFIX "_${Q_WINDOWS_ARCH}${CMAKE_SHARED_LIBRARY_SUFFIX}")
 endif()
 
-# GCC and Clang settings
+# compiler settings
 if(CMAKE_COMPILER_IS_GNUCC OR CMAKE_C_COMPILER_ID STREQUAL "Clang")
+	# GCC and Clang settings
 	add_definitions(-pipe)
 	add_definitions(-Wall)
 	if (CPU_OPTIMIZATION)
@@ -109,11 +110,11 @@ if(CMAKE_COMPILER_IS_GNUCC OR CMAKE_C_COMPILER_ID STREQUAL "Clang")
 		endif()
 	endif()
 
-  # -MMD to generate header dependencies. (They cannot be
-  #  generated if building universal binaries on OSX)
-  if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-    set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -MMD")
-  endif()
+	# -MMD to generate header dependencies. (They cannot be
+	#  generated if building universal binaries on OSX)
+	if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+		set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -MMD")
+	endif()
 
 	# the warnings are used for every profile anyway, so put them in a variable
 	set(my_warn_flags "-Wno-pragmas -Wno-unused-variable -Wno-switch -Wno-unused-value -Winvalid-pch -Wno-multichar")
@@ -146,9 +147,8 @@ if(CMAKE_COMPILER_IS_GNUCC OR CMAKE_C_COMPILER_ID STREQUAL "Clang")
 	if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 		set(CMAKE_SHARED_LIBRARY_SUFFIX "_mac${CMAKE_SHARED_LIBRARY_SUFFIX}")
 	endif()
-
-# MSVC settings
 elseif(MSVC)
+	# MSVC settings
 	set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} /D _DEBUG /MP /MTd")
 	set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} /MP /Oi /Oy /MT")
 	set(CMAKE_C_FLAGS_RELWITHDEBINFO "${CMAKE_C_FLAGS_RELWITHDEBINFO} /MP /Oi /MTd")
@@ -159,12 +159,13 @@ elseif(MSVC)
 	set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} /MP /MTd")
 	set(CMAKE_CXX_FLAGS_MINSIZEREL "${CMAKE_CXX_FLAGS_MINSIZEREL} /MP /Oi /Oy /MT")
 
-	# RB: without /SAFESEH:NO we can't link against ffmpeg libs and VS2013 or we have to build our own
-	# libs for newer compilers
-	set(CMAKE_EXE_LINKER_FLAGS_DEBUG "${CMAKE_EXE_LINKER_FLAGS_DEBUG} /SAFESEH:NO")
-	set(CMAKE_EXE_LINKER_FLAGS_MINSIZEREL "${CMAKE_EXE_LINKER_FLAGS_MINSIZEREL} /SAFESEH:NO")
-	set(CMAKE_EXE_LINKER_FLAGS_RELEASE "${CMAKE_EXE_LINKER_FLAGS_RELEASE} /SAFESEH:NO")
-	set(CMAKE_EXE_LINKER_FLAGS_RELWITHDEBINFO "${CMAKE_EXE_LINKER_FLAGS_RELWITHDEBINFO} /SAFESEH:NO")
+	# for MSVC 2013+, without /SAFESEH:NO, we can't link against older libraries
+	if (NOT(MSVC_VERSION LESS 1800))
+		set(CMAKE_EXE_LINKER_FLAGS_DEBUG "${CMAKE_EXE_LINKER_FLAGS_DEBUG} /SAFESEH:NO")
+		set(CMAKE_EXE_LINKER_FLAGS_MINSIZEREL "${CMAKE_EXE_LINKER_FLAGS_MINSIZEREL} /SAFESEH:NO")
+		set(CMAKE_EXE_LINKER_FLAGS_RELEASE "${CMAKE_EXE_LINKER_FLAGS_RELEASE} /SAFESEH:NO")
+		set(CMAKE_EXE_LINKER_FLAGS_RELWITHDEBINFO "${CMAKE_EXE_LINKER_FLAGS_RELWITHDEBINFO} /SAFESEH:NO")
+	endif()
 
 	add_definitions(-DWIN32
 					-D_WINDOWS
@@ -173,21 +174,27 @@ elseif(MSVC)
 					-D_CRT_SECURE_NO_WARNINGS
 					-DUSE_EXCEPTIONS)
 
-	if( ${CMAKE_SYSTEM_VERSION} EQUAL 6.2 OR ${CMAKE_SYSTEM_VERSION} EQUAL 6.3 ) # Windows 8 or 8.1
-		add_definitions(-DUSE_WINRT)
-  elseif( ${CMAKE_SYSTEM_VERSION} EQUAL 10 ) # Windows 10
-		add_definitions(-DUSE_WINRT)
-  endif()
-  if (USE_INTRINSICS)
+	# for MSVC 2015+, If we want UWP support
+	if (NOT(MSVC_VERSION LESS 1900))
+		if( ${CMAKE_SYSTEM_VERSION} EQUAL 6.2 OR ${CMAKE_SYSTEM_VERSION} EQUAL 6.3 ) # Windows 8 or 8.1
+			add_definitions(-DUSE_WINRT)
+		elseif( ${CMAKE_SYSTEM_VERSION} EQUAL 10 ) # Windows 10
+			add_definitions(-DUSE_WINRT)
+		endif()
+	endif()
+	
+	# if we want compiler intrinsics
+	if (USE_INTRINSICS)
 		add_definitions(-DUSE_INTRINSICS)
-  endif()
+	endif()
 
   set_property(DIRECTORY PROPERTY VS_STARTUP_PROJECT "cake")
   set(CMAKE_VS_INCLUDE_INSTALL_TO_DEFAULT_BUILD 1)
-
 endif()
 
+#
 # add projects
+#
 add_subdirectory(refresh)
 add_subdirectory(game)
 add_subdirectory(engine)
