@@ -19,6 +19,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 */
 // input.h -- external (non-keyboard) input devices
 
+extern int sys_frame_time; // Saves the time of the last input event.
+
 /*
 * Initializes the input backend
 */
@@ -38,11 +40,6 @@ void IN_Shutdown(void);
 * Updates the state of the input queue
 */
 void IN_Update(void);
-
-/*
-* Emit key events for game controller buttons, including emulated buttons for analog sticks / triggers
-*/
-void IN_Commands(void);
 
 /*
 * Emit haptic feedback for controllers based on sound name

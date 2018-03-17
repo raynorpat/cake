@@ -342,7 +342,7 @@ retryRecv:
 			gspyi.dprint("Retrying Gamespy TCP Validate Handshake, Attempt %i of %i.\n", retry, totalRetry);
 			msleep(sleepMs);
 			sleepMs = sleepMs + 10;
-			gspyi.run_keyevents (); /* FS: Check for aborts */
+			gspyi.in_update();
 			goto retryRecv;
 		}
 		else
@@ -550,7 +550,7 @@ retryRecv:
 			gspyi.dprint("Retrying Gamespy TCP List RECV, Attempt %i of %i.\n", retry, totalRetry);
 			msleep(sleepMs);
 			sleepMs = sleepMs + 10;
-			gspyi.run_keyevents (); /* FS: Check for aborts */
+			gspyi.in_update ();
 			goto retryRecv;
 		}
 		else

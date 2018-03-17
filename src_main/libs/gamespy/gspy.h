@@ -72,7 +72,7 @@ typedef struct
 	cvar_t	*(*cvar_set)(char *name, char *value);
 	cvar_t	*(*cvar_forceset)(char *name, char *value);
 	char	*(*net_strerror)(void);
-	void	(*run_keyevents)(void);
+	void	(*in_update)(void);
 	void	(*play_sound)(char *s);
 	void	(*update_numservers)(int numServers);
 } gspyimport_t;

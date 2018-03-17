@@ -314,7 +314,7 @@ static void CL_LoadGameSpy(void)
 	import.cvar_set = Cvar_Set;
 	import.cvar_forceset = Cvar_ForceSet;
 	import.net_strerror = NET_ErrorString;
-	import.run_keyevents = Sys_SendKeyEvents;
+	import.in_update = IN_Update;
 	import.play_sound = S_StartLocalSound;
 	import.update_numservers = CL_Gamespy_Update_Num_Servers;
 

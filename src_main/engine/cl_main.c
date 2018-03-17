@@ -1595,7 +1595,7 @@ void CL_SendCommand (void)
 	CL_UpdateWindowedMouse();
 
 	// get new key events
-	Sys_SendKeyEvents ();
+	IN_Update ();
 
 	// process console commands
 	Cbuf_Execute ();
@@ -1656,7 +1656,7 @@ void CL_Frame (int packetdelta, int renderdelta, int timedelta, qboolean packetf
 		
 		// update input
 		CL_UpdateWindowedMouse();
-		Sys_SendKeyEvents();
+		IN_Update();
 		
 		// execute whats in the command buffer
 		Cbuf_Execute();

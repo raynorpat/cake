@@ -58,8 +58,6 @@ extern _declspec(dllexport) int AmdPowerXpressRequestHighPerformance = 1;
 #endif
 #endif
 
-unsigned int sys_frame_time;
-
 qboolean	stdin_active = true;
 cvar_t		*nostdout;
 
@@ -479,6 +477,9 @@ void Sys_Nanosleep(int nanosec)
 	WaitForSingleObject(timer, INFINITE);
 
 	CloseHandle(timer);
+#else
+	struct timespec t = { 0, nanosec };
+	nanosleep(&t, NULL);
 #endif
 }
 
@@ -690,25 +691,6 @@ void Sys_ConsoleOutput (char *string)
 
 /*
 ================
-Sys_SendKeyEvents
-
-Send Key_Event calls
-================
-*/
-void Sys_SendKeyEvents (void)
-{
-#ifndef DEDICATED_ONLY
-	IN_Commands();
-	IN_Update();
-#endif
-
-	// grab frame time
-	sys_frame_time = Sys_Milliseconds ();	// FIXME: should this be at start?
-}
-
-
-/*
-================
 Sys_GetClipboardData
 ================
 */
@@ -835,19 +817,10 @@ int main(int argc, char **argv)
 	while (1)
 	{
 		// throttle the game a little bit
-#ifdef WIN32
 #ifndef DEDICATED_ONLY
 		Sys_Nanosleep(5000);
 #else
 		Sys_Nanosleep(850000);
-#endif
-#else
-#ifndef DEDICATED_ONLY
-		struct timespec t = { 0, 5000 };
-#else
-		struct timespec t = { 0, 850000 };
-#endif
-		nanosleep(&t, NULL);
 #endif
 
 		newtime = Sys_Microseconds();

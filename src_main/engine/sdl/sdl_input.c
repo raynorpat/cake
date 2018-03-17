@@ -134,6 +134,7 @@ static cvar_t *joy_haptic_magnitude;
 static int mouse_x, mouse_y;
 static int old_mouse_x, old_mouse_y;
 static qboolean mlooking;
+int sys_frame_time;
 
 /* CVars */
 cvar_t *vid_fullscreen;
@@ -151,6 +152,8 @@ cvar_t *sensitivity;
 static cvar_t *windowed_mouse;
 
 cvar_t *in_controller;
+
+void IN_ControllerCommands(void);
 
 extern void VID_GrabInput(qboolean grab);
 
@@ -515,6 +518,11 @@ void IN_Update(void)
 		}
 	}
 
+#if SDL_VERSION_ATLEAST(2, 0, 0)
+	// Emit key events for game controller buttons, including emulated buttons for analog sticks / triggers
+	IN_ControllerCommands();
+#endif
+
 	/* Grab and ungrab the mouse if the console or the menu is opened
 	 * calling VID_GrabInput() each is a but ugly but simple and should work.
 	 * + the called SDL functions return after a cheap check, if there's
@@ -522,6 +530,9 @@ void IN_Update(void)
 	 */
 	want_grab = (vid_fullscreen->value || in_grab->value == 1 || (in_grab->value == 2 && windowed_mouse->value));
 	VID_GrabInput(want_grab);
+
+	// Grab frame time
+	sys_frame_time = Sys_Milliseconds();
 }
 
 /*
@@ -1178,19 +1189,6 @@ void IN_ControllerMove(usercmd_t *cmd)
 }
 #endif
 
-/*
-================
-IN_Commands
-
-Emit key events for game controller buttons, including emulated buttons for analog sticks/triggers
-================
-*/
-void IN_Commands(void)
-{
-#if SDL_VERSION_ATLEAST(2, 0, 0)
-	IN_ControllerCommands ();
-#endif
-}
 
 /*
 ================
