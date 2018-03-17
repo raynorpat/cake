@@ -640,7 +640,6 @@ void SpawnEntities (char *mapname, char *entities, char *spawnpoint)
 	ifeq <stat> <value>
 	ifbit <stat> <value>
 	endif
-
 #endif
 
 char *single_statusbar = 
