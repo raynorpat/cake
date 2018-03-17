@@ -1,5 +1,5 @@
 del /s /q build
 mkdir build
 cd build
-cmake -G "Visual Studio 12" .
+cmake -G "Visual Studio 12" ..
 pause
