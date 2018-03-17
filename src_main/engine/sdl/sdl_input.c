@@ -519,8 +519,10 @@ void IN_Update(void)
 	}
 
 #if SDL_VERSION_ATLEAST(2, 0, 0)
-	// Emit key events for game controller buttons, including emulated buttons for analog sticks / triggers
-	IN_ControllerCommands();
+	if (in_controller->value) {
+		// Emit key events for game controller buttons, including emulated buttons for analog sticks / triggers
+		IN_ControllerCommands();
+	}
 #endif
 
 	/* Grab and ungrab the mouse if the console or the menu is opened
@@ -1396,7 +1398,9 @@ void IN_Move(usercmd_t *cmd)
 	IN_MouseMove(cmd);
 
 #if SDL_VERSION_ATLEAST(2, 0, 0)
-	IN_ControllerMove(cmd);
+	if (in_controller->value) {
+		IN_ControllerMove(cmd);
+	}
 #endif
 }
 
