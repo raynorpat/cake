@@ -462,12 +462,11 @@ void CL_CheckForResend (void)
 /*
 ================
 CL_Connect_f
-
 ================
 */
 void CL_Connect_f (void)
 {
-	char	*server;
+	char server[256];
 
 	if (Cmd_Argc() != 2)
 	{
@@ -475,20 +474,15 @@ void CL_Connect_f (void)
 		return;
 	}
 
+	Q_strlcpy(server, Cmd_Argv(1), sizeof(server));
+
 	if (Com_ServerState ())
 	{
 		// if running a local server, kill it and reissue
 		SV_Shutdown (va ("Server quit\n", msg), false);
 	}
-	else
-	{
-		CL_Disconnect ();
-	}
 
-	server = Cmd_Argv (1);
-
-	NET_Config (true);		// allow remote
-
+	NET_Config (true); // allow remote
 	CL_Disconnect ();
 
 	cls.state = ca_connecting;
