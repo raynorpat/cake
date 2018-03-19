@@ -143,8 +143,8 @@ Q_DLL_EXPORT game_export_t *GetGameAPI (game_import_t *import)
 	return &globals;
 }
 
-#ifndef GAME_HARD_LINKED
-// this is only here so the functions in q_shared.c can link
+#ifndef MONOLITH
+// these functions are only here so the functions in q_shared.c can link
 void Sys_Error (char *error, ...)
 {
 	va_list		argptr;

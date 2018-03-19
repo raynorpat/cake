@@ -21,6 +21,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
 #include "qcommon.h"
 #include "input.h"
+#include "game.h"
 
 #include "SDL.h"
 
@@ -742,10 +743,12 @@ Sys_UnloadGame
 */
 void Sys_UnloadGame (void)
 {
+#ifndef MONOLITH
 	SDL_UnloadObject(game_library);
 
 	if (!game_library)
 		Com_Error (ERR_FATAL, "FreeLibrary failed for game library");
+#endif
 
 	game_library = NULL;
 }
@@ -759,6 +762,7 @@ Loads the game dll
 */
 void *Sys_GetGameAPI (void *parms)
 {
+#ifndef MONOLITH
 	void	* (*GetGameAPI) (void *);
 	char	name[MAX_OSPATH];
 	char	*path;
@@ -801,6 +805,11 @@ void *Sys_GetGameAPI (void *parms)
 	}
 
 	return GetGameAPI(parms);
+#else
+	extern game_export_t *GetGameAPI(game_import_t *import);
+
+	return GetGameAPI(parms);
+#endif
 }
 
 //=======================================================================

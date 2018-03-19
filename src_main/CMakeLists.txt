@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 2.8)
+cmake_minimum_required(VERSION 3.0)
 
 set(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake)
 set(CMAKE_INSTALL_PREFIX "${CMAKE_SOURCE_DIR}/..")
@@ -155,7 +155,9 @@ elseif(MSVC)
 	# for MSVC 2015+, if we want UWP support
 	if (WIN_UWP)
 		if (NOT(MSVC_VERSION LESS 1900))
-			add_definitions(-DWIN_UWP)
+			add_definitions(-DWIN_UWP
+							-DMONOLITH
+							)
 			
 			# we have to force the WindowsApp lib instead of the usual Win32 ones
 			set(CMAKE_CXX_STANDARD_LIBRARIES "WindowsApp.lib")
@@ -167,13 +169,19 @@ elseif(MSVC)
 			set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} /MDd /ZW")
 			set(CMAKE_CXX_FLAGS_MINSIZEREL "${CMAKE_CXX_FLAGS_MINSIZEREL} /MD /ZW")
 			
-			set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} /MDd")
-			set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} /MD")
-			set(CMAKE_C_FLAGS_RELWITHDEBINFO "${CMAKE_C_FLAGS_RELWITHDEBINFO} /MDd")
-			set(CMAKE_C_FLAGS_MINSIZEREL "${CMAKE_C_FLAGS_MINSIZEREL} /MD")
+			set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} /MDd /ZW")
+			set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} /MD /ZW")
+			set(CMAKE_C_FLAGS_RELWITHDEBINFO "${CMAKE_C_FLAGS_RELWITHDEBINFO} /MDd /ZW")
+			set(CMAKE_C_FLAGS_MINSIZEREL "${CMAKE_C_FLAGS_MINSIZEREL} /MD /ZW")
 			
 			# set special UWP linker flags
 			set(CMAKE_EXE_LINKER_FLAGS "/MANIFEST:NO /DEBUG:FASTLINK /WINMD")
+			link_libraries(
+				-nodefaultlib:vccorlib$<$<CONFIG:Debug>:d>
+				-nodefaultlib:msvcrt$<$<CONFIG:Debug>:d>
+				vccorlib$<$<CONFIG:Debug>:d>.lib
+				msvcrt$<$<CONFIG:Debug>:d>.lib
+			)
 		endif()
 	else()
 		# define the standard link libraries
