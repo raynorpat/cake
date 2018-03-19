@@ -15,11 +15,14 @@ Fax(714)549-0757
 
 unsigned long current_time(void) /* returns current time in msec */
 {
-#ifndef _WIN32
+#if !defined(_WIN32)
 	struct timeval time;
 
 	gettimeofday(&time, NULL);
 	return (time.tv_sec * 1000 + time.tv_usec / 1000);
+#elif defined(WIN_UWP)
+	// TODO UWP
+	return NULL;
 #else
 	return (GetTickCount());
 #endif

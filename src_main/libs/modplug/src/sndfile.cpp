@@ -23,6 +23,42 @@ extern DWORD ITReadBits(DWORD &bitbuf, UINT &bitnum, LPBYTE &ibuf, CHAR n);
 extern void ITUnpack8Bit(signed char *pSample, DWORD dwLen, LPBYTE lpMemFile, DWORD dwMemLength, BOOL b215);
 extern void ITUnpack16Bit(signed char *pSample, DWORD dwLen, LPBYTE lpMemFile, DWORD dwMemLength, BOOL b215);
 
+#ifdef WIN_UWP
+unsigned int lstrlen(const char *str)
+{
+	return str ? unsigned int(strlen(str)) : 0;
+}
+
+char *lstrcpyn(char *dst, const char *src, unsigned int len)
+{
+	if (!src || !dst)
+		return 0;
+#if defined(_MSC_VER) && _MSC_VER >= 1400
+	strncpy_s(dst, len, src, len - 1);
+#else
+	strncpy(dst, src, len);
+#endif
+	if (len > 0)
+		dst[len - 1] = '\0';
+	return dst;
+}
+
+char *lstrcpy(char *dst, const char *src)
+{
+	if (!src)
+		return 0;
+#if defined(_MSC_VER) && _MSC_VER >= 1400
+	int len = lstrlen(src);
+	// This is actually not secure!!! It will be fixed
+	// properly in a later release!
+	if (len >= 0 && strcpy_s(dst, len + 1, src) == 0)
+		return dst;
+	return 0;
+#else
+	return strcpy(dst, src);
+#endif
+}
+#endif
 
 #ifndef MODPLUG_NO_FILESAVE
 #ifndef NO_PACKING
@@ -176,7 +212,7 @@ BOOL CSoundFile::Create(LPCBYTE lpStream, DWORD dwMemLength)
 #ifdef MMCMP_SUPPORT
 		if (bMMCmp)
 		{
-			GlobalFreePtr(lpStream);
+			GlobalFreePtr((void *)lpStream);
 			lpStream = NULL;
 		}
 #endif
@@ -390,7 +426,10 @@ void CSoundFile::ResetMidiCfg()
 	lstrcpy(&m_MidiCfg.szMidiGlb[MIDIOUT_NOTEOFF*32], "9c n 0");
 	lstrcpy(&m_MidiCfg.szMidiGlb[MIDIOUT_PROGRAM*32], "Cc p");
 	lstrcpy(&m_MidiCfg.szMidiSFXExt[0], "F0F000z");
-	for (int iz=0; iz<16; iz++) wsprintf(&m_MidiCfg.szMidiZXXExt[iz*32], "F0F001%02X", iz*8);
+#ifndef WIN_UWP
+	for (int iz=0; iz<16; iz++)
+		wsprintf(&m_MidiCfg.szMidiZXXExt[iz*32], "F0F001%02X", iz*8);
+#endif
 }
 
 

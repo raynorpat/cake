@@ -72,7 +72,6 @@ void V_ClearScene (void)
 /*
 =====================
 V_AddEntity
-
 =====================
 */
 void V_AddEntity (entity_t *ent)
@@ -84,17 +83,6 @@ void V_AddEntity (entity_t *ent)
 	r_entities[r_numentities++] = *ent;
 }
 
-#ifdef _WIN32
-#ifndef _PALETTEENTRY_DEFINED
-#define _PALETTEENTRY_DEFINED
-typedef struct tagPALETTEENTRY {
-	byte        peRed;
-	byte        peGreen;
-	byte        peBlue;
-	byte        peFlags;
-} PALETTEENTRY, *PPALETTEENTRY;
-#endif // !_PALETTEENTRY_DEFINED
-#endif
 
 /*
 =====================
@@ -112,10 +100,12 @@ void V_AddParticle(vec3_t org, int color, float alpha)
 
 	VectorCopy(org, p->origin);
 
+#ifndef WIN_UWP
 	// transform 8bit colors into RGBA
 	extern unsigned d_8to24table_rgba[];
 	p->color = d_8to24table_rgba[color & 255];
 	((byte *)&p->color)[3] = (alpha > 1) ? 255 : ((alpha < 0) ? 0 : alpha * 255);
+#endif
 
 	// these are leftover for software refresh
 	p->soft_color = color;

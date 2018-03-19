@@ -129,14 +129,13 @@ Writes a delta update of an entity_state_t list to the message.
 */
 void SV_EmitPacketEntities (client_frame_t *from, client_frame_t *to, sizebuf_t *msg)
 {
-	entity_state_t	*oldent, *newent;
+	entity_state_t	*oldent = NULL, *newent = NULL;
 	int		oldindex, newindex;
 	int		oldnum, newnum;
 	int		from_num_entities;
 	int		bits;
 
 #if 0
-
 	if (numprojs)
 		MSG_WriteByte (msg, svc_packetentities2);
 	else

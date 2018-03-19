@@ -1,30 +1,31 @@
 project(refresh)
 
-# glew
-find_package(GLEW)
-if (GLEW_FOUND)
-    include_directories(${GLEW_INCLUDE_DIRS})
-    set(GLEW_LIBRARY ${GLEW_LIBRARIES})
-else (GLEW_FOUND)
-    include_directories("../libs/glew/include")
-    set(GLEW_LIBRARY "" )
-    add_definitions(-DGLEW_STATIC)
-endif (GLEW_FOUND)
-
-if (NOT GLEW_FOUND)
-    set(GLEW_INCLUDES ../libs/glew/include/GL/glew.h)
-    set(GLEW_SOURCES ../libs/glew/src/glew.c)
-    if(WIN32)
-        set(GLEW_INCLUDES ${GLEW_INCLUDES} ../libs/glew/include/GL/wglew.h)
-    else(WIN32)
-        set(GLEW_INCLUDES ${GLEW_INCLUDES} ../libs/glew/include/GL/glxew.h)
-    endif(WIN32)
-else (NOT GLEW_FOUND)
-    set(GLEW_INCLUDES "")
-    set(GLEW_SOURCES "")
-endif (NOT GLEW_FOUND)
-source_group("libs\\glew" FILES ${GLEW_INCLUDES})
-source_group("libs\\glew" FILES ${GLEW_SOURCES})
+if (NOT WIN_UWP)
+	# glew
+	find_package(GLEW)
+	if (GLEW_FOUND)
+		include_directories(${GLEW_INCLUDE_DIRS})
+		set(GLEW_LIBRARY ${GLEW_LIBRARIES})
+	else (GLEW_FOUND)
+		include_directories("../libs/glew/include")
+		set(GLEW_LIBRARY "" )
+		add_definitions(-DGLEW_STATIC)
+	endif (GLEW_FOUND)
+	if (NOT GLEW_FOUND)
+		set(GLEW_INCLUDES ../libs/glew/include/GL/glew.h)
+		set(GLEW_SOURCES ../libs/glew/src/glew.c)
+		if(WIN32)
+			set(GLEW_INCLUDES ${GLEW_INCLUDES} ../libs/glew/include/GL/wglew.h)
+		else(WIN32)
+			set(GLEW_INCLUDES ${GLEW_INCLUDES} ../libs/glew/include/GL/glxew.h)
+		endif(WIN32)
+	else (NOT GLEW_FOUND)
+		set(GLEW_INCLUDES "")
+		set(GLEW_SOURCES "")
+	endif (NOT GLEW_FOUND)
+	source_group("libs\\glew" FILES ${GLEW_INCLUDES})
+	source_group("libs\\glew" FILES ${GLEW_SOURCES})
+endif()
 
 # sdl
 if(NOT USE_SYSTEM_SDL2)
@@ -76,6 +77,7 @@ set(RENDERER_SOFT_SOURCES
 source_group("refresh\\soft" FILES ${RENDERER_SOFT_INCLUDES})
 source_group("refresh\\soft" FILES ${RENDERER_SOFT_SOURCES})
 
+if (NOT WIN_UWP)
 # OpenGL refresh backend sources
 set(RENDERER_GL_INCLUDES
 	../refresh/gl/gl_model.h
@@ -101,10 +103,11 @@ set(RENDERER_GL_SOURCES
 	../refresh/gl/gl_state.c
 	../refresh/gl/gl_warp.c
 	../refresh/gl/gl_state_dsa.cpp
+	../refresh/vid/vid_gl.c
 	)
 source_group("refresh\\gl" FILES ${RENDERER_GL_INCLUDES})
 source_group("refresh\\gl" FILES ${RENDERER_GL_SOURCES})
-
+endif()
 
 # video backend sources
 set(RENDERER_VID_INCLUDES
@@ -112,7 +115,6 @@ set(RENDERER_VID_INCLUDES
 	)
 set(RENDERER_VID_SOURCES
 	../refresh/vid/vid.c
-	../refresh/vid/vid_gl.c
 	)
 source_group("refresh\\vid" FILES ${RENDERER_VID_INCLUDES})
 source_group("refresh\\vid" FILES ${RENDERER_VID_SOURCES})

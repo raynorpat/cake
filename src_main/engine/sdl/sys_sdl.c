@@ -464,7 +464,7 @@ Sys_Nanosleep
 */
 void Sys_Nanosleep(int nanosec)
 {
-#ifdef WIN32
+#if defined(_WIN32) && !defined(WIN_UWP)
 	HANDLE timer;
 	LARGE_INTEGER li;
 
@@ -477,6 +477,8 @@ void Sys_Nanosleep(int nanosec)
 	WaitForSingleObject(timer, INFINITE);
 
 	CloseHandle(timer);
+#elif defined(WIN_UWP)
+	// TODO: UWP doesn't have Create or Set waitable timer functions
 #else
 	struct timespec t = { 0, nanosec };
 	nanosleep(&t, NULL);
@@ -522,7 +524,7 @@ void Sys_SetIcon(void)
 }
 
 
-#ifdef _WIN32
+#if defined(_WIN32) && !defined(WIN_UWP)
 /*
 ================
 Sys_SetHighDPIMode
@@ -610,7 +612,7 @@ void Sys_Init (void)
 	// init SDL timer
 	Sys_InitTime();
 
-#ifdef _WIN32
+#if defined(_WIN32) && !defined(WIN_UWP)
 	// force DPI awareness in Windows
 	Sys_SetHighDPIMode();
 #endif
@@ -627,6 +629,7 @@ Sys_ConsoleInput
 */
 char *Sys_ConsoleInput (void)
 {
+#ifndef WIN_UWP
 	static char text[256];
 	int len;
 	fd_set fdset;
@@ -668,6 +671,9 @@ char *Sys_ConsoleInput (void)
 	text[len - 1] = 0; // rip off the /n and terminate
 
 	return (text);
+#else
+	return NULL;
+#endif
 }
 
 
@@ -680,12 +686,14 @@ Print text to the dedicated console
 */
 void Sys_ConsoleOutput (char *string)
 {
+#ifndef WIN_UWP
 	if (nostdout && nostdout->value)
 	{
 		return;
 	}
 
 	fputs(string, stdout);
+#endif
 }
 
 

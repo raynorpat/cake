@@ -147,7 +147,9 @@ qboolean SNDDMA_Init(void)
 #endif
 
 	snprintf(reqdriver, sizeof(reqdriver), "%s=%s", "SDL_AUDIODRIVER", s_sdldriver->string);
+#ifndef WIN_UWP
 	putenv(reqdriver);
+#endif
 
 	Com_Printf("Starting SDL audio callback.\n");
 

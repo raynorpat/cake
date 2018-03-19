@@ -679,13 +679,12 @@ void SV_Loadgame_f (void)
 	SV_Map (false, svs.mapcmd, true);
 }
 
-
+// HACK!
 void GL_MapShot_f (char *name);
 
 /*
 ==============
 SV_Savegame_f
-
 ==============
 */
 void SV_Savegame_f (void)
@@ -742,7 +741,10 @@ void SV_Savegame_f (void)
 	// copy it off
 	SV_CopySaveGame ("current", dir);
 
+#ifndef WIN_UWP
+	// HACK!
 	GL_MapShot_f (dir);
+#endif
 
 	Com_Printf ("Done.\n");
 }

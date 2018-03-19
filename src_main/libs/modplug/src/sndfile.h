@@ -21,6 +21,15 @@ int _strnicmp(const char *str1,const char *str2, int n);
 typedef const BYTE * LPCBYTE;
 #endif
 
+#ifdef WIN_UWP
+#define GlobalFreePtr(x) free(x)
+#define GlobalAllocPtr(x, size) malloc(size)
+
+unsigned int lstrlen(const char *str);
+char *lstrcpyn(char *dst, const char *src, unsigned int len);
+char *lstrcpy(char *dst, const char *src);
+#endif
+
 #define MOD_AMIGAC2			0x1AB
 #define MAX_SAMPLE_LENGTH	16000000
 #define MAX_SAMPLE_RATE		192000

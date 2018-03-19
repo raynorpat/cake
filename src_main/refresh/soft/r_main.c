@@ -1770,6 +1770,23 @@ void SWimp_EndFrame (void)
 #endif
 }
 
+#ifdef WIN_UWP
+/*
+* (Un)grab Input
+*/
+void VID_GrabInput(qboolean grab)
+{
+	if (window != NULL) {
+		SDL_SetWindowGrab(window, grab ? SDL_TRUE : SDL_FALSE);
+	}
+
+	if (SDL_SetRelativeMouseMode(grab ? SDL_TRUE : SDL_FALSE) < 0) {
+		Com_Printf("WARNING: Setting Relative Mousemode failed, reason: %s\n", SDL_GetError());
+		Com_Printf("         You should probably update to SDL 2.0.3 or newer!\n");
+	}
+}
+#endif
+
 /*
 ** SWimp_SetMode
 */
