@@ -360,7 +360,7 @@ void IN_Update(void)
 			Key_Event((event.wheel.y > 0 ? K_MWHEELUP : K_MWHEELDOWN), false, true);
 			break;
 
-			/* fall-through */
+		case SDL_MOUSEBUTTONDOWN:
 		case SDL_MOUSEBUTTONUP:
 			switch (event.button.button)
 			{
