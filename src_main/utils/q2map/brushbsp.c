@@ -391,31 +391,6 @@ bspbrush_t *CopyBrush (bspbrush_t *brush)
 	return newbrush;
 }
 
-
-/*
-==================
-PointInLeaf
-
-==================
-*/
-node_t	*PointInLeaf (node_t *node, vec3_t point)
-{
-	vec_t		d;
-	plane_t		*plane;
-
-	while (node->planenum != PLANENUM_LEAF)
-	{
-		plane = &mapplanes[node->planenum];
-		d = DotProduct (point, plane->normal) - plane->dist;
-		if (d > 0)
-			node = node->children[0];
-		else
-			node = node->children[1];
-	}
-
-	return node;
-}
-
 //========================================================
 
 /*
@@ -1312,19 +1287,7 @@ tree_t *BrushBSP (bspbrush_t *brushlist, vec3_t mins, vec3_t maxs)
 	qprintf ("%5i visible nodes\n", c_nodes/2 - c_nonvis);
 	qprintf ("%5i nonvis nodes\n", c_nonvis);
 	qprintf ("%5i leafs\n", (c_nodes+1)/2);
-#if 0
-{	// debug code
-static node_t	*tnode;
-vec3_t	p;
 
-p[0] = -1469;
-p[1] = -118;
-p[2] = 119;
-tnode = PointInLeaf (tree->headnode, p);
-printf ("contents: %i\n", tnode->contents);
-p[0] = 0;
-}
-#endif
 	return tree;
 }
 

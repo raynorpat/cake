@@ -519,26 +519,6 @@ void ChopWindingInPlace (winding_t **inout, vec3_t normal, vec_t dist, vec_t eps
 
 /*
 =================
-ChopWinding
-
-Returns the fragment of in that is on the front side
-of the cliping plane.  The original is freed.
-=================
-*/
-winding_t	*ChopWinding (winding_t *in, vec3_t normal, vec_t dist)
-{
-	winding_t	*f, *b;
-
-	ClipWindingEpsilon (in, normal, dist, ON_EPSILON, &f, &b);
-	FreeWinding (in);
-	if (b)
-		FreeWinding (b);
-	return f;
-}
-
-
-/*
-=================
 CheckWinding
 
 =================

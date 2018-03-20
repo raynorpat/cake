@@ -331,10 +331,10 @@ void ProcessModels (void)
 
 /*
 ============
-main
+BSP_Main
 ============
 */
-int main (int argc, char **argv)
+int BSP_Main (int argc, char **argv)
 {
 	int		i;
 	double		start, end;
@@ -478,7 +478,7 @@ int main (int argc, char **argv)
 	}
 
 	if (i != argc - 1)
-		Error ("usage: qbsp3 [options] mapfile");
+		Error ("usage: q2map -bsp [options] mapfile");
 
 	start = I_FloatTime ();
 

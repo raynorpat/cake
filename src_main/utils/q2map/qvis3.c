@@ -90,30 +90,6 @@ winding_t *NewWinding (int points)
 	return w;
 }
 
-
-
-void pw(winding_t *w)
-{
-	int		i;
-	for (i=0 ; i<w->numpoints ; i++)
-		printf ("(%5.1f, %5.1f, %5.1f)\n",w->points[i][0], w->points[i][1],w->points[i][2]);
-}
-
-void prl(leaf_t *l)
-{
-	int			i;
-	portal_t	*p;
-	plane_t		pl;
-	
-	for (i=0 ; i<l->numportals ; i++)
-	{
-		p = l->portals[i];
-		pl = p->plane;
-		printf ("portal %4i to leaf %4i : %7.1f : (%4.1f, %4.1f, %4.1f)\n",(int)(p-portals),p->leaf,pl.dist, pl.normal[0], pl.normal[1], pl.normal[2]);
-	}
-}
-
-
 //=============================================================================
 
 /*
@@ -519,10 +495,10 @@ void CalcPHS (void)
 
 /*
 ===========
-main
+Vis_Main
 ===========
 */
-int main (int argc, char **argv)
+int Vis_Main (int argc, char **argv)
 {
 	char	portalfile[1024];
 	char		source[1024];
@@ -572,7 +548,7 @@ int main (int argc, char **argv)
 	}
 
 	if (i != argc - 1)
-		Error ("usage: vis [-threads #] [-level 0-4] [-fast] [-v] bspfile");
+		Error ("usage: q2map -vis [-threads #] [-level 0-4] [-fast] [-v] bspfile");
 
 	start = I_FloatTime ();
 	

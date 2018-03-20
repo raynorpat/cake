@@ -1,6 +1,7 @@
 /*
 ===========================================================================
 Copyright (C) 1997-2006 Id Software, Inc.
+Copyright (C) 2017-2018 Pat 'raynorpat' Raynor <raynorpat@gmail.com>
 
 This file is part of Quake 2 Tools source code.
 
@@ -20,37 +21,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 */
 
-#include "cmdlib.h"
-#include "mathlib.h"
-#include "bspfile.h"
-
-void main (int argc, char **argv)
-{
-	int			i;
-	char		source[1024];
-	int			size;
-	FILE		*f;
-
-	if (argc == 1)
-		Error ("usage: bspinfo bspfile [bspfiles]");
-		
-	for (i=1 ; i<argc ; i++)
-	{
-		printf ("---------------------\n");
-		strcpy (source, argv[i]);
-		DefaultExtension (source, ".bsp");
-		f = fopen (source, "rb");
-		if (f)
-		{
-			size = Q_filelength (f);
-			fclose (f);
-		}
-		else
-			size = 0;
-		printf ("%s: %i\n", source, size);
-		
-		LoadBSPFile (source);		
-		PrintBSPFileSizes ();
-		printf ("---------------------\n");
-	}
-}
+int Info_Main (int argc, char **argv);
+int BSP_Main (int argc, char **argv);
+int Vis_Main (int argc, char **argv);
+int Light_Main (int argc, char **argv);

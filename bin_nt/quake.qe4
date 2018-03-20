@@ -33,15 +33,15 @@
 // ! will be replaced with <rshcmd>
 // $ will be replaced with <remotebasepath>/maps/<currentmap>
 // @ is changed to a quote(in case you need one in the command line)
-"bsp_Relight_Qrad"  			"! qbsp3_x86 -onlyents $ && ! qrad3_x86 $"
-"bsp_novis"             		"! qbsp3_x86 $"
-"bsp_Entities"          		"! qbsp3_x86 -onlyents $"
-"bsp_FullVis (nowater)"   		"! qbsp3_x86 -nowater $ && ! qvis3_x86 $ && ! qrad3_x86 $"
-"bsp_FullVis"           		"! qbsp3_x86 $ && ! qvis3_x86 $ && ! qrad3_x86 $"
-"bsp_FullVis (no qrad)"    		"! qbsp3_x86 $ && ! qvis3_x86 $"
-"bsp_FullVis (qrad -extra)"		"! qbsp3_x86 $ && ! qvis3_x86 $ && ! qrad3_x86 -extra $"
-"bsp_FullVis (qrad -maxlt -extra)" "! qbsp3_x86 $ && ! qvis3_x86 $ && ! qrad3_x86 -maxlight 1 -extra $"
-"bsp_FullVis (nodetail, qrad -extra)" "! qbsp3_x86 -nodetail $ && ! qvis3_x86 $ && ! qrad3_x86 -extra $"
-"bsp_FastVis"           		"! qbsp3_x86 $ && ! qvis3_x86 -fast $ && ! qrad3_x86 $"
-"bsp_FastVis (nowater)"   		"! qbsp3_x86 -nowater $ && ! qvis3_x86 -fast $ && ! qrad3_x86 $"
+"bsp_Relight_Qrad"  			"! q2map_x86 -bsp -onlyents $ && ! q2map_x86 -light $"
+"bsp_novis"             		"! q2map_x86 -bsp $"
+"bsp_Entities"          		"! q2map_x86 -bsp -onlyents $"
+"bsp_FullVis (nowater)"   		"! q2map_x86 -bsp -nowater $ && ! q2map_x86 -vis $ && ! q2map_x86 -light $"
+"bsp_FullVis"           		"! q2map_x86 -bsp $ && ! q2map_x86 -vis $ && ! q2map_x86 -light $"
+"bsp_FullVis (no qrad)"    		"! q2map_x86 -bsp $ && ! q2map_x86 -vis $"
+"bsp_FullVis (qrad -extra)"		"! q2map_x86 -bsp $ && ! q2map_x86 -vis $ && ! q2map_x86 -light -extra $"
+"bsp_FullVis (qrad -maxlt -extra)" "! q2map_x86 -bsp $ && ! q2map_x86 -vis $ && ! q2map_x86 -light -maxlight 1 -extra $"
+"bsp_FullVis (nodetail, qrad -extra)" "! q2map_x86 -bsp -nodetail $ && ! q2map_x86 -vis $ && ! q2map_x86 -light -extra $"
+"bsp_FastVis"           		"! q2map_x86 -bsp $ && ! q2map_x86 -vis -fast $ && ! q2map_x86 -light $"
+"bsp_FastVis (nowater)"   		"! q2map_x86 -bsp -nowater $ && ! q2map_x86 -vis -fast $ && ! q2map_x86 -light $"
 }

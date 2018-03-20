@@ -1,4 +1,4 @@
-add_subdirectory(bsp)
+add_subdirectory(q2map)
 add_subdirectory(qdata)
 add_subdirectory(extractfunctions)
 

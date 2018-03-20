@@ -113,7 +113,6 @@ void FreeStackWinding (winding_t *w, pstack_t *stack)
 /*
 ==============
 ChopWinding
-
 ==============
 */
 winding_t	*ChopWinding (winding_t *in, pstack_t *stack, plane_t *split)

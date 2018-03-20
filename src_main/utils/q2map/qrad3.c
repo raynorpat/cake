@@ -585,12 +585,12 @@ void RadWorld (void)
 
 /*
 ========
-main
+Light_Main
 
 light modelfile
 ========
 */
-int main (int argc, char **argv)
+int Light_Main (int argc, char **argv)
 {
 	int		i;
 	double		start, end;
@@ -679,7 +679,7 @@ int main (int argc, char **argv)
 		maxlight = 255;
 
 	if (i != argc - 1)
-		Error ("usage: qrad [-v] [-chop num] [-scale num] [-ambient num] [-maxlight num] [-threads num] bspfile");
+		Error ("usage: q2map -light [-v] [-chop num] [-scale num] [-ambient num] [-maxlight num] [-threads num] bspfile");
 
 	start = I_FloatTime ();
 
