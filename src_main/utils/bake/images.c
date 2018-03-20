@@ -20,7 +20,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 */
 
-#include "qdata.h"
+#include "bake.h"
 
 char		mip_prefix[1024];		// directory to dump the textures in
 

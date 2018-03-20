@@ -1,20 +1,20 @@
-project(qdata)
+project(bake)
 
 # sources
-set(QDATA_INCLUDES
+set(BAKE_INCLUDES
 	./anorms.h
-	./qdata.h
+	./bake.h
 	)
-set(QDATA_SOURCES
+set(BAKE_SOURCES
 	./images.c
 	./models.c
-	./qdata.c
+	./bake.c
 	./sprites.c
 	./tables.c
 	./video.c
 	)
-source_group("qdata" FILES ${QDATA_INCLUDES})
-source_group("qdata" FILES ${QDATA_SOURCES})
+source_group("bake" FILES ${BAKE_INCLUDES})
+source_group("bake" FILES ${BAKE_SOURCES})
 
 set(COMMON_INCLUDES
 	../common/bspfile.h
@@ -43,7 +43,7 @@ source_group("common" FILES ${COMMON_SOURCES})
 
 
 #
-# QDATA tool
+# BAKE tool
 #
 
 # set include directories
@@ -53,7 +53,7 @@ include_directories(
 	)
 
 # build it
-add_executable(qdata ${QDATA_INCLUDES} ${QDATA_SOURCES} ${COMMON_INCLUDES} ${COMMON_SOURCES})
+add_executable(bake ${BAKE_INCLUDES} ${BAKE_SOURCES} ${COMMON_INCLUDES} ${COMMON_SOURCES})
 
-q_set_output_dir(qdata ${Q_UTILS_DIR})
-install(TARGETS qdata RUNTIME DESTINATION ${Q_UTILS_DIR})
+q_set_output_dir(bake ${Q_UTILS_DIR})
+install(TARGETS bake RUNTIME DESTINATION ${Q_UTILS_DIR})

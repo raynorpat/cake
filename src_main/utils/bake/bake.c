@@ -20,7 +20,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 */
 
-#include "qdata.h"
+#include "bake.h"
 
 qboolean	g_compress_pak;
 qboolean	g_release;			// don't grab, copy output data to new tree

@@ -1,5 +1,5 @@
 add_subdirectory(q2map)
-add_subdirectory(qdata)
+add_subdirectory(bake)
 add_subdirectory(extractfunctions)
 
 if (MSVC)
