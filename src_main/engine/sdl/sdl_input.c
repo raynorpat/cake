@@ -24,30 +24,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #endif
 #include <SDL.h>
 
-/* SDL 1.2 <-> 2.0 compatiblity cruft */
-#if SDL_VERSION_ATLEAST(2, 0, 0)
-#define SDLK_KP0 SDLK_KP_0
-#define SDLK_KP1 SDLK_KP_1
-#define SDLK_KP2 SDLK_KP_2
-#define SDLK_KP3 SDLK_KP_3
-#define SDLK_KP4 SDLK_KP_4
-#define SDLK_KP5 SDLK_KP_5
-#define SDLK_KP6 SDLK_KP_6
-#define SDLK_KP7 SDLK_KP_7
-#define SDLK_KP8 SDLK_KP_8
-#define SDLK_KP9 SDLK_KP_9
-
-#define SDLK_RMETA SDLK_RGUI
-#define SDLK_LMETA SDLK_LGUI
-
-#define SDLK_COMPOSE SDLK_APPLICATION
-
-#define SDLK_PRINT SDLK_PRINTSCREEN
-#define SDLK_SCROLLOCK SDLK_SCROLLLOCK
-#define SDLK_NUMLOCK SDLK_NUMLOCKCLEAR
-#endif
-
-#if SDL_VERSION_ATLEAST(2, 0, 0)
 enum _GamepadStickModes
 {
 	Gamepad_StickDefault = 0, Gamepad_StickSwap
@@ -60,7 +36,6 @@ typedef enum _GamepadDirection {
 	Gamepad_Left,
 	Gamepad_Right
 } dir_t;
-
 
 static cvar_t *autosensitivity;
 static cvar_t *gamepad_usernum;
@@ -125,7 +100,6 @@ static int last_haptic_efffect_size = HAPTIC_EFFECT_LAST;
 static int last_haptic_efffect_pos = 0;
 
 static cvar_t *joy_haptic_magnitude;
-#endif
 
 #define MOUSE_MAX 3000
 #define MOUSE_MIN 40
@@ -171,46 +145,46 @@ static int IN_TranslateSDLtoQ2Key(unsigned int keysym)
 	case SDLK_PAGEUP:
 		key = K_PGUP;
 		break;
-	case SDLK_KP9:
+	case SDLK_KP_9:
 		key = K_KP_PGUP;
 		break;
 	case SDLK_PAGEDOWN:
 		key = K_PGDN;
 		break;
-	case SDLK_KP3:
+	case SDLK_KP_3:
 		key = K_KP_PGDN;
 		break;
-	case SDLK_KP7:
+	case SDLK_KP_7:
 		key = K_KP_HOME;
 		break;
 	case SDLK_HOME:
 		key = K_HOME;
 		break;
-	case SDLK_KP1:
+	case SDLK_KP_1:
 		key = K_KP_END;
 		break;
 	case SDLK_END:
 		key = K_END;
 		break;
-	case SDLK_KP4:
+	case SDLK_KP_4:
 		key = K_KP_LEFTARROW;
 		break;
 	case SDLK_LEFT:
 		key = K_LEFTARROW;
 		break;
-	case SDLK_KP6:
+	case SDLK_KP_6:
 		key = K_KP_RIGHTARROW;
 		break;
 	case SDLK_RIGHT:
 		key = K_RIGHTARROW;
 		break;
-	case SDLK_KP2:
+	case SDLK_KP_2:
 		key = K_KP_DOWNARROW;
 		break;
 	case SDLK_DOWN:
 		key = K_DOWNARROW;
 		break;
-	case SDLK_KP8:
+	case SDLK_KP_8:
 		key = K_KP_UPARROW;
 		break;
 	case SDLK_UP:
@@ -293,21 +267,21 @@ static int IN_TranslateSDLtoQ2Key(unsigned int keysym)
 	case SDLK_RCTRL:
 		key = K_CTRL;
 		break;
-	case SDLK_RMETA:
-	case SDLK_LMETA:
+	case SDLK_RGUI:
+	case SDLK_LGUI:
 		key = K_COMMAND;
 		break;
 	case SDLK_RALT:
 	case SDLK_LALT:
 		key = K_ALT;
 		break;
-	case SDLK_KP5:
+	case SDLK_KP_5:
 		key = K_KP_5;
 		break;
 	case SDLK_INSERT:
 		key = K_INS;
 		break;
-	case SDLK_KP0:
+	case SDLK_KP_0:
 		key = K_KP_INS;
 		break;
 	case SDLK_KP_MULTIPLY:
@@ -325,13 +299,13 @@ static int IN_TranslateSDLtoQ2Key(unsigned int keysym)
 	case SDLK_MODE:
 		key = K_MODE;
 		break;
-	case SDLK_COMPOSE:
+	case SDLK_APPLICATION:
 		key = K_COMPOSE;
 		break;
 	case SDLK_HELP:
 		key = K_HELP;
 		break;
-	case SDLK_PRINT:
+	case SDLK_PRINTSCREEN:
 		key = K_PRINT;
 		break;
 	case SDLK_SYSREQ:
@@ -346,10 +320,10 @@ static int IN_TranslateSDLtoQ2Key(unsigned int keysym)
 	case SDLK_UNDO:
 		key = K_UNDO;
 		break;
-	case SDLK_SCROLLOCK:
+	case SDLK_SCROLLLOCK:
 		key = K_SCROLLOCK;
 		break;
-	case SDLK_NUMLOCK:
+	case SDLK_NUMLOCKCLEAR:
 		key = K_KP_NUMLOCK;
 		break;
 	case SDLK_CAPSLOCK:
@@ -381,27 +355,11 @@ void IN_Update(void)
 	{
 		switch (event.type)
 		{
-#if SDL_VERSION_ATLEAST(2, 0, 0)
 		case SDL_MOUSEWHEEL:
 			Key_Event((event.wheel.y > 0 ? K_MWHEELUP : K_MWHEELDOWN), true, true);
 			Key_Event((event.wheel.y > 0 ? K_MWHEELUP : K_MWHEELDOWN), false, true);
 			break;
-#endif
-		case SDL_MOUSEBUTTONDOWN:
-#if !SDL_VERSION_ATLEAST(2, 0, 0)
-			if (event.button.button == 4)
-			{
-				Key_Event(K_MWHEELUP, true, true);
-				Key_Event(K_MWHEELUP, false, true);
-				break;
-			}
-			else if (event.button.button == 5)
-			{
-				Key_Event(K_MWHEELDOWN, true, true);
-				Key_Event(K_MWHEELDOWN, false, true);
-				break;
-			}
-#endif
+
 			/* fall-through */
 		case SDL_MOUSEBUTTONUP:
 			switch (event.button.button)
@@ -435,7 +393,6 @@ void IN_Update(void)
 			}
 			break;
 
-#if SDL_VERSION_ATLEAST(2, 0, 0)
 		case SDL_TEXTINPUT:
 			if ((event.text.text[0] >= ' ') &&
 				(event.text.text[0] <= '~'))
@@ -444,22 +401,12 @@ void IN_Update(void)
 			}
 
 			break;
-#endif
 
 		case SDL_KEYDOWN:
-#if !SDL_VERSION_ATLEAST(2, 0, 0)
-			if ((event.key.keysym.unicode >= SDLK_SPACE) &&
-				(event.key.keysym.unicode < SDLK_DELETE))
-			{
-				Char_Event(event.key.keysym.unicode);
-			}
-#endif
-			/* fall-through */
 		case SDL_KEYUP:
 		{
 			qboolean down = (event.type == SDL_KEYDOWN);
 
-#if SDL_VERSION_ATLEAST(2, 0, 0)
 			/* workaround for AZERTY-keyboards, which don't have 1, 2, ..., 9, 0 in first row:
 			* always map those physical keys (scancodes) to those keycodes anyway
 			* see also https://bugzilla.libsdl.org/show_bug.cgi?id=3188 */
@@ -477,9 +424,8 @@ void IN_Update(void)
 				Key_Event(key, down, false);
 			}
 			else
-#endif /* SDL2; (SDL1.2 doesn't have scancodes so nothing we can do there) */
-				if ((event.key.keysym.sym >= SDLK_SPACE) &&
-					(event.key.keysym.sym < SDLK_DELETE))
+			{
+				if ((event.key.keysym.sym >= SDLK_SPACE) && (event.key.keysym.sym < SDLK_DELETE))
 				{
 					Key_Event(event.key.keysym.sym, down, false);
 				}
@@ -487,10 +433,10 @@ void IN_Update(void)
 				{
 					Key_Event(IN_TranslateSDLtoQ2Key(event.key.keysym.sym), down, true);
 				}
+			}
 		}
 		break;
 
-#if SDL_VERSION_ATLEAST(2, 0, 0)
 		case SDL_WINDOWEVENT:
 			if (event.window.event == SDL_WINDOWEVENT_FOCUS_LOST ||
 				event.window.event == SDL_WINDOWEVENT_FOCUS_GAINED)
@@ -502,14 +448,6 @@ void IN_Update(void)
 				// make sure VID_GetRefreshRate() will query from SDL again - the window might be on another display now!
 				viddef.refreshRate = -1;
 			}
-
-#else /* SDL1.2 */
-		case SDL_ACTIVEEVENT:
-			if (event.active.gain == 0 && (event.active.state & SDL_APPINPUTFOCUS))
-			{
-				Key_ClearStates();
-			}
-#endif
 			break;
 
 		case SDL_QUIT:
@@ -518,12 +456,10 @@ void IN_Update(void)
 		}
 	}
 
-#if SDL_VERSION_ATLEAST(2, 0, 0)
 	if (in_controller->value) {
 		// Emit key events for game controller buttons, including emulated buttons for analog sticks / triggers
 		IN_ControllerCommands();
 	}
-#endif
 
 	/* Grab and ungrab the mouse if the console or the menu is opened
 	 * calling VID_GrabInput() each is a but ugly but simple and should work.
@@ -542,19 +478,12 @@ void IN_Update(void)
 */
 void In_FlushQueue(void)
 {
-#if SDL_VERSION_ATLEAST(2, 0, 0)
 	SDL_FlushEvents(SDL_FIRSTEVENT, SDL_LASTEVENT);
-#else
-	SDL_Event event;
-	while (SDL_PollEvent(&event));
-#endif
-
 	Key_ClearStates();
 }
 
 /* ------------------------------------------------------------------ */
 
-#if SDL_VERSION_ATLEAST(2, 0, 0)
 /*
 * Shutdown haptic functionality
 */
@@ -1189,7 +1118,6 @@ void IN_ControllerMove(usercmd_t *cmd)
 	cl.viewangles[PITCH] -= (view[1] * view[2] * pitchInvert * gamepad_pitch_sensitivity->value) * aspeed * cl_pitchspeed->value;
 	cl.viewangles[YAW] -= (view[0] * view[2] * gamepad_yaw_sensitivity->value) * aspeed * cl_yawspeed->value;
 }
-#endif
 
 
 /*
@@ -1201,7 +1129,6 @@ Emit haptic feedback for controllers based on sound name
 */
 void Haptic_Feedback(char *name)
 {
-#if SDL_VERSION_ATLEAST(2, 0, 0)
 	int effect_type = HAPTIC_EFFECT_UNKNOWN;
 
 	if (joy_haptic_magnitude->value <= 0)
@@ -1309,7 +1236,6 @@ void Haptic_Feedback(char *name)
 
 		SDL_HapticRunEffect(currentControllerHaptic, last_haptic_efffect[last_haptic_efffect_pos].effect_id, 1);
 	}
-#endif
 }
 
 /* ------------------------------------------------------------------ */
@@ -1397,11 +1323,10 @@ void IN_Move(usercmd_t *cmd)
 {
 	IN_MouseMove(cmd);
 
-#if SDL_VERSION_ATLEAST(2, 0, 0)
-	if (in_controller->value) {
+	if (in_controller->value)
+	{
 		IN_ControllerMove(cmd);
 	}
-#endif
 }
 
 /* ------------------------------------------------------------------ */
@@ -1451,15 +1376,9 @@ void IN_Init(void)
 	Cmd_AddCommand("+mlook", IN_MLookDown);
 	Cmd_AddCommand("-mlook", IN_MLookUp);
 
-#if SDL_VERSION_ATLEAST(2, 0, 0)
 	SDL_StartTextInput();
-#else
-	SDL_EnableKeyRepeat(SDL_DEFAULT_REPEAT_DELAY, SDL_DEFAULT_REPEAT_INTERVAL);
-#endif
 
-#if SDL_VERSION_ATLEAST(2, 0, 0)
 	IN_ControllerInit();
-#endif
 
 	Com_Printf("------------------------------------\n\n");
 }
@@ -1474,7 +1393,5 @@ void IN_Shutdown(void)
 
 	Com_Printf("Shutting down input.\n");
 
-#if SDL_VERSION_ATLEAST(2, 0, 0)
 	IN_Haptic_Shutdown();
-#endif
 }

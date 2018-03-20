@@ -1354,14 +1354,10 @@ qboolean SWimp_IsVsyncActive(void)
 	return true;
 }
 
-#if SDL_VERSION_ATLEAST(2, 0, 0)
 static SDL_Window* window = NULL;
 static SDL_Surface *surface = NULL;
 static SDL_Texture *texture = NULL;
 static SDL_Renderer *renderer = NULL;
-#else
-static SDL_Surface* window = NULL;
-#endif
 
 /*
 ** SWimp_Init
@@ -1381,15 +1377,10 @@ int SWimp_Init(void)
 		}
 
 		SDL_version version;
-
-#if SDL_VERSION_ATLEAST(2, 0, 0)
 		SDL_GetVersion(&version);
+
 		const char* driverName = SDL_GetCurrentVideoDriver();
-#else
-		char driverName[64];
-		SDL_VideoDriverName(driverName, sizeof(driverName));
-		version = *SDL_Linked_Version();
-#endif
+		
 		Com_Printf("SDL version is: %i.%i.%i\n", (int)version.major, (int)version.minor, (int)version.patch);
 		Com_Printf("SDL video driver is \"%s\".\n", driverName);
 	}
@@ -1400,7 +1391,6 @@ int SWimp_Init(void)
 /*
  * Sets the window icon
  */
-#if SDL_VERSION_ATLEAST(2, 0, 0)
 
 /* The 64x64 32bit window icon */
 #include "../../engine/sdl/q2icon64.h"
@@ -1433,62 +1423,8 @@ SetSDLIcon()
 	SDL_FreeSurface(icon);
 }
 
-#else /* SDL 1.2 */
-
-/* The window icon */
-#include "../../../backends/sdl/icon/q2icon.xbm"
-
-static void
-SetSDLIcon()
-{
-	SDL_Surface *icon;
-	SDL_Color transColor, solidColor;
-	Uint8 *ptr;
-	int i;
-	int mask;
-
-	icon = SDL_CreateRGBSurface(SDL_SWSURFACE,
-			q2icon_width, q2icon_height, 8,
-			0, 0, 0, 0);
-
-	if (icon == NULL)
-	{
-		return;
-	}
-
-	SDL_SetColorKey(icon, SDL_SRCCOLORKEY, 0);
-
-	transColor.r = 255;
-	transColor.g = 255;
-	transColor.b = 255;
-
-	solidColor.r = 0;
-	solidColor.g = 0;
-	solidColor.b = 0;
-
-	SDL_SetColors(icon, &transColor, 0, 1);
-	SDL_SetColors(icon, &solidColor, 1, 1);
-
-	ptr = (Uint8 *)icon->pixels;
-
-	for (i = 0; i < sizeof(q2icon_bits); i++)
-	{
-		for (mask = 1; mask != 0x100; mask <<= 1)
-		{
-			*ptr = (q2icon_bits[i] & mask) ? 1 : 0;
-			ptr++;
-		}
-	}
-
-	SDL_WM_SetIcon(icon, NULL);
-
-	SDL_FreeSurface(icon);
-}
-#endif /* SDL 1.2 */
-
 static int IsFullscreen()
 {
-#if SDL_VERSION_ATLEAST(2, 0, 0)
 	if (SDL_GetWindowFlags(window) & SDL_WINDOW_FULLSCREEN_DESKTOP) {
 		return 1;
 	} else if (SDL_GetWindowFlags(window) & SDL_WINDOW_FULLSCREEN) {
@@ -1496,9 +1432,6 @@ static int IsFullscreen()
 	} else {
 		return 0;
 	}
-#else
-	return !!(window->flags & SDL_FULLSCREEN);
-#endif
 }
 
 static qboolean GetWindowSize(int* w, int* h)
@@ -1506,7 +1439,6 @@ static qboolean GetWindowSize(int* w, int* h)
 	if(window == NULL || w == NULL || h == NULL)
 		return false;
 
-#if SDL_VERSION_ATLEAST(2, 0, 0)
 	SDL_DisplayMode m;
 	if(SDL_GetWindowDisplayMode(window, &m) != 0)
 	{
@@ -1515,10 +1447,6 @@ static qboolean GetWindowSize(int* w, int* h)
 	}
 	*w = m.w;
 	*h = m.h;
-#else
-	*w = window->w;
-	*h = window->h;
-#endif
 
 	return true;
 }
@@ -1533,26 +1461,16 @@ int R_InitContext(void* win)
 		return false;
 	}
 
-#if SDL_VERSION_ATLEAST(2, 0, 0)
 	window = (SDL_Window*)win;
-#else // SDL 1.2
-	window = (SDL_Surface*)win;
-#endif
 
 	/* Window title - set here so we can display renderer name in it */
 	snprintf(title, sizeof(title), va("Quake II %d", VERSION));
-#if SDL_VERSION_ATLEAST(2, 0, 0)
 	SDL_SetWindowTitle(window, title);
-#else
-	SDL_WM_SetCaption(title, title);
-#endif
-
 	return true;
 }
 
 static qboolean CreateSDLWindow(int flags, int w, int h)
 {
-#if SDL_VERSION_ATLEAST(2, 0, 0)
 	Uint32 Rmask, Gmask, Bmask, Amask;
 	int bpp;
 	int windowPos = SDL_WINDOWPOS_UNDEFINED;
@@ -1570,11 +1488,6 @@ static qboolean CreateSDLWindow(int flags, int w, int h)
 								   SDL_TEXTUREACCESS_STREAMING,
 								   w, h);
 	return window != NULL;
-#else
-	window = SDL_SetVideoMode(w, h, 0, flags);
-	SDL_EnableUNICODE(SDL_TRUE);
-	return window != NULL;
-#endif
 }
 
 static void SWimp_DestroyRender(void)
@@ -1589,7 +1502,6 @@ static void SWimp_DestroyRender(void)
 	}
 	vid_polygon_spans = NULL;
 
-#if SDL_VERSION_ATLEAST(2, 0, 0)
 	if (texture)
 	{
 		SDL_DestroyTexture(texture);
@@ -1611,11 +1523,7 @@ static void SWimp_DestroyRender(void)
 	/* Is the surface used? */
 	if (window)
 		SDL_DestroyWindow(window);
-#else
-	/* Is the surface used? */
-	if (window)
-		SDL_FreeSurface(window);
-#endif
+
 	window = NULL;
 }
 
@@ -1637,29 +1545,18 @@ static qboolean SWimp_InitGraphics(qboolean fullscreen, int *pwidth, int *pheigh
 	int height = *pheight;
 	unsigned int fs_flag = 0;
 
-#if SDL_VERSION_ATLEAST(2, 0, 0)
 	if (fullscreen == 1) {
 		fs_flag = SDL_WINDOW_FULLSCREEN_DESKTOP;
 	} else if (fullscreen == 2) {
 		fs_flag = SDL_WINDOW_FULLSCREEN;
 	}
-#else
-	if (fullscreen) {
-		fs_flag = SDL_FULLSCREEN;
-	}
-#endif
 
 	if (GetWindowSize(&curWidth, &curHeight) && (curWidth == width) && (curHeight == height))
 	{
 		/* If we want fullscreen, but aren't */
 		if (fullscreen != IsFullscreen())
 		{
-#if SDL_VERSION_ATLEAST(2, 0, 0)
 			SDL_SetWindowFullscreen(window, fs_flag);
-#else
-			SDL_WM_ToggleFullScreen(window);
-#endif
-
 			Cvar_SetValue("vid_fullscreen", fullscreen);
 		}
 
@@ -1674,11 +1571,6 @@ static qboolean SWimp_InitGraphics(qboolean fullscreen, int *pwidth, int *pheigh
 
 	// let the sound and input subsystems know about the new window
 	VID_NewWindow (vid.width, vid.height);
-
-#if !SDL_VERSION_ATLEAST(2, 0, 0)
-	/* Set window icon - For SDL1.2, this must be done before creating the window */
-	SetSDLIcon();
-#endif
 
 	flags = SDL_SWSURFACE;
 	if (fs_flag)
@@ -1705,11 +1597,8 @@ static qboolean SWimp_InitGraphics(qboolean fullscreen, int *pwidth, int *pheigh
 		return false;
 	}
 
-	/* Note: window title is now set in re.InitContext() to include renderer name */
-#if SDL_VERSION_ATLEAST(2, 0, 0)
-	/* Set the window icon - For SDL2, this must be done after creating the window */
+	/* Set the window icon - this must be done after creating the window */
 	SetSDLIcon();
-#endif
 
 	/* No cursor */
 	SDL_ShowCursor(0);
@@ -1734,40 +1623,23 @@ void SWimp_EndFrame (void)
 {
 	int y,x;
 	const unsigned char *pallete = (const unsigned char *)sw_state.currentpalette;
-#if SDL_VERSION_ATLEAST(2, 0, 0)
 	Uint32 * pixels = (Uint32 *)surface->pixels;
-#else
-	Uint32 * pixels = (Uint32 *)window->pixels;
-#endif
+
 	for (y=0; y < vid.height;  y++) {
 		for (x=0; x < vid.width; x ++) {
-#if SDL_VERSION_ATLEAST(2, 0, 0)
 			Uint32 color = SDL_MapRGB(surface->format,
 						  pallete[vid_buffer[y * vid.width + x] * 4 + 0], // red
 						  pallete[vid_buffer[y * vid.width + x] * 4 + 1], // green
 						  pallete[vid_buffer[y * vid.width + x] * 4 + 2]  //blue
 						);
 			pixels[y * surface->pitch / sizeof(Uint32) + x] = color;
-#else
-			Uint32 color = SDL_MapRGB(window->format,
-						  pallete[vid_buffer[y * vid.width + x] * 4 + 0], // red
-						  pallete[vid_buffer[y * vid.width + x] * 4 + 1], // green
-						  pallete[vid_buffer[y * vid.width + x] * 4 + 2]  //blue
-						);
-			pixels[y * window->pitch / sizeof(Uint32) + x] = color;
-#endif
 		}
 	}
 
-#if SDL_VERSION_ATLEAST(2, 0, 0)
 	SDL_UpdateTexture(texture, NULL, surface->pixels, surface->pitch);
 	SDL_RenderClear(renderer);
 	SDL_RenderCopy(renderer, texture, NULL, NULL);
 	SDL_RenderPresent(renderer);
-#else
-	/* SDL_Flip(window); */
-	SDL_UpdateRect(window, 0, 0, 0, 0);
-#endif
 }
 
 #ifdef WIN_UWP
