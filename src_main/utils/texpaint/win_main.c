@@ -212,7 +212,6 @@ BOOL bSetupPixelFormat(HDC hDC)
 	0, 0, 0				// layer masks ignored
     };
     int pixelformat = 0;
-	PIXELFORMATDESCRIPTOR newp;
 
     if ( (pixelformat = ChoosePixelFormat(hDC, &pfd)) == 0 )
 	{

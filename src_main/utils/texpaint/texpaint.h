@@ -86,3 +86,30 @@ typedef void (APIENTRY *BINDTEXFUNCPTR)(GLenum, GLuint);
 
 extern	BINDTEXFUNCPTR BindTextureEXT;
 
+// win_main.c
+void Sys_Error(char *error, ...);
+BOOL bSetupPixelFormat(HDC hDC);
+BOOL RestoreWindowState(HWND hWnd, const char *pszName);
+void Main_Create(HINSTANCE hInstance);
+void ResampleSkin(void);
+
+// win_skin.c
+void WSkin_Create(HINSTANCE hInstance);
+void NewSkin(void);
+void Skin_SaveFile(char *name);
+void Skin_LoadFile(char *name);
+void SetSkin(int index, int pixel);
+void Undo(void);
+void Redo(void);
+
+// win_cam.c
+void WCam_Create(HINSTANCE hInstance);
+void InitIndexTexture(void);
+
+// win_pal.c
+void WPal_Create(HINSTANCE hInstance);
+void Pal_SetIndex(int index);
+
+// texpaint.c
+void LoadTriFile(char *name);
+void CalcTmCoords(void);
