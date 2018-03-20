@@ -285,7 +285,7 @@ if (MONOLITH)
 		${GAME_SOURCES}
 		)
 
-	add_definitions(-D__MONOLITH_GAME__)
+	add_definitions(-DMONOLITH)
 endif()
 
 if (WIN_UWP)
