@@ -75,3 +75,6 @@ baseq2/video/*.cin
 *.lst
 *.bak
 *.tmp
+*.manifest
+*.pri
+*.winmd
