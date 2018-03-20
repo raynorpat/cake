@@ -13,6 +13,7 @@ else (GLEW_FOUND)
     include_directories("../libs/glew/include")
     set(GLEW_LIBRARY "")
     add_definitions(-DGLEW_STATIC)
+	message(STATUS "Using builtin glew")
 endif (GLEW_FOUND)
 
 # sdl
@@ -31,6 +32,7 @@ if (MAD_FOUND)
 else (MAD_FOUND)
     include_directories("../libs/mad/include")
     set(MAD_LIBRARY "" )
+	message(STATUS "Using builtin libmad")
 endif (MAD_FOUND)
 
 # libmodplug
@@ -41,17 +43,11 @@ if (MODPLUG_FOUND)
 else (MODPLUG_FOUND)
     include_directories("../libs/modplug/src")
     set(MODPLUG_LIBRARY "" )
+	message(STATUS "Using builtin libmodplug")
 endif (MODPLUG_FOUND)
 
-# libgamespy
-#find_package(GAMESPY)
-if (GAMESPY_FOUND)
-    include_directories(${GAMESPY_INCLUDE_DIRS})
-    set(GAMESPY_LIBRARY ${GAMESPY_LIBRARIES})
-else (GAMESPY_FOUND)
-    include_directories("../libs/gamespy")
-    set(GAMESPY_LIBRARY "" )
-endif (GAMESPY_FOUND)
+# gamespy library
+include_directories("../libs/gamespy")
 
 # stb headers
 include_directories("../libs/stb")
@@ -232,17 +228,11 @@ endif (NOT MODPLUG_FOUND)
 source_group("libs\\modplug" FILES ${MODPLUG_INCLUDES})
 source_group("libs\\modplug" FILES ${MODPLUG_SOURCES})
 
-# libgamespy
-if (NOT GAMESPY_FOUND)
-	file(GLOB GAMESPY_INCLUDES ../libs/gamespy/*.h ../libs/gamespy/CEngine/*.h)
-	file(GLOB GAMESPY_SOURCES ../libs/gamespy/*.c ../libs/gamespy/CEngine/*.c)
-else (NOT GAMESPY_FOUND)
-    set(GAMESPY_INCLUDES "")
-    set(GAMESPY_SOURCES "")
-endif (NOT GAMESPY_FOUND)
+# gamespy library
+file(GLOB GAMESPY_INCLUDES ../libs/gamespy/*.h ../libs/gamespy/CEngine/*.h)
+file(GLOB GAMESPY_SOURCES ../libs/gamespy/*.c ../libs/gamespy/CEngine/*.c)
 source_group("libs\\gamespy" FILES ${GAMESPY_INCLUDES})
 source_group("libs\\gamespy" FILES ${GAMESPY_SOURCES})
-
 
 
 #
@@ -290,7 +280,6 @@ endif()
 
 if (WIN_UWP)
 	# set manifest names and guid
-	set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 	set(APP_MANIFEST_NAME Package.appxmanifest)
 	set(EXE_NAME cake)
 	set(SHORT_NAME ${EXE_NAME})
