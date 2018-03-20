@@ -501,10 +501,11 @@ Vis_Main
 int Vis_Main (int argc, char **argv)
 {
 	char	portalfile[1024];
-	char		source[1024];
-	char		name[1024];
+	char	source[1024];
+	char	name[1024];
 	int		i;
-	double		start, end;
+	double	start, end;
+	int		total_vis_time;
 		
 	printf ("---- vis ----\n");
 
@@ -584,7 +585,12 @@ int Vis_Main (int argc, char **argv)
 	WriteBSPFile (name);	
 	
 	end = I_FloatTime ();
-	printf ("%5.1f seconds elapsed\n", end-start);
+	total_vis_time = (int) ( end - start );
+	printf ("\nVIS Time: ");
+	if ( total_vis_time > 59 ) {
+		printf( "%d minutes ", total_vis_time / 60 );
+	}
+	printf( "%d seconds\n", total_vis_time % 60 );
 
 	return 0;
 }

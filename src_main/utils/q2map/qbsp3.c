@@ -337,8 +337,9 @@ BSP_Main
 int BSP_Main (int argc, char **argv)
 {
 	int		i;
-	double		start, end;
-	char		path[1024];
+	double	start, end;
+	char	path[1024];
+	int 	total_bsp_time;
 
 	printf ("---- qbsp3 ----\n");
 
@@ -530,7 +531,12 @@ numthreads = 1;		// multiple threads aren't helping...
 	}
 
 	end = I_FloatTime ();
-	printf ("%5.0f seconds elapsed\n", end-start);
+	total_bsp_time = (int) ( end - start );
+	printf( "\nBSP Time: " );
+	if ( total_bsp_time > 59 ) {
+		printf( "%d minutes ", total_bsp_time / 60 );
+	}
+	printf( "%d seconds\n", total_bsp_time % 60 );
 
 	return 0;
 }

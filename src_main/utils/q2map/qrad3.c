@@ -593,8 +593,9 @@ light modelfile
 int Light_Main (int argc, char **argv)
 {
 	int		i;
-	double		start, end;
-	char		name[1024];
+	double	start, end;
+	char	name[1024];
+	int 	total_rad_time;
 
 	printf ("----- Radiosity ----\n");
 
@@ -688,8 +689,6 @@ int Light_Main (int argc, char **argv)
 	StripExtension (source);
 	DefaultExtension (source, ".bsp");
 
-//	ReadLightFile ();
-
 	sprintf (name, "%s%s", inbase, source);
 	printf ("reading %s\n", name);
 	LoadBSPFile (name);
@@ -710,7 +709,12 @@ int Light_Main (int argc, char **argv)
 	WriteBSPFile (name);
 
 	end = I_FloatTime ();
-	printf ("%5.0f seconds elapsed\n", end-start);
+	total_rad_time = (int) ( end - start );
+	printf( "\nRAD Time: " );
+	if ( total_rad_time > 59 ) {
+		printf( "%d minutes ", total_rad_time / 60 );
+	}
+	printf( "%d seconds\n", total_rad_time % 60 );
 	
 	return 0;
 }
