@@ -371,6 +371,8 @@ typedef struct
 	const char *vendor_string;
 	const char *version_string;
 	const char *extension_string;
+
+	qboolean	gl_ext_GPUShader5_support;
 } glconfig_t;
 
 typedef struct

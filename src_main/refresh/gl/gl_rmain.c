@@ -769,6 +769,35 @@ static qboolean RMain_CheckFor_DirectStateAccess(void)
 	return true;
 }
 
+static void RMain_CheckFor_GPUShader5(void)
+{
+	VID_Printf(PRINT_ALL, "RMain_CheckExtension : checking for GL_ARB_gpu_shader5...\n");
+
+	// check in glew first...
+	if (!glewIsSupported("GL_ARB_gpu_shader5 "))
+	{
+		// lets double check the actual extension list we grabbed earlier,
+		// glew is known to be buggy checking for extensions...
+		if (!strcmp("GL_ARB_gpu_shader5 ", gl_config.extension_string))
+		{
+			// found it in our list
+			VID_Printf(PRINT_ALL, " ...found GL_ARB_gpu_shader5\n");
+			gl_config.gl_ext_GPUShader5_support = true;
+			return;
+		}
+	}
+	else
+	{
+		// found it in glew's list
+		VID_Printf(PRINT_ALL, " ...found GL_ARB_gpu_shader5\n");
+		gl_config.gl_ext_GPUShader5_support = true;
+		return;
+	}
+
+	VID_Printf(PRINT_ALL, " ...missing GL_ARB_gpu_shader5\n");
+	gl_config.gl_ext_GPUShader5_support = false;
+}
+
 #define R_MODE_FALLBACK 10 // 1024x768
 
 static int SetMode_impl(int mode, int fullscreen)
@@ -864,6 +893,9 @@ success:
 		VID_Printf(PRINT_ALL, "RMain_CheckExtension : unable to emulate GL_EXT_direct_state_access\n");
 		return false;
 	}
+
+	// check for GPUShader5 support
+	RMain_CheckFor_GPUShader5();
 
 	return true;
 }
