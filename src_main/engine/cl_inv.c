@@ -71,7 +71,7 @@ CL_DrawInventory
 void CL_DrawInventory (void)
 {
 	int		i, j;
-	int		num, selected_num, item;
+	int		num = 0, selected_num = 0, item;
 	int		index[MAX_ITEMS];
 	char	string[1024];
 	int		x, y;
@@ -83,9 +83,6 @@ void CL_DrawInventory (void)
 	float	scale = SCR_GetHUDScale();
 
 	selected = cl.frame.playerstate.stats[STAT_SELECTED_ITEM];
-
-	num = 0;
-	selected_num = 0;
 
 	for (i = 0; i < MAX_ITEMS; i++)
 	{

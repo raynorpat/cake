@@ -634,7 +634,7 @@ SCR_PlayCinematic
 void SCR_PlayCinematic (char *arg)
 {
 	int		width, height;
-	byte	*palette;
+	byte	*palette = NULL;
 	char	name[MAX_OSPATH], *dot;
 	int		old_khz;
 
