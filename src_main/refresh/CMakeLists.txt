@@ -130,6 +130,7 @@ include_directories(
 			../engine
 			../shared
 			../libs/stb
+			../libs/libcurl/include # because client.h includes curl.h
             )
 
 # build the refresh library
