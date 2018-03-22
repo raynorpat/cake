@@ -38,37 +38,27 @@ CL_ParseEntityBits
 Returns the entity number and the header bits
 =================
 */
-int	bitcounts[32];	/// just for protocol profiling
 int CL_ParseEntityBits (unsigned *bits)
 {
 	unsigned	b, total;
-	int			i;
 	int			number;
 
 	total = MSG_ReadByte (&net_message);
-
 	if (total & U_MOREBITS1)
 	{
 		b = MSG_ReadByte (&net_message);
 		total |= b << 8;
 	}
-
 	if (total & U_MOREBITS2)
 	{
 		b = MSG_ReadByte (&net_message);
 		total |= b << 16;
 	}
-
 	if (total & U_MOREBITS3)
 	{
 		b = MSG_ReadByte (&net_message);
 		total |= b << 24;
 	}
-
-	// count the bits for net profiling
-	for (i = 0; i < 32; i++)
-		if (total& (1 << i))
-			bitcounts[i]++;
 
 	if (total & U_NUMBER16)
 		number = MSG_ReadShort (&net_message);
@@ -136,19 +126,15 @@ void CL_ParseDelta (entity_state_t *from, entity_state_t *to, int number, int bi
 
 	if (bits & U_ORIGIN1)
 		to->origin[0] = MSG_ReadCoord (&net_message);
-
 	if (bits & U_ORIGIN2)
 		to->origin[1] = MSG_ReadCoord (&net_message);
-
 	if (bits & U_ORIGIN3)
 		to->origin[2] = MSG_ReadCoord (&net_message);
 
 	if (bits & U_ANGLE1)
 		to->angles[0] = MSG_ReadAngle (&net_message);
-
 	if (bits & U_ANGLE2)
 		to->angles[1] = MSG_ReadAngle (&net_message);
-
 	if (bits & U_ANGLE3)
 		to->angles[2] = MSG_ReadAngle (&net_message);
 
@@ -267,7 +253,6 @@ void CL_ParsePacketEntities (frame_t *oldframe, frame_t *newframe)
 	while (1)
 	{
 		newnum = CL_ParseEntityBits (&bits);
-
 		if (newnum >= MAX_EDICTS)
 			Com_Error (ERR_DROP, "CL_ParsePacketEntities: bad number:%i", newnum);
 
@@ -491,7 +476,6 @@ void CL_ParsePlayerstate (frame_t *oldframe, frame_t *newframe)
 
 	// parse stats
 	statbits = MSG_ReadLong (&net_message);
-
 	for (i = 0; i < MAX_STATS; i++)
 		if (statbits & (1 << i))
 			state->stats[i] = MSG_ReadShort (&net_message);
@@ -513,13 +497,8 @@ void CL_FireEntityEvents (frame_t *frame)
 	{
 		num = (frame->parse_entities + pnum) & (MAX_PARSE_ENTITIES - 1);
 		s1 = &cl_parse_entities[num];
-
 		if (s1->event)
 			CL_EntityEvent (s1);
-
-		// EF_TELEPORTER acts like an event, but is not cleared each frame
-		if (s1->effects & EF_TELEPORTER)
-			CL_TeleporterParticles (s1);
 	}
 }
 
@@ -577,11 +556,11 @@ void CL_ParseFrame (void)
 		{
 			// The frame that the server did the delta from
 			// is too old, so we can't reconstruct it properly.
-			Com_Printf ("Delta frame too old.\n");
+			Com_DPrintf ("Delta frame too old.\n");
 		}
 		else if (cl.parse_entities - old->parse_entities > MAX_PARSE_ENTITIES - 128)
 		{
-			Com_Printf ("Delta parse_entities too old.\n");
+			Com_DPrintf ("Delta parse_entities too old.\n");
 		}
 		else
 			cl.frame.valid = true;	// valid delta parse
@@ -1092,6 +1071,12 @@ void CL_AddPacketEntities (frame_t *frame)
 			ent.flags |= (RF_TRANSLUCENT | RF_SHELL_GREEN);
 			ent.alpha = 0.30;
 			V_AddEntity (&ent);
+		}
+
+		// add teleporter particles
+		if (effects & EF_TELEPORTER)
+		{
+			CL_TeleporterParticles (s1);
 		}
 
 		// add automatic particle trails
