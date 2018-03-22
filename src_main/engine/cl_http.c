@@ -17,7 +17,7 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
 */
-// cl_http.c -- HTTP downloading
+// cl_http.c -- HTTP downloading via libcurl
 
 #include "client.h"
 
@@ -280,6 +280,7 @@ static void CL_StartHTTPDownload (dlqueue_t *entry, dlhandle_t *dl)
 	curl_easy_setopt (dl->curl, CURLOPT_USERAGENT, Cvar_VariableString ("version"));
 	curl_easy_setopt (dl->curl, CURLOPT_REFERER, cls.downloadReferer);
 	curl_easy_setopt (dl->curl, CURLOPT_URL, dl->URL);
+	curl_easy_setopt (dl->curl, CURLOPT_PROTOCOLS, CURLPROTO_HTTP | CURLPROTO_HTTPS | CURLPROTO_FTP | CURLPROTO_FTPS);
 
 	if (curl_multi_add_handle (multi, dl->curl) != CURLM_OK)
 	{
