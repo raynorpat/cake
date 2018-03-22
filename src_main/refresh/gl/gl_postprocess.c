@@ -87,25 +87,6 @@ void RPostProcess_CreatePrograms(void)
 	byte lumdata[1][1][4];
 	int width, height, x, y;
 
-	// do functionality test
-	if (!GLEW_ARB_texture_gather || !gl_config.gl_ext_GPUShader5_support)
-	{
-		// these won't quite work out that great on lesser hardware,
-		// so skip post-processing when the hardware doesn't support it
-		r_skippost = true;
-		return;
-	}
-
-	// create shaders
-	gl_compositeprog = GL_CreateShaderFromName("glsl/composite.glsl", "CompositeVS", "CompositeFS");
-	gl_postprog = GL_CreateShaderFromName("glsl/post.glsl", "PostVS", "PostFS");
-	gl_ssaoprog = GL_CreateShaderFromName("glsl/ssao.glsl", "SSAOVS", "SSAOFS");
-	gl_fxaaprog = GL_CreateShaderFromName("glsl/fxaa.glsl", "FXAAVS", "FXAAFS");
-
-	// create compute shaders
-	gl_calcLumProg = GL_CreateComputeShaderFromName("glsl/calcLum.cs");
-	gl_calcAdaptiveLumProg = GL_CreateComputeShaderFromName("glsl/calcAdaptiveLum.cs");
-
 	// create texture for underwater warp gradient
 	LoadTGAFile("env/warpgradient.tga", &data, &width, &height);
 	if (data)
@@ -244,6 +225,25 @@ void RPostProcess_CreatePrograms(void)
 
 	glEnableVertexArrayAttribEXT (r_postvao, 2);
 	glVertexArrayVertexAttribOffsetEXT (r_postvao, r_postvbo, 2, 2, GL_FLOAT, GL_FALSE, sizeof (wwvert_t), 8);
+
+	// do functionality test, as we don't want to load shaders that we don't need
+	if (!GLEW_ARB_texture_gather || !gl_config.gl_ext_GPUShader5_support || !gl_config.gl_ext_computeShader_support)
+	{
+		// these won't quite work out that great on lesser hardware,
+		// so skip post-processing when the hardware doesn't support it
+		r_skippost = true;
+		return;
+	}
+
+	// create shaders
+	gl_compositeprog = GL_CreateShaderFromName("glsl/composite.glsl", "CompositeVS", "CompositeFS");
+	gl_postprog = GL_CreateShaderFromName("glsl/post.glsl", "PostVS", "PostFS");
+	gl_ssaoprog = GL_CreateShaderFromName("glsl/ssao.glsl", "SSAOVS", "SSAOFS");
+	gl_fxaaprog = GL_CreateShaderFromName("glsl/fxaa.glsl", "FXAAVS", "FXAAFS");
+
+	// create compute shaders
+	gl_calcLumProg = GL_CreateComputeShaderFromName("glsl/calcLum.cs");
+	gl_calcAdaptiveLumProg = GL_CreateComputeShaderFromName("glsl/calcAdaptiveLum.cs");
 
 	// set up shader uniforms
 	u_compositeMode = glGetUniformLocation(gl_compositeprog, "compositeMode");

@@ -798,6 +798,35 @@ static void RMain_CheckFor_GPUShader5(void)
 	gl_config.gl_ext_GPUShader5_support = false;
 }
 
+static void RMain_CheckFor_ComputeShader(void)
+{
+	VID_Printf(PRINT_ALL, "RMain_CheckExtension : checking for GL_ARB_compute_shader...\n");
+
+	// check in glew first...
+	if (!glewIsSupported("GL_ARB_compute_shader "))
+	{
+		// lets double check the actual extension list we grabbed earlier,
+		// glew is known to be buggy checking for extensions...
+		if (!strcmp("GL_ARB_compute_shader ", gl_config.extension_string))
+		{
+			// found it in our list
+			VID_Printf(PRINT_ALL, " ...found GL_ARB_compute_shader\n");
+			gl_config.gl_ext_computeShader_support = true;
+			return;
+		}
+	}
+	else
+	{
+		// found it in glew's list
+		VID_Printf(PRINT_ALL, " ...found GL_ARB_compute_shader\n");
+		gl_config.gl_ext_computeShader_support = true;
+		return;
+	}
+
+	VID_Printf(PRINT_ALL, " ...missing GL_ARB_compute_shader\n");
+	gl_config.gl_ext_computeShader_support = false;
+}
+
 #define R_MODE_FALLBACK 10 // 1024x768
 
 static int SetMode_impl(int mode, int fullscreen)
@@ -896,6 +925,9 @@ success:
 
 	// check for GPUShader5 support
 	RMain_CheckFor_GPUShader5();
+
+	// check for compute shader support
+	RMain_CheckFor_ComputeShader();
 
 	return true;
 }

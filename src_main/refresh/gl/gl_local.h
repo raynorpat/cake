@@ -373,6 +373,7 @@ typedef struct
 	const char *extension_string;
 
 	qboolean	gl_ext_GPUShader5_support;
+	qboolean	gl_ext_computeShader_support;
 } glconfig_t;
 
 typedef struct
