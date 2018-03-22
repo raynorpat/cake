@@ -464,7 +464,7 @@ main
 */
 int main (int argc, char **argv)
 {
-	static	int		i;		// VC4.2 compiler bug if auto...
+	int		i;
 	char	path[1024];
 
 	ExpandWildcards (&argc, &argv);
@@ -517,7 +517,7 @@ int main (int argc, char **argv)
 	}
 
 	if (i >= argc)
-		Error ("usage: qgrab [-archive <directory>] [-release <directory>] [-only <model>] [-3ds] file.qgr");
+		Error ("usage: bake [-archive <directory>] [-release <directory>] [-only <model>] [-3ds] file.qdt");
 
 	if (do3ds)
 		trifileext = ext_3ds;
@@ -527,15 +527,14 @@ int main (int argc, char **argv)
 	for ( ; i<argc ; i++)
 	{
 		printf ("--------------- %s ---------------\n", argv[i]);
+
 		// load the script
 		strcpy (path, argv[i]);
 		DefaultExtension (path, ".qdt");
 		SetQdirFromPath (path);
 		LoadScriptFile (ExpandArg(path));
 
-		//
 		// parse it
-		//
 		ParseScript ();
 
 		// write out the last model
