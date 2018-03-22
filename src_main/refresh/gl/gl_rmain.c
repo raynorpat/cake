@@ -24,7 +24,6 @@ void RSky_BeginFrame (void);
 void RWarp_BeginFrame (void);
 void RSurf_BeginFrame (void);
 
-
 GLuint gl_sharedubo = 0;
 
 void GL_Clear (GLbitfield mask);
