@@ -47,34 +47,11 @@ option(ONATIVE "Optimize for the host CPU" OFF)
 option(WIN_UWP "Build for Microsoft Universal Windows Platform" OFF)
 option(UTILS "Build utilities and tools" ON)
 
-option(USE_SYSTEM_LIBCURL "Use the system libcurl instead of the bundled one" OFF)
-option(USE_SYSTEM_LIBMAD "Use the system libmad instead of the bundled one" OFF)
-option(USE_SYSTEM_LIBMODPLUG "Use the system libmodplug instead of the bundled one" OFF)
-option(USE_SYSTEM_LIBGLEW "Use the system libglew instead of the bundled one" OFF)
-option(USE_SYSTEM_SDL2 "Use the system SDL2 instead of the bundled one" OFF)
-
 set(CPU_OPTIMIZATION "-mmmx -msse -msse2" CACHE STRING "Which CPU specific optimitations should be used beside the compiler's default?")
 
 #
 # Compiler settings
 #
-
-# System Library defines if using system libs (most likely for Linux or BSD)
-if (USE_SYSTEM_LIBCURL)
-	add_definitions(-DUSE_SYSTEM_LIBCURL)
-endif()
-if (USE_SYSTEM_LIBMAD)
-	add_definitions(-DUSE_SYSTEM_LIBMAD)
-endif()
-if (USE_SYSTEM_LIBMODPLUG)
-	add_definitions(-DUSE_SYSTEM_LIBMODPLUG)
-endif()
-if (USE_SYSTEM_LIBGLEW)
-	add_definitions(-DUSE_SYSTEM_LIBGLEW)
-endif()
-if (USE_SYSTEM_SDL2)
-	add_definitions(-DUSE_SYSTEM_SDL2)
-endif()
 
 # Windows specific settings
 if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")

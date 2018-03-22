@@ -4,13 +4,12 @@ project(cake)
 # Libraries
 #
 
-# sdl
+# sdl2
 if(NOT USE_SYSTEM_SDL2)
 	SET(SDL2_PATH ../libs/SDL2)
 endif()
 find_package(SDL2 REQUIRED)
 include_directories(${SDL2_INCLUDE_DIR})
-set(SDLx_LIBRARY ${SDL2_LIBRARY})
 
 # glew
 find_package(GLEW)
@@ -369,19 +368,22 @@ if(MSVC)
 	add_executable(cake WIN32 ${CAKE_INCLUDES} ${CAKE_SOURCES})
 if (NOT WIN_UWP)
 	target_link_libraries(cake PRIVATE
-		${SDLx_LIBRARY}
+		${SDL2_LIBRARY}
 		opengl32
 		glu32
 		dbghelp
 		iphlpapi
 		wsock32.lib
+		${CURL_LIBRARY}
+		${MODPLUG_LIBRARY}
+		${MAD_LIBRARY}
         ${GLEW_LIBRARY}
 		${CMAKE_DL_LIBS}
 		refresh
 		)
 else()
 	target_link_libraries(cake PRIVATE
-		${SDLx_LIBRARY}
+		${SDL2_LIBRARY}
 		${CMAKE_DL_LIBS}
 		refresh
 		)
@@ -414,8 +416,11 @@ else()
 			refresh
 			pthread
 			${RT_LIBRARY}
-			${SDLx_LIBRARY}
+			${SDL2_LIBRARY}
             ${GLEW_LIBRARY}
+			${CURL_LIBRARY}
+			${MODPLUG_LIBRARY}
+			${MAD_LIBRARY}
 			${OPENGL_LIBRARY}
 			${CMAKE_DL_LIBS}
 			)
