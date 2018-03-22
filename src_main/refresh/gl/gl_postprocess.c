@@ -531,6 +531,8 @@ void RPostProcess_MenuBackground(void)
 {
 	vec2_t texScale;
 
+	if (r_skippost || !r_postprocessing->value) return;
+
 	// set screen scale
 	texScale[0] = 1.0f / vid.width;
 	texScale[1] = 1.0f / vid.height;
