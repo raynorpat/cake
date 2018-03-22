@@ -1,10 +1,13 @@
 cmake_minimum_required(VERSION 3.0)
 
+# set our module path and install prefix
 set(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake)
 set(CMAKE_INSTALL_PREFIX "${CMAKE_SOURCE_DIR}/..")
 
+# set the USE_FOLDERS global property, this puts the targets into a CMakePredefinedTargets folder
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
-	
+
+# output some status messages
 message(STATUS "CMAKE_SYSTEM: " ${CMAKE_SYSTEM})
 message(STATUS "CMAKE_SYSTEM_NAME: " ${CMAKE_SYSTEM_NAME})
 message(STATUS "CMAKE_SYSTEM_VERSION: " ${CMAKE_SYSTEM_VERSION})
@@ -25,7 +28,7 @@ macro(q_set_output_dir name dir)
     set_target_properties(${name} PROPERTIES ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_HOME_DIRECTORY}/../${dir})
 endmacro()
 
-# set directory names
+# set directory names for the game and utils
 set(Q_GAME_DIR baseq2)
 if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
 	set(Q_UTILS_DIR bin_nt)
@@ -44,6 +47,7 @@ option(ONATIVE "Optimize for the host CPU" OFF)
 option(WIN_UWP "Build for Microsoft Universal Windows Platform" OFF)
 option(UTILS "Build utilities and tools" ON)
 
+option(USE_SYSTEM_LIBCURL "Use the system libcurl instead of the bundled one" OFF)
 option(USE_SYSTEM_LIBMAD "Use the system libmad instead of the bundled one" OFF)
 option(USE_SYSTEM_LIBMODPLUG "Use the system libmodplug instead of the bundled one" OFF)
 option(USE_SYSTEM_LIBGLEW "Use the system libglew instead of the bundled one" OFF)
@@ -56,6 +60,9 @@ set(CPU_OPTIMIZATION "-mmmx -msse -msse2" CACHE STRING "Which CPU specific optim
 #
 
 # System Library defines if using system libs (most likely for Linux or BSD)
+if (USE_SYSTEM_LIBCURL)
+	add_definitions(-DUSE_SYSTEM_LIBCURL)
+endif()
 if (USE_SYSTEM_LIBMAD)
 	add_definitions(-DUSE_SYSTEM_LIBMAD)
 endif()
@@ -158,8 +165,8 @@ elseif(MSVC)
 	if (WIN_UWP)
 		if (NOT(MSVC_VERSION LESS 1900))
 			add_definitions(-DWIN_UWP
-							-DMONOLITH
-							)
+					-DMONOLITH
+					)
 			
 			# we have to force the WindowsApp lib instead of the usual Win32 ones
 			set(CMAKE_CXX_STANDARD_LIBRARIES "WindowsApp.lib")

@@ -4,6 +4,14 @@ project(cake)
 # Libraries
 #
 
+# sdl
+if(NOT USE_SYSTEM_SDL2)
+	SET(SDL2_PATH ../libs/SDL2)
+endif()
+find_package(SDL2 REQUIRED)
+include_directories(${SDL2_INCLUDE_DIR})
+set(SDLx_LIBRARY ${SDL2_LIBRARY})
+
 # glew
 find_package(GLEW)
 if (GLEW_FOUND)
@@ -15,14 +23,6 @@ else (GLEW_FOUND)
     add_definitions(-DGLEW_STATIC)
 	message(STATUS "Using builtin glew")
 endif (GLEW_FOUND)
-
-# sdl
-if(NOT USE_SYSTEM_SDL2)
-	SET(SDL2_PATH ../libs/SDL2)
-endif()
-find_package(SDL2 REQUIRED)
-include_directories(${SDL2_INCLUDE_DIR})
-set(SDLx_LIBRARY ${SDL2_LIBRARY})
 
 # libmad
 find_package(MAD)
@@ -45,6 +45,18 @@ else (MODPLUG_FOUND)
     set(MODPLUG_LIBRARY "" )
 	message(STATUS "Using builtin libmodplug")
 endif (MODPLUG_FOUND)
+
+# libcurl
+find_package(CURL)
+if (CURL_FOUND)
+    include_directories(${CURL_INCLUDE_DIRS})
+    set(CURL_LIBRARY ${CURL_LIBRARIES})
+else (CURL_FOUND)
+    include_directories("../libs/libcurl/include")
+	include_directories("../libs/libcurl/lib")
+    set(CURL_LIBRARY "" )
+	message(STATUS "Using builtin libcurl")
+endif (CURL_FOUND)
 
 # gamespy library
 include_directories("../libs/gamespy")
@@ -228,6 +240,20 @@ endif (NOT MODPLUG_FOUND)
 source_group("libs\\modplug" FILES ${MODPLUG_INCLUDES})
 source_group("libs\\modplug" FILES ${MODPLUG_SOURCES})
 
+# libcurl
+if (NOT CURL_FOUND)
+	file(GLOB CURL_INCLUDES ../libs/libcurl/include/curl/*.h)
+	file(GLOB CURL_SOURCES ../libs/libcurl/lib/*.c ../libs/libcurl/lib/vauth/*.c ../libs/libcurl/lib/vtls/*.c)
+	add_definitions(-DCURL_STATICLIB
+					-DBUILDING_LIBCURL 
+					-DCURL_DISABLE_LDAP -DCURL_DISABLE_CRYPTO_AUTH)
+else (NOT CURL_FOUND)
+    set(CURL_INCLUDES "")
+    set(CURL_SOURCES "")
+endif (NOT CURL_FOUND)
+source_group("libs\\curl" FILES ${CURL_INCLUDES})
+source_group("libs\\curl" FILES ${CURL_SOURCES})
+
 # gamespy library
 file(GLOB GAMESPY_INCLUDES ../libs/gamespy/*.h ../libs/gamespy/CEngine/*.h)
 file(GLOB GAMESPY_SOURCES ../libs/gamespy/*.c ../libs/gamespy/CEngine/*.c)
@@ -252,6 +278,7 @@ set(CAKE_INCLUDES
 			${MAD_INCLUDES}
 			${MODPLUG_INCLUDES}
 			${GAMESPY_INCLUDES}
+			${CURL_INCLUDES}
 			)
 set(CAKE_SOURCES
 			${CLIENT_SOURCES}
@@ -265,6 +292,7 @@ set(CAKE_SOURCES
 			${MAD_SOURCES}
 			${MODPLUG_SOURCES}
 			${GAMESPY_SOURCES}
+			${CURL_SOURCES}
 			)
 
 if (MONOLITH)
