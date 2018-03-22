@@ -68,7 +68,8 @@ to start a download from the server.
 */
 qboolean CL_CheckOrDownloadFile (char *filename)
 {
-	FILE *fp;
+	FILE 	*fp;
+	char	*p;
 	char	name[MAX_OSPATH];
 
 	if (strstr (filename, ".."))
@@ -91,7 +92,9 @@ qboolean CL_CheckOrDownloadFile (char *filename)
 		return true;
 	}
 
-	strcpy (cls.downloadname, filename);
+	strncpy (cls.downloadname, filename, sizeof(cls.downloadname) - 1);
+	while ((p = strstr(cls.downloadname, "\\")))
+		*p = '/';
 
 	// download to a temp name, and only rename
 	// to the real name when done, so if interrupted
@@ -104,8 +107,7 @@ qboolean CL_CheckOrDownloadFile (char *filename)
 	CL_DownloadFileName (name, sizeof (name), cls.downloadtempname);
 
 	fp = fopen (name, "r+b");
-
-	if (fp)  // it exists
+	if (fp) // it exists
 	{
 		int len;
 		fseek (fp, 0, SEEK_END);
@@ -116,15 +118,13 @@ qboolean CL_CheckOrDownloadFile (char *filename)
 		// give the server an offset to start the download
 		Com_Printf ("Resuming %s\n", cls.downloadname);
 		MSG_WriteByte (&cls.netchan.message, clc_stringcmd);
-		MSG_WriteString (&cls.netchan.message,
-						 va ("download %s %i", cls.downloadname, len));
+		MSG_WriteString (&cls.netchan.message, va ("download %s %i", cls.downloadname, len));
 	}
 	else
 	{
 		Com_Printf ("Downloading %s\n", cls.downloadname);
 		MSG_WriteByte (&cls.netchan.message, clc_stringcmd);
-		MSG_WriteString (&cls.netchan.message,
-						 va ("download %s", cls.downloadname));
+		MSG_WriteString (&cls.netchan.message, va ("download %s", cls.downloadname));
 	}
 
 	cls.forcePacket = true;
@@ -139,9 +139,12 @@ CL_Download_f
 Request a download from the server
 ===============
 */
-void	CL_Download_f (void)
+void CL_Download_f (void)
 {
-	char filename[MAX_OSPATH];
+	char	name[MAX_OSPATH];
+	FILE	*fp;
+	char	*p;
+	char 	filename[MAX_OSPATH];
 
 	if (Cmd_Argc() != 2)
 	{
@@ -153,7 +156,13 @@ void	CL_Download_f (void)
 
 	if (strstr (filename, ".."))
 	{
-		Com_Printf ("Refusing to download a path with ..\n");
+		Com_Printf ("Refusing to download a path with .. (%s)\n", filename);
+		return;
+	}
+
+	if (cls.state <= ca_connecting)
+	{
+		Com_Printf ("Not connected.\n");
 		return;
 	}
 
@@ -164,8 +173,9 @@ void	CL_Download_f (void)
 		return;
 	}
 
-	strcpy (cls.downloadname, filename);
-	Com_Printf ("Downloading %s\n", cls.downloadname);
+	strncpy (cls.downloadname, filename, sizeof(cls.downloadname)-1);
+	while ((p = strstr(cls.downloadname, "\\")))
+		*p = '/';
 
 	// download to a temp name, and only rename
 	// to the real name when done, so if interrupted
@@ -173,9 +183,31 @@ void	CL_Download_f (void)
 	COM_StripExtension (cls.downloadname, cls.downloadtempname);
 	strcat (cls.downloadtempname, ".tmp");
 
-	MSG_WriteByte (&cls.netchan.message, clc_stringcmd);
-	MSG_WriteString (&cls.netchan.message,
-					 va ("download %s", cls.downloadname));
+	// check to see if we already have a tmp for this file, if so, try to resume
+	// open the file if not opened yet
+	CL_DownloadFileName(name, sizeof(name), cls.downloadtempname);
+
+	fp = fopen (name, "r+b");
+	if (fp) // it exists
+	{
+		int len;		
+		fseek(fp, 0, SEEK_END);
+		len = ftell(fp);
+
+		cls.download = fp;
+
+		// give the server an offset to start the download
+		Com_Printf ("Resuming %s\n", cls.downloadname);
+		MSG_WriteByte (&cls.netchan.message, clc_stringcmd);
+		MSG_WriteString (&cls.netchan.message, va("download %s %i", cls.downloadname, len));
+	}
+	else
+	{
+		Com_Printf ("Downloading %s\n", cls.downloadname);
+
+		MSG_WriteByte (&cls.netchan.message, clc_stringcmd);
+		MSG_WriteString (&cls.netchan.message, va ("download %s", cls.downloadname));
+	}
 }
 
 /*
@@ -243,7 +275,6 @@ void CL_ParseDownload (void)
 		FS_CreatePath (name);
 
 		cls.download = fopen (name, "wb");
-
 		if (!cls.download)
 		{
 			net_message.readcount += size;
@@ -311,7 +342,6 @@ void CL_ParseServerData (void)
 	char	*str;
 	int		i;
 
-	Com_DPrintf ("Serverdata packet received.\n");
 	//
 	// wipe the client_state_t struct
 	//
@@ -345,6 +375,8 @@ void CL_ParseServerData (void)
 
 	// get the full level name
 	str = MSG_ReadString (&net_message);
+
+	Com_DPrintf ("Serverdata packet received. protocol=%d, servercount=%d, attractloop=%d, clnum=%d, game=%s, map=%s\n", cls.serverProtocol, cl.servercount, cl.attractloop, cl.playernum, cl.gamedir, str);
 
 	if (cl.playernum == -1)
 	{

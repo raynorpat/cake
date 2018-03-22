@@ -781,7 +781,7 @@ static void CL_FinishHTTPDownload (void)
 	int			msgs_in_queue;
 	CURLMsg		*msg;
 	CURLcode	result;
-	dlhandle_t	*dl;
+	dlhandle_t	*dl = NULL;
 	CURL		*curl;
 	long		responseCode;
 	double		timeTaken;
