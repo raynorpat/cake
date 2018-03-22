@@ -122,7 +122,6 @@ qboolean	CL_CheckOrDownloadFile (char *filename)
 						 va ("download %s", cls.downloadname));
 	}
 
-	cls.downloadnumber++;
 	cls.forcePacket = true;
 
 	return false;
@@ -172,8 +171,6 @@ void	CL_Download_f (void)
 	MSG_WriteByte (&cls.netchan.message, clc_stringcmd);
 	MSG_WriteString (&cls.netchan.message,
 					 va ("download %s", cls.downloadname));
-
-	cls.downloadnumber++;
 }
 
 /*
@@ -228,6 +225,7 @@ void CL_ParseDownload (void)
 			cls.download = NULL;
 		}
 
+		cls.failed_download = true;
 		CL_RequestNextDownload ();
 		return;
 	}
@@ -245,6 +243,7 @@ void CL_ParseDownload (void)
 		{
 			net_message.readcount += size;
 			Com_Printf ("Failed to open %s\n", cls.downloadtempname);
+			cls.failed_download = true;
 			CL_RequestNextDownload ();
 			return;
 		}
@@ -256,17 +255,6 @@ void CL_ParseDownload (void)
 	if (percent != 100)
 	{
 		// request next block
-		// change display routines by zoid
-#if 0
-		Com_Printf (".");
-
-		if (10 * (percent / 10) != cls.downloadpercent)
-		{
-			cls.downloadpercent = 10 * (percent / 10);
-			Com_Printf ("%i%%", cls.downloadpercent);
-		}
-
-#endif
 		cls.downloadpercent = percent;
 
 		MSG_WriteByte (&cls.netchan.message, clc_stringcmd);
@@ -278,8 +266,6 @@ void CL_ParseDownload (void)
 		char	oldn[MAX_OSPATH];
 		char	newn[MAX_OSPATH];
 
-		//		Com_Printf ("100%%\n");
-
 		fclose (cls.download);
 
 		// rename the temp file to it's final name
@@ -290,11 +276,12 @@ void CL_ParseDownload (void)
 		if (r)
 			Com_Printf ("failed to rename.\n");
 
+		cls.failed_download = false;
 		cls.download = NULL;
 		cls.downloadpercent = 0;
+		cls.downloadposition = 0;
 
 		// get another file if needed
-
 		CL_RequestNextDownload ();
 	}
 }

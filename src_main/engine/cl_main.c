@@ -630,6 +630,11 @@ void CL_Disconnect (void)
 		cls.download = NULL;
 	}
 
+
+	cls.downloadname[0] = 0;
+	cls.downloadposition = 0;
+
+	cls.servername[0] = '\0';
 	cls.state = ca_disconnected;
 }
 

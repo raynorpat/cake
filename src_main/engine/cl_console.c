@@ -626,7 +626,7 @@ void Con_DrawConsole (float frac)
 	}
 
 	// draw the download bar
-	if (cls.download)
+	if (cls.downloadname[0] && (cls.download || cls.downloadposition))
 	{
 		if ((text = strrchr (cls.downloadname, '/')) != NULL)
 			text++;
@@ -667,7 +667,10 @@ void Con_DrawConsole (float frac)
 		dlbar[i++] = '\x82';
 		dlbar[i] = 0;
 
-		sprintf (dlbar + strlen (dlbar), " %02d%%", cls.downloadpercent);
+		if (cls.download)
+			cls.downloadposition = ftell(cls.download);
+
+		sprintf(dlbar + i, " %02d%% (%.02f KB)", cls.downloadpercent, (float)cls.downloadposition / 1024.0);
 
 		// draw it
 		y = con.vislines - 12;
@@ -679,5 +682,3 @@ void Con_DrawConsole (float frac)
 	// draw the input prompt, user text, and cursor if desired
 	Con_DrawInput ();
 }
-
-

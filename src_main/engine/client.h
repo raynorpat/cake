@@ -190,15 +190,6 @@ typedef enum
 	ca_active			// game views should be displayed
 } connstate_t;
 
-typedef enum
-{
-	dl_none,
-	dl_model,
-	dl_sound,
-	dl_skin,
-	dl_single
-} dltype_t;		// download type
-
 typedef enum {key_game, key_console, key_message, key_menu} keydest_t;
 
 typedef struct
@@ -222,8 +213,7 @@ typedef struct
 	char		servername[MAX_OSPATH];	// name of server from original connect
 	float		connect_time;		// for connection retransmits
 
-	int			quakePort;			// a 16 bit value that allows quake servers
-	// to work around address translating routers
+	int			quakePort;			// a 16 bit value that allows quake servers to work around address translating routers
 	netchan_t	netchan;
 	int			serverProtocol;		// in case we are doing some kind of version hack
 
@@ -231,14 +221,15 @@ typedef struct
 
 	qboolean	forcePacket;		// forces a packet to be send at the next frame
 
-	FILE		*download;			// file transfer from server
+	// file transfer from server
+	FILE		*download;			
 	char		downloadtempname[MAX_OSPATH];
 	char		downloadname[MAX_OSPATH];
-	int			downloadnumber;
-	dltype_t	downloadtype;
 	int			downloadpercent;
+	size_t		downloadposition;
+	qboolean	failed_download;
 
-	//* For gamespy
+	// for gamespy
 	int			gamespypercent;
 	int			gamespyupdate;
 	int			gamespytotalservers;
