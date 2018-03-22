@@ -470,7 +470,9 @@ RE_Draw_FadeScreen
 */
 void RE_GL_Draw_FadeScreen (void)
 {
-	if (!r_postprocessing->value)
+	extern qboolean r_skippost;
+
+	if (r_skippost || !r_postprocessing->value)
 	{
 		Draw_ColouredRect (0, 0, vid.width, vid.height, 0xcc000000);
 	}
