@@ -38,6 +38,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #include "console.h"
 #include "cl_bgmusic.h"
 
+// for curl downloading
+#include <curl/curl.h>
+
 //=============================================================================
 
 typedef struct
@@ -83,6 +86,36 @@ extern char cl_weaponmodels[MAX_CLIENTWEAPONMODELS][MAX_QPATH];
 extern int num_cl_weaponmodels;
 
 #define	CMD_BACKUP		64	// allow a lot of command backups for very fast systems
+
+// download queue state
+typedef enum
+{
+	DLQ_STATE_NOT_STARTED,
+	DLQ_STATE_RUNNING,
+	DLQ_STATE_DONE
+} dlq_state;
+
+// download queue
+typedef struct dlqueue_s
+{
+	struct dlqueue_s	*next;
+	char				quakePath[MAX_QPATH];
+	dlq_state			state;
+} dlqueue_t;
+
+// download handle
+typedef struct dlhandle_s
+{
+	CURL		*curl;
+	char		filePath[MAX_OSPATH];
+	FILE		*file;
+	dlqueue_t	*queueEntry;
+	size_t		fileSize;
+	size_t		position;
+	double		speed;
+	char		URL[576];
+	char		*tempBuffer;
+} dlhandle_t;
 
 //
 // the client_state_t structure is wiped completely at every
@@ -239,6 +272,12 @@ typedef struct
 	qboolean	demorecording;
 	qboolean	demowaiting;	// don't record until a non-delta message is received
 	FILE		*demofile;
+
+	// for curl downloading
+	dlqueue_t	downloadQueue;	// queue of paths we need
+	dlhandle_t	HTTPHandles[4];	// actual download handles
+	char		downloadServer[512]; // base url prefix to download from
+	char		downloadReferer[32]; // libcurl requires a static string for referers...
 } client_static_t;
 
 extern client_static_t	cls;
@@ -299,6 +338,11 @@ extern	cvar_t  *fov_adapt;
 extern  cvar_t	*cl_hudscale;
 extern  cvar_t	*cl_consolescale;
 extern  cvar_t	*cl_menuscale;
+
+extern	cvar_t	*cl_http_downloads;
+extern	cvar_t	*cl_http_filelists;
+extern	cvar_t	*cl_http_proxy;
+extern	cvar_t	*cl_http_max_connections;
 
 typedef struct
 {
@@ -609,3 +653,14 @@ void M_AddToServerList (netadr_t adr, char *info);
 //
 void CL_ParseInventory (void);
 void CL_DrawInventory (void);
+
+//
+// cl_http.c
+//
+void CL_CancelHTTPDownloads (qboolean permKill);
+void CL_InitHTTPDownloads (void);
+qboolean CL_QueueHTTPDownload (char *quakePath);
+void CL_RunHTTPDownloads (void);
+qboolean CL_PendingHTTPDownloads (void);
+void CL_SetHTTPServer (const char *URL);
+void CL_HTTP_Cleanup (qboolean fullShutdown);

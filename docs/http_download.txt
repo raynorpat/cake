@@ -1,0 +1,49 @@
+Server Operators:
+=================
+You can enable redirected downloads on your server by using the sv_download_server cvar and pointing to a URL of your choosing.
+sv_download_server is the base of the URL that contains your custom files the client will append both fs_game and the filename to the end of this value. 
+For example, if you have sv_download_server set to "http://cake.sourceforge.net/", fs_game is "base", and the client is missing "test.pak", it will attempt to download from the URL "http://cake.sourceforge.net/base/test.pak"
+
+Server operators can also provide a filelist, which will tell the engine exactly which files to grab first, before checking for missing items one-by-one.
+Inside of the fs_game folder, a server operator would put a .filelist file inside of that folder. The .filelist would then be filled with the files of that specific mod.
+An example of the inside of a filelist:
+maps\q2dm1.bsp
+sounds\env\ambien06.wav
+models\weapons\w_cactus.md2
+Any listing is that file will be downloaded even if its required or not.
+
+Server operators who are concerned about potential "leeching" from their HTTP servers from other game servers can make use of the HTTP_REFERER that the game sets which is "quake2://{SERVER_IP}:{SERVER_PORT}".
+For, example, Apache's mod_rewrite can restrict access based on HTTP_REFERER.
+
+
+Clients:
+========
+Clients should not have to do anything special, as by default HTTP downloading is enabled.
+If a client requires use of a proxy to get out, then set cl_http_proxy to the proxy required.
+
+
+Server CVars:
+=============
+sv_download_server
+specifies the URL clients should use for HTTP downloading.
+URL must begin with a 'http://' prefix and end with a trailing slash. Default value is empty.
+
+
+Client CVars:
+=============
+cl_http_downloads
+Enables HTTP downloads, if server advertises download URL.
+Default value is 1 (enabled).
+
+cl_http_filelists
+When a first file is about to be downloaded from HTTP server, send a filelist request, and download any additional files specified in the filelist.
+Filelists provide a ‘pushing’ mechanism for the server operator to make sure all clients download complete set of data for the particular mod, instead of requesting files one-by-one.
+Default value is 1 (request filelists).
+
+cl_http_max_connections
+Maximum number of simultaneous connections to the HTTP server.
+Default value is 2.
+
+cl_http_proxy
+HTTP proxy server to use for downloads.
+Default value is empty (direct connection).

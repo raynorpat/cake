@@ -34,6 +34,7 @@ cvar_t	*zombietime;			// seconds to sink messages after disconnect
 
 cvar_t	*rcon_password;			// password for remote server commands
 
+cvar_t	*sv_download_server;	// specifies the URL clients should use for HTTP downloading
 cvar_t	*allow_download;
 cvar_t	*allow_download_players;
 cvar_t	*allow_download_models;
@@ -411,7 +412,10 @@ gotnewcl:
 	SV_UserinfoChanged (newcl);
 
 	// send the connect packet to the client
-	Netchan_OutOfBandPrint (NS_SERVER, adr, "client_connect");
+	if (sv_download_server->string[0])
+		Netchan_OutOfBandPrint(NS_SERVER, adr, "client_connect dlserver=%s", sv_download_server->string);
+	else
+		Netchan_OutOfBandPrint (NS_SERVER, adr, "client_connect");
 
 	Netchan_Setup (NS_SERVER, &newcl->netchan, adr, qport);
 
@@ -999,6 +1003,7 @@ void SV_Init (void)
 	sv_paused = Cvar_Get ("paused", "0", 0);
 	sv_timedemo = Cvar_Get ("timedemo", "0", 0);
 	sv_enforcetime = Cvar_Get ("sv_enforcetime", "0", 0);
+	sv_download_server = Cvar_Get("sv_download_server", "", 0);
 	allow_download = Cvar_Get ("allow_download", "1", CVAR_ARCHIVE);
 	allow_download_players = Cvar_Get ("allow_download_players", "0", CVAR_ARCHIVE);
 	allow_download_models = Cvar_Get ("allow_download_models", "1", CVAR_ARCHIVE);

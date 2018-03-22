@@ -630,6 +630,8 @@ void CL_Disconnect (void)
 		cls.download = NULL;
 	}
 
+	CL_CancelHTTPDownloads(true);
+	cls.downloadReferer[0] = 0;
 
 	cls.downloadname[0] = 0;
 	cls.downloadposition = 0;
@@ -809,6 +811,7 @@ void CL_ConnectionlessPacket (void)
 {
 	char	*s;
 	char	*c;
+	int		i;
 
 	MSG_BeginReading (&net_message);
 	MSG_ReadLong (&net_message);	// skip the -1
@@ -824,6 +827,8 @@ void CL_ConnectionlessPacket (void)
 	// server connection
 	if (!strcmp (c, "client_connect"))
 	{
+		char *p;
+
 		if (cls.state == ca_connected)
 		{
 			Com_Printf ("Dup connect received. Ignored.\n");
@@ -831,6 +836,26 @@ void CL_ConnectionlessPacket (void)
 		}
 
 		Netchan_Setup (NS_CLIENT, &cls.netchan, net_from, cls.quakePort);
+
+		// check client connect arguments
+		for (i = 1; i < Cmd_Argc(); i++)
+		{
+			p = Cmd_Argv(i);
+
+			// check for dlserver url for HTTP download support
+			if (!strncmp(p, "dlserver=", 9))
+			{
+				p += 9;
+				if (strlen(p) > 2)
+				{
+					Com_sprintf(cls.downloadReferer, sizeof(cls.downloadReferer), "quake2://%s", NET_AdrToString(cls.netchan.remote_address));
+					CL_SetHTTPServer(p);
+					if (cls.downloadServer[0])
+						Com_Printf("HTTP downloading enabled, URL: %s\n", cls.downloadServer);
+				}
+			}
+		}
+
 		MSG_WriteChar (&cls.netchan.message, clc_stringcmd);
 		MSG_WriteString (&cls.netchan.message, "new");
 		cls.state = ca_connected;
@@ -1030,6 +1055,11 @@ void CL_Snd_Restart_f (void)
 	CL_RegisterSounds ();
 }
 
+/*
+=================
+CL_RequestNextDownload
+=================
+*/
 int precache_check; // for autodownload of precache items
 int precache_spawncount;
 int precache_tex;
@@ -1045,6 +1075,13 @@ byte *precache_model; // used for skin checking in alias models
 
 static const char *env_suf[6] = {"rt", "bk", "lf", "ft", "up", "dn"};
 
+void CL_ResetPrecacheCheck(void)
+{
+	precache_check = CS_MODELS;
+	precache_model = 0;
+	precache_model_skin = -1;
+}
+
 void CL_RequestNextDownload (void)
 {
 	unsigned	map_checksum;		// for detecting cheater maps
@@ -1057,7 +1094,6 @@ void CL_RequestNextDownload (void)
 	if (!allow_download->value && precache_check < ENV_CNT)
 		precache_check = ENV_CNT;
 
-	//ZOID
 	if (precache_check == CS_MODELS)  // confirm map
 	{
 		precache_check = CS_MODELS + 2; // 0 isn't used
@@ -1145,6 +1181,10 @@ void CL_RequestNextDownload (void)
 				precache_check++;
 			}
 		}
+
+		// pending downloads (models), let's wait here before we continue
+		if (CL_PendingHTTPDownloads())
+			return;
 
 		precache_check = CS_SOUNDS;
 	}
@@ -1310,6 +1350,10 @@ void CL_RequestNextDownload (void)
 		}
 	}
 
+	// map might still be downloading, so wait up a sec
+	if (CL_PendingHTTPDownloads())
+		return;
+
 	if (precache_check > ENV_CNT && precache_check < TEXTURE_CNT)
 	{
 		if (allow_download->value && allow_download_maps->value)
@@ -1339,7 +1383,7 @@ void CL_RequestNextDownload (void)
 	// confirm existance of textures, download any that don't exist
 	if (precache_check == TEXTURE_CNT + 1)
 	{
-		// from qcommon/cmodel.c
+		// from server/sv_cmodel.c
 		extern int			numtexinfo;
 		extern mapsurface_t	map_surfaces[];
 
@@ -1359,7 +1403,10 @@ void CL_RequestNextDownload (void)
 		precache_check = TEXTURE_CNT + 999;
 	}
 
-	//ZOID
+	// could be pending downloads (possibly textures), so let's wait here.
+	if (CL_PendingHTTPDownloads())
+		return;
+
 	CL_RegisterSounds ();
 	CL_PrepRefresh ();
 
@@ -1378,11 +1425,10 @@ before allowing the client into the server
 */
 void CL_Precache_f (void)
 {
-	//Yet another hack to let old demos work
-	//the old precache sequence
+	// HACK: Yet another hack to let old demos work - the old precache sequence
 	if (Cmd_Argc() < 2)
 	{
-		unsigned	map_checksum;		// for detecting cheater maps
+		unsigned	map_checksum; // for detecting cheater maps
 
 		CM_LoadMap (cl.configstrings[CS_MODELS+1], true, &map_checksum);
 		CL_RegisterSounds ();
@@ -1465,6 +1511,11 @@ void CL_InitLocal (void)
 	rcon_address = Cvar_Get ("rcon_address", "", 0);
 
 	cl_lightlevel = Cvar_Get ("r_lightlevel", "0", 0);
+
+	cl_http_proxy = Cvar_Get("cl_http_proxy", "", 0);
+	cl_http_filelists = Cvar_Get("cl_http_filelists", "1", 0);
+	cl_http_downloads = Cvar_Get("cl_http_downloads", "1", 0);
+	cl_http_max_connections = Cvar_Get("cl_http_max_connections", "2", 0);
 
 	// userinfo
 	info_password = Cvar_Get ("password", "", CVAR_USERINFO);
@@ -1646,6 +1697,11 @@ void CL_Frame (int packetdelta, int renderdelta, int timedelta, qboolean packetf
 		{
 			packetframe = true;
 		}
+		else
+		{
+			// run downloads at full speed when connecting
+			CL_RunHTTPDownloads();
+		}
 	}
 
 	if (packetframe || renderframe)
@@ -1675,9 +1731,10 @@ void CL_Frame (int packetdelta, int renderdelta, int timedelta, qboolean packetf
 
 	if (packetframe)
 	{		
-		// sned command and check for resending
+		// send command and check for resending
 		CL_SendCmd();
 		CL_CheckForResend();
+		CL_RunHTTPDownloads();
 	}
 
 	if (renderframe)
@@ -1778,7 +1835,9 @@ void CL_Init (void)
 
 	CL_InitLocal ();
 
-	Cbuf_Execute ();
+	CL_InitHTTPDownloads();
+
+	Cbuf_Execute();
 }
 
 
@@ -1804,6 +1863,7 @@ void CL_Shutdown (void)
 
 	CL_WriteConfiguration ();
 
+	CL_HTTP_Cleanup(true);
 	BGM_Shutdown ();
 	S_Shutdown ();
 	IN_Shutdown ();

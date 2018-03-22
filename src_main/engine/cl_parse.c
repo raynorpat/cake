@@ -66,7 +66,7 @@ Returns true if the file exists, otherwise it attempts
 to start a download from the server.
 ===============
 */
-qboolean	CL_CheckOrDownloadFile (char *filename)
+qboolean CL_CheckOrDownloadFile (char *filename)
 {
 	FILE *fp;
 	char	name[MAX_OSPATH];
@@ -83,6 +83,14 @@ qboolean	CL_CheckOrDownloadFile (char *filename)
 		return true;
 	}
 
+	if (CL_QueueHTTPDownload(filename))
+	{
+		// we return true so that the precache check keeps feeding us more files.
+		// Since we have multiple HTTP connections we want to minimize latency
+		// and be constantly sending requests, not one at a time.
+		return true;
+	}
+
 	strcpy (cls.downloadname, filename);
 
 	// download to a temp name, and only rename
@@ -91,12 +99,9 @@ qboolean	CL_CheckOrDownloadFile (char *filename)
 	COM_StripExtension (cls.downloadname, cls.downloadtempname);
 	strcat (cls.downloadtempname, ".tmp");
 
-	//ZOID
 	// check to see if we already have a tmp for this file, if so, try to resume
 	// open the file if not opened yet
 	CL_DownloadFileName (name, sizeof (name), cls.downloadtempname);
-
-	//	FS_CreatePath (name);
 
 	fp = fopen (name, "r+b");
 
