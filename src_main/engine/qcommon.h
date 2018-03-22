@@ -754,6 +754,7 @@ void	FS_FreeFile (void *buffer);
 
 void	FS_CreatePath (char *path);
 
+qboolean FS_ExistsInGameDir(char *filename);
 
 /* The following FS_*() stdio replacements are necessary if one is
 * to perform non-sequential reads on files reopened on pak files

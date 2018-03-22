@@ -186,11 +186,10 @@ a seperate file.
 */
 int file_from_pak = 0;
 
-int pakfilecmpfnc (const packfile_t *a, const packfile_t *b)
+int pakfilecmpfnc (packfile_t *a, packfile_t *b)
 {
 	return Q_stricmp (a->name, b->name);
 }
-
 
 packfile_t *FS_FindFileInPak (packfile_t *files, int numfiles, char *filename)
 {
@@ -237,7 +236,6 @@ int FS_FOpenFile (char *filename, FILE **file)
 			pak = search->pack;
 
 			// this works because the name of the file is the first element in the packfile_t struct
-			//if ((found = bsearch (filename, pak->files, pak->numfiles, sizeof (packfile_t), (int (*) (const void *, const void *)) pakfilecmpfnc)) != NULL)
 			if ((found = FS_FindFileInPak (pak->files, pak->numfiles, filename)) != NULL)
 			{
 				// found it!
@@ -747,6 +745,68 @@ void FS_InitFilesystem (void)
 
 	if (fs_gamedirvar->string[0])
 		FS_SetGamedir (fs_gamedirvar->string);
+}
+
+/*
+============
+FS_ExistsInGameDir
+
+See if a file exists in the mod directory/paks (ignores baseq2)
+============
+*/
+qboolean FS_ExistsInGameDir(char *filename)
+{
+	const searchpath_t	*search, *end;
+	char				netpath[MAX_OSPATH];
+	const pack_t		*pak;
+	const packfile_t	*pakfile;
+	FILE				*file;
+
+	if (fs_searchpaths != fs_base_searchpaths)
+	{
+		end = fs_base_searchpaths;
+	}
+	else
+	{
+		end = NULL;
+	}
+	
+	for (search = fs_searchpaths; search != end; search = search->next)
+	{
+		// is the element a pak file?
+		if (search->pack)
+		{
+			pak = search->pack;
+
+			if ((pakfile = FS_FindFileInPak(pak->files, pak->numfiles, filename)) != NULL)
+			{
+				// found it!
+				Com_DPrintf("PackFile: %s : %s for %s\n", pak->filename, pakfile->name, filename);
+				return true;
+			}
+		}
+		else
+		{
+			// check a file in the directory tree
+			Com_sprintf(netpath, sizeof(netpath), "%s/%s", search->filename, filename);
+
+			file = fopen(netpath, "rb");
+#ifndef _WIN32
+			if (!file)
+			{
+				Q_strlwr(netpath);
+				file = fopen(netpath, "rb");
+			}
+#endif
+			if (file)
+			{
+				fclose(file);
+				return true;
+			}
+		}
+	}
+
+	return false;
 }
 
 
