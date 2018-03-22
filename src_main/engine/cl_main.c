@@ -189,15 +189,15 @@ void CL_Record_f (void)
 	//
 	Com_sprintf (name, sizeof (name), "%s/demos/%s.dm2", FS_Gamedir(), Cmd_Argv (1));
 
-	Com_Printf ("recording to %s.\n", name);
 	FS_CreatePath (name);
 	cls.demofile = fopen (name, "wb");
-
 	if (!cls.demofile)
 	{
 		Com_Printf ("ERROR: couldn't open.\n");
 		return;
 	}
+
+	Com_Printf ("recording to %s.\n", name);
 
 	cls.demorecording = true;
 
@@ -370,7 +370,6 @@ void CL_Drop (void)
 {
 	if (cls.state == ca_uninitialized)
 		return;
-
 	if (cls.state == ca_disconnected)
 		return;
 
@@ -397,7 +396,7 @@ void CL_SendConnectPacket (void)
 
 	if (!NET_StringToAdr (cls.servername, &adr))
 	{
-		Com_Printf ("Bad server address\n");
+		Com_Printf ("Bad server address: %s\n", cls.servername);
 		cls.connect_time = 0;
 		return;
 	}
@@ -503,11 +502,10 @@ void CL_Rcon_f (void)
 {
 	char	message[1024];
 	int		i;
-	netadr_t	to;
 
-	if (!rcon_client_password->string)
+	if ((strlen(Cmd_Args()) + strlen(rcon_client_password->string) + 16) >= sizeof(message))
 	{
-		Com_Printf ("You must set 'rcon_password' before issuing an rcon command.\n");
+		Com_Printf ("Length of password + command exceeds maximum allowed length.\n");
 		return;
 	}
 
@@ -521,8 +519,11 @@ void CL_Rcon_f (void)
 
 	strcat (message, "rcon ");
 
-	strcat (message, rcon_client_password->string);
-	strcat (message, " ");
+	if (*rcon_client_password->string)
+	{
+		strcat (message, rcon_client_password->string);
+		strcat (message, " ");
+	}
 
 	for (i = 1; i < Cmd_Argc (); i++)
 	{
@@ -531,7 +532,7 @@ void CL_Rcon_f (void)
 	}
 
 	if (cls.state >= ca_connected)
-		to = cls.netchan.remote_address;
+		cls.last_rcon_to = cls.netchan.remote_address;
 	else
 	{
 		if (!strlen (rcon_address->string))
@@ -543,13 +544,12 @@ void CL_Rcon_f (void)
 			return;
 		}
 
-		NET_StringToAdr (rcon_address->string, &to);
-
-		if (to.port == 0)
-			to.port = BigShort (PORT_SERVER);
+		NET_StringToAdr (rcon_address->string, &cls.last_rcon_to);
+		if (cls.last_rcon_to.port == 0)
+			cls.last_rcon_to.port = BigShort (PORT_SERVER);
 	}
 
-	NET_SendPacket (NS_CLIENT, strlen (message) + 1, message, to);
+	NET_SendPacket (NS_CLIENT, strlen(message) + 1, message, cls.last_rcon_to);
 }
 
 
@@ -572,7 +572,6 @@ void CL_ClearState (void)
 	memset (&cl_entities, 0, sizeof (cl_entities));
 
 	SZ_Clear (&cls.netchan.message);
-
 }
 
 /*
@@ -596,7 +595,6 @@ void CL_Disconnect (void)
 		int	time;
 
 		time = Sys_Milliseconds () - cl.timedemo_start;
-
 		if (time > 0)
 			Com_Printf ("%i frames, %3.1f seconds: %3.1f fps\n", cl.timedemo_frames,
 						time / 1000.0, cl.timedemo_frames * 1000.0 / time);
@@ -792,8 +790,7 @@ void CL_Skins_f (void)
 	{
 		if (!cl.configstrings[CS_PLAYERSKINS+i][0])
 			continue;
-
-		Com_Printf ("client %i: %s\n", i, cl.configstrings[CS_PLAYERSKINS+i]);
+		Com_DPrintf ("client %i: %s\n", i, cl.configstrings[CS_PLAYERSKINS+i]);
 		SCR_UpdateScreen ();
 		CL_ParseClientinfo (i);
 	}
@@ -809,31 +806,61 @@ Responses to broadcasts, etc
 */
 void CL_ConnectionlessPacket (void)
 {
-	char	*s;
-	char	*c;
-	int		i;
+	char		*s;
+	char		*c;
+	netadr_t 	remote;
 
 	MSG_BeginReading (&net_message);
 	MSG_ReadLong (&net_message);	// skip the -1
 
 	s = MSG_ReadStringLine (&net_message);
 
+	NET_StringToAdr (cls.servername, &remote);
+
 	Cmd_TokenizeString (s, false);
 
 	c = Cmd_Argv (0);
+
+	// server responding to a status broadcast (ignores security check due to broadcasts responding)
+	if (!strcmp(c, "info"))
+	{
+		CL_ParseStatusMessage ();
+		return;
+	}
+
+	// security check - only allow from current connected server and last destination client sent an rcon to
+	if (!NET_CompareBaseAdr (net_from, remote) && !NET_CompareBaseAdr (net_from, cls.last_rcon_to))
+	{
+		Com_DPrintf ("Illegal %s from %s.  Ignored.\n", c, NET_AdrToString (net_from));
+		return;
+	}
 
 	Com_Printf ("%s: %s\n", NET_AdrToString (net_from), c);
 
 	// server connection
 	if (!strcmp (c, "client_connect"))
 	{
+		int i;
 		char *p;
 
 		if (cls.state == ca_connected)
 		{
-			Com_Printf ("Dup connect received. Ignored.\n");
+			Com_DPrintf ("Dup connect received. Ignored.\n");
 			return;
 		}
+		else if (cls.state == ca_disconnected)
+		{
+			// FIXME: this should never happen (disconnecting nukes remote, no remote = no packet)
+			Com_DPrintf ("Received connect when disconnected.  Ignored.\n");
+			return;
+		}
+		else if (cls.state == ca_active)
+		{
+			Com_DPrintf ("Illegal connect when already connected !! (q2msgs?).  Ignored.\n");
+			return;
+		}
+
+		Com_DPrintf ("client_connect: new\n");
 
 		Netchan_Setup (NS_CLIENT, &cls.netchan, net_from, cls.quakePort);
 
@@ -862,19 +889,12 @@ void CL_ConnectionlessPacket (void)
 		return;
 	}
 
-	// server responding to a status broadcast
-	if (!strcmp (c, "info"))
-	{
-		CL_ParseStatusMessage ();
-		return;
-	}
-
 	// remote command from gui front end
 	if (!strcmp (c, "cmd"))
 	{
 		if (!NET_IsLocalAddress (net_from))
 		{
-			Com_Printf ("Command packet from remote host. Ignored.\n");
+			Com_DPrintf ("Command packet from remote host. Ignored.\n");
 			return;
 		}
 
@@ -892,17 +912,11 @@ void CL_ConnectionlessPacket (void)
 		return;
 	}
 
-	// ping from somewhere
-	if (!strcmp (c, "ping"))
-	{
-		Netchan_OutOfBandPrint (NS_CLIENT, net_from, "ack");
-		return;
-	}
-
 	// challenge from the server we are connecting to
 	if (!strcmp (c, "challenge"))
 	{
 		cls.challenge = atoi (Cmd_Argv (1));
+		cls.connect_time = cls.realtime; // reset the timer so we don't send duplicate getchallenges
 		CL_SendConnectPacket ();
 		return;
 	}
@@ -914,24 +928,7 @@ void CL_ConnectionlessPacket (void)
 		return;
 	}
 
-	Com_Printf ("Unknown command.\n");
-}
-
-
-/*
-=================
-CL_DumpPackets
-
-A vain attempt to help bad TCP stacks that cause problems
-when they overflow
-=================
-*/
-void CL_DumpPackets (void)
-{
-	while (NET_GetPacket (NS_CLIENT, &net_from, &net_message))
-	{
-		Com_Printf ("dumnping a packet\n");
-	}
+	Com_Printf ("Unknown connectionless packet command %s\n", c);
 }
 
 /*
@@ -958,7 +955,7 @@ void CL_ReadPackets (void)
 
 		if (net_message.cursize < 8)
 		{
-			Com_Printf ("%s: Runt packet\n", NET_AdrToString (net_from));
+			Com_DPrintf ("%s: Runt packet\n", NET_AdrToString (net_from));
 			continue;
 		}
 

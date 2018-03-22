@@ -253,6 +253,7 @@ typedef struct
 	int			challenge;			// from the server to use for connecting
 
 	qboolean	forcePacket;		// forces a packet to be send at the next frame
+	netadr_t	last_rcon_to;		// last destination client sent an rcon to
 
 	// file transfer from server
 	FILE		*download;			
