@@ -456,17 +456,24 @@ void IN_Update(void)
 		}
 	}
 
-	if (in_controller->value) {
-		// Emit key events for game controller buttons, including emulated buttons for analog sticks / triggers
+	// Emit key events for game controller buttons, including emulated buttons for analog sticks / triggers
+	if (in_controller->value)
+	{
 		IN_ControllerCommands();
 	}
 
-	/* Grab and ungrab the mouse if the console or the menu is opened
-	 * calling VID_GrabInput() each is a but ugly but simple and should work.
-	 * + the called SDL functions return after a cheap check, if there's
-	 * nothing to do, anyway
-	 */
-	want_grab = (vid_fullscreen->value || in_grab->value == 1 || (in_grab->value == 2 && windowed_mouse->value));
+	// Grab and ungrab the mouse if the console or the menu is opened
+	if (in_grab->value == 3)
+	{
+		want_grab = windowed_mouse->value;
+	}
+	else
+	{
+		want_grab = (vid_fullscreen->value || in_grab->value == 1 || (in_grab->value == 2 && windowed_mouse->value));
+	}
+
+	// Calling VID_GrabInput() each is a but ugly but simple and should work + the
+	// called SDL functions return after a cheap check, if there's nothing to do, anyway
 	VID_GrabInput(want_grab);
 
 	// Grab frame time
