@@ -1,16 +1,16 @@
 Server Operators:
 =================
 You can enable redirected downloads on your server by using the sv_download_server cvar and pointing to a URL of your choosing.
-sv_download_server is the base of the URL that contains your custom files the client will append both fs_game and the filename to the end of this value. 
+sv_download_server is the base of the URL that contains your custom files, the client will append both fs_game and the filename to the end of this value.
 For example, if you have sv_download_server set to "http://cake.sourceforge.net/", fs_game is "base", and the client is missing "test.pak", it will attempt to download from the URL "http://cake.sourceforge.net/base/test.pak"
 
 Server operators can also provide a filelist, which will tell the engine exactly which files to grab first, before checking for missing items one-by-one.
-Inside of the fs_game folder, a server operator would put a .filelist file inside of that folder. The .filelist would then be filled with the files of that specific mod.
+Inside of the fs_game folder, a server operator would put a .filelist file. The .filelist would then be filled with the files of that specific mod.
 An example of the inside of a filelist:
 maps\q2dm1.bsp
 sounds\env\ambien06.wav
 models\weapons\w_cactus.md2
-Any listing is that file will be downloaded even if its required or not.
+Any listing in that file will be downloaded even if it's required or not.
 
 Server operators who are concerned about potential "leeching" from their HTTP servers from other game servers can make use of the HTTP_REFERER that the game sets which is "quake2://{SERVER_IP}:{SERVER_PORT}".
 For, example, Apache's mod_rewrite can restrict access based on HTTP_REFERER.
