@@ -1131,9 +1131,10 @@ void Haptic_Feedback(char *name)
 {
 	int effect_type = HAPTIC_EFFECT_UNKNOWN;
 
+	if (!in_controller->value)
+		return;
 	if (joy_haptic_magnitude->value <= 0)
 		return;
-
 	if (!currentControllerHaptic)
 		return;
 
