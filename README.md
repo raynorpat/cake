@@ -1,9 +1,12 @@
 # Cake
-todo: put image here...
+![Cake](https://github.com/raynorpat/cake/raw/master/docs/scrnshot.png)
+
+**The project is hosted at:** https://github.com/raynorpat
+**Report bugs here:** https://github.com/raynorpat/cake/issues
 
 ## Overview
 
-Cake is a modified Quake 2 based game engine built ontop of the Quake 2 source code released by id Software.
+Cake is a modified Quake 2 based game engine built on top of the Quake 2 source code released by id Software.
 
 I plan on using Cake as a basis for building first person games for myself and hopefully others will fork the engine and use it for their own needs.
 
