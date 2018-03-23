@@ -21,7 +21,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 // qcommon.h -- definitions common between client and server, but not game.dll
 #include "q_shared.h"
 
-#define	VERSION		0.09
+#define	VERSION		0.10
 
 #define	BASEDIRNAME	"baseq2"
 
