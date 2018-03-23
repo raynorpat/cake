@@ -22,16 +22,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #ifndef _Q_SHARED_
 #define _Q_SHARED_
 
-
-#ifdef _WIN32
-// unknown pragmas are SUPPOSED to be ignored, but....
-#pragma warning(disable : 4244)   // MIPS
-#pragma warning(disable : 4136)   // X86
-#pragma warning(disable : 4051)   // ALPHA
-
-#pragma warning(disable : 4018)   // signed/unsigned mismatch
-#pragma warning(disable : 4305)	  // truncation from const double to float
-#endif
+#include "q_platform.h"
 
 #include <assert.h>
 #include <math.h>
@@ -43,21 +34,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #include <ctype.h>
 #include <stdint.h>
 #include <time.h>
-
 #ifdef _WIN32
 #include <direct.h>
-#endif
-
-#if (defined _M_IX86 || defined __i386__) && !defined C_ONLY && !defined __sun__
-#define id386	1
-#else
-#define id386	0
-#endif
-
-#if defined _M_ALPHA && !defined C_ONLY
-#define idaxp	1
-#else
-#define idaxp	0
 #endif
 
 typedef unsigned char 		byte;
@@ -74,43 +52,6 @@ typedef enum {false, true}	qboolean;
 #define min(a,b) (((a) < (b)) ? (a) : (b))
 #endif
 
-#ifndef NULL
-#define NULL ((void *)0)
-#endif
-
-#if !defined(__GNUC__)
-#define	__attribute__(x)
-#endif
-
-// argument format attributes for function pointers are supported for gcc >= 3.1
-#if defined(__GNUC__) && (__GNUC__ > 3 || (__GNUC__ == 3 && __GNUC_MINOR__ > 0))
-#define	__fp_attribute__ __attribute__
-#else
-#define	__fp_attribute__(x)
-#endif
-
-// Generic helper definitions for shared library support
-#if defined _WIN32 || defined __CYGWIN__
-# define Q_DLL_IMPORT __declspec( dllimport )
-# define Q_DLL_EXPORT __declspec( dllexport )
-# define Q_DLL_LOCAL
-#else
-# if __GNUC__ >= 4
-#  define Q_DLL_IMPORT __attribute__ ( ( visibility( "default" ) ) )
-#  define Q_DLL_EXPORT __attribute__ ( ( visibility( "default" ) ) )
-#  define Q_DLL_LOCAL  __attribute__ ( ( visibility( "hidden" ) ) )
-# else
-#  define Q_DLL_IMPORT
-#  define Q_DLL_EXPORT
-#  define Q_DLL_LOCAL
-# endif
-#endif
-
-#ifdef _WIN32
-#define Q_alloca _alloca
-#else
-#define Q_alloca alloca
-#endif
 
 #if defined(__DJGPP__) || defined(_WIN32)
 char *strtok_r(char *s, const char *delim, char **last);

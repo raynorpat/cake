@@ -181,6 +181,7 @@ source_group("system\\sdl" FILES ${SYSTEM_SOURCES})
 # shared code
 set(SHARED_INCLUDES
 	../shared/game.h
+	../shared/q_platform.h
 	../shared/q_shared.h
 	../shared/qfiles.h
 	)

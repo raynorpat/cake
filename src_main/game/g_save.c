@@ -69,42 +69,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define SAVEGAMEVER "Q2-1"
 
 /*
- * This macros are used to
- * prohibit loading of savegames
- * created on other systems or
- * architectures. This will
- * crash q2 in spectacular
- * ways
- */
-#if defined(__APPLE__)
- #define OS "MacOS X"
-#elif defined(__FreeBSD__)
- #define OS "FreeBSD"
-#elif defined(__OpenBSD__)
- #define OS "OpenBSD"
-#elif defined(__linux__)
- #define OS "Linux"
-#elif defined(_WIN32)
- #define OS "Windows"
-#elif defined(__DJGPP__) /* FS: Added */
- #define OS "MS-DOS"
-#else
- #define OS "Unknown"
-#endif
-
-#if defined(__i386__)
- #define ARCH "i386"
-#elif defined(__x86_64__)
- #define ARCH "amd64"
-#elif defined(__sparc__)
- #define ARCH "sparc64"
-#elif defined(__ia64__)
- #define ARCH "ia64"
-#else
- #define ARCH "unknown"
-#endif
-
-/*
  * Connects a human readable
  * function signature with
  * the corresponding pointer
@@ -721,7 +685,7 @@ void WriteGame (char *filename, qboolean autosave)
 
 	strncpy(str_ver, SAVEGAMEVER, sizeof(str_ver) - 1);
 	strncpy(str_game, GAMEVERSION, sizeof(str_game) - 1);
-	strncpy(str_os, OS, sizeof(str_os) - 1);
+	strncpy(str_os, BUILDSTRING, sizeof(str_os) - 1);
 	strncpy(str_arch, ARCH, sizeof(str_arch) - 1);
 
 	fwrite(str_ver, sizeof(str_ver), 1, f);
@@ -770,7 +734,7 @@ void ReadGame (char *filename)
 		fclose(f);
 		gi.error("Savegame from an other game module.\n");
 	}
- 	else if (strcmp(str_os, OS))
+ 	else if (strcmp(str_os, BUILDSTRING))
 	{
 		fclose(f);
 		gi.error("Savegame from an other os.\n");
