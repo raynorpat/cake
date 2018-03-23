@@ -8,31 +8,44 @@
 
 Cake is a modified Quake 2 based game engine built on top of the Quake 2 source code released by id Software.
 
-I plan on using Cake as a basis for building first person games for myself and hopefully others will fork the engine and use it for their own needs.
+Some of the major features currently implemented are:
 
-I am not finished working on Cake, so bug reports are very much welcome. 
+  * Easy to use modern build system via CMake
+  * SDL 2 backend
+  * Rewritten OpenGL 3.3 renderer with various graphical goodness but is still true to the original
+  * Background Music support (tracker xm/s3m/it/mod, mp3, and even wav)
+  * HTTP/FTP download redirection (using cURL)
+  * Many, many, many bug fixes
 
 ## Downloads
 
-Preview releases of _Cake_ for all platforms are not quite available just yet.
+Pre-built releases of _Cake_ are available at: https://github.com/raynorpat/cake/releases
 
 ## Compiling
 
-Cake builds with CMake. If you've never tried it, please do so, it rocks.
+_Cake_ builds with CMake. If you've never tried it, please do so, it rocks.
+
+The main requirement to build _Cake_ is SDL2, which is provided in library format for MSVC builds.
+Other dependencies include glew, libcurl, libmad, libmodplug, and zlib.
+We provide all dependencies for building everything else in src_main/libs if CMake doesn't find one.
+
+There are various scripts in the src_main directory that will give you a way to build if CMake is installed on your machine.
 
 ## Installing
 
 To have a working game, you must install the game data into the baseq2 folder. 
 All that is required is a copy of the full retail version of Quake 2. That is pak0.pak, pak1.pak, and pak2.pak.
 
-Cake requires SDL 2 to be installed or available on your system to function.
+Cake requires SDL2 to be installed or available on your system to function.
 If on Windows, that usually just requires putting SDL2.dll next to the main engine exe.
 
-## Support, Copyright, & Permissions
+## Contributing
+
+Please send all patches as a GitHub pull request, that will make everything easier to track.
+
+## Copyright, & Permissions
 
 Copyright (C) 1996-2001 Id Software, Inc.
-
-Copyright (C) 2012-2018 Pat 'raynorpat' Raynor and others
 
 This program is free software; you can redistribute it and/or modify it under 
 the terms of the GNU General Public License as published by the Free Software 
@@ -44,3 +57,16 @@ WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
 PARTICULAR PURPOSE.
 
 See the LICENSE file for more details.
+
+## Credits
+
+Maintainers
+
+  * Pat 'raynorpat' Raynor <raynorpat@gmail.com>
+  
+Contributions from
+
+  * Ryan C. Gordon <icculus@icculus.org> - initial sdl 1.2 quake2 port - see http://www.icculus.org/quake2/
+  * Stuart Dalton <badcdev@gmail.com> - ioquake3 sound codecs system
+  * O.Sezer <sezero@users.sourceforge.net> - uHexen II sound codecs system
+  * your-name-here - bug fixes
