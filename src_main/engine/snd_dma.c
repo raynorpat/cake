@@ -28,10 +28,9 @@ void S_SoundList (void);
 void S_Update_ ();
 void S_StopAllSounds (void);
 
-
-// =======================================================================
+//
 // Internal sound data & structures
-// =======================================================================
+//
 
 // only begin attenuating sound volumes when outside the FULLVOLUME range
 #define		SOUND_FULLVOLUME	80
@@ -79,17 +78,10 @@ cvar_t		*s_khz;
 cvar_t		*s_show;
 cvar_t		*s_mixahead;
 
+int			s_rawend;
+portable_samplepair_t s_rawsamples[MAX_RAW_SAMPLES];
 
-int		s_rawend;
-portable_samplepair_t	s_rawsamples[MAX_RAW_SAMPLES];
-
-
-// ====================================================================
-// User-setable variables
-// ====================================================================
-
-
-void S_SoundInfo_f (void)
+static void S_SoundInfo_f (void)
 {
 	if (!sound_started)
 	{
@@ -105,8 +97,6 @@ void S_SoundInfo_f (void)
 	Com_Printf ("%5d speed\n", dma.speed);
 	Com_Printf ("0x%x dma buffer\n", dma.buffer);
 }
-
-
 
 /*
 ================
@@ -158,11 +148,13 @@ void S_Init (void)
 	Com_Printf ("------------------------------------\n");
 }
 
+/*
+==================
+S_Shutdown
 
-// =======================================================================
-// Shutdown sound engine
-// =======================================================================
-
+Shutdown sound engine
+==================
+*/
 void S_Shutdown (void)
 {
 	int		i;
@@ -197,15 +189,9 @@ void S_Shutdown (void)
 	num_sfx = 0;
 }
 
-
-// =======================================================================
-// Load a sound
-// =======================================================================
-
 /*
 ==================
 S_FindName
-
 ==================
 */
 sfx_t *S_FindName (char *name, qboolean create)
@@ -258,7 +244,6 @@ sfx_t *S_FindName (char *name, qboolean create)
 /*
 ==================
 S_AliasName
-
 ==================
 */
 sfx_t *S_AliasName (char *aliasname, char *truename)
@@ -296,7 +281,6 @@ sfx_t *S_AliasName (char *aliasname, char *truename)
 /*
 =====================
 S_BeginRegistration
-
 =====================
 */
 void S_BeginRegistration (void)
@@ -308,7 +292,6 @@ void S_BeginRegistration (void)
 /*
 ==================
 S_RegisterSound
-
 ==================
 */
 sfx_t *S_RegisterSound (char *name)
@@ -331,7 +314,6 @@ sfx_t *S_RegisterSound (char *name)
 /*
 =====================
 S_EndRegistration
-
 =====================
 */
 void S_EndRegistration (void)
@@ -377,7 +359,6 @@ void S_EndRegistration (void)
 
 	s_registering = false;
 }
-
 
 //=============================================================================
 
@@ -664,11 +645,6 @@ struct sfx_s *S_RegisterSexedSound (entity_state_t *ent, char *base)
 
 	return sfx;
 }
-
-
-// =======================================================================
-// Start a sound effect
-// =======================================================================
 
 /*
 ====================
