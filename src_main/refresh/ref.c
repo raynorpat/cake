@@ -65,22 +65,13 @@ void GFX_CoreInit (char *name)
 	RE_gfxVal = REF_API_UNDETERMINED;
 	if (vid_ref)
 	{
-		if (!strcmp(vid_ref->string, "soft"))
-			RE_gfxVal = REF_API_SOFT;
-		else if (!strcmp(vid_ref->string, "gl"))
+		if (!strcmp(vid_ref->string, "gl"))
 			RE_gfxVal = REF_API_OPENGL;
 	}
-#ifdef WIN_UWP
-	// HACK: force software
-	RE_gfxVal = REF_API_SOFT;
-#endif
 
 	// init function pointers according to vid_ref cvar
 	switch (RE_gfxVal)
 	{
-	case REF_API_SOFT:
-		SW_GFX_CoreInit ();
-		break;
 	case REF_API_OPENGL:
 #ifndef WIN_UWP
 		GL_GFX_CoreInit ();
@@ -104,9 +95,6 @@ void GFX_CoreShutdown (void)
 {
 	switch (RE_gfxVal)
 	{
-	case REF_API_SOFT:
-		// software shutdown works fine with call to RE_Shutdown, no context to clear
-		break;
 	case REF_API_OPENGL:
 #ifndef WIN_UWP
 		// OpenGL needs to destroy everything, including the context, hence this extra call
@@ -132,9 +120,6 @@ int GFX_Core_GetRefreshRate (void)
 
 	switch (RE_gfxVal)
 	{
-	case REF_API_SOFT:
-		return refreshRate; // software will always be hardcoded to 60
-		break;
 	case REF_API_OPENGL:
 #ifndef WIN_UWP
 		refreshRate = VID_GL_GetRefreshRate ();

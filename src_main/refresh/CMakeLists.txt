@@ -48,35 +48,6 @@ set(RENDERER_SOURCES
 source_group("refresh" FILES ${RENDERER_INCLUDES})
 source_group("refresh" FILES ${RENDERER_SOURCES})
 
-# Software refresh backend sources
-set(RENDERER_SOFT_INCLUDES
-	../refresh/soft/adivtab.h
-	../refresh/soft/anorms.h
-	../refresh/soft/r_model.h
-	../refresh/soft/r_local.h
-	)
-set(RENDERER_SOFT_SOURCES
-	../refresh/soft/r_aclip.c
-	../refresh/soft/r_alias.c
-	../refresh/soft/r_bsp.c
-	../refresh/soft/r_draw.c
-	../refresh/soft/r_edge.c
-	../refresh/soft/r_image.c
-	../refresh/soft/r_light.c
-	../refresh/soft/r_main.c
-	../refresh/soft/r_misc.c
-	../refresh/soft/r_model.c
-	../refresh/soft/r_part.c
-	../refresh/soft/r_poly.c
-	../refresh/soft/r_polyse.c
-	../refresh/soft/r_rast.c
-	../refresh/soft/r_scan.c
-	../refresh/soft/r_sprite.c
-	../refresh/soft/r_surf.c
-	)
-source_group("refresh\\soft" FILES ${RENDERER_SOFT_INCLUDES})
-source_group("refresh\\soft" FILES ${RENDERER_SOFT_SOURCES})
-
 if (NOT WIN_UWP)
 # OpenGL refresh backend sources
 set(RENDERER_GL_INCLUDES
@@ -138,8 +109,6 @@ add_library(refresh STATIC ${GLEW_INCLUDES}
 	${GLEW_SOURCES}
 	${RENDERER_INCLUDES}
 	${RENDERER_SOURCES}
-	${RENDERER_SOFT_INCLUDES}
-	${RENDERER_SOFT_SOURCES}
 	${RENDERER_GL_INCLUDES}
 	${RENDERER_GL_SOURCES}
 	${RENDERER_VID_INCLUDES}
