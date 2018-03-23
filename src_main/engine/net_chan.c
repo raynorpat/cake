@@ -165,23 +165,7 @@ void Netchan_Setup (netsrc_t sock, netchan_t *chan, netadr_t adr, int qport)
 }
 
 
-/*
-===============
-Netchan_CanReliable
-
-Returns true if the last reliable message has acked
-================
-*/
-qboolean Netchan_CanReliable (netchan_t *chan)
-{
-	if (chan->reliable_length)
-		return false;			// waiting for ack
-
-	return true;
-}
-
-
-qboolean Netchan_NeedReliable (netchan_t *chan)
+static qboolean Netchan_NeedReliable (netchan_t *chan)
 {
 	qboolean	send_reliable;
 

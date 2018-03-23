@@ -652,8 +652,6 @@ void Netchan_OutOfBand (int net_socket, netadr_t adr, int length, byte *data);
 void Netchan_OutOfBandPrint (int net_socket, netadr_t adr, char *format, ...);
 qboolean Netchan_Process (netchan_t *chan, sizebuf_t *msg);
 
-qboolean Netchan_CanReliable (netchan_t *chan);
-
 
 /*
 ==============================================================
