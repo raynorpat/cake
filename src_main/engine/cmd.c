@@ -400,8 +400,7 @@ void Cmd_Exec_f (void)
 	}
 
 	len = FS_LoadFile (Cmd_Argv (1), (void **) &f);
-
-	if (!f)
+	if (!f || !len)
 	{
 		Com_Printf ("couldn't exec %s\n", Cmd_Argv (1));
 		return;
@@ -440,6 +439,60 @@ void Cmd_Echo_f (void)
 
 /*
 ===============
+Cmd_Aliaslist_f
+
+Lists alias commands
+===============
+*/
+static int __cdecl aliassort( const void *_a, const void *_b )
+{
+	const cmdalias_t *a = (const cmdalias_t *)_a;
+	const cmdalias_t *b = (const cmdalias_t *)_b;
+
+	return strcmp (a->name, b->name);
+}
+
+void Cmd_Aliaslist_f (void)
+{
+	cmdalias_t	*a;
+	int argLen;
+	int i, j;
+	int len, num;
+	cmdalias_t *sortedList;
+
+	argLen = strlen(Cmd_Argv(1));
+
+	for (a = cmd_alias, i = 0; a ; a = a->next, i++);
+	num = i;
+
+	len = num * sizeof(cmdalias_t);
+	sortedList = Z_Malloc (len);
+	
+	for (a = cmd_alias, i = 0; a ; a = a->next, i++)
+	{
+		sortedList[i] = *a;
+	}
+
+	qsort (sortedList, num, sizeof(sortedList[0]), (int (*)(const void *, const void *))aliassort);
+
+	for (j = 0; j < num; j++)
+	{
+		a = &sortedList[j];
+
+		if (argLen && Q_strncasecmp (a->name, Cmd_Argv(1), argLen))
+			continue;
+
+		if (argLen)
+			Com_Printf ("a %s\n", a->name);
+		else
+			Com_Printf ("%s : %s\n", a->name, a->value);
+	}
+
+	Z_Free (sortedList);
+}
+
+/*
+===============
 Cmd_Alias_f
 
 Creates a new command that executes a command string (possibly; seperated)
@@ -455,15 +508,11 @@ void Cmd_Alias_f (void)
 	if (Cmd_Argc() == 1)
 	{
 		Com_Printf ("Current alias commands:\n");
-
-		for (a = cmd_alias; a; a = a->next)
-			Com_Printf ("%s : %s\n", a->name, a->value);
-
+		Cmd_Aliaslist_f ();
 		return;
 	}
 
 	s = Cmd_Argv (1);
-
 	if (strlen (s) >= MAX_ALIAS_NAME)
 	{
 		Com_Printf ("Alias name is too long\n");
@@ -579,11 +628,13 @@ char *Cmd_MacroExpandString (char *text)
 	char	temporary[MAX_STRING_CHARS];
 	char	*token, *start;
 
+	if (!strstr(text, "$"))
+		return text;
+
 	inquote = false;
 	scan = text;
 
 	len = strlen (scan);
-
 	if (len >= MAX_STRING_CHARS)
 	{
 		Com_Printf ("Line exceeded %i chars, discarded.\n", MAX_STRING_CHARS);
@@ -817,33 +868,31 @@ Cmd_CompleteCommand
 char *Cmd_CompleteCommand (char *partial)
 {
 	cmd_function_t	*cmd;
-	int				len;
-	cmdalias_t		*a;
+	char *best = "~";
+	char *least = "~";
+	cmdalias_t *alias;
 
-	len = strlen (partial);
+	// try and complete as a command
+	for (cmd = cmd_functions ; cmd ; cmd = cmd->next)
+	{
+		if (strcmp(cmd->name, partial) >= 0 && strcmp(best, cmd->name) > 0)
+			best = cmd->name;
+		if (strcmp(cmd->name, least) < 0)
+			least = cmd->name;
+	}
 
-	if (!len)
-		return NULL;
+	// try and complete as an alias
+	for (alias = cmd_alias ; alias ; alias = alias->next)
+	{
+		if (strcmp(alias->name, partial) >= 0 && strcmp(best, alias->name) > 0)
+			best = alias->name;
+		if (strcmp(alias->name, least) < 0)
+			least = alias->name;
+	}
 
-	// check for exact match
-	for (cmd = cmd_functions; cmd; cmd = cmd->next)
-		if (!strcmp (partial, cmd->name))
-			return cmd->name;
-
-	for (a = cmd_alias; a; a = a->next)
-		if (!strcmp (partial, a->name))
-			return a->name;
-
-	// check for partial match
-	for (cmd = cmd_functions; cmd; cmd = cmd->next)
-		if (!strncmp (partial, cmd->name, len))
-			return cmd->name;
-
-	for (a = cmd_alias; a; a = a->next)
-		if (!strncmp (partial, a->name, len))
-			return a->name;
-
-	return NULL;
+	if (best[0] == '~')
+		return least;
+	return best;
 }
 
 // ugly hack to suppress warnings from default.cfg in Key_Bind_f()
@@ -870,7 +919,7 @@ void	Cmd_ExecuteString (char *text)
 
 	if (Cmd_Argc() > 1 && Q_strcasecmp(cmd_argv[0], "exec") == 0 && Q_strcasecmp(cmd_argv[1], "config.cfg") == 0)
 	{
-		// exec config.cfg is done directly after exec default.cfg, see Qcommon_Init() */
+		// exec config.cfg is done directly after exec default.cfg, see Qcommon_Init()
 		doneWithDefaultCfg = true;
 	}
 
@@ -920,17 +969,51 @@ void	Cmd_ExecuteString (char *text)
 Cmd_List_f
 ============
 */
+static int cmdsort( const void *_a, const void *_b )
+{
+	const cmd_function_t *a = (const cmd_function_t *)_a;
+	const cmd_function_t *b = (const cmd_function_t *)_b;
+
+	return strcmp (a->name, b->name);
+}
+
 void Cmd_List_f (void)
 {
 	cmd_function_t	*cmd;
-	int				i;
+	int				i, j;
+	int				len, num;
+	int				argLen;
+	cmd_function_t	*sortedList;
 
-	i = 0;
+	argLen = strlen(Cmd_Argv(1));
 
-	for (cmd = cmd_functions; cmd; cmd = cmd->next, i++)
-		Com_Printf ("%s\n", cmd->name);
+	for (cmd = cmd_functions, i = 0; cmd ; cmd = cmd->next, i++);
+	num = i;
 
-	Com_Printf ("%i commands\n", i);
+	len = num * sizeof(cmd_function_t);
+	sortedList = Z_Malloc(len);
+	
+	for (cmd = cmd_functions, i = 0; cmd ; cmd = cmd->next, i++)
+	{
+		sortedList[i] = *cmd;
+	}
+
+	qsort (sortedList, num, sizeof(sortedList[0]), (int (*)(const void *, const void *))cmdsort);
+
+	//for (cmd=cmd_functions ; cmd ; cmd=cmd->next, i++)
+	for (j = 0; j < num; j++)
+	{
+		cmd = &sortedList[j];
+
+		if (argLen && Q_strncasecmp (cmd->name, Cmd_Argv(1), argLen))
+			continue;
+		Com_Printf ("c %s\n", cmd->name);
+	}
+
+	if (!argLen)
+		Com_Printf ("%i commands\n", i);
+
+	Z_Free (sortedList);
 }
 
 /*
@@ -947,6 +1030,7 @@ void Cmd_Init (void)
 	Cmd_AddCommand ("exec", Cmd_Exec_f);
 	Cmd_AddCommand ("echo", Cmd_Echo_f);
 	Cmd_AddCommand ("alias", Cmd_Alias_f);
+	Cmd_AddCommand ("aliaslist", Cmd_Aliaslist_f);
 	Cmd_AddCommand ("wait", Cmd_Wait_f);
 }
 

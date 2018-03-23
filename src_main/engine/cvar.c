@@ -487,48 +487,81 @@ void Cvar_WriteVariables (char *path)
 Cvar_List_f
 ============
 */
+static int cvarsort( const void *_a, const void *_b )
+{
+	const cvar_t *a = (const cvar_t *)_a;
+	const cvar_t *b = (const cvar_t *)_b;
+
+	return strcmp (a->name, b->name);
+}
+
 void Cvar_List_f (void)
 {
 	cvar_t	*var;
-	int		i;
+	int		i, j;
+	int		len, num;
+	cvar_t	*sortedList;
+	int		argLen;
 
-	i = 0;
+	argLen = strlen(Cmd_Argv(1));
 
-	for (var = cvar_vars; var; var = var->next, i++)
+	for (var = cvar_vars, i = 0; var ; var = var->next, i++);
+	num = i;
+
+	len = num * sizeof(cvar_t);
+	sortedList = Z_Malloc(len);
+	
+	for (var = cvar_vars, i = 0; var ; var = var->next, i++)
 	{
-		if (var->flags & CVAR_ARCHIVE)
-			Com_Printf ("*");
-		else
-			Com_Printf (" ");
-
-		if (var->flags & CVAR_USERINFO)
-			Com_Printf ("U");
-		else
-			Com_Printf (" ");
-
-		if (var->flags & CVAR_SERVERINFO)
-			Com_Printf ("S");
-		else
-			Com_Printf (" ");
-
-		if (var->flags & CVAR_NOSET)
-			Com_Printf ("-");
-		else if (var->flags & CVAR_LATCH)
-			Com_Printf ("L");
-		else
-			Com_Printf (" ");
-
-		Com_Printf (" %s \"%s\"\n", var->name, var->string);
+		sortedList[i] = *var;
 	}
 
-	Com_Printf ("%i cvars\n", i);
+	qsort (sortedList, num, sizeof(sortedList[0]), (int (*)(const void *, const void *))cvarsort);
+
+	for (j = 0; j < num; j++)
+	{
+		var = &sortedList[j];
+		if (argLen && Q_strncasecmp (var->name, Cmd_Argv(1), argLen))
+			continue;
+
+		if (!argLen)
+		{
+			if (var->flags & CVAR_ARCHIVE)
+				Com_Printf ("*");
+			else
+				Com_Printf (" ");	
+			if (var->flags & CVAR_USERINFO)
+				Com_Printf ("U");
+			else
+				Com_Printf (" ");	
+			if (var->flags & CVAR_SERVERINFO)
+				Com_Printf ("S");
+			else
+				Com_Printf (" ");	
+			if (var->flags & CVAR_NOSET)
+				Com_Printf ("-");
+			else if (var->flags & CVAR_LATCH)
+				Com_Printf ("L");
+			else
+				Com_Printf (" ");
+			Com_Printf (" %s \"%s\"\n", var->name, var->string);
+		}
+		else
+		{
+			Com_Printf ("v %s\n", var->name, var->string);
+		}
+	}
+	if (!argLen)
+		Com_Printf ("%i cvars\n", i);
+
+	Z_Free (sortedList);
 }
 
 
 qboolean userinfo_modified;
 
 
-char	*Cvar_BitInfo (int bit)
+char *Cvar_BitInfo (int bit)
 {
 	static char	info[MAX_INFO_STRING];
 	cvar_t	*var;
