@@ -304,7 +304,7 @@ Init libcurl and multi handle.
 void CL_InitHTTPDownloads (void)
 {
 	curl_global_init (CURL_GLOBAL_NOTHING);
-	Com_Printf ("%s initialized.\n", curl_version());
+	Com_DPrintf ("CL_InitHTTPDownloads: %s initialized.\n", curl_version());
 }
 
 /*
