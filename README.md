@@ -23,20 +23,23 @@ Pre-built releases of _Cake_ are available at: https://github.com/raynorpat/cake
 
 ## Compiling
 
-_Cake_ builds with CMake. If you've never tried it, please do so, it rocks.
+_Cake_ builds with CMake. If you've never tried it, please do so, it rocks. We require at least version 3.0.
 
-The main requirement to build _Cake_ is SDL2, which is provided in library format for MSVC builds.
+The main dependency to build _Cake_ is SDL2, which is provided in library format for MSVC builds, all others will need to grab it
+from source or from their distribution.
+
 Other dependencies include glew, libcurl, libmad, libmodplug, and zlib.
 We provide all dependencies for building everything else in src_main/libs if CMake doesn't find one.
 
-There are various scripts in the src_main directory that will give you a way to build if CMake is installed on your machine.
+There are various scripts in the src_main directory that will give you a way to build if CMake is installed on your machine. These scripts range from
+regular old GNU makefiles to XCode projects as well as MSVC 2010 all the way through 2017 32bit and 64bit variants.
 
 ## Installing
 
 To have a working game, you must install the game data into the baseq2 folder. 
 All that is required is a copy of the full retail version of Quake 2. That is pak0.pak, pak1.pak, and pak2.pak.
 
-Cake requires SDL2 to be installed or available on your system to function.
+_Cake_ requires SDL2 to be installed or available on your system to function.
 If on Windows, that usually just requires putting SDL2.dll next to the main engine exe.
 
 ## Contributing
