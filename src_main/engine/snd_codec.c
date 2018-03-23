@@ -1,6 +1,5 @@
 /*
  * Audio Codecs: Adapted from ioquake3 with changes.
- * For now, only handles streaming music, not sound effects.
  *
  * Copyright (C) 1999-2005 Id Software, Inc.
  * Copyright (C) 2005 Stuart Dalton <badcdev@gmail.com>
