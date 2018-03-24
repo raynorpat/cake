@@ -46,6 +46,7 @@ static menuseparator_s	s_blankline;
 
 static void StartGame (void)
 {
+	// if we are already connected to a server, disconnect
 	if (cls.state != ca_disconnected && cls.state != ca_uninitialized)
 	{
 		CL_Disconnect();
@@ -492,17 +493,16 @@ void M_Menu_SaveGame_f (void)
 /*
 =============================================================================
 
-END GAME MENU
+CREDITS MENU
 
 =============================================================================
 */
-
-extern int Developer_searchpath(int who);
 
 static int credits_start_time;
 static const char **credits;
 static char *creditsIndex[256];
 static char *creditsBuffer;
+
 static const char *idcredits[] =
 {
 	"+QUAKE II BY ID SOFTWARE",
@@ -591,261 +591,6 @@ static const char *idcredits[] =
 	"trademark of Activision, Inc. All",
 	"other trademarks and trade names are",
 	"properties of their respective owners.",
-	0
-};
-
-static const char *xatcredits[] =
-{
-	"+QUAKE II MISSION PACK: THE RECKONING",
-	"+BY",
-	"+XATRIX ENTERTAINMENT, INC.",
-	"",
-	"+DESIGN AND DIRECTION",
-	"Drew Markham",
-	"",
-	"+PRODUCED BY",
-	"Greg Goodrich",
-	"",
-	"+PROGRAMMING",
-	"Rafael Paiz",
-	"",
-	"+LEVEL DESIGN / ADDITIONAL GAME DESIGN",
-	"Alex Mayberry",
-	"",
-	"+LEVEL DESIGN",
-	"Mal Blackwell",
-	"Dan Koppel",
-	"",
-	"+ART DIRECTION",
-	"Michael \"Maxx\" Kaufman",
-	"",
-	"+COMPUTER GRAPHICS SUPERVISOR AND",
-	"+CHARACTER ANIMATION DIRECTION",
-	"Barry Dempsey",
-	"",
-	"+SENIOR ANIMATOR AND MODELER",
-	"Jason Hoover",
-	"",
-	"+CHARACTER ANIMATION AND",
-	"+MOTION CAPTURE SPECIALIST",
-	"Amit Doron",
-	"",
-	"+ART",
-	"Claire Praderie-Markham",
-	"Viktor Antonov",
-	"Corky Lehmkuhl",
-	"",
-	"+INTRODUCTION ANIMATION",
-	"Dominique Drozdz",
-	"",
-	"+ADDITIONAL LEVEL DESIGN",
-	"Aaron Barber",
-	"Rhett Baldwin",
-	"",
-	"+3D CHARACTER ANIMATION TOOLS",
-	"Gerry Tyra, SA Technology",
-	"",
-	"+ADDITIONAL EDITOR TOOL PROGRAMMING",
-	"Robert Duffy",
-	"",
-	"+ADDITIONAL PROGRAMMING",
-	"Ryan Feltrin",
-	"",
-	"+PRODUCTION COORDINATOR",
-	"Victoria Sylvester",
-	"",
-	"+SOUND DESIGN",
-	"Gary Bradfield",
-	"",
-	"+MUSIC BY",
-	"Sonic Mayhem",
-	"",
-	"",
-	"",
-	"+SPECIAL THANKS",
-	"+TO",
-	"+OUR FRIENDS AT ID SOFTWARE",
-	"",
-	"John Carmack",
-	"John Cash",
-	"Brian Hook",
-	"Adrian Carmack",
-	"Kevin Cloud",
-	"Paul Steed",
-	"Tim Willits",
-	"Christian Antkow",
-	"Paul Jaquays",
-	"Brandon James",
-	"Todd Hollenshead",
-	"Barrett (Bear) Alexander",
-	"Dave \"Zoid\" Kirsch",
-	"Donna Jackson",
-	"",
-	"",
-	"",
-	"+THANKS TO ACTIVISION",
-	"+IN PARTICULAR:",
-	"",
-	"Marty Stratton",
-	"Henk \"The Original Ripper\" Hartong",
-	"Kevin Kraff",
-	"Jamey Gottlieb",
-	"Chris Hepburn",
-	"",
-	"+AND THE GAME TESTERS",
-	"",
-	"Tim Vanlaw",
-	"Doug Jacobs",
-	"Steven Rosenthal",
-	"David Baker",
-	"Chris Campbell",
-	"Aaron Casillas",
-	"Steve Elwell",
-	"Derek Johnstone",
-	"Igor Krinitskiy",
-	"Samantha Lee",
-	"Michael Spann",
-	"Chris Toft",
-	"Juan Valdes",
-	"",
-    "+THANKS TO INTERGRAPH COMPUTER SYSTEMS",
-	"+IN PARTICULAR:",
-	"",
-	"Michael T. Nicolaou",
-	"",
-	"",
-	"Quake II Mission Pack: The Reckoning",
-	"(tm) (C)1998 Id Software, Inc. All",
-	"Rights Reserved. Developed by Xatrix",
-	"Entertainment, Inc. for Id Software,",
-	"Inc. Distributed by Activision Inc.",
-	"under license. Quake(R) is a",
-	"registered trademark of Id Software,",
-	"Inc. Quake II Mission Pack: The",
-	"Reckoning(tm), Quake II(tm), the Id",
-	"Software name, the \"Q II\"(tm) logo",
-	"and id(tm) logo are trademarks of Id",
-	"Software, Inc. Activision(R) is a",
-	"registered trademark of Activision,",
-	"Inc. Xatrix(R) is a registered",
-	"trademark of Xatrix Entertainment,",
-	"Inc. All other trademarks and trade",
-	"names are properties of their",
-	"respective owners.",
-	0
-};
-
-static const char *roguecredits[] =
-{
-	"+QUAKE II MISSION PACK 2: GROUND ZERO",
-	"+BY",
-	"+ROGUE ENTERTAINMENT, INC.",
-	"",
-	"+PRODUCED BY",
-	"Jim Molinets",
-	"",
-	"+PROGRAMMING",
-	"Peter Mack",
-	"Patrick Magruder",
-	"",
-	"+LEVEL DESIGN",
-	"Jim Molinets",
-	"Cameron Lamprecht",
-	"Berenger Fish",
-	"Robert Selitto",
-	"Steve Tietze",
-	"Steve Thoms",
-	"",
-	"+ART DIRECTION",
-	"Rich Fleider",
-	"",
-	"+ART",
-	"Rich Fleider",
-	"Steve Maines",
-	"Won Choi",
-	"",
-	"+ANIMATION SEQUENCES",
-	"Creat Studios",
-	"Steve Maines",
-	"",
-	"+ADDITIONAL LEVEL DESIGN",
-	"Rich Fleider",
-	"Steve Maines",
-	"Peter Mack",
-	"",
-	"+SOUND",
-	"James Grunke",
-	"",
-	"+GROUND ZERO THEME",
-	"+AND",
-	"+MUSIC BY",
-	"Sonic Mayhem",
-	"",
-	"+VWEP MODELS",
-	"Brent \"Hentai\" Dill",
-	"",
-	"",
-	"",
-	"+SPECIAL THANKS",
-	"+TO",
-	"+OUR FRIENDS AT ID SOFTWARE",
-	"",
-	"John Carmack",
-	"John Cash",
-	"Brian Hook",
-	"Adrian Carmack",
-	"Kevin Cloud",
-	"Paul Steed",
-	"Tim Willits",
-	"Christian Antkow",
-	"Paul Jaquays",
-	"Brandon James",
-	"Todd Hollenshead",
-	"Barrett (Bear) Alexander",
-	"Katherine Anna Kang",
-	"Donna Jackson",
-	"Dave \"Zoid\" Kirsch",
-	"",
-	"",
-	"",
-	"+THANKS TO ACTIVISION",
-	"+IN PARTICULAR:",
-	"",
-	"Marty Stratton",
-	"Henk Hartong",
-	"Mitch Lasky",
-	"Steve Rosenthal",
-	"Steve Elwell",
-	"",
-	"+AND THE GAME TESTERS",
-	"",
-	"The Ranger Clan",
-	"Dave \"Zoid\" Kirsch",
-	"Nihilistic Software",
-	"Robert Duffy",
-	"",
-	"And Countless Others",
-	"",
-	"",
-	"",
-	"Quake II Mission Pack 2: Ground Zero",
-	"(tm) (C)1998 Id Software, Inc. All",
-	"Rights Reserved. Developed by Rogue",
-	"Entertainment, Inc. for Id Software,",
-	"Inc. Distributed by Activision Inc.",
-	"under license. Quake(R) is a",
-	"registered trademark of Id Software,",
-	"Inc. Quake II Mission Pack 2: Ground",
-	"Zero(tm), Quake II(tm), the Id",
-	"Software name, the \"Q II\"(tm) logo",
-	"and id(tm) logo are trademarks of Id",
-	"Software, Inc. Activision(R) is a",
-	"registered trademark of Activision,",
-	"Inc. Rogue(R) is a registered",
-	"trademark of Rogue Entertainment,",
-	"Inc. All other trademarks and trade",
-	"names are properties of their",
-	"respective owners.",
 	0
 };
 
@@ -951,18 +696,10 @@ void M_Menu_Credits_f (void)
 	}
 	else
 	{
-		isdeveloper = Developer_searchpath (1);
-
-		if (isdeveloper == 1)			// xatrix
-			credits = xatcredits;
-		else if (isdeveloper == 2)		// ROGUE
-			credits = roguecredits;
-		else
-		{
-			credits = idcredits;
-		}
+		credits = idcredits;
 	}
 
 	credits_start_time = cls.realtime;
+
 	M_PushMenu (M_Credits_MenuDraw, M_Credits_Key);
 }
