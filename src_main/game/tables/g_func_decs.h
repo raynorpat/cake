@@ -393,6 +393,7 @@ extern void SVCmd_WriteIP_f ( void ) ;
 extern void SVCmd_ListIP_f ( void ) ;
 extern void SVCmd_RemoveIP_f ( void ) ;
 extern void SVCmd_AddIP_f ( void ) ;
+extern qboolean SV_FilterPacket ( char * from ) ;
 extern void Svcmd_Test_f ( void ) ;
 extern void SP_worldspawn ( edict_t * ent ) ;
 extern void SpawnEntities ( char * mapname , char * entities , char * spawnpoint ) ;
