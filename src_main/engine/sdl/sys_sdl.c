@@ -61,6 +61,7 @@ extern _declspec(dllexport) int AmdPowerXpressRequestHighPerformance = 1;
 
 qboolean	stdin_active = true;
 cvar_t		*nostdout;
+cvar_t		*busywait;
 
 
 /*
@@ -814,6 +815,12 @@ void *Sys_GetGameAPI (void *parms)
 
 //=======================================================================
 
+#ifndef DEDICATED_ONLY
+#define FRAMEDELAY 5
+#else
+#define FRAMEDELAY 850
+#endif
+
 /*
 ==================
 main
@@ -829,16 +836,25 @@ int main(int argc, char **argv)
 	Qcommon_Init(argc, argv);
 
 	nostdout = Cvar_Get("nostdout", "0", 0);
+	busywait = Cvar_Get("busywait", "1", CVAR_ARCHIVE);
 
 	oldtime = Sys_Microseconds();
 	while (1)
 	{
 		// throttle the game a little bit
-#ifndef DEDICATED_ONLY
-		Sys_Nanosleep(5000);
-#else
-		Sys_Nanosleep(850000);
-#endif
+		if (busywait->value)
+		{
+			long long spintime = Sys_Microseconds();
+			while (1)
+			{
+				if (Sys_Microseconds() - spintime >= FRAMEDELAY)
+					break;
+			}
+		}
+		else
+		{
+			Sys_Nanosleep(FRAMEDELAY * 1000);
+		}
 
 		newtime = Sys_Microseconds();
 
