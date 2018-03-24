@@ -1632,7 +1632,7 @@ void AddressBook_MenuInit (void)
 		s_addressbook_fields[i].generic.name = 0;
 		s_addressbook_fields[i].generic.callback = 0;
 		s_addressbook_fields[i].generic.x		= 0;
-		s_addressbook_fields[i].generic.y		= i * 18 + 0;
+		s_addressbook_fields[i].generic.y		= i * 18;
 		s_addressbook_fields[i].generic.localdata[0] = i;
 		s_addressbook_fields[i].cursor			= 0;
 		s_addressbook_fields[i].length			= 60;
