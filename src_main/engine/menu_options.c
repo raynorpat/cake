@@ -28,8 +28,6 @@ KEYS MENU
 =======================================================================
 */
 
-const char *Default_MenuKey (menuframework_s *m, int key);
-
 char *bindnames[][2] =
 {
 	{"+attack", 		"attack"},

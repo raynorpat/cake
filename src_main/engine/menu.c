@@ -21,9 +21,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #include "client.h"
 #include "qmenu.h"
 
-static int	m_main_cursor;
-#define NUM_CURSOR_FRAMES 15
-
 char *menu_in_sound		= "misc/menu1.wav";
 char *menu_move_sound	= "misc/menu2.wav";
 char *menu_out_sound	= "misc/menu3.wav";
@@ -46,13 +43,31 @@ void M_Menu_Options_f (void);
 void M_Menu_Keys_f (void);
 void M_Menu_Quit_f (void);
 
-qboolean	m_entersound;		// play after drawing a frame, so caching won't disrupt the sound
+qboolean m_entersound; // play after drawing a frame, so caching won't disrupt the sound
 
-void	(*m_drawfunc) (void);
-const char * (*m_keyfunc) (int key);
+void			(*m_drawfunc) (void);
+const char		*(*m_keyfunc) (int key);
 
 //=============================================================================
-/* Support Routines */
+
+/*
+* These crappy functions maintaine a stack of opened menus.
+* The steps in this horrible mess are:
+*
+* 1. Put the game into pause if a menu is opened
+*
+* 2. If the requested menu is already open, close it.
+*
+* 3. If the requested menu is already open but not
+*    on top, close all menus above it and the menu
+*    itself. This is necessary since an instance of
+*    the reqeuested menu is in flight and will be
+*    displayed.
+*
+* 4. Save the previous menu on top (which was in flight)
+*    to the stack and make the requested menu the menu in
+*    flight.
+*/
 
 #define	MAX_MENU_DEPTH	8
 
@@ -64,25 +79,6 @@ typedef struct
 
 menulayer_t	m_layers[MAX_MENU_DEPTH];
 int		m_menudepth;
-
-void M_Banner (char *name)
-{
-	int w, h;
-	float scale = SCR_GetMenuScale();
-
-	RE_Draw_GetPicSize (&w, &h, name);
-	RE_Draw_PicScaled(viddef.width / 2 - (w * scale) / 2, viddef.height / 2 - (110 * scale), name, scale);
-}
-
-void M_ForceMenuOff (void)
-{
-	m_drawfunc = NULL;
-	m_keyfunc = NULL;
-	cls.key_dest = key_game;
-	m_menudepth = 0;
-	Key_ClearStates ();
-	Cvar_Set ("paused", "0");
-}
 
 void M_PopMenu (void)
 {
@@ -100,24 +96,6 @@ void M_PopMenu (void)
 		M_ForceMenuOff ();
 }
 
-/*
- * This crappy function maintaines a stack of opened menus.
- * The steps in this horrible mess are:
- *
- * 1. But the game into pause if a menu is opened
- *
- * 2. If the requested menu is already open, close it.
- *
- * 3. If the requested menu is already open but not
- *    on top, close all menus above it and the menu
- *    itself. This is necessary since an instance of
- *    the reqeuested menu is in flight and will be
- *    displayed.
- *
- * 4. Save the previous menu on top (which was in flight)
- *    to the stack and make the requested menu the menu in
- *    flight.
- */
 void M_PushMenu (void (*draw) (void), const char * (*key) (int k))
 {
 	int		i;
@@ -168,6 +146,33 @@ void M_PushMenu (void (*draw) (void), const char * (*key) (int k))
 	cls.key_dest = key_menu;
 }
 
+//=============================================================================
+
+/*
+================
+M_ForceMenuOff
+
+Turns off pause, puts us back into game mode,
+sets the menu layer depth to 0, and resets the key state
+================
+*/
+void M_ForceMenuOff(void)
+{
+	m_drawfunc = NULL;
+	m_keyfunc = NULL;
+	cls.key_dest = key_game;
+	m_menudepth = 0;
+	Key_ClearStates();
+	Cvar_Set("paused", "0");
+}
+
+/*
+================
+Default_MenuKey
+
+Default keybindings for the menu system
+================
+*/
 const char *Default_MenuKey (menuframework_s *m, int key)
 {
 	const char *sound = NULL;
@@ -312,6 +317,13 @@ void M_DrawCharacter (int cx, int cy, int num)
 	RE_Draw_CharScaled(cx + ((int)(viddef.width - 320 * scale) >> 1), cy + ((int)(viddef.height - 240 * scale) >> 1), num, scale);
 }
 
+/*
+================
+M_Print
+
+Draws an entire string
+================
+*/
 void M_Print (int x, int y, char *str)
 {
     int cx, cy;
@@ -335,6 +347,13 @@ void M_Print (int x, int y, char *str)
 	}
 }
 
+/*
+================
+M_DrawPic
+
+Draws a pic
+================
+*/
 void M_DrawPic (int x, int y, char *pic)
 {
 	float scale = SCR_GetMenuScale();
@@ -344,37 +363,11 @@ void M_DrawPic (int x, int y, char *pic)
 
 /*
 =============
-M_DrawCursor
+M_DrawTextBox
 
-Draws an animating cursor with the point at
-x,y. The pic will extend to the left of x,
-and both above and below y.
+Draws a text box
 =============
 */
-void M_DrawCursor (int x, int y, int f)
-{
-	char	cursorname[80];
-	static qboolean cached;
-	float scale = SCR_GetMenuScale();
-
-	if (!cached)
-	{
-		int i;
-
-		for (i = 0; i < NUM_CURSOR_FRAMES; i++)
-		{
-			Com_sprintf (cursorname, sizeof (cursorname), "m_cursor%d", i);
-
-			RE_Draw_RegisterPic (cursorname);
-		}
-
-		cached = true;
-	}
-
-	Com_sprintf (cursorname, sizeof (cursorname), "m_cursor%d", f);
-	RE_Draw_PicScaled (x * scale, y * scale, cursorname, scale);
-}
-
 void M_DrawTextBox (int x, int y, int width, int lines)
 {
 	int		cx, cy;
@@ -426,6 +419,13 @@ void M_DrawTextBox (int x, int y, int width, int lines)
     M_DrawCharacter(cx * scale, cy * scale + 8 * scale, 9);
 }
 
+/*
+=================
+M_Popup
+
+Draws a popup with a textbox and string
+=================
+*/
 char *m_popup_string;
 int m_popup_endtime;
 
@@ -481,228 +481,19 @@ void M_Popup(void)
 }
 
 /*
-=======================================================================
+=================
+M_Banner
 
-MAIN MENU
-
-=======================================================================
+Draws a picture banner overhead
+=================
 */
-
-#define	MAIN_ITEMS	5
-
-void M_Main_Draw (void)
+void M_Banner(char *name)
 {
-	int i;
 	int w, h;
-	int ystart;
-	int	xoffset;
-	int widest = -1;
-	int totalheight = 0;
-	char litname[80];
 	float scale = SCR_GetMenuScale();
-	char *names[] =
-	{
-		"m_main_game",
-		"m_main_multiplayer",
-		"m_main_options",
-		"m_main_video",
-		"m_main_quit",
-		0
-	};
 
-	for (i = 0; names[i] != 0; i++)
-	{
-		RE_Draw_GetPicSize (&w, &h, names[i]);
-
-		if (w > widest)
-			widest = w;
-
-		totalheight += (h + 12);
-	}
-
-	ystart = (viddef.height / (2 * scale) - 110);
-	xoffset = (viddef.width / scale - widest + 70) / 2;
-
-	for (i = 0; names[i] != 0; i++)
-	{
-		if (i != m_main_cursor)
-			RE_Draw_PicScaled (xoffset * scale, (ystart + i * 40 + 13) * scale, names[i], scale);
-	}
-
-	strcpy (litname, names[m_main_cursor]);
-	strcat (litname, "_sel");
-	RE_Draw_PicScaled (xoffset * scale, (ystart + m_main_cursor * 40 + 13) * scale, litname, scale);
-
-	M_DrawCursor (xoffset - 25, ystart + m_main_cursor * 40 + 11, (int) (cls.realtime / 100) % NUM_CURSOR_FRAMES);
-
-	RE_Draw_GetPicSize (&w, &h, "m_main_plaque");
-	RE_Draw_PicScaled ((xoffset - 30 - w) * scale, ystart * scale, "m_main_plaque", scale);
-
-	RE_Draw_PicScaled ((xoffset - 30 - w) * scale, (ystart + h + 5) * scale, "m_main_logo", scale);
-}
-
-const char *M_Main_Key (int key)
-{
-	const char *sound = menu_move_sound;
-
-	switch (key)
-	{
-	case K_ESCAPE:
-	case K_GAMEPAD_BACK:
-	case K_GAMEPAD_START:
-	case K_GAMEPAD_B:
-		M_PopMenu ();
-		break;
-
-	case K_GAMEPAD_DOWN:
-	case K_GAMEPAD_LSTICK_DOWN:
-	case K_GAMEPAD_RSTICK_DOWN:
-	case K_KP_DOWNARROW:
-	case K_DOWNARROW:
-		if (++m_main_cursor >= MAIN_ITEMS)
-			m_main_cursor = 0;
-		return sound;
-
-	case K_GAMEPAD_UP:
-	case K_GAMEPAD_LSTICK_UP:
-	case K_GAMEPAD_RSTICK_UP:
-	case K_KP_UPARROW:
-	case K_UPARROW:
-		if (--m_main_cursor < 0)
-			m_main_cursor = MAIN_ITEMS - 1;
-		return sound;
-
-	case K_KP_ENTER:
-	case K_ENTER:
-	case K_GAMEPAD_A:
-		m_entersound = true;
-
-		switch (m_main_cursor)
-		{
-		case 0:
-			M_Menu_Game_f ();
-			break;
-
-		case 1:
-			M_Menu_Multiplayer_f ();
-			break;
-
-		case 2:
-			M_Menu_Options_f ();
-			break;
-
-		case 3:
-			M_Menu_Video_f ();
-			break;
-
-		case 4:
-			M_Menu_Quit_f ();
-			break;
-		}
-	}
-
-	return NULL;
-}
-
-void M_Menu_Main_f (void)
-{
-	M_PushMenu (M_Main_Draw, M_Main_Key);
-}
-
-/*
-=======================================================================
-
-QUIT MENU
-
-=======================================================================
-*/
-
-int msgNumber;
-
-char *quitMessage[] =
-{
-	/* .........1.........2.... */
-	"  Are you gonna quit    ",
-	"  this game just like   ",
-	"   everything else?     ",
-	"                        ",
-
-	" Milord, methinks that  ",
-	"   thou art a lowly     ",
-	" quitter. Is this true? ",
-	"                        ",
-
-	" Do I need to bust your ",
-	"  face open for trying  ",
-	"        to quit?        ",
-	"                        ",
-
-	" Man, I oughta smack you",
-	"   for trying to quit!  ",
-	"     Press Y to get     ",
-	"      smacked out.      ",
-
-	" Press Y to quit like a ",
-	"   big loser in life.   ",
-	"  Press N to stay proud ",
-	"    and successful!     ",
-
-	"   If you press Y to    ",
-	"  quit, I will summon   ",
-	"  Satan all over your   ",
-	"      hard drive!       ",
-
-	"  Um, Asmodeus dislikes ",
-	" his children trying to ",
-	" quit. Press Y to return",
-	"   to your Tinkertoys.  ",
-
-	"  If you quit now, I'll ",
-	"  throw a blanket-party ",
-	"   for you next time!   ",
-	"                        "
-};
-
-const char *M_Quit_Key(int key)
-{
-	switch (key)
-	{
-	case K_ESCAPE:
-	case K_GAMEPAD_B:
-	case K_GAMEPAD_BACK:
-	case 'n':
-	case 'N':
-		M_PopMenu();
-		break;
-
-	case 'Y':
-	case 'y':
-	case K_GAMEPAD_A:
-		cls.key_dest = key_console;
-		CL_Quit_f();
-		break;
-
-	default:
-		break;
-	}
-
-	return NULL;
-}
-
-void M_Quit_Draw(void)
-{
-	M_DrawTextBox(56, 76, 24, 4);
-	M_Print(64, 84, quitMessage[msgNumber * 4 + 0]);
-	M_Print(64, 92, quitMessage[msgNumber * 4 + 1]);
-	M_Print(64, 100, quitMessage[msgNumber * 4 + 2]);
-	M_Print(64, 108, quitMessage[msgNumber * 4 + 3]);
-}
-
-void M_Menu_Quit_f(void)
-{
-	msgNumber = rand() & 7;
-
-	M_PushMenu(M_Quit_Draw, M_Quit_Key);
+	RE_Draw_GetPicSize(&w, &h, name);
+	RE_Draw_PicScaled(viddef.width / 2 - (w * scale) / 2, viddef.height / 2 - (110 * scale), name, scale);
 }
 
 //=============================================================================
@@ -784,4 +575,3 @@ void M_Keydown (int key)
 			S_StartLocalSound((char *)s);
 	}
 }
-

@@ -104,6 +104,7 @@ set(MENU_INCLUDES
 set(MENU_SOURCES
 	qmenu.c
 	menu.c
+	menu_main.c
 	menu_multiplayer.c
 	menu_singleplayer.c
 	menu_options.c

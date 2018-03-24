@@ -28,8 +28,6 @@ GAME MENU
 =============================================================================
 */
 
-const char *Default_MenuKey (menuframework_s *m, int key);
-
 void M_Menu_LoadGame_f (void);
 void M_Menu_SaveGame_f (void);
 void M_Menu_Credits_f (void);

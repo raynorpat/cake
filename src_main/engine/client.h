@@ -637,15 +637,20 @@ void M_Init (void);
 void M_Keydown (int key);
 void M_Draw (void);
 
+const char *Default_MenuKey (struct _tag_menuframework *m, int key);
+
+void M_DrawCharacter (int cx, int cy, int num);
+void M_Print (int x, int y, char *str);
+void M_DrawPic (int x, int y, char *pic);
 void M_DrawTextBox (int x, int y, int width, int lines);
+void M_Banner (char *name);
+void M_Popup (void);
 
 void M_Menu_Main_f (void);
 
-void M_Banner (char *name);
 void M_ForceMenuOff (void);
 void M_PopMenu (void);
 void M_PushMenu (void(*draw) (void), const char * (*key) (int k));
-void M_Popup (void);
 
 void M_AddToServerList (netadr_t adr, char *info);
 

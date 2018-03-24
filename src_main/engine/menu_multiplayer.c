@@ -28,8 +28,6 @@ MULTIPLAYER MENU
 =======================================================================
 */
 
-const char *Default_MenuKey(menuframework_s *m, int key);
-
 void M_Menu_PlayerConfig_f (void);
 void M_Menu_JoinGamespyServer_f (void);
 void M_Menu_JoinServer_f (void);
