@@ -302,10 +302,14 @@ static void BGM_UpdateStream (void)
 	byte raw[16384];
 	qboolean did_rewind = false;
 
+	// don't bother playing anything if disabled
+	if (s_nobgm->value)
+		return;
+
 	if (bgmstream->status != STREAM_PLAY)
 		return;
 
-	// don't bother playing anything if musicvolume is 0
+	// don't bother playing anything if volume is 0
 	if (s_volume->value <= 0)
 		return;
 

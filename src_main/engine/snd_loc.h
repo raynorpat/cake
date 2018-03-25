@@ -134,6 +134,7 @@ extern cvar_t	*s_khz;
 extern cvar_t	*s_show;
 extern cvar_t	*s_mixahead;
 extern cvar_t	*s_testsound;
+extern cvar_t	*s_nobgm;
 
 void S_InitScaletable (void);
 

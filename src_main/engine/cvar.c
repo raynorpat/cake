@@ -75,11 +75,11 @@ float Cvar_VariableValue (char *var_name)
 Cvar_VariableInteger
 ============
 */
-int Cvar_VariableInteger(char *var_name)
+int Cvar_VariableInteger (char *var_name)
 {
 	cvar_t	*var;
 
-	var = Cvar_FindVar(var_name);
+	var = Cvar_FindVar (var_name);
 
 	if (!var)
 		return 0;
