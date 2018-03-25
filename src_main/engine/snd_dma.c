@@ -113,7 +113,9 @@ void S_Init (void)
 	cv = Cvar_Get ("s_initsound", "1", 0);
 
 	if (!cv->value)
+	{
 		Com_Printf ("not initializing.\n");
+	}
 	else
 	{
 		s_volume = Cvar_Get ("s_volume", "0.7", CVAR_ARCHIVE);
@@ -538,7 +540,6 @@ void S_FreePlaysound (playsound_t *ps)
 	ps->prev = &s_freeplays;
 	s_freeplays.next = ps;
 }
-
 
 
 /*
@@ -1095,9 +1096,7 @@ void S_Update (vec3_t origin, vec3_t forward, vec3_t right, vec3_t up)
 	// add loopsounds
 	S_AddLoopSounds ();
 
-	//
 	// debugging output
-	//
 	if (s_show->value)
 	{
 		total = 0;
@@ -1174,7 +1173,6 @@ void S_Update_ (void)
 
 	// mix ahead of current position
 	endtime = soundtime + s_mixahead->value * dma.speed;
-	//endtime = (soundtime + 4096) & ~4095;
 
 	// mix to an even submission block size
 	endtime = (endtime + dma.submission_chunk - 1) & ~(dma.submission_chunk - 1);
@@ -1259,4 +1257,3 @@ void S_SoundList (void)
 
 	Com_Printf ("Total resident: %i\n", total);
 }
-

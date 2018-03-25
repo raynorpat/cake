@@ -28,7 +28,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 ResampleSfx
 ================
 */
-void ResampleSfx (sfx_t *sfx, int inrate, int inwidth, byte *data)
+static void ResampleSfx (sfx_t *sfx, int inrate, int inwidth, byte *data)
 {
 	int		outcount;
 	int		srcsample;
@@ -60,7 +60,6 @@ void ResampleSfx (sfx_t *sfx, int inrate, int inwidth, byte *data)
 	sc->stereo = 0;
 
 	// resample / decimate to the current source rate
-
 	if (stepscale == 1 && inwidth == 1 && sc->width == 1)
 	{
 		// fast special case
