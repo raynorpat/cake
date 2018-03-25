@@ -88,7 +88,7 @@ void Field_Draw (menufield_s *f)
 	float scale = SCR_GetMenuScale();
 
 	if (f->generic.name)
-		Menu_DrawStringR2LDark (f->generic.x + f->generic.parent->x + LCOLUMN_OFFSET * scale, f->generic.y + f->generic.parent->y, f->generic.name);
+		Menu_DrawStringR2LDark (f->generic.x + f->generic.parent->x + (LCOLUMN_OFFSET * scale), f->generic.y + f->generic.parent->y, f->generic.name);
 
 	n = f->visible_length + 1;
 	if (n > sizeof(tempbuffer))
@@ -97,8 +97,8 @@ void Field_Draw (menufield_s *f)
 	}
 	Q_strlcpy (tempbuffer, f->buffer + f->visible_offset, n);
 
-	RE_Draw_CharScaled (f->generic.x + f->generic.parent->x + 16 * scale, f->generic.y + (f->generic.parent->y - 4) * scale, 18, scale);
-	RE_Draw_CharScaled (f->generic.x + f->generic.parent->x + 16 * scale, f->generic.y + (f->generic.parent->y + 4) * scale, 24, scale);
+	RE_Draw_CharScaled (f->generic.x + f->generic.parent->x + 16 * scale, (f->generic.y + f->generic.parent->y - 4) * scale, 18, scale);
+	RE_Draw_CharScaled (f->generic.x + f->generic.parent->x + 16 * scale, (f->generic.y + f->generic.parent->y + 4) * scale, 24, scale);
 
 	RE_Draw_CharScaled ((f->generic.x + f->generic.parent->x + 24 * scale) + (f->visible_length * 8 * scale), (f->generic.y + f->generic.parent->y - 4) * scale, 20, scale);
 	RE_Draw_CharScaled ((f->generic.x + f->generic.parent->x + 24 * scale) + (f->visible_length * 8 * scale), (f->generic.y + f->generic.parent->y + 4) * scale, 26, scale);
