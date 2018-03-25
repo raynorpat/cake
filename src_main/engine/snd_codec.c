@@ -26,10 +26,6 @@
 #include "snd_codec.h"
 #include "snd_codeci.h"
 
-#define USE_CODEC_WAVE
-#define USE_CODEC_MP3
-#define USE_CODEC_MODPLUG
-
 // headers for individual codecs
 #include "snd_wave.h"
 #include "snd_mp3.h"

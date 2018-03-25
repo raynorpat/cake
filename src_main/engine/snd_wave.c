@@ -25,8 +25,6 @@
 #include "client.h"
 #include "snd_loc.h"
 
-#define USE_CODEC_WAVE
-
 #if defined(USE_CODEC_WAVE)
 #include "snd_codec.h"
 #include "snd_codeci.h"

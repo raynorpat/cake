@@ -1,6 +1,19 @@
 project(cake)
 
 #
+# Options
+#
+if (USE_CODEC_WAV)
+	add_definitions(-DUSE_CODEC_WAVE)
+endif()
+if (USE_CODEC_MP3)
+	add_definitions(-DUSE_CODEC_MP3)
+endif()
+if (USE_CODEC_MODPLUG)
+	add_definitions(-DUSE_CODEC_MODPLUG)
+endif()
+
+#
 # Libraries
 #
 
@@ -24,26 +37,30 @@ else (GLEW_FOUND)
 endif (GLEW_FOUND)
 
 # libmad
-find_package(MAD)
-if (MAD_FOUND)
-    include_directories(${MAD_INCLUDE_DIRS})
-    set(MAD_LIBRARY ${MAD_LIBRARIES})
-else (MAD_FOUND)
-    include_directories("../libs/mad/include")
-    set(MAD_LIBRARY "" )
-	message(STATUS "Using builtin libmad")
-endif (MAD_FOUND)
+if (USE_CODEC_MP3)
+	find_package(MAD)
+	if (MAD_FOUND)
+		include_directories(${MAD_INCLUDE_DIRS})
+		set(MAD_LIBRARY ${MAD_LIBRARIES})
+	else (MAD_FOUND)
+		include_directories("../libs/mad/include")
+		set(MAD_LIBRARY "" )
+		message(STATUS "Using builtin libmad")
+	endif (MAD_FOUND)
+endif()
 
 # libmodplug
-find_package(MODPLUG)
-if (MODPLUG_FOUND)
-    include_directories(${MODPLUG_INCLUDE_DIRS})
-    set(MODPLUG_LIBRARY ${MODPLUG_LIBRARIES})
-else (MODPLUG_FOUND)
-    include_directories("../libs/modplug/src")
-    set(MODPLUG_LIBRARY "" )
-	message(STATUS "Using builtin libmodplug")
-endif (MODPLUG_FOUND)
+if (USE_CODEC_MODPLUG)
+	find_package(MODPLUG)
+	if (MODPLUG_FOUND)
+		include_directories(${MODPLUG_INCLUDE_DIRS})
+		set(MODPLUG_LIBRARY ${MODPLUG_LIBRARIES})
+	else (MODPLUG_FOUND)
+		include_directories("../libs/modplug/src")
+		set(MODPLUG_LIBRARY "" )
+		message(STATUS "Using builtin libmodplug")
+	endif (MODPLUG_FOUND)
+endif()
 
 # libcurl
 find_package(CURL)
@@ -117,19 +134,25 @@ set(SOUND_INCLUDES
 	snd_codec.h
 	snd_codeci.h
 	snd_loc.h
-	snd_wave.h
-	snd_mp3.h
-	snd_modplug.h
 	)
 set(SOUND_SOURCES
 	snd_codec.c
 	snd_dma.c
 	snd_mem.c
 	snd_mix.c
-	snd_wave.c
-	snd_mp3.c
-	snd_modplug.c
 	)
+if (USE_CODEC_WAV)
+	list(APPEND SOUND_INCLUDES snd_wave.h)
+	list(APPEND SOUND_SOURCES snd_wave.c)
+endif()
+if (USE_CODEC_MP3)
+	list(APPEND SOUND_INCLUDES snd_mp3.h)
+	list(APPEND SOUND_SOURCES snd_mp3.c)
+endif()
+if (USE_CODEC_MODPLUG)
+	list(APPEND SOUND_INCLUDES snd_modplug.h)
+	list(APPEND SOUND_SOURCES snd_modplug.c)
+endif()
 source_group("client\\sound" FILES ${SOUND_INCLUDES})
 source_group("client\\sound" FILES ${SOUND_SOURCES})
 
@@ -220,27 +243,38 @@ source_group("libs\\glew" FILES ${GLEW_INCLUDES})
 source_group("libs\\glew" FILES ${GLEW_SOURCES})
 
 # libmad
-if (NOT MAD_FOUND)
-	file(GLOB MAD_INCLUDES ../libs/mad/include/*.h)
-	file(GLOB MAD_SOURCES ../libs/mad/src/*.c)
-else (NOT MAD_FOUND)
-    set(MAD_INCLUDES "")
-    set(MAD_SOURCES "")
-endif (NOT MAD_FOUND)
-source_group("libs\\mad" FILES ${MAD_INCLUDES})
-source_group("libs\\mad" FILES ${MAD_SOURCES})
+if (USE_CODEC_MP3)
+	if (NOT MAD_FOUND)
+		file(GLOB MAD_INCLUDES ../libs/mad/include/*.h)
+		file(GLOB MAD_SOURCES ../libs/mad/src/*.c)
+	else (NOT MAD_FOUND)
+		set(MAD_INCLUDES "")
+		set(MAD_SOURCES "")
+	endif (NOT MAD_FOUND)
+	source_group("libs\\mad" FILES ${MAD_INCLUDES})
+	source_group("libs\\mad" FILES ${MAD_SOURCES})
+else()
+	set(MAD_INCLUDES "")
+	set(MAD_SOURCES "")
+endif()
 
 # libmodplug
-if (NOT MODPLUG_FOUND)
-	file(GLOB MODPLUG_INCLUDES ../libs/modplug/src/*.h)
-	file(GLOB MODPLUG_SOURCES ../libs/modplug/src/*.cpp)
-	add_definitions(-DMODPLUG_STATIC)
-else (NOT MODPLUG_FOUND)
-    set(MODPLUG_INCLUDES "")
-    set(MODPLUG_SOURCES "")
-endif (NOT MODPLUG_FOUND)
-source_group("libs\\modplug" FILES ${MODPLUG_INCLUDES})
-source_group("libs\\modplug" FILES ${MODPLUG_SOURCES})
+if (USE_CODEC_MODPLUG)
+	if (NOT MODPLUG_FOUND)
+		file(GLOB MODPLUG_INCLUDES ../libs/modplug/src/*.h)
+		file(GLOB MODPLUG_SOURCES ../libs/modplug/src/*.cpp)
+		add_definitions(-DMODPLUG_STATIC)
+	else (NOT MODPLUG_FOUND)
+		set(MODPLUG_INCLUDES "")
+		set(MODPLUG_SOURCES "")
+		add_definitions(-DUSE_SYSTEM_MODPLUG)
+	endif (NOT MODPLUG_FOUND)
+	source_group("libs\\modplug" FILES ${MODPLUG_INCLUDES})
+	source_group("libs\\modplug" FILES ${MODPLUG_SOURCES})
+else()
+	set(MODPLUG_INCLUDES "")
+	set(MODPLUG_SOURCES "")
+endif()
 
 # libcurl
 if (NOT CURL_FOUND)

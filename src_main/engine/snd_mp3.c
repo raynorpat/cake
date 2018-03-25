@@ -27,8 +27,6 @@
 
 #include "client.h"
 
-#define USE_CODEC_MP3
-
 #if defined(USE_CODEC_MP3)
 #include "snd_codec.h"
 #include "snd_codeci.h"

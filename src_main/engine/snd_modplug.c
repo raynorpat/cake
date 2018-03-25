@@ -22,8 +22,6 @@
 #include "client.h"
 #include "snd_loc.h"
 
-#define USE_CODEC_MODPLUG
-
 #if defined(USE_CODEC_MODPLUG)
 #include "snd_codec.h"
 #include "snd_codeci.h"
