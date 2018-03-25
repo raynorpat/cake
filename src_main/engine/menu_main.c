@@ -37,10 +37,27 @@ MAIN MENU
 
 extern qboolean m_entersound;
 
-static int	m_main_cursor;
+static int m_main_cursor;
 #define NUM_CURSOR_FRAMES 15
 
 #define	MAIN_ITEMS	5
+
+static char *names[] =
+{
+	"m_main_game",
+	"m_main_multiplayer",
+	"m_main_options",
+	"m_main_video",
+	"m_main_quit",
+	0
+};
+
+typedef struct mainMenu_s {
+	menuframework_s	menu;
+	menubitmap_s bitmaps[MAIN_ITEMS];
+} mainMenu_t;
+
+static mainMenu_t m_main;
 
 /*
 =============
@@ -53,7 +70,7 @@ and both above and below y.
 */
 static void M_DrawCursor(int x, int y, int f)
 {
-	char	cursorname[80];
+	char cursorname[80];
 	static qboolean cached;
 	float scale = SCR_GetMenuScale();
 
@@ -71,28 +88,25 @@ static void M_DrawCursor(int x, int y, int f)
 	}
 
 	Com_sprintf(cursorname, sizeof(cursorname), "m_cursor%d", f);
-	RE_Draw_PicScaled(x * scale, y * scale, cursorname, scale);
+	RE_Draw_PicScaled(x, y, cursorname, scale);
 }
 
-void M_Main_Draw (void)
+static void MainMenu_CursorDraw(void *self)
+{
+	menubitmap_s *b;
+
+	b = (menubitmap_s *)self;
+	M_DrawCursor(b->generic.x - 100, b->generic.y + 5, (int)(cls.realtime / 100) % NUM_CURSOR_FRAMES);
+}
+
+void M_Main_Draw (menuframework_s *self)
 {
 	int i;
 	int w, h;
 	int ystart;
 	int	xoffset;
 	int widest = -1;
-	int totalheight = 0;
-	char litname[80];
 	float scale = SCR_GetMenuScale();
-	char *names[] =
-	{
-		"m_main_game",
-		"m_main_multiplayer",
-		"m_main_options",
-		"m_main_video",
-		"m_main_quit",
-		0
-	};
 
 	for (i = 0; names[i] != 0; i++)
 	{
@@ -100,69 +114,28 @@ void M_Main_Draw (void)
 
 		if (w > widest)
 			widest = w;
-
-		totalheight += (h + 12);
 	}
 
 	ystart = (viddef.height / (2 * scale) - 110);
 	xoffset = (viddef.width / scale - widest + 70) / 2;
 
-	for (i = 0; names[i] != 0; i++)
-	{
-		if (i != m_main_cursor)
-			RE_Draw_PicScaled (xoffset * scale, (ystart + i * 40 + 13) * scale, names[i], scale);
-	}
-
-	strcpy (litname, names[m_main_cursor]);
-	strcat (litname, "_sel");
-	RE_Draw_PicScaled (xoffset * scale, (ystart + m_main_cursor * 40 + 13) * scale, litname, scale);
-
-	M_DrawCursor (xoffset - 25, ystart + m_main_cursor * 40 + 11, (int) (cls.realtime / 100) % NUM_CURSOR_FRAMES);
-
 	RE_Draw_GetPicSize (&w, &h, "m_main_plaque");
 	RE_Draw_PicScaled ((xoffset - 30 - w) * scale, ystart * scale, "m_main_plaque", scale);
 
 	RE_Draw_PicScaled ((xoffset - 30 - w) * scale, (ystart + h + 5) * scale, "m_main_logo", scale);
+
+	Menu_Draw (self);
 }
 
-const char *M_Main_Key (int key)
+static void MainMenu_Callback (void *self)
 {
-	const char *sound = menu_move_sound;
+	int index;
+	menubitmap_s *b;
+	b = (menubitmap_s *)self;
 
-	switch (key)
+	index = b - m_main.bitmaps;
+	switch( index )
 	{
-	case K_ESCAPE:
-	case K_GAMEPAD_BACK:
-	case K_GAMEPAD_START:
-	case K_GAMEPAD_B:
-		M_PopMenu ();
-		break;
-
-	case K_GAMEPAD_DOWN:
-	case K_GAMEPAD_LSTICK_DOWN:
-	case K_GAMEPAD_RSTICK_DOWN:
-	case K_KP_DOWNARROW:
-	case K_DOWNARROW:
-		if (++m_main_cursor >= MAIN_ITEMS)
-			m_main_cursor = 0;
-		return sound;
-
-	case K_GAMEPAD_UP:
-	case K_GAMEPAD_LSTICK_UP:
-	case K_GAMEPAD_RSTICK_UP:
-	case K_KP_UPARROW:
-	case K_UPARROW:
-		if (--m_main_cursor < 0)
-			m_main_cursor = MAIN_ITEMS - 1;
-		return sound;
-
-	case K_KP_ENTER:
-	case K_ENTER:
-	case K_GAMEPAD_A:
-		m_entersound = true;
-
-		switch (m_main_cursor)
-		{
 		case 0:
 			M_Menu_Game_f ();
 			break;
@@ -182,15 +155,56 @@ const char *M_Main_Key (int key)
 		case 4:
 			M_Menu_Quit_f ();
 			break;
-		}
+	}
+}
+
+void MainMenu_Init (void)
+{
+	int i;
+	int w, h;
+	int ystart;
+	int	xoffset;
+	int widest = -1;
+	float scale = SCR_GetMenuScale();
+
+	for( i=0 ; names[i] ; i++ )
+	{
+		RE_Draw_GetPicSize(&w, &h, names[i]);
+		if(w > widest)
+			widest = w;
 	}
 
-	return NULL;
+	ystart = (viddef.height / (2 * scale) - 110);
+	xoffset = (viddef.width / scale - widest + 70) / 2;
+
+	memset (&m_main, 0, sizeof(m_main));
+
+	for(i = 0; i < MAIN_ITEMS; i++)
+	{
+		RE_Draw_GetPicSize(&w, &h, names[i]);
+
+		m_main.bitmaps[i].generic.type = MTYPE_BITMAP;
+		m_main.bitmaps[i].generic.name = names[i];
+		m_main.bitmaps[i].generic.x = xoffset * scale;
+		m_main.bitmaps[i].generic.y = (ystart + i * 40 + 13) * scale;
+		m_main.bitmaps[i].generic.width = w;
+		m_main.bitmaps[i].generic.height = h;
+		m_main.bitmaps[i].generic.cursordraw = MainMenu_CursorDraw;
+		m_main.bitmaps[i].generic.callback = MainMenu_Callback;
+	
+		Menu_AddItem (&m_main.menu, (void *)&m_main.bitmaps[i]);
+	}
+
+	m_main.menu.draw = M_Main_Draw;
+	m_main.menu.key = NULL;
+
 }
 
 void M_Menu_Main_f (void)
 {
-	M_PushMenu (M_Main_Draw, M_Main_Key);
+	MainMenu_Init();
+
+	M_PushMenu (&m_main.menu);
 }
 
 /*
@@ -201,8 +215,9 @@ QUIT MENU
 =======================================================================
 */
 
-int msgNumber;
+static menuframework_s m_quitMenu;
 
+int msgNumber;
 char *quitMessage[] =
 {
 	/* .........1.........2.... */
@@ -247,11 +262,12 @@ char *quitMessage[] =
 	"                        "
 };
 
-const char *M_Quit_Key(int key)
+char *M_Quit_Key (menuframework_s *self, int key)
 {
 	switch (key)
 	{
 	case K_ESCAPE:
+	case K_MOUSE2:
 	case K_GAMEPAD_B:
 	case K_GAMEPAD_BACK:
 	case 'n':
@@ -273,18 +289,28 @@ const char *M_Quit_Key(int key)
 	return NULL;
 }
 
-void M_Quit_Draw(void)
+void M_Quit_Draw (menuframework_s *self)
 {
 	M_DrawTextBox(56, 76, 24, 4);
+
 	M_Print(64, 84, quitMessage[msgNumber * 4 + 0]);
 	M_Print(64, 92, quitMessage[msgNumber * 4 + 1]);
 	M_Print(64, 100, quitMessage[msgNumber * 4 + 2]);
 	M_Print(64, 108, quitMessage[msgNumber * 4 + 3]);
 }
 
-void M_Menu_Quit_f(void)
+void QuitMenu_Init (void)
 {
+	memset(&m_quitMenu, 0, sizeof(m_quitMenu));
 	msgNumber = rand() & 7;
 
-	M_PushMenu(M_Quit_Draw, M_Quit_Key);
+	m_quitMenu.draw = M_Quit_Draw;
+	m_quitMenu.key = M_Quit_Key;
 }
+
+void M_Menu_Quit_f(void)
+{
+	QuitMenu_Init();
+	M_PushMenu(&m_quitMenu);
+}
+

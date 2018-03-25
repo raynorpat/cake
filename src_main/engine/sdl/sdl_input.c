@@ -387,9 +387,14 @@ void IN_Update(void)
 			break;
 
 		case SDL_MOUSEMOTION:
-			if (cls.key_dest == key_game && (int)cl_paused->value == 0) {
+			if (cls.key_dest == key_game && (int)cl_paused->value == 0)
+			{
 				mouse_x += event.motion.xrel;
 				mouse_y += event.motion.yrel;
+			}
+			else if(cls.key_dest == key_menu)
+			{
+				M_MouseMove(event.motion.xrel, event.motion.yrel);
 			}
 			break;
 

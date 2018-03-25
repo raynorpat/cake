@@ -26,6 +26,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 static void	Action_DoEnter (menuaction_s *a);
 static void	Action_Draw (menuaction_s *a);
 static void Menu_DrawStatusBar (const char *string);
+static void	Menulist_DoEnter (menulist_s *l);
 static void	MenuList_Draw (menulist_s *l);
 static void	Separator_Draw (menuseparator_s *s);
 static void	Slider_DoSlide (menuslider_s *s, int dir);
@@ -70,11 +71,32 @@ void Action_Draw (menuaction_s *a)
 		a->generic.ownerdraw (a);
 }
 
+static void Bitmap_Draw (menubitmap_s *b)
+{
+	float scale = SCR_GetMenuScale();
+
+	if (Menu_ItemAtCursor(b->generic.parent) == b)
+		RE_Draw_PicScaled(b->generic.parent->x + b->generic.x, b->generic.parent->y + b->generic.y, va("%s_sel", (char *)b->generic.name), scale);
+	else
+		RE_Draw_PicScaled(b->generic.parent->x + b->generic.x, b->generic.parent->y + b->generic.y, (char *)b->generic.name, scale);
+}
+
+static qboolean Bitmap_DoEnter (menubitmap_s *b)
+{
+	if (b->generic.callback)
+	{
+		b->generic.callback(b);
+		return true;
+	}
+	
+	return false;
+}
+
 qboolean Field_DoEnter (menufield_s *f)
 {
 	if (f->generic.callback)
 	{
-		f->generic.callback (f);
+		f->generic.callback(f);
 		return true;
 	}
 
@@ -139,48 +161,50 @@ qboolean Field_Key (menufield_s *f, int key)
 
 	switch (key)
 	{
-	case K_KP_SLASH:
-		key = '/';
-		break;
-	case K_KP_MINUS:
-		key = '-';
-		break;
-	case K_KP_PLUS:
-		key = '+';
-		break;
-	case K_KP_HOME:
-		key = '7';
-		break;
-	case K_KP_UPARROW:
-		key = '8';
-		break;
-	case K_KP_PGUP:
-		key = '9';
-		break;
-	case K_KP_LEFTARROW:
-		key = '4';
-		break;
-	case K_KP_5:
-		key = '5';
-		break;
-	case K_KP_RIGHTARROW:
-		key = '6';
-		break;
-	case K_KP_END:
-		key = '1';
-		break;
-	case K_KP_DOWNARROW:
-		key = '2';
-		break;
-	case K_KP_PGDN:
-		key = '3';
-		break;
-	case K_KP_INS:
-		key = '0';
-		break;
-	case K_KP_DEL:
-		key = '.';
-		break;
+		case K_KP_SLASH:
+			key = '/';
+			break;
+		case K_KP_MINUS:
+			key = '-';
+			break;
+		case K_KP_PLUS:
+			key = '+';
+			break;
+		case K_KP_HOME:
+			key = '7';
+			break;
+		case K_KP_UPARROW:
+			key = '8';
+			break;
+		case K_KP_PGUP:
+			key = '9';
+			break;
+		case K_KP_LEFTARROW:
+			key = '4';
+			break;
+		case K_KP_5:
+			key = '5';
+			break;
+		case K_KP_RIGHTARROW:
+			key = '6';
+			break;
+		case K_KP_END:
+			key = '1';
+			break;
+		case K_KP_DOWNARROW:
+			key = '2';
+			break;
+		case K_KP_PGDN:
+			key = '3';
+			break;
+		case K_KP_INS:
+			key = '0';
+			break;
+		case K_KP_DEL:
+			key = '.';
+			break;
+		case K_MOUSE1:
+			return true;
 	}
 
 	if (key > 127)
@@ -268,17 +292,11 @@ qboolean Field_Key (menufield_s *f, int key)
 
 void Menu_AddItem (menuframework_s *menu, void *item)
 {
-	if (menu->nitems == 0)
-		menu->nslots = 0;
+	if (menu->nitems >= MAXMENUITEMS)
+		return;
 
-	if (menu->nitems < MAXMENUITEMS)
-	{
-		menu->items[menu->nitems] = item;
-		((menucommon_s *) menu->items[menu->nitems])->parent = menu;
-		menu->nitems++;
-	}
-
-	menu->nslots = Menu_TallySlots (menu);
+	menu->items[menu->nitems++] = item;
+	((menucommon_s *)item)->parent = menu;
 }
 
 /*
@@ -295,7 +313,7 @@ void Menu_AdjustCursor (menuframework_s *m, int dir)
 	// see if it's in a valid spot
 	if ((m->cursor >= 0) && (m->cursor < m->nitems))
 	{
-		if ((citem = Menu_ItemAtCursor (m)) != 0)
+		if ((citem = Menu_ItemAtCursor(m)) != 0)
 		{
 			if (citem->type != MTYPE_SEPARATOR)
 				return;
@@ -378,6 +396,9 @@ void Menu_Draw (menuframework_s *menu)
 		case MTYPE_SEPARATOR:
 			Separator_Draw ((menuseparator_s *) menu->items[i]);
 			break;
+		case MTYPE_BITMAP:
+			Bitmap_Draw ((menubitmap_s *) menu->items[i]);
+			break;
 		}
 	}
 
@@ -391,7 +412,7 @@ void Menu_Draw (menuframework_s *menu)
 	{
 		menu->cursordraw (menu);
 	}
-	else if (item && (item->type != MTYPE_FIELD))
+	else if (item && ((item->type != MTYPE_FIELD) && (item->type != MTYPE_LIST)))
 	{
 		if (item->flags & QMF_LEFT_JUSTIFY)
 		{
@@ -503,9 +524,13 @@ qboolean Menu_SelectItem (menuframework_s *s)
 			Action_DoEnter ((menuaction_s *) item);
 			return true;
 		case MTYPE_LIST:
+			Menulist_DoEnter( ( menulist_s * ) item );
 			return false;
 		case MTYPE_SPINCONTROL:
 			return false;
+		case MTYPE_BITMAP:
+			Bitmap_DoEnter( (menubitmap_s *)item );
+			return true;
 		}
 	}
 
@@ -535,51 +560,255 @@ void Menu_SlideItem (menuframework_s *s, int dir)
 	}
 }
 
-int Menu_TallySlots (menuframework_s *menu)
+void Menulist_DoEnter( menulist_s *l )
 {
-	int i;
-	int total = 0;
+	if ( l->generic.callback )
+		l->generic.callback( l );
+}
 
-	for (i = 0; i < menu->nitems; i++)
-	{
-		if (((menucommon_s *) menu->items[i])->type == MTYPE_LIST)
-		{
-			int nitems = 0;
-			const char **n = ((menulist_s *) menu->items[i])->itemnames;
+static void DrawBorder (int x, int y, int w, int h, int c, int s)
+{
+	RE_Draw_Fill (x, y, w, s, c );
+	RE_Draw_Fill (x, y + h - s, w, s, c);
+	RE_Draw_Fill (x, y, s, h, c);
+	RE_Draw_Fill (x + w - s, y, s, h, c);
+}
 
-			while (*n)
-				nitems++, n++;
-
-			total += nitems;
-		}
-		else
-		{
-			total++;
-		}
-	}
-
-	return total;
+void MenuList_Init (menulist_s *l)
+{
+	l->maxItems = (l->height - 2 * MLIST_BSIZE) / MLIST_SPACING;
+	l->height -= (l->height - 2 * MLIST_BSIZE) % MLIST_SPACING;
 }
 
 void MenuList_Draw (menulist_s *l)
 {
+	int y = l->generic.y + l->generic.parent->y;
+	int x = l->generic.x + l->generic.parent->x;
+	int width = l->width, height = l->height;
+	int numItems = l->count, maxItems = l->maxItems;
 	const char **n;
-	int y = 0;
-	float scale = SCR_GetMenuScale();
+	char buffer[128];
+	int i, pituus = 100, px = 0;
 
-	Menu_DrawStringR2LDark (l->generic.x + l->generic.parent->x + LCOLUMN_OFFSET * scale, l->generic.y + l->generic.parent->y, l->generic.name);
+	DrawBorder(x, y, width, height, 215, MLIST_BSIZE);
+	x += MLIST_BSIZE;
+	y += MLIST_BSIZE;
+	width -= 2 * MLIST_BSIZE;
+	height -= 2 * MLIST_BSIZE;
 
-	n = l->itemnames;
+	if (!numItems)
+		return;
 
-	RE_Draw_Fill (l->generic.x - 112 + l->generic.parent->x, l->generic.parent->y + l->generic.y + l->curvalue * 10 + 10, 128, 10, 16);
-
-	while (*n)
+	if (numItems > maxItems)
 	{
-		Menu_DrawStringR2LDark (l->generic.x + l->generic.parent->x + LCOLUMN_OFFSET * scale, l->generic.y + l->generic.parent->y + y + 10, *n);
-
-		n++;
-		y += 10;
+		pituus = height / 100 * (maxItems / numItems * 100);
+		px = height / 100 * (l->prestep / numItems * 100);
+		width -= MLIST_SSIZE;
+  		RE_Draw_Fill(x + width, y + px, MLIST_SSIZE, pituus + 1, 215);
+		DrawBorder(x + width, y + px, MLIST_SSIZE, pituus + 1, 7, 3);
 	}
+	else
+	{
+		maxItems = numItems;
+	}
+
+	n = l->itemnames + l->prestep;
+
+	y += 1;
+	for (i = 0; i < maxItems && *n; i++, n++)
+	{
+		if (n - l->itemnames == l->curvalue)
+			RE_Draw_Fill(x, y - 1, width, 10, 16);
+
+		Q_strlcpy(buffer, *n, sizeof(buffer));
+		if (strlen(buffer) > (width / 8))
+			strcpy(buffer + (width / 8) - 3, "...");
+
+		DrawStringScaled(x, y, buffer, SCR_GetMenuScale());
+		y += MLIST_SPACING;
+	}
+}
+
+int MenuList_HitTest (menulist_s *l, int mx, int my)
+{
+	int y = l->generic.y + l->generic.parent->y + MLIST_BSIZE;
+	int x = l->generic.x + l->generic.parent->x + MLIST_BSIZE;
+	int width = l->width - (MLIST_BSIZE * 2);
+	int height = l->height - (MLIST_BSIZE * 2);
+	int numItems = l->count, maxItems = l->maxItems;
+	const char **n;
+	int i, sbheight, sby;
+	
+	if (!numItems)
+		return -1;
+
+	if (numItems > maxItems)
+	{
+		sbheight = height / 100 * (maxItems / numItems * 100);
+		sby = height / 100 * (l->prestep / numItems * 100);
+		width -= MLIST_SSIZE;
+		if(mx >= x + width && mx <= x + width + MLIST_SSIZE &&
+		   my >= y + sby+1 && my <= y + sby + sbheight)
+		   return -2;
+
+	}
+	else
+	{
+		maxItems = numItems;
+	}
+
+	n = l->itemnames + l->prestep;
+	for (i = 0; i < maxItems && *n; i++, n++)
+	{
+		if (mx >= x && mx <= x + width && my >= y - 1 && my <= y + MLIST_SPACING)
+		{
+			return n - l->itemnames;
+		}
+
+		y += MLIST_SPACING;
+	}
+
+	return -1;
+}
+
+#define DOUBLE_CLICK_DELAY	300
+extern int m_mouse[2];
+
+void List_MoveCursorFromMouse (menulist_s *l, int mouse_old_y, int mouse_y)
+{
+	int y = l->generic.y + l->generic.parent->y + MLIST_BSIZE;
+	int height = l->height - (MLIST_BSIZE * 2);
+	int numItems = l->count;
+	int maxItems = l->maxItems;
+	int count;
+	static int remainders = 0;
+
+	if(!mouse_y)
+		return;
+
+	clamp(maxItems, 0, numItems);
+
+	if(mouse_old_y <= y + 2)
+	{
+		l->prestep = 0;
+		remainders = 0;
+		return;
+	}
+	else if (mouse_old_y >= y + height - 2)
+	{
+		l->prestep = l->count - maxItems;
+		remainders = 0;
+		return;
+	}
+
+	remainders += numItems / 100 * (mouse_y / height * 100);
+	count = remainders;
+	remainders -= count;
+
+	l->prestep += count;
+
+	clamp(l->prestep, 0, l->count - maxItems);
+}
+
+extern qboolean bselected;
+qboolean List_Key (menulist_s *l, int key)
+{
+	int i;
+	int maxItems = l->maxItems;
+
+	if (!l->count)
+		return true;
+
+	clamp(maxItems, 0, l->count);
+
+	switch(key)
+	{
+		case K_UPARROW:
+		case K_KP_UPARROW:
+			if(l->curvalue > 0)
+			{
+				l->curvalue--;
+	
+				if(l->curvalue < l->prestep)
+					l->prestep = l->curvalue;
+				else if(l->curvalue + 1 > l->prestep + maxItems)
+					l->prestep = l->curvalue + 1 - maxItems;
+			}
+			return true;
+		case K_DOWNARROW:
+		case K_KP_DOWNARROW:
+			if(l->curvalue < l->count - 1)
+			{
+				l->curvalue++;
+	
+				if(l->curvalue < l->prestep)
+					l->prestep = l->curvalue;
+				else if(l->curvalue + 1 > l->prestep + maxItems)
+					l->prestep = l->curvalue + 1 - maxItems;
+			}
+			return true;
+	
+		case K_MWHEELUP:
+			l->prestep -= 3;
+			if(l->prestep < 0)
+				l->prestep = 0;
+	
+			return true;
+		case K_MWHEELDOWN:
+			if(l->count > maxItems)
+			{
+				l->prestep += 3;
+				if(l->prestep > l->count - maxItems)
+					l->prestep = l->count - maxItems;
+			}
+			return true;
+	
+		case K_HOME:
+		case K_KP_HOME:
+			l->prestep = 0;
+			return true;
+		case K_END:
+		case K_KP_END:
+			if(l->count > maxItems)
+				l->prestep = l->count - maxItems;
+			return true;
+	
+		case K_PGUP:
+			l->prestep -= maxItems;
+			if(l->prestep < 0)
+				l->prestep = 0;
+			return true;
+		case K_PGDN:
+			if(l->count > maxItems)
+			{
+				l->prestep += maxItems;
+				if(l->prestep > l->count - maxItems)
+					l->prestep = l->count - maxItems;
+			}
+			return true;
+	
+		case K_MOUSE1:
+			i = MenuList_HitTest(l, m_mouse[0], m_mouse[1]);
+			if(i == -2)
+			{
+				bselected = true;
+				return true;
+			}
+			if(i == -1)
+				return true;
+	
+			if(l->curvalue == i && Sys_Milliseconds() - l->lastClick < DOUBLE_CLICK_DELAY)
+			{
+				if(l->generic.callback)
+					l->generic.callback(l);
+				return true;
+			}
+			l->lastClick = Sys_Milliseconds();
+			l->curvalue = i;
+			return true;
+	}
+
+	return false;
 }
 
 void Separator_Draw (menuseparator_s *s)
@@ -616,7 +845,6 @@ void Slider_Draw (menuslider_s *s)
 
 	if (s->range < 0)
 		s->range = 0;
-
 	if (s->range > 1)
 		s->range = 1;
 
@@ -668,3 +896,196 @@ void SpinControl_Draw (menulist_s *s)
 	}
 }
 
+void Field_GetSize(mrect_t *rc, menufield_s *f)
+{
+	int len = 0;
+	float scale = SCR_GetMenuScale();
+
+	if (f->generic.name)
+	{
+		len = strlen(f->generic.name);
+		len <<= 3;
+	}
+
+	if (len)
+	{
+		rc->x = f->generic.x + f->generic.parent->x + (LCOLUMN_OFFSET * scale) - len;
+	}
+	else
+	{
+		rc->x = f->generic.x + f->generic.parent->x + (RCOLUMN_OFFSET * scale);
+	}
+	rc->y = (f->generic.y + f->generic.parent->y - 4) * scale;
+
+	if (len)
+	{
+		rc->width = (32 + len + ((f->visible_length + 2) << 3)) * scale;
+	}
+	else
+	{
+		rc->width = ((f->visible_length + 2) << 3) * scale;
+	}
+	rc->height = 16 * scale;
+}
+
+void Slider_GetSize(mrect_t *rc, menuslider_s *s)
+{
+	int len = strlen(s->generic.name);
+	float scale = SCR_GetMenuScale();
+
+	len <<= 3;
+
+	rc->x = s->generic.x + s->generic.parent->x + (LCOLUMN_OFFSET * scale) - len;
+	rc->y = (s->generic.y + s->generic.parent->y) * scale;
+
+	rc->width = (32 + len + ((SLIDER_RANGE + 2) << 3)) * scale;
+	rc->height = 8 * scale;
+}
+
+void SpinControl_GetSize(mrect_t *rc, menulist_s *s)
+{
+	int len = 0;
+	float scale = SCR_GetMenuScale();
+
+	if (s->generic.name)
+	{
+		len = strlen(s->generic.name);
+		len <<= 3;
+	}
+
+	if (len)
+	{
+		rc->x = s->generic.x + s->generic.parent->x + (LCOLUMN_OFFSET * scale) - len;
+	}
+	else
+	{
+		rc->x = s->generic.x + s->generic.parent->x + (RCOLUMN_OFFSET * scale);
+	}
+	rc->y = (s->generic.y + s->generic.parent->y) * scale;
+
+	if (len)
+	{
+		rc->width = (32 + len + (20 << 3)) * scale;
+	}
+	else
+	{
+		rc->width = (20 << 3) * scale;
+	}
+	rc->height = 8 * scale;
+}
+
+void Action_GetSize(mrect_t *rc, menuaction_s *a)
+{
+	int len;
+	float scale = SCR_GetMenuScale();
+
+	len = strlen(a->generic.name);
+	len <<= 3;
+
+	if (a->generic.flags & QMF_LEFT_JUSTIFY)
+	{
+		rc->x = a->generic.x + a->generic.parent->x + (LCOLUMN_OFFSET * scale);
+	}
+	else
+	{
+		rc->x = a->generic.x + a->generic.parent->x + (LCOLUMN_OFFSET * scale) - len;
+	}
+
+	rc->y = (a->generic.y + a->generic.parent->y) * scale;
+
+	rc->width = (len + 8) * scale;
+	rc->height = 8 * scale;
+}
+
+void MenuList_GetSize(mrect_t *rc, menulist_s *s )
+{
+	float scale = SCR_GetMenuScale();
+
+	rc->y = (s->generic.x + s->generic.parent->x) * scale;
+	rc->x = (s->generic.y + s->generic.parent->y) * scale;
+	rc->width = s->width * scale;
+	rc->height = s->height * scale;
+}
+
+void Bitmap_GetSize(mrect_t *rc, menubitmap_s *b )
+{
+	float scale = SCR_GetMenuScale();
+
+	rc->x = b->generic.parent->x + b->generic.x;
+	rc->y = b->generic.parent->y + b->generic.y;
+	rc->width = b->generic.width * scale;
+	rc->height = b->generic.height * scale;
+}
+
+int Menu_ClickHit (menuframework_s *menu, int x, int y)
+{
+	mrect_t rect;
+	int i;
+	
+	for(i = 0; i < menu->nitems; i++)
+	{
+		rect.x = rect.y = 999999;
+		rect.width = rect.height = -999999;
+
+		switch(((menucommon_s *)menu->items[i])->type)
+		{
+			case MTYPE_FIELD:
+				Field_GetSize(&rect, (menufield_s *)menu->items[i]);
+				break;
+			case MTYPE_LIST:
+				MenuList_GetSize(&rect, (menulist_s *) menu->items[i]);
+				break;
+			default:
+				continue;
+		}
+
+		if(x >= rect.x && x <= rect.x + rect.width && y >= rect.y && y <= rect.y + rect.height)
+		{
+			return i;
+		}
+	}
+	return -1;
+}
+
+int Menu_HitTest (menuframework_s *menu, int x, int y)
+{
+	mrect_t rect;
+	int i;
+	
+	for(i = 0; i < menu->nitems; i++)
+	{
+		rect.x = rect.y = 999999;
+		rect.width = rect.height = -999999;
+
+		switch(((menucommon_s *)menu->items[i])->type) 
+		{
+			case MTYPE_FIELD:
+				Field_GetSize(&rect, (menufield_s *)menu->items[i]);
+				break;
+			case MTYPE_SLIDER:
+				Slider_GetSize(&rect, (menuslider_s *)menu->items[i]);
+				break;
+			case MTYPE_LIST:
+				MenuList_GetSize(&rect, (menulist_s *) menu->items[i]);
+				break;
+			case MTYPE_SPINCONTROL:
+				SpinControl_GetSize(&rect, (menulist_s *)menu->items[i]);
+				break;
+			case MTYPE_ACTION:
+				Action_GetSize(&rect, (menuaction_s *)menu->items[i]);
+				break;
+			case MTYPE_SEPARATOR:
+				break;
+			case MTYPE_BITMAP:
+				Bitmap_GetSize(&rect, (menubitmap_s *)menu->items[i]);
+				break;
+		}
+
+		if(x >= rect.x && x <= rect.x + rect.width && y >= rect.y && y <= rect.y + rect.height)
+		{
+			return i;
+		}
+	}
+
+	return -1;
+}

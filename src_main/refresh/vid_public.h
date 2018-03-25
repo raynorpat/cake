@@ -73,7 +73,5 @@ void	VID_GL_EndFrame(void);
 
 // Video menu
 void	VID_MenuInit(void);
-void	VID_MenuDraw(void);
-const char *VID_MenuKey(int);
 
 #endif

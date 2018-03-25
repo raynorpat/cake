@@ -45,8 +45,12 @@ void M_Menu_Quit_f (void);
 
 qboolean m_entersound; // play after drawing a frame, so caching won't disrupt the sound
 
-void			(*m_drawfunc) (void);
-const char		*(*m_keyfunc) (int key);
+static menuframework_s *m_active;
+
+int m_mouse[2] = {0, 0};
+
+int Menu_ClickHit (menuframework_s *menu, int x, int y);
+qboolean bselected = false;
 
 //=============================================================================
 
@@ -71,75 +75,57 @@ const char		*(*m_keyfunc) (int key);
 
 #define	MAX_MENU_DEPTH	8
 
-typedef struct
-{
-	void	(*draw) (void);
-	const char * (*key) (int k);
-} menulayer_t;
-
-menulayer_t	m_layers[MAX_MENU_DEPTH];
-int		m_menudepth;
+static menuframework_s *m_layers[MAX_MENU_DEPTH];
+static int	m_menudepth;
 
 void M_PopMenu (void)
 {
-	S_StartLocalSound (menu_out_sound);
-
 	if (m_menudepth < 1)
 		Com_Error (ERR_FATAL, "M_PopMenu: depth < 1");
 
+	if( !m_entersound )
+		S_StartLocalSound( menu_out_sound );
+
 	m_menudepth--;
 
-	m_drawfunc = m_layers[m_menudepth].draw;
-	m_keyfunc = m_layers[m_menudepth].key;
-
-	if (!m_menudepth)
+	if (!m_menudepth) {
 		M_ForceMenuOff ();
+		return;
+	}
+
+	m_active = m_layers[m_menudepth - 1];
 }
 
-void M_PushMenu (void (*draw) (void), const char * (*key) (int k))
+void M_PushMenu ( menuframework_s *menu )
 {
 	int		i;
-    int alreadyPresent = 0;
 
 	if ((Cvar_VariableValue ("maxclients") == 1) && Com_ServerState ())
 		Cvar_Set ("paused", "1");
-
-    // if this menu is already open (and on top), close it => toggling behaviour
-    if ((m_drawfunc == draw) && (m_keyfunc == key))
-    {
-        M_PopMenu();
-        return;
-    }
 
 	// if this menu is already present, drop back to that level
 	// to avoid stacking menus by hotkeys
 	for (i = 0; i < m_menudepth; i++)
 	{
-		if ((m_layers[i].draw == draw) && (m_layers[i].key == key))
+		if( m_layers[i] == menu )
 		{
-            alreadyPresent = 1;
             break;
 		}
 	}
 
 	// menu was already opened further down the stack
-    while (alreadyPresent && i <= m_menudepth)
-    {
-        M_PopMenu(); // decrements m_menudepth
-    }
+	if (i == m_menudepth)
+	{
+		if (m_menudepth >= MAX_MENU_DEPTH)
+			Com_Error (ERR_FATAL, "M_PushMenu: MAX_MENU_DEPTH");
+		m_layers[m_menudepth++] = menu;
+	}
+	else
+	{
+		m_menudepth = i+1;
+	}
 
-	if (m_menudepth >= MAX_MENU_DEPTH)
-    {
-        Com_Printf("Too many open menus!\n");
-        return;
-    }
-
-	m_layers[m_menudepth].draw = m_drawfunc;
-	m_layers[m_menudepth].key = m_keyfunc;
-	m_menudepth++;
-
-	m_drawfunc = draw;
-	m_keyfunc = key;
+	m_active = menu;
 
 	m_entersound = true;
 
@@ -158,10 +144,9 @@ sets the menu layer depth to 0, and resets the key state
 */
 void M_ForceMenuOff(void)
 {
-	m_drawfunc = NULL;
-	m_keyfunc = NULL;
 	cls.key_dest = key_game;
 	m_menudepth = 0;
+	m_active = NULL;
 	Key_ClearStates();
 	Cvar_Set("paused", "0");
 }
@@ -173,25 +158,48 @@ Default_MenuKey
 Default keybindings for the menu system
 ================
 */
-const char *Default_MenuKey (menuframework_s *m, int key)
+char *Default_MenuKey (menuframework_s *m, int key)
 {
-	const char *sound = NULL;
-	menucommon_s *item;
+	char *sound = NULL;
+	menucommon_s *item = NULL;
+	int index;
 
 	if (m)
 	{
+		if (key == K_MOUSE1)
+		{
+			index = Menu_ClickHit(m, m_mouse[0], m_mouse[1]);
+			if (index != -1 && m_active->cursor != index)
+				m_active->cursor = index;
+		}
+
 		if ((item = Menu_ItemAtCursor (m)) != 0)
 		{
 			if (item->type == MTYPE_FIELD)
 			{
-				if (Field_Key ((menufield_s *) item, key))
+				if (Field_Key((menufield_s *) item, key))
+					return NULL;
+			}
+			else if (item->type == MTYPE_LIST)
+			{
+				if (List_Key((menulist_s *) item, key))
 					return NULL;
 			}
 		}
 	}
 
+	// HACK
+	if(item && (item->type == MTYPE_SLIDER || item->type == MTYPE_SPINCONTROL))
+	{
+		if(key == K_MOUSE1)
+			key = K_RIGHTARROW;
+		else if(key == K_MOUSE2)
+			key = K_LEFTARROW;
+	}
+
 	switch (key)
 	{
+	case K_MOUSE2:
 	case K_ESCAPE:
 	case K_GAMEPAD_START:
 	case K_GAMEPAD_B:
@@ -213,6 +221,13 @@ const char *Default_MenuKey (menuframework_s *m, int key)
 		break;
 
 	case K_TAB:
+		if ( m )
+		{
+			m->cursor++;
+			Menu_AdjustCursor( m, 1 );
+			sound = menu_move_sound;
+		}
+		break;
 	case K_KP_DOWNARROW:
 	case K_DOWNARROW:
 	case K_GAMEPAD_DOWN:
@@ -251,10 +266,13 @@ const char *Default_MenuKey (menuframework_s *m, int key)
 		break;
 
 	case K_MOUSE1:
-	case K_MOUSE2:
 	case K_MOUSE3:
     case K_MOUSE4:
     case K_MOUSE5:
+	case K_JOY1:
+	case K_JOY2:
+	case K_JOY3:
+	case K_JOY4:
 	case K_AUX1:
 	case K_AUX2:
 	case K_AUX3:
@@ -287,14 +305,11 @@ const char *Default_MenuKey (menuframework_s *m, int key)
 	case K_AUX30:
 	case K_AUX31:
 	case K_AUX32:
-
 	case K_KP_ENTER:
 	case K_ENTER:
 	case K_GAMEPAD_A:
-
 		if (m)
 			Menu_SelectItem (m);
-
 		sound = menu_move_sound;
 		break;
 	}
@@ -534,12 +549,45 @@ void M_Init (void)
 
 /*
 =================
+M_MouseMove
+=================
+*/
+void M_MouseMove (int mx, int my)
+{
+	menucommon_s *item = NULL;
+
+	m_mouse[0] += mx;
+	m_mouse[1] += my;
+
+	// clamp mouse movements to refresh height and width
+	clamp(m_mouse[0], 0, viddef.width - 8);
+	clamp(m_mouse[1], 0, viddef.height - 8);
+
+	// see if we have selected anything
+	if(bselected)
+	{
+		if (my)
+		{
+			// possibly move cursor in list
+			if((item = Menu_ItemAtCursor(m_active)) != 0)
+				List_MoveCursorFromMouse((menulist_s * ) item, m_mouse[1], my);
+		}
+	}
+}
+
+/*
+=================
 M_Draw
 =================
 */
 void M_Draw (void)
 {
+	int index;
+	static int prev;
+
 	if (cls.key_dest != key_menu)
+		return;
+	if (!m_active)
 		return;
 
 	// dim everything behind it down
@@ -548,7 +596,26 @@ void M_Draw (void)
 	else
 		RE_Draw_FadeScreen ();
 
-	m_drawfunc ();
+	// see if the mouse is hitting anything
+	if(!bselected)
+	{
+		index = Menu_HitTest(m_active, m_mouse[0], m_mouse[1]);
+		if( prev != index )
+		{
+			if( index != -1 )
+				m_active->cursor = index;
+		}
+		prev = index;
+	}
+
+	// draw the menu
+	if(m_active->draw)
+		m_active->draw(m_active);
+	else
+		Menu_Draw(m_active);
+
+	// draw the mouse cursor
+	RE_Draw_PicScaled(m_mouse[0], m_mouse[1], "ch1", SCR_GetMenuScale());
 
 	// delay playing the enter sound until after the
 	// menu has been drawn, to avoid delay while
@@ -565,13 +632,26 @@ void M_Draw (void)
 M_Keydown
 =================
 */
-void M_Keydown (int key)
+void M_Keydown (int key, qboolean down)
 {
-	const char *s;
+	char *s;
 
-	if (m_keyfunc)
-	{
-		if ((s = m_keyfunc(key)) != 0)
-			S_StartLocalSound((char *)s);
-	}
+	if (!m_active)
+		return;
+
+	// see if we have been selected
+	if (key == K_MOUSE1 && !down && bselected)
+		bselected = false;
+	if (!down || bselected)
+		return;
+
+	// do menu keypress function
+	if (m_active->key)
+		s = m_active->key(m_active, key);
+	else
+		s = Default_MenuKey(m_active, key);
+
+	// play sound
+	if (s)
+		S_StartLocalSound(s);
 }

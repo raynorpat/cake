@@ -20,7 +20,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #ifndef __QMENU_H__
 #define __QMENU_H__
 
-#define MAXMENUITEMS	64
+#define MAXMENUITEMS		64
 
 #define MTYPE_SLIDER		0
 #define MTYPE_LIST			1
@@ -28,10 +28,20 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #define MTYPE_SPINCONTROL	3
 #define MTYPE_SEPARATOR 	4
 #define MTYPE_FIELD			5
+#define MTYPE_BITMAP		6
+
+#define MLIST_SPACING		10
+#define MLIST_BSIZE 		3
+#define MLIST_SSIZE 		16
 
 #define QMF_LEFT_JUSTIFY	0x00000001
 #define QMF_GRAYED			0x00000002
 #define QMF_NUMBERSONLY		0x00000004
+
+typedef struct mrect_s
+{
+	int x, y, width, height;
+} mrect_t;
 
 typedef struct _tag_menuframework
 {
@@ -39,11 +49,12 @@ typedef struct _tag_menuframework
 	int	cursor;
 
 	int	nitems;
-	int nslots;
 	void *items[64];
 
 	const char *statusbar;
 
+	void (*draw)( struct _tag_menuframework *self );
+	char *(*key)( struct _tag_menuframework *self, int k );
 	void (*cursordraw) (struct _tag_menuframework *m);
 } menuframework_s;
 
@@ -52,6 +63,8 @@ typedef struct
 	int type;
 	const char *name;
 	int x, y;
+	int width;
+	int height;
 	menuframework_s *parent;
 	int cursor_offset;
 	int	localdata[4];
@@ -91,9 +104,15 @@ typedef struct
 {
 	menucommon_s generic;
 
+	int prestep;
 	int curvalue;
-
+	int count;
 	const char **itemnames;
+
+	int	width;
+	int height;
+	int lastClick;
+	int maxItems;
 } menulist_s;
 
 typedef struct
@@ -106,7 +125,17 @@ typedef struct
 	menucommon_s generic;
 } menuseparator_s;
 
+typedef struct
+{
+	menucommon_s generic;
+} menubitmap_s;
+
+int		Menu_HitTest (menuframework_s *menu, int x, int y);
+
 qboolean Field_Key (menufield_s *field, int key);
+qboolean List_Key (menulist_s *l, int key);
+
+void	List_MoveCursorFromMouse (menulist_s *l, int mouse_old_y, int mouse_y);
 
 void	Menu_AddItem (menuframework_s *menu, void *item);
 void	Menu_AdjustCursor (menuframework_s *menu, int dir);
@@ -116,11 +145,12 @@ void	*Menu_ItemAtCursor (menuframework_s *m);
 qboolean Menu_SelectItem (menuframework_s *s);
 void	Menu_SetStatusBar (menuframework_s *s, const char *string);
 void	Menu_SlideItem (menuframework_s *s, int dir);
-int		Menu_TallySlots (menuframework_s *menu);
 
-void	 Menu_DrawString (int, int, const char *);
-void	 Menu_DrawStringDark (int, int, const char *);
-void	 Menu_DrawStringR2L (int, int, const char *);
-void	 Menu_DrawStringR2LDark (int, int, const char *);
+void 	MenuList_Init (menulist_s *l);
+
+void	Menu_DrawString (int, int, const char *);
+void	Menu_DrawStringDark (int, int, const char *);
+void	Menu_DrawStringR2L (int, int, const char *);
+void	Menu_DrawStringR2LDark (int, int, const char *);
 
 #endif

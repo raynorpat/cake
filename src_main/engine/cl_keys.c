@@ -867,7 +867,7 @@ void Char_Event(int key)
 
 		// Menu
 	case key_menu:
-		M_Keydown(key);
+		M_Keydown(key, true);
 		break;
 
 		// Console
@@ -980,7 +980,7 @@ void Key_Event (int key, qboolean down, qboolean special)
 				Key_Message(key);
 				break;
 			case key_menu:
-				M_Keydown(key);
+				M_Keydown(key, down);
 				break;
 			case key_game:
 			case key_console:
@@ -1071,9 +1071,8 @@ void Key_Event (int key, qboolean down, qboolean special)
 			Key_Message (key);
 			break;
 		case key_menu:
-			M_Keydown (key);
+			M_Keydown (key, down);
 			break;
-
 		case key_game:
 		case key_console:
 			Key_Console (key);

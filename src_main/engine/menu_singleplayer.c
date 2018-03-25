@@ -32,7 +32,7 @@ void M_Menu_LoadGame_f (void);
 void M_Menu_SaveGame_f (void);
 void M_Menu_Credits_f (void);
 
-static int		m_game_cursor;
+static int				m_game_cursor;
 
 static menuframework_s	s_game_menu;
 static menuaction_s		s_easy_game_action;
@@ -101,8 +101,16 @@ static void CreditsFunc (void *unused)
 	M_Menu_Credits_f ();
 }
 
+void Game_MenuDraw (menuframework_s *self)
+{
+	M_Banner ("m_banner_game");
+	Menu_AdjustCursor (self, 1);
+	Menu_Draw (self);
+}
+
 void Game_MenuInit (void)
 {
+	memset (&s_game_menu, 0, sizeof(s_game_menu));
 	s_game_menu.x = (int)(viddef.width * 0.50f);
 	s_game_menu.nitems = 0;
 
@@ -157,6 +165,9 @@ void Game_MenuInit (void)
 	s_credits_action.generic.name	= "credits";
 	s_credits_action.generic.callback = CreditsFunc;
 
+	s_game_menu.draw = Game_MenuDraw;
+	s_game_menu.key = NULL;
+
 	Menu_AddItem (&s_game_menu, (void *) &s_easy_game_action);
 	Menu_AddItem (&s_game_menu, (void *) &s_medium_game_action);
 	Menu_AddItem (&s_game_menu, (void *) &s_hard_game_action);
@@ -170,22 +181,10 @@ void Game_MenuInit (void)
 	Menu_Center (&s_game_menu);
 }
 
-void Game_MenuDraw (void)
-{
-	M_Banner ("m_banner_game");
-	Menu_AdjustCursor (&s_game_menu, 1);
-	Menu_Draw (&s_game_menu);
-}
-
-const char *Game_MenuKey (int key)
-{
-	return Default_MenuKey (&s_game_menu, key);
-}
-
 void M_Menu_Game_f (void)
 {
 	Game_MenuInit ();
-	M_PushMenu (Game_MenuDraw, Game_MenuKey);
+	M_PushMenu (&s_game_menu);
 	m_game_cursor = 1;
 }
 
@@ -196,6 +195,8 @@ LOADGAME MENU
 
 =============================================================================
 */
+
+void LoadGame_MenuInit(void);
 
 #define MAX_SAVESLOTS 16
 #define MAX_SAVEPAGES 2
@@ -279,14 +280,64 @@ void LoadGameCallback (void *self)
 	M_ForceMenuOff ();
 }
 
+void LoadGame_MenuDraw (menuframework_s *self)
+{
+	M_Banner ("m_banner_load_game");
+	Menu_AdjustCursor (self, 1);
+	Menu_Draw (self);
+}
+
+char *LoadGame_MenuKey (menuframework_s *self, int key)
+{
+	switch (key)
+	{
+		case K_KP_UPARROW:
+		case K_UPARROW:
+			if (self->cursor == 0)
+			{
+				LoadSave_AdjustPage(-1);
+				LoadGame_MenuInit();
+			}
+			break;
+		case K_TAB:
+		case K_KP_DOWNARROW:
+		case K_DOWNARROW:
+			if (self->cursor == self->nitems - 1)
+			{
+				LoadSave_AdjustPage(1);
+				LoadGame_MenuInit();
+			}
+			break;
+		case K_KP_LEFTARROW:
+		case K_LEFTARROW:
+			LoadSave_AdjustPage(-1);
+			LoadGame_MenuInit();
+			return menu_move_sound;
+		case K_KP_RIGHTARROW:
+		case K_RIGHTARROW:
+			LoadSave_AdjustPage(1);
+			LoadGame_MenuInit();
+			return menu_move_sound;
+		default:
+			s_savegame_menu.cursor = s_loadgame_menu.cursor;
+			break;
+	}
+
+	return Default_MenuKey (self, key);
+}
+
 void LoadGame_MenuInit (void)
 {
 	int i;
 	float scale = SCR_GetMenuScale();
 
+	memset(&s_loadgame_menu, 0, sizeof(s_loadgame_menu));
 	s_loadgame_menu.x = viddef.width / 2 - (120 * scale);
 	s_loadgame_menu.y = viddef.height / (2 * scale) - 58;
 	s_loadgame_menu.nitems = 0;
+
+	s_loadgame_menu.draw = LoadGame_MenuDraw;
+	s_loadgame_menu.key = LoadGame_MenuKey;
 
 	Create_Savestrings ();
 
@@ -315,59 +366,11 @@ void LoadGame_MenuInit (void)
 	Menu_SetStatusBar (&s_loadgame_menu, m_loadsave_statusbar);
 }
 
-void LoadGame_MenuDraw (void)
-{
-	M_Banner ("m_banner_load_game");
-	Menu_AdjustCursor (&s_loadgame_menu, 1);
-	Menu_Draw (&s_loadgame_menu);
-}
-
-const char *LoadGame_MenuKey (int key)
-{
-	static menuframework_s *m = &s_loadgame_menu;
-
-	switch (key)
-	{
-		case K_KP_UPARROW:
-		case K_UPARROW:
-			if (m->cursor == 0)
-			{
-				LoadSave_AdjustPage(-1);
-				LoadGame_MenuInit();
-			}
-			break;
-		case K_TAB:
-		case K_KP_DOWNARROW:
-		case K_DOWNARROW:
-			if (m->cursor == m->nitems - 1)
-			{
-				LoadSave_AdjustPage(1);
-				LoadGame_MenuInit();
-			}
-			break;
-		case K_KP_LEFTARROW:
-		case K_LEFTARROW:
-			LoadSave_AdjustPage(-1);
-			LoadGame_MenuInit();
-			return menu_move_sound;
-		case K_KP_RIGHTARROW:
-		case K_RIGHTARROW:
-			LoadSave_AdjustPage(1);
-			LoadGame_MenuInit();
-			return menu_move_sound;
-		default:
-			s_savegame_menu.cursor = s_loadgame_menu.cursor;
-			break;
-	}
-
-	return Default_MenuKey (m, key);
-}
-
 void M_Menu_LoadGame_f (void)
 {
 	LoadSave_AdjustPage(0);
 	LoadGame_MenuInit ();
-	M_PushMenu (LoadGame_MenuDraw, LoadGame_MenuKey);
+	M_PushMenu (&s_loadgame_menu);
 }
 
 /*
@@ -377,6 +380,8 @@ SAVEGAME MENU
 
 =============================================================================
 */
+
+void SaveGame_MenuInit(void);
 
 void SaveGameCallback (void *self)
 {
@@ -396,46 +401,16 @@ void SaveGameCallback (void *self)
 	M_ForceMenuOff ();
 }
 
-void SaveGame_MenuDraw (void)
+void SaveGame_MenuDraw (menuframework_s *self)
 {
 	M_Banner ("m_banner_save_game");
-	Menu_AdjustCursor (&s_savegame_menu, 1);
-	Menu_Draw (&s_savegame_menu);
+	Menu_AdjustCursor (self, 1);
+	Menu_Draw (self);
 	M_Popup();
 }
 
-void SaveGame_MenuInit (void)
+char *SaveGame_MenuKey (menuframework_s *self, int key)
 {
-	int i;
-	float scale = SCR_GetMenuScale();
-
-	s_savegame_menu.x = viddef.width / 2 - (120 * scale);
-	s_savegame_menu.y = viddef.height / (2 * scale) - 58;
-	s_savegame_menu.nitems = 0;
-
-	Create_Savestrings ();
-
-	// don't include the autosave slot
-	for (i = 0; i < MAX_SAVESLOTS; i++)
-	{
-		s_savegame_actions[i].generic.type = MTYPE_ACTION;
-		s_savegame_actions[i].generic.name = m_savestrings[i];
-		s_savegame_actions[i].generic.x = 0;
-		s_savegame_actions[i].generic.y = i * 10;
-		s_savegame_actions[i].generic.localdata[0] = i + m_loadsave_page * MAX_SAVESLOTS;
-		s_savegame_actions[i].generic.flags = QMF_LEFT_JUSTIFY;
-		s_savegame_actions[i].generic.callback = SaveGameCallback;
-
-		Menu_AddItem (&s_savegame_menu, &s_savegame_actions[i]);
-	}
-
-	Menu_SetStatusBar(&s_savegame_menu, m_loadsave_statusbar);
-}
-
-const char *SaveGame_MenuKey (int key)
-{
-	static menuframework_s *m = &s_savegame_menu;
-
 	if (m_popup_string)
 	{
 		m_popup_string = NULL;
@@ -446,7 +421,7 @@ const char *SaveGame_MenuKey (int key)
 	{
 		case K_KP_UPARROW:
 		case K_UPARROW:
-			if (m->cursor == 0)
+			if (self->cursor == 0)
 			{
 				LoadSave_AdjustPage(-1);
 				SaveGame_MenuInit();
@@ -455,7 +430,7 @@ const char *SaveGame_MenuKey (int key)
 		case K_TAB:
 		case K_KP_DOWNARROW:
 		case K_DOWNARROW:
-			if (m->cursor == m->nitems - 1)
+			if (self->cursor == self->nitems - 1)
 			{
 				LoadSave_AdjustPage(1);
 				SaveGame_MenuInit();
@@ -476,7 +451,39 @@ const char *SaveGame_MenuKey (int key)
 			break;
 	}
 
-	return Default_MenuKey (m, key);
+	return Default_MenuKey (self, key);
+}
+
+void SaveGame_MenuInit (void)
+{
+	int i;
+	float scale = SCR_GetMenuScale();
+
+	memset(&s_savegame_menu, 0, sizeof(s_savegame_menu));
+	s_savegame_menu.x = viddef.width / 2 - (120 * scale);
+	s_savegame_menu.y = viddef.height / (2 * scale) - 58;
+	s_savegame_menu.nitems = 0;
+
+	s_savegame_menu.draw = SaveGame_MenuDraw;
+	s_savegame_menu.key = SaveGame_MenuKey;
+
+	Create_Savestrings ();
+
+	// don't include the autosave slot
+	for (i = 0; i < MAX_SAVESLOTS; i++)
+	{
+		s_savegame_actions[i].generic.type = MTYPE_ACTION;
+		s_savegame_actions[i].generic.name = m_savestrings[i];
+		s_savegame_actions[i].generic.x = 0;
+		s_savegame_actions[i].generic.y = i * 10;
+		s_savegame_actions[i].generic.localdata[0] = i + m_loadsave_page * MAX_SAVESLOTS;
+		s_savegame_actions[i].generic.flags = QMF_LEFT_JUSTIFY;
+		s_savegame_actions[i].generic.callback = SaveGameCallback;
+
+		Menu_AddItem (&s_savegame_menu, &s_savegame_actions[i]);
+	}
+
+	Menu_SetStatusBar(&s_savegame_menu, m_loadsave_statusbar);
 }
 
 void M_Menu_SaveGame_f (void)
@@ -486,7 +493,7 @@ void M_Menu_SaveGame_f (void)
 
 	LoadSave_AdjustPage(0);
 	SaveGame_MenuInit ();
-	M_PushMenu (SaveGame_MenuDraw, SaveGame_MenuKey);
+	M_PushMenu (&s_savegame_menu);
 }
 
 
@@ -594,7 +601,7 @@ static const char *idcredits[] =
 	0
 };
 
-void M_Credits_MenuDraw (void)
+void M_Credits_MenuDraw (menuframework_s *self)
 {
 	int i, y;
 	float scale = SCR_GetMenuScale();
@@ -636,11 +643,12 @@ void M_Credits_MenuDraw (void)
 		credits_start_time = cls.realtime;
 }
 
-const char *M_Credits_Key (int key)
+char *M_Credits_Key (menuframework_s *self, int key)
 {
 	switch (key)
 	{
 	case K_ESCAPE:
+	case K_MOUSE2:
 	case K_GAMEPAD_B:
 		if (creditsBuffer)
 			FS_FreeFile (creditsBuffer);
@@ -650,6 +658,16 @@ const char *M_Credits_Key (int key)
 
 	return menu_out_sound;
 }
+
+static menuframework_s	m_creditsMenu;
+
+static void Credits_MenuInit (void)
+{
+	memset (&m_creditsMenu, 0, sizeof(m_creditsMenu));
+	m_creditsMenu.draw = M_Credits_MenuDraw;
+	m_creditsMenu.key = M_Credits_Key;
+}
+
 
 void M_Menu_Credits_f (void)
 {
@@ -701,5 +719,6 @@ void M_Menu_Credits_f (void)
 
 	credits_start_time = cls.realtime;
 
-	M_PushMenu (M_Credits_MenuDraw, M_Credits_Key);
+	Credits_MenuInit ();
+	M_PushMenu (&m_creditsMenu);
 }
