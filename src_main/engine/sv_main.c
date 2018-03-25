@@ -1005,7 +1005,7 @@ void SV_Init (void)
 	sv_enforcetime = Cvar_Get ("sv_enforcetime", "0", 0);
 	sv_download_server = Cvar_Get("sv_download_server", "", 0);
 	allow_download = Cvar_Get ("allow_download", "1", CVAR_ARCHIVE);
-	allow_download_players = Cvar_Get ("allow_download_players", "0", CVAR_ARCHIVE);
+	allow_download_players = Cvar_Get ("allow_download_players", "1", CVAR_ARCHIVE);
 	allow_download_models = Cvar_Get ("allow_download_models", "1", CVAR_ARCHIVE);
 	allow_download_sounds = Cvar_Get ("allow_download_sounds", "1", CVAR_ARCHIVE);
 	allow_download_maps	 = Cvar_Get ("allow_download_maps", "1", CVAR_ARCHIVE);
