@@ -335,7 +335,14 @@ static void ControlsResetDefaultsFunc (void *unused)
 
 static void InvertMouseFunc (void *unused)
 {
-	Cvar_SetValue ("m_pitch", -m_pitch->value);
+	if (s_options_invertmouse_box.curvalue == 0)
+	{
+		Cvar_SetValue("m_pitch", (float)fabs(m_pitch->value));
+	}
+	else
+	{
+		Cvar_SetValue("m_pitch", -(float)fabs(m_pitch->value));
+	}
 }
 
 static void LookstrafeFunc (void *unused)
