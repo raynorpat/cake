@@ -72,4 +72,5 @@ Contributions from
   * Ryan C. Gordon <icculus@icculus.org> - initial sdl 1.2 quake2 port - see http://www.icculus.org/quake2/
   * Stuart Dalton <badcdev@gmail.com> - ioquake3 sound codecs system
   * O.Sezer <sezero@users.sourceforge.net> - uHexen II sound codecs system
+  * yquake2 and KMQ2 - Save game system
   * your-name-here - bug fixes
