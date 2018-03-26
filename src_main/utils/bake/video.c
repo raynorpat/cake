@@ -89,8 +89,8 @@ void Cmd_Video (void)
 	strcpy (parms.soundName, base);
 	if (g_release)
 	{
-//		sprintf (savename, "video/%s.roq", token);
-//		ReleaseFile (savename);
+		sprintf (base, "video/%s.roq", token);
+		ReleaseFile (base);
 		return;
 	}
 
