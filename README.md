@@ -73,4 +73,5 @@ Contributions from
   * Stuart Dalton <badcdev@gmail.com> - ioquake3 sound codecs system
   * O.Sezer <sezero@users.sourceforge.net> - uHexen II sound codecs system
   * yquake2 and KMQ2 - Save game system
+  * FFmpeg - RoQ video encoder
   * your-name-here - bug fixes
