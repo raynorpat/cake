@@ -49,6 +49,7 @@ set(ROQ_INCLUDES
 	./roq/random.h
 	./roq/roq.h
 	./roq/video.h
+	./roq_encoder.h
 	)
 set(ROQ_SOURCES
 	./roq/audio.cpp
@@ -57,6 +58,7 @@ set(ROQ_SOURCES
 	./roq/elbg.cpp
 	./roq/random.cpp
 	./roq/video.cpp
+	./roq_encoder.cpp
 	)
 source_group("roq" FILES ${ROQ_INCLUDES})
 source_group("roq" FILES ${ROQ_SOURCES})
