@@ -568,8 +568,7 @@ Will load either an lbm or pcx, depending on extension.
 Any of the return pointers can be NULL if you don't want them.
 ==============
 */
-void Load256Image (char *name, byte **pixels, byte **palette,
-				   int *width, int *height)
+void Load256Image (char *name, byte **pixels, byte **palette, int *width, int *height)
 {
 	char	ext[128];
 
@@ -587,7 +586,9 @@ void Load256Image (char *name, byte **pixels, byte **palette,
 		LoadPCX (name, pixels, palette, width, height);
 	}
 	else
+	{
 		Error ("%s doesn't have a known image extension", name);
+	}
 }
 
 
@@ -598,8 +599,7 @@ Save256Image
 Will save either an lbm or pcx, depending on extension.
 ==============
 */
-void Save256Image (char *name, byte *pixels, byte *palette,
-				   int width, int height)
+void Save256Image (char *name, byte *pixels, byte *palette, int width, int height)
 {
 	char	ext[128];
 
@@ -613,11 +613,10 @@ void Save256Image (char *name, byte *pixels, byte *palette,
 		WritePCXfile (name, pixels, width, height, palette);
 	}
 	else
+	{
 		Error ("%s doesn't have a known image extension", name);
+	}
 }
-
-
-
 
 /*
 ============================================================================
