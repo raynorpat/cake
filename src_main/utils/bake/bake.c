@@ -424,10 +424,6 @@ void ParseScript (void)
 			Cmd_Dir ();
 		else if (!strcmp (token, "$maps"))
 			Cmd_Maps ();
-		else if (!strcmp (token, "$alphalight"))
-			Cmd_Alphalight ();
-		else if (!strcmp (token, "$inverse16table" ))
-			Cmd_Inverse16Table();
 		else
 			Error ("bad command %s\n", token);
 	}

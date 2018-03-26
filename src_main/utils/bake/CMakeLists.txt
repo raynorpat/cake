@@ -10,7 +10,6 @@ set(BAKE_SOURCES
 	./models.c
 	./bake.c
 	./sprites.c
-	./tables.c
 	./video.c
 	)
 source_group("bake" FILES ${BAKE_INCLUDES})
