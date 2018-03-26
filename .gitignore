@@ -55,6 +55,7 @@
 *.idb
 *.pdb
 
+build
 src_main/build
 
 baseq2/*.pak
@@ -72,6 +73,7 @@ baseq2/sound
 baseq2/sprites
 baseq2/textures
 baseq2/video/*.cin
+
 *.lst
 *.bak
 *.tmp
