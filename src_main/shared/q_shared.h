@@ -639,8 +639,6 @@ typedef struct
 #define RDF_UVGOGGLES		8
 //ROGUE
 
-#define RDF_FOVADAPT		0x40000000
-
 //
 // muzzle flashes / player effects
 //

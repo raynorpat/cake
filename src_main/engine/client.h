@@ -334,8 +334,6 @@ extern	cvar_t	*cl_timedemo;
 
 extern	cvar_t	*cl_vwep;
 
-extern	cvar_t  *fov_adapt;
-
 extern  cvar_t	*cl_hudscale;
 extern  cvar_t	*cl_consolescale;
 extern  cvar_t	*cl_menuscale;

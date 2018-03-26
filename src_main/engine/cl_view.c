@@ -349,7 +349,7 @@ void CL_PrepRefresh (void)
 CalcFov
 ====================
 */
-float SCR_CalcFovX (float fov_y, float width, float height)
+static float SCR_CalcFovX (float fov_y, float width, float height)
 {
 	float   a;
 	float   y;
@@ -364,7 +364,6 @@ float SCR_CalcFovX (float fov_y, float width, float height)
 
 	return a;
 }
-
 
 float SCR_CalcFovY (float fov_x, float width, float height)
 {
@@ -382,7 +381,6 @@ float SCR_CalcFovY (float fov_x, float width, float height)
 	return a;
 }
 
-
 void SCR_CalcFOV (refdef_t *rd)
 {
 	// calculate y fov as if the screen was 640 x 480; this ensures that the top and bottom
@@ -392,7 +390,6 @@ void SCR_CalcFOV (refdef_t *rd)
 	// now recalculate fov_x so that it's correctly proportioned for fov_y
 	rd->fov_x = SCR_CalcFovX (rd->fov_y, rd->width, rd->height);
 }
-
 
 //============================================================================
 
@@ -576,9 +573,6 @@ void V_RenderView (float stereo_separation)
 		cl.refdef.lightstyles = r_lightstyles;
 
 		cl.refdef.rdflags = cl.frame.playerstate.rdflags;
-
-		if (fov_adapt->value)
-			cl.refdef.rdflags |= RDF_FOVADAPT;
 
 		// sort entities for better cache locality
 		qsort (cl.refdef.entities, cl.refdef.num_entities, sizeof (cl.refdef.entities[0]), (int (*) (const void *, const void *)) entitycmpfnc);

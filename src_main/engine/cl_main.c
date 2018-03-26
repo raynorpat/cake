@@ -77,7 +77,6 @@ cvar_t	*name;
 cvar_t	*skin;
 cvar_t	*rate;
 cvar_t	*fov;
-cvar_t  *fov_adapt;
 cvar_t  *windowed_mouse;
 cvar_t	*msg;
 cvar_t	*hand;
@@ -1523,7 +1522,6 @@ void CL_InitLocal (void)
 	msg = Cvar_Get ("msg", "1", CVAR_USERINFO | CVAR_ARCHIVE);
 	hand = Cvar_Get ("hand", "0", CVAR_USERINFO | CVAR_ARCHIVE);
 	fov = Cvar_Get ("fov", "90", CVAR_USERINFO | CVAR_ARCHIVE);
-	fov_adapt = Cvar_Get("fov_adapt", "1", CVAR_ARCHIVE);
 	windowed_mouse = Cvar_Get("windowed_mouse", "1", CVAR_USERINFO | CVAR_ARCHIVE);
 	gender = Cvar_Get ("gender", "male", CVAR_USERINFO | CVAR_ARCHIVE);
 	gender_auto = Cvar_Get ("gender_auto", "1", CVAR_ARCHIVE);

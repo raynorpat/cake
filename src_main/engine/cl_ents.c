@@ -1304,30 +1304,6 @@ void CL_AddViewWeapon (player_state_t *ps, player_state_t *ops)
 
 /*
 ===============
-AdaptFov
-
-Adapt a 4:3 horizontal FOV to the current screen size using the "Hor+" scaling:
-fov = 2.0 * atan(width / height * 3.0 / 4.0 * tan(fov43 / 2.0))
-===============
-*/
-static inline float AdaptFov(float fov, float w, float h)
-{
-	static const float pi = M_PI; // float instead of double
-
-	if (!fov_adapt->value)
-		return fov;
-	if (fov < 1 || fov > 179)
-		Com_Error(ERR_DROP, "Bad fov: %f", fov);
-	if (w <= 0 || h <= 0)
-		return fov;
-	if ((h / w) == 0.75)
-		return fov;
-
-	return (atanf(tanf(fov / 360.0f * pi) * (w / h * 0.75f)) / pi * 360.0f);
-}
-
-/*
-===============
 CL_CalcViewValues
 
 Sets cl.refdef view values
@@ -1411,7 +1387,7 @@ void CL_CalcViewValues(void)
 
 	// interpolate field of view
 	ifov = ops->fov + lerp * (ps->fov - ops->fov);
-	cl.refdef.fov_x = AdaptFov(ifov, cl.refdef.width, cl.refdef.height);
+	cl.refdef.fov_x = ifov;
 
 	// don't interpolate blend color
 	for (i = 0; i < 4; i++)
