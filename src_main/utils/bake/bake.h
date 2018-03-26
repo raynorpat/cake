@@ -61,8 +61,6 @@ void Cmd_Colormap (void);
 
 void Cmd_File (void);
 void Cmd_Dir (void);
-void Cmd_StartWad (void);
-void Cmd_EndWad (void);
 void Cmd_Mippal (void);
 void Cmd_Mipdir (void);
 
