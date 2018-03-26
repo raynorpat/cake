@@ -12,6 +12,9 @@ endif()
 if (USE_CODEC_MODPLUG)
 	add_definitions(-DUSE_CODEC_MODPLUG)
 endif()
+if (USE_OPENAL)
+	add_definitions(-DUSE_OPENAL)
+endif()
 
 #
 # Libraries
@@ -23,6 +26,15 @@ if(NOT USE_SYSTEM_SDL2)
 endif()
 find_package(SDL2 REQUIRED)
 include_directories(${SDL2_INCLUDE_DIR})
+
+# openal
+if (USE_OPENAL)
+	if(NOT USE_SYSTEM_OPENAL)
+		set(ENV{OPENALDIR} ${CMAKE_SOURCE_DIR}/libs/openal)
+	endif()
+	find_package(OPENAL REQUIRED)
+	include_directories(${OPENAL_INCLUDE_DIR})
+endif()
 
 # glew
 find_package(GLEW)
@@ -415,6 +427,7 @@ if (NOT WIN_UWP)
 		${MAD_LIBRARY}
         ${GLEW_LIBRARY}
 		${CMAKE_DL_LIBS}
+		${OPENAL_LIBRARY}
 		refresh
 		)
 else()
@@ -458,6 +471,7 @@ else()
 			${MODPLUG_LIBRARY}
 			${MAD_LIBRARY}
 			${OPENGL_LIBRARY}
+			${OPENAL_LIBRARY}
 			${CMAKE_DL_LIBS}
 			)
 	endif()
