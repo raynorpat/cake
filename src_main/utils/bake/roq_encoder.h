@@ -32,16 +32,16 @@ typedef struct
 	int			from;
 	int			to;
 
-	bool		noSound;
+	qboolean	noSound;
 	char		soundName[1024];
-	bool		soundNormalize;
+	qboolean	soundNormalize;
 
 	char		videoName[1024];
 
 	int			framerate;
 	int			bitrate;
 
-	bool		hqAudio;
+	qboolean	hqAudio;
 } encodingParms_t;
 
 void EncodeVideo (encodingParms_t *parms);
