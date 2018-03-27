@@ -1074,8 +1074,8 @@ void S_RawSamples (int samples, int rate, int width, int channels, byte *data)
 			{
 				dst = s_rawend & (MAX_RAW_SAMPLES - 1);
 				s_rawend++;
-				s_rawsamples[dst].left = LittleShort (((short *) data) [i * 2]) * snd_vol;;
-				s_rawsamples[dst].right = LittleShort(((short *)data)[i * 2 + 1]) * snd_vol;
+				s_rawsamples[dst].left = LittleShort (((short *) data) [i * 2]) * snd_vol;
+				s_rawsamples[dst].right = LittleShort (((short *)data)[i * 2 + 1]) * snd_vol;
 			}
 		}
 		else
