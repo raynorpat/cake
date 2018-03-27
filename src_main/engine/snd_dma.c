@@ -66,6 +66,7 @@ playsound_t	s_pendingplays;
 
 int			s_beginofs;
 
+cvar_t		*s_enable;
 cvar_t		*s_volume;
 cvar_t		*s_testsound;
 cvar_t		*s_loadas8bit;
@@ -107,10 +108,8 @@ S_Init
 */
 void S_Init (void)
 {
-	cvar_t	*cv;
-
-	cv = Cvar_Get ("s_enable", "2", CVAR_ARCHIVE);
-	if (cv->integer <= SS_NOT)
+	s_enable = Cvar_Get ("s_enable", "2", CVAR_ARCHIVE);
+	if (s_enable->integer <= SS_NOT)
 	{
 		Com_Printf("Sound initialization disabled.\n");
 		return;
@@ -135,10 +134,10 @@ void S_Init (void)
 	// start one of available sound engines
 	sound_started = SS_NOT;
 #if USE_OPENAL
-	if (sound_started == SS_NOT && cv->integer >= SS_OAL && AL_Init())
+	if (sound_started == SS_NOT && s_enable->integer >= SS_OAL && AL_Init())
 		sound_started = SS_OAL;
 #endif
-	if (sound_started == SS_NOT && cv->integer >= SS_DMA && SNDDMA_Init())
+	if (sound_started == SS_NOT && s_enable->integer >= SS_DMA && SNDDMA_Init())
 		sound_started = SS_DMA;
 
 	if (sound_started == SS_NOT)
