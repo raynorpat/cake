@@ -765,6 +765,10 @@ NON-PORTABLE SYSTEM SERVICES
 void	Sys_Init (void);
 void	Sys_Quit (void);
 
+void	*Sys_GetProcAddress (void *handle, const char *sym);
+void	Sys_FreeLibrary (void *handle);
+void	*Sys_LoadLibrary (const char *path, const char *sym, void **handle);
+
 void	Sys_UnloadGame (void);
 void	*Sys_GetGameAPI (void *parms);
 // loads the game dll and calls the api init function
