@@ -272,7 +272,7 @@ static menuslider_s		s_options_sfxvolume_slider;
 static menulist_s		s_options_joystick_box;
 static menulist_s		s_options_cdvolume_box;
 static menulist_s		s_options_quality_list;
-//static menulist_s		s_options_compatibility_list;
+static menulist_s		s_options_sound_enable_list;
 static menulist_s		s_options_console_action;
 
 static void CrosshairFunc (void *unused)
@@ -424,7 +424,7 @@ static void UpdateSoundQualityFunc (void *unused)
 			break;
 	}
 
-	//Cvar_SetValue("s_primary", s_options_compatibility_list.curvalue);
+	Cvar_SetValue("s_enable", s_options_sound_enable_list.curvalue);
 
     m_popup_string = "Restarting the sound system. This\n"
                      "could take up to a minute, so\n"
@@ -457,19 +457,20 @@ void Options_MenuInit (void)
 	};
 	static const char *quality_items[] =
 	{
-		"Low (11KHz/8-bit)",
-		"Normal (22KHz/16-bit)",
-		"High (44KHz/16-bit)",
-		"Extreme (48KHz/16-bit)",
+		"low (11KHz/8-bit)",
+		"normal (22KHz/16-bit)",
+		"high (44KHz/16-bit)",
+		"extreme (48KHz/16-bit)",
 		0
 	};
 
-	/*
 	static const char *compatibility_items[] =
 	{
-		"max compatibility", "max performance", 0
+		"disabled",
+		"DMA",
+		"OpenAL",
+		0
 	};
-	*/
 
 	static const char *yesno_names[] =
 	{
@@ -515,9 +516,25 @@ void Options_MenuInit (void)
 	s_options_menu.y = viddef.height / (2 * scale) - 58;
 	s_options_menu.nitems = 0;
 
+	s_options_sound_enable_list.generic.type = MTYPE_SPINCONTROL;
+	s_options_sound_enable_list.generic.x	= 0;
+	s_options_sound_enable_list.generic.y	= 0;
+	s_options_sound_enable_list.generic.name = "sound engine";
+	s_options_sound_enable_list.generic.callback = UpdateSoundQualityFunc;
+	s_options_sound_enable_list.itemnames	= compatibility_items;
+	s_options_sound_enable_list.curvalue	= Cvar_VariableInteger ("s_enable");
+
+	s_options_quality_list.generic.type = MTYPE_SPINCONTROL;
+	s_options_quality_list.generic.x		= 0;
+	s_options_quality_list.generic.y		= y += 10;
+	s_options_quality_list.generic.name		= "sound quality";
+	s_options_quality_list.generic.callback = UpdateSoundQualityFunc;
+	s_options_quality_list.itemnames = quality_items;
+	s_options_quality_list.curvalue = squality;
+
 	s_options_sfxvolume_slider.generic.type	= MTYPE_SLIDER;
 	s_options_sfxvolume_slider.generic.x	= 0;
-	s_options_sfxvolume_slider.generic.y	= 0;
+	s_options_sfxvolume_slider.generic.y	= y += 10;
 	s_options_sfxvolume_slider.generic.name	= "volume";
 	s_options_sfxvolume_slider.generic.callback	= UpdateVolumeFunc;
 	s_options_sfxvolume_slider.minvalue		= 0;
@@ -531,24 +548,6 @@ void Options_MenuInit (void)
 	s_options_cdvolume_box.generic.callback	= UpdateCDVolumeFunc;
 	s_options_cdvolume_box.itemnames		= cd_music_items;
 	s_options_cdvolume_box.curvalue 		= !Cvar_VariableValue("s_nobgm");
-
-	s_options_quality_list.generic.type		= MTYPE_SPINCONTROL;
-	s_options_quality_list.generic.x		= 0;
-	s_options_quality_list.generic.y		= y += 10;
-	s_options_quality_list.generic.name		= "sound quality";
-	s_options_quality_list.generic.callback = UpdateSoundQualityFunc;
-	s_options_quality_list.itemnames		= quality_items;
-	s_options_quality_list.curvalue			= squality;
-
-	/*
-	s_options_compatibility_list.generic.type	= MTYPE_SPINCONTROL;
-	s_options_compatibility_list.generic.x		= 0;
-	s_options_compatibility_list.generic.y		= y += 10;
-	s_options_compatibility_list.generic.name	= "sound compatibility";
-	s_options_compatibility_list.generic.callback = UpdateSoundQualityFunc;
-	s_options_compatibility_list.itemnames		= compatibility_items;
-	s_options_compatibility_list.curvalue		= Cvar_VariableIntValue("s_primary");
-	*/
 
 	s_options_sensitivity_slider.generic.type	= MTYPE_SLIDER;
 	s_options_sensitivity_slider.generic.x		= 0;
@@ -623,10 +622,10 @@ void Options_MenuInit (void)
 	s_options_menu.draw = Options_MenuDraw;
 	s_options_menu.key = NULL;
 
+	Menu_AddItem (&s_options_menu, (void *) &s_options_sound_enable_list);
+	Menu_AddItem (&s_options_menu, (void *) &s_options_quality_list);
 	Menu_AddItem (&s_options_menu, (void *) &s_options_sfxvolume_slider);
 	Menu_AddItem (&s_options_menu, (void *) &s_options_cdvolume_box);
-	Menu_AddItem (&s_options_menu, (void *) &s_options_quality_list);
-	//Menu_AddItem (&s_options_menu, (void *) &s_options_compatibility_list);
 	Menu_AddItem (&s_options_menu, (void *) &s_options_sensitivity_slider);
 	Menu_AddItem (&s_options_menu, (void *) &s_options_alwaysrun_box);
 	Menu_AddItem (&s_options_menu, (void *) &s_options_invertmouse_box);
