@@ -1439,8 +1439,6 @@ void CL_AddEntities (void)
 	CL_AddLightStyles ();
 }
 
-
-
 /*
 ===============
 CL_GetEntitySoundOrigin
@@ -1459,4 +1457,24 @@ void CL_GetEntitySoundOrigin (int ent, vec3_t org)
 	VectorCopy (old->lerp_origin, org);
 
 	// FIXME: bmodel issues...
+}
+
+/*
+===============
+CL_GetEntitySoundVelocity
+
+Called to get the sound spatialization velocity
+===============
+*/
+void CL_GetEntitySoundVelocity (int ent, vec3_t vel)
+{
+	centity_t *old;
+
+	if ((ent < 0) || (ent >= MAX_EDICTS))
+	{
+		Com_Error(ERR_DROP, "CL_GetEntitySoundVelocity: bad ent");
+	}
+
+	old = &cl_entities[ent];
+	VectorSubtract(old->current.origin, old->prev.origin, vel);
 }
