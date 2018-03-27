@@ -35,7 +35,6 @@ qboolean	threaded;
 /*
 =============
 GetThreadWork
-
 =============
 */
 int	GetThreadWork (void)
@@ -78,7 +77,6 @@ void ThreadWorkerFunction (int threadnum)
 		work = GetThreadWork ();
 		if (work == -1)
 			break;
-//printf ("thread %i, work %i\n", threadnum, work);
 		workfunction(work);
 	}
 }
@@ -170,7 +168,8 @@ void RunThreadsOn (int workcnt, qboolean showpacifier, void(*func)(int))
 	InitializeCriticalSection (&crit);
 
 	if (numthreads == 1)
-	{	// use same thread
+	{
+		// use same thread
 		func (0);
 	}
 	else
@@ -299,6 +298,172 @@ void RunThreadsOn (int workcnt, qboolean showpacifier, void(*func)(int))
 		printf (" (%i)\n", end-start);
 }
 
+#endif
+
+/*
+===================================================================
+
+POSIX THREADS (pthreads)
+
+===================================================================
+*/
+
+#if !defined(USED) && !defined(_WIN32) && (defined(__unix__) || defined(__unix) || (defined(__APPLE__) && defined(__MACH__)))
+#include <unistd.h>
+
+#ifdef _POSIX_VERSION
+#define USED
+
+int		numthreads = -1;
+
+#include <stddef.h>
+
+#ifdef _SC_NPROCESSORS_ONLN
+void ThreadSetDefault()
+{
+	if (numthreads == -1)
+	{
+		int res = sysconf(_SC_NPROCESSORS_ONLN); // the number of processors currently online (available).
+		if (res < 1)
+			numthreads = 1;
+		else
+			numthreads = res;
+	}
+}
+#elif defined(__linux__)
+#include <sched.h>
+void ThreadSetDefault()
+{
+	if (numthreads == -1)
+	{
+		cpu_set_t cs;
+		CPU_ZERO(&cs);
+		if (sched_getaffinity(0, sizeof(cs), &cs) != 0)
+		{
+			numthreads = 1;
+			return;
+		}
+
+		int count = 0;
+		for (int i = 0; i < CPU_COUNT(&cs); i++)
+		{
+			if (CPU_ISSET(i, &cs))
+				count++;
+		}
+
+		if (count < 1)
+			numthreads = 1;
+		else
+			numthreads = count;
+	}
+}
+#else
+void ThreadSetDefault()
+{
+	if (numthreads == -1)
+		numthreads = 1;
+}
+#endif
+
+#include <pthread.h>
+
+typedef void *pthread_addr_t;
+pthread_mutex_t	*my_mutex;
+
+void ThreadLock(void)
+{
+	if (my_mutex)
+		pthread_mutex_lock(my_mutex);
+}
+
+void ThreadUnlock(void)
+{
+	if (my_mutex)
+		pthread_mutex_unlock(my_mutex);
+}
+
+static void(*q_entry)(int) = 0;
+
+static void* ThreadEntryStub(void* pParam)
+{
+	q_entry((int)pParam);
+	return NULL;
+}
+
+void RunThreadsOn(int workcnt, qboolean showpacifier, void(*func)(int))
+{
+	int       i;
+	pthread_t       work_threads[MAX_THREADS];
+	pthread_addr_t  status;
+	pthread_attr_t  attrib;
+	int          start, end;
+
+	start = I_FloatTime();
+
+	dispatch = 0;
+	workcount = workcnt;
+	oldf = -1;
+	pacifier = showpacifier;
+	threaded = true;
+	q_entry = func;
+
+	if (pacifier)
+		setbuf(stdout, NULL);
+
+	pthread_mutexattr_t mattrib;
+
+	if (!my_mutex)
+	{
+		my_mutex = (pthread_mutex_t*)malloc(sizeof(*my_mutex));
+		if (pthread_mutexattr_init(&mattrib) == -1)
+		{
+			Error("pthread_mutex_attr_init failed");
+		}
+		if (pthread_mutex_init(my_mutex, &mattrib) == -1)
+		{
+			Error("pthread_mutex_init failed");
+		}
+	}
+
+	if (pthread_attr_init(&attrib) == -1)
+	{
+		Error("pthread_attr_init failed");
+	}
+#ifdef _POSIX_THREAD_ATTR_STACKSIZE
+	if (pthread_attr_setstacksize(&attrib, 0x400000) == -1)
+	{
+		Error("pthread_attr_setstacksize failed");
+	}
+#endif
+
+	for (i = 0; i < numthreads; i++)
+	{
+		if (pthread_create(&work_threads[i], &attrib, ThreadEntryStub, (void*)i) == -1)
+		{
+			Error("pthread_create failed");
+		}
+	}
+
+	for (i = 0; i < numthreads; i++)
+	{
+		if (pthread_join(work_threads[i], &status) == -1)
+		{
+			Error("pthread_join failed");
+		}
+	}
+
+	free(my_mutex);
+	my_mutex = NULL;
+
+	q_entry = NULL;
+	threaded = false;
+
+	end = I_FloatTime();
+	if (pacifier)
+		printf(" (%i)\n", end - start);
+}
+
+#endif
 
 #endif
 

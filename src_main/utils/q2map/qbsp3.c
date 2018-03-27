@@ -484,7 +484,7 @@ int BSP_Main (int argc, char **argv)
 	start = I_FloatTime ();
 
 	ThreadSetDefault ();
-numthreads = 1;		// multiple threads aren't helping...
+	numthreads = 1; // FIXME: multiple threads aren't helping...
 	SetQdirFromPath (argv[i]);
 
 	strcpy (source, ExpandArg (argv[i]));

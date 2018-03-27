@@ -1,5 +1,7 @@
 project(q2map)
 
+find_package(Threads)
+
 # common sources
 set(COMMON_INCLUDES
 	../common/bspfile.h
@@ -99,6 +101,8 @@ add_executable(q2map
 				${RAD_INCLUDES} ${RAD_SOURCES}
 				${VIS_INCLUDES} ${VIS_SOURCES}
 				${COMMON_INCLUDES} ${COMMON_SOURCES})
+				
+target_link_libraries(q2map ${CMAKE_THREAD_LIBS_INIT})
 
 q_set_output_dir(q2map ${Q_UTILS_DIR})
 install(TARGETS q2map RUNTIME DESTINATION ${Q_UTILS_DIR})
