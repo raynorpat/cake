@@ -1478,3 +1478,20 @@ void CL_GetEntitySoundVelocity (int ent, vec3_t vel)
 	old = &cl_entities[ent];
 	VectorSubtract(old->current.origin, old->prev.origin, vel);
 }
+
+/*
+===============
+CL_GetViewVelocity
+
+Called to get the velocity of the viewer
+===============
+*/
+void CL_GetViewVelocity (vec3_t vel)
+{
+	// restore value from 12.3 fixed point
+	const float scale_factor = 1.0f / 8.0f;
+
+	vel[0] = (float)cl.frame.playerstate.pmove.velocity[0] * scale_factor;
+	vel[1] = (float)cl.frame.playerstate.pmove.velocity[1] * scale_factor;
+	vel[2] = (float)cl.frame.playerstate.pmove.velocity[2] * scale_factor;
+}
