@@ -438,7 +438,7 @@ void SV_Map (qboolean attractloop, char *levelstring, qboolean loadgame)
 		strcpy (level, level + 1);
 
 	l = strlen (level);
-	if (l > 4 && !strcmp (level + l - 4, ".roq"))
+	if (l > 4 && !strcmp (level + l - 4, ".roq") || l > 4 && !strcmp(level + l - 4, ".cin"))
 	{
 		SCR_BeginLoadingPlaque ();			// for local system
 		SV_BroadcastCommand ("changing\n");
