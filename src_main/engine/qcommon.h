@@ -768,6 +768,7 @@ void	Sys_Quit (void);
 void	*Sys_GetProcAddress (void *handle, const char *sym);
 void	Sys_FreeLibrary (void *handle);
 void	*Sys_LoadLibrary (const char *path, const char *sym, void **handle);
+// loads any library, path is absolute
 
 void	Sys_UnloadGame (void);
 void	*Sys_GetGameAPI (void *parms);
