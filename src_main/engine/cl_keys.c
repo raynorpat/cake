@@ -177,29 +177,160 @@ keyname_t keynames[] =
 ==============================================================================
 */
 
-void CompleteCommand (void)
+extern cmdalias_t		*cmd_alias;
+extern cmd_function_t	*cmd_functions;
+
+static void Key_CompleteCommand (void)
 {
-	char	*cmd, *s;
+	cmd_function_t	*cmd, *cmdFound;
+	cmdalias_t		*alias, *aliasFound;
+	cvar_t			*cvar, *cvarFound;
+	char			*cmdName, *partial;
+	int				aliasCnt, cmdCnt, cvarCnt, len, offset;
+	qboolean		checkCmds = true;
 
-	s = key_lines[edit_line] + 1;
+	partial = key_lines[edit_line] + 1;
 
-	if ((*s == '\\') || (*s == '/'))
-		s++;
-
-	cmd = Cmd_CompleteCommand (s);
-
-	if (!cmd)
-		cmd = Cvar_CompleteVariable (s);
-
-	if (cmd)
+	// skip '/' and '\'
+	if ((*partial == '\\') || (*partial == '/'))
 	{
-		key_lines[edit_line][1] = '/';
-		strcpy (key_lines[edit_line] + 2, cmd);
-		key_linepos = strlen (cmd) + 2;
+		offset = 1;
+		partial++;
+	}
+	else
+	{
+		offset = 0;
+	}
+
+	// HACK: set completion
+	if (!Q_strncasecmp(partial, "set ", 4))
+	{
+		checkCmds = false;
+		partial += 4;
+		offset += 4;
+	}
+
+	len = strlen(partial);
+
+	if (!len)
+		return;
+
+	cmdName = NULL;
+
+	cmd = cmdFound = NULL;
+	alias = aliasFound = NULL;
+	cvar = cvarFound = NULL;
+	aliasCnt = cmdCnt = cvarCnt = 0;
+
+	// check for exact match
+	if (checkCmds)
+	{
+		for (cmd = cmd_functions; cmd; cmd = cmd->next)
+		{
+			if (!Q_stricmp(partial, cmd->name))
+			{
+				cmdCnt++;
+				cmdFound = cmd;
+			}
+		}
+
+		for (alias = cmd_alias; alias; alias = alias->next)
+		{
+			if (!Q_stricmp(partial, alias->name))
+			{
+				aliasCnt++;
+				aliasFound = alias;
+			}
+		}
+	}
+
+	for (cvar = cvar_vars; cvar; cvar = cvar->next)
+	{
+		if (!Q_stricmp(partial, cvar->name))
+		{
+			cvarFound = cvar;
+			cvarCnt++;
+		}
+	}
+
+	// check for partial match
+	if (checkCmds)
+	{
+		for (cmd = cmd_functions; cmd; cmd = cmd->next)
+		{
+			if (!Q_strncasecmp(partial, cmd->name, len))
+			{
+				cmdFound = cmd;
+				cmdCnt++;
+			}
+		}
+
+		for (alias = cmd_alias; alias; alias = alias->next)
+		{
+			if (!Q_strncasecmp(partial, alias->name, len))
+			{
+				aliasFound = alias;
+				aliasCnt++;
+			}
+		}
+	}
+
+	for (cvar = cvar_vars; cvar; cvar = cvar->next)
+	{
+		if (!Q_strncasecmp(partial, cvar->name, len))
+		{
+			cvarFound = cvar;
+			cvarCnt++;
+		}
+	}
+
+	// return a match if only one was found, otherwise list matches
+	if ((aliasCnt + cmdCnt + cvarCnt) == 1)
+	{
+		if (cmdFound)
+			cmdName = cmdFound->name;
+		else if (aliasFound)
+			cmdName = aliasFound->name;
+		else if (cvarFound)
+			cmdName = cvarFound->name;
+		else
+			cmdName = NULL;
+	}
+	else
+	{
+		if (aliasCnt + cmdCnt + cvarCnt)
+			Com_Printf("\nPossible matches:\n");
+
+		if (aliasCnt > 0)
+		{
+			Cbuf_AddText(va("aliaslist %s\n", partial));
+		}
+
+		if (cmdCnt > 0)
+		{
+			Cbuf_AddText(va("cmdlist %s\n", partial));
+		}
+
+		if (cvarCnt > 0)
+		{
+			Cbuf_AddText(va("cvarlist %s\n", partial));
+		}
+	}
+
+	if (cmdName)
+	{
+		int cmdLen = strlen(cmdName);
+		if (cmdLen + offset + 2 >= MAXCMDLINE)
+		{
+			Com_DPrintf ("Key_CompleteCommand: expansion would overflow command buffer\n");
+			return;
+		}
+
+		strcpy(key_lines[edit_line] + offset + 1, cmdName);
+		key_linepos = 1 + offset + cmdLen;
 		key_lines[edit_line][key_linepos] = ' ';
 		key_linepos++;
 		key_lines[edit_line][key_linepos] = 0;
-		return;
 	}
 }
 
@@ -298,7 +429,7 @@ void Key_Console (int key)
 	if (key == K_TAB)
 	{
 		// command completion
-		CompleteCommand ();
+		Key_CompleteCommand ();
 		return;
 	}
 
