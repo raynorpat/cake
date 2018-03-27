@@ -49,10 +49,12 @@ extern	char		crosshair_pic[MAX_QPATH];
 extern	int			crosshair_width, crosshair_height;
 
 //
-// scr_cin.c
+// cl_cin.c
 //
 void SCR_PlayCinematic (char *name);
 qboolean SCR_DrawCinematic (void);
+void SCR_InitCinematic (void);
+unsigned int SCR_GetCinematicTime (void);
 void SCR_RunCinematic (void);
 void SCR_StopCinematic (void);
 void SCR_FinishCinematic (void);

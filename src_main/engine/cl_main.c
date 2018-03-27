@@ -600,7 +600,6 @@ void CL_Disconnect (void)
 	}
 
 	VectorClear (cl.refdef.blend);
-	RE_SetPalette (NULL);
 
 	M_ForceMenuOff ();
 
@@ -1760,7 +1759,11 @@ void CL_Frame (int packetdelta, int renderdelta, int timedelta, qboolean packetf
 		// advance local effects for next frame
 		CL_RunDLights ();
 		CL_RunLightStyles ();
+
+		// update cinematics
 		SCR_RunCinematic ();
+
+		// update console
 		SCR_RunConsole ();
 
 		// update framecounter

@@ -591,7 +591,7 @@ void M_Draw (void)
 		return;
 
 	// dim everything behind it down
-	if (cl.cinematictime > 0)
+	if (SCR_GetCinematicTime() > 0)
 		RE_Draw_Fill (0, 0, viddef.width, viddef.height, 0);
 	else
 		RE_Draw_FadeScreen ();

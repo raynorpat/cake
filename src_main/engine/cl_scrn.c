@@ -381,6 +381,8 @@ void SCR_Init (void)
 	Cmd_AddCommand ("loading", SCR_Loading_f);
 	Cmd_AddCommand ("sky", SCR_Sky_f);
 
+	SCR_InitCinematic ();
+
 	scr_initialized = true;
 }
 
@@ -607,7 +609,7 @@ void SCR_BeginLoadingPlaque (void)
 
 	M_ForceMenuOff ();
 
-	if (cl.cinematictime > 0)
+	if (SCR_GetCinematicTime() > 0)
 		scr_draw_loading = 2;	// clear to balack first
 	else
 		scr_draw_loading = 1;
@@ -1257,33 +1259,21 @@ void SCR_UpdateScreen (void)
 			// loading plaque over black screen
 			int		w, h;
 
-			RE_SetPalette (NULL);
 			scr_draw_loading = false;
+
 			RE_Draw_GetPicSize (&w, &h, "loading");
 			RE_Draw_PicScaled((viddef.width - w * scale) / 2, (viddef.height - h * scale) / 2, "loading", scale);
 		}
 		// if a cinematic is supposed to be running, handle menus
 		// and console specially
-		else if (cl.cinematictime > 0)
+		else if (SCR_GetCinematicTime() > 0)
 		{
 			if (cls.key_dest == key_menu)
 			{
-				if (cl.cinematicpalette_active)
-				{
-					RE_SetPalette (NULL);
-					cl.cinematicpalette_active = false;
-				}
-
 				M_Draw ();
 			}
 			else if (cls.key_dest == key_console)
 			{
-				if (cl.cinematicpalette_active)
-				{
-					RE_SetPalette (NULL);
-					cl.cinematicpalette_active = false;
-				}
-
 				SCR_DrawConsole ();
 			}
 			else
@@ -1293,13 +1283,6 @@ void SCR_UpdateScreen (void)
 		}
 		else
 		{
-			// make sure the game palette is active
-			if (cl.cinematicpalette_active)
-			{
-				RE_SetPalette (NULL);
-				cl.cinematicpalette_active = false;
-			}
-
 			V_RenderView (separation[i]);
 
 			SCR_DrawStats ();

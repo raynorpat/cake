@@ -19,133 +19,548 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 */
 #include "client.h"
 
-typedef struct
-{
-	byte	*data;
-	int		count;
-} cblock_t;
-
-typedef struct
-{
-	qboolean	restart_sound;
-	int		s_rate;
-	int		s_width;
-	int		s_channels;
-
-	int		width;
-	int		height;
-	byte	*pic;
-	byte	*pic_pending;
-
-	// order 1 huffman stuff
-	int		*hnodes1;	// [256][256][2];
-	int		numhnodes1[256];
-
-	int		h_used[512];
-	int		h_count[512];
-} cinematics_t;
-
-cinematics_t	cin;
-
 /*
 =================================================================
 
-PCX LOADING
+RoQ LOADING
 
 =================================================================
 */
 
+static int snd_sqr_arr[256];
 
 /*
-==============
-SCR_LoadPCX
-==============
+==================
+RoQ_Init
+==================
 */
-void SCR_LoadPCX (char *filename, byte **pic, byte **palette, int *width, int *height)
+void RoQ_Init(void)
 {
-	byte	*raw;
-	pcx_t	*pcx;
-	int		x, y;
-	int		len;
-	int		dataByte, runLength;
-	byte	*out, *pix;
+	int i;
 
-	*pic = NULL;
-
-	//
-	// load the file
-	//
-	len = FS_LoadFile (filename, (void **) &raw);
-
-	if (!raw)
-		return;	// Com_Printf ("Bad pcx file %s\n", filename);
-
-	//
-	// parse the PCX file
-	//
-	pcx = (pcx_t *) raw;
-	raw = &pcx->data;
-
-	if (pcx->manufacturer != 0x0a
-			|| pcx->version != 5
-			|| pcx->encoding != 1
-			|| pcx->bits_per_pixel != 8
-			|| pcx->xmax >= 640
-			|| pcx->ymax >= 480)
+	for (i = 0; i < 128; i++)
 	{
-		Com_Printf ("Bad pcx file %s\n", filename);
-		return;
+		snd_sqr_arr[i] = i * i;
+		snd_sqr_arr[i + 128] = -(i * i);
 	}
-
-	out = Z_Malloc ((pcx->ymax + 1) * (pcx->xmax + 1));
-
-	*pic = out;
-
-	pix = out;
-
-	if (palette)
-	{
-		*palette = Z_Malloc (768);
-		memcpy (*palette, (byte *) pcx + len - 768, 768);
-	}
-
-	if (width)
-		*width = pcx->xmax + 1;
-
-	if (height)
-		*height = pcx->ymax + 1;
-
-	for (y = 0; y <= pcx->ymax; y++, pix += pcx->xmax + 1)
-	{
-		for (x = 0; x <= pcx->xmax ;)
-		{
-			dataByte = *raw++;
-
-			if ((dataByte & 0xC0) == 0xC0)
-			{
-				runLength = dataByte & 0x3F;
-				dataByte = *raw++;
-			}
-			else
-				runLength = 1;
-
-			while (runLength-- > 0)
-				pix[x++] = dataByte;
-		}
-
-	}
-
-	if (raw - (byte *) pcx > len)
-	{
-		Com_Printf ("PCX file %s was malformed", filename);
-		Z_Free (*pic);
-		*pic = NULL;
-	}
-
-	FS_FreeFile (pcx);
 }
 
-//=============================================================
+/*
+==================
+RoQ_ReadChunk
+==================
+*/
+void RoQ_ReadChunk(cinematics_t *cin)
+{
+	roq_chunk_t *chunk = &cin->chunk;
+
+	FS_Read(&chunk->id, sizeof(short), cin->file);
+	FS_Read(&chunk->size, sizeof(int), cin->file);
+	FS_Read(&chunk->argument, sizeof(short), cin->file);
+
+	chunk->id = LittleShort(chunk->id);
+	chunk->size = LittleLong(chunk->size);
+	chunk->argument = LittleShort(chunk->argument);
+}
+
+/*
+==================
+RoQ_SkipChunk
+==================
+*/
+void RoQ_SkipChunk(cinematics_t *cin)
+{
+	roq_chunk_t *chunk = &cin->chunk;
+	byte compressed[0x20000];
+
+	FS_Read(compressed, chunk->size, cin->file);
+	cin->remaining -= chunk->size;
+}
+
+/*
+==================
+RoQ_ReadInfo
+==================
+*/
+void RoQ_ReadInfo(cinematics_t *cin)
+{
+	int i;
+	short t[4];
+	roq_chunk_t *chunk = &cin->chunk;
+
+	FS_Read(t, sizeof(short) * 4, cin->file);
+	cin->remaining -= sizeof(short) * 4;
+
+	cin->width = LittleShort(t[0]);
+	cin->height = LittleShort(t[1]);
+	cin->width_2 = cin->width / 2;
+
+	if (cin->buf)
+	{
+		Z_Free(cin->buf);
+	}
+	cin->buf = Z_Malloc(cin->width * cin->height * 4);
+
+	for (i = 0; i < 2; i++)
+	{
+		if (cin->y[i])
+		{
+			Z_Free(cin->y[i]);
+		}
+		cin->y[i] = Z_Malloc(cin->width * cin->height);
+
+		if (cin->u[i])
+		{
+			Z_Free(cin->u[i]);
+		}
+		cin->u[i] = Z_Malloc(cin->width * cin->height / 4);
+
+		if (cin->v[i])
+		{
+			Z_Free(cin->v[i]);
+		}
+		cin->v[i] = Z_Malloc(cin->width * cin->height / 4);
+	}
+}
+
+/*
+==================
+RoQ_ReadCodebook
+==================
+*/
+void RoQ_ReadCodebook(cinematics_t *cin)
+{
+	int nv1, nv2;
+	roq_chunk_t *chunk = &cin->chunk;
+
+	nv1 = (chunk->argument >> 8) & 0xFF;
+	if (!nv1)
+	{
+		nv1 = 256;
+	}
+
+	nv2 = chunk->argument & 0xFF;
+	if (!nv2 && (nv1 * 6 < chunk->size))
+	{
+		nv2 = 256;
+	}
+
+	FS_Read(cin->cells, sizeof(roq_cell_t)*nv1, cin->file);
+	FS_Read(cin->qcells, sizeof(roq_qcell_t)*nv2, cin->file);
+
+	cin->remaining -= chunk->size;
+}
+
+/*
+==================
+RoQ_ApplyVector2x2
+==================
+*/
+static void RoQ_ApplyVector2x2(cinematics_t *cin, int x, int y, roq_cell_t *cell)
+{
+	byte *yptr;
+
+	yptr = cin->y[0] + (y * cin->width) + x;
+	*yptr++ = cell->y0;
+	*yptr++ = cell->y1;
+
+	yptr += (cin->width - 2);
+	*yptr++ = cell->y2;
+	*yptr++ = cell->y3;
+
+	cin->u[0][(y / 2) * cin->width_2 + x / 2] = cell->u;
+	cin->v[0][(y / 2) * cin->width_2 + x / 2] = cell->v;
+}
+
+/*
+==================
+RoQ_ApplyVector4x4
+==================
+*/
+static void RoQ_ApplyVector4x4(cinematics_t *cin, int x, int y, roq_cell_t *cell)
+{
+	int row_inc, c_row_inc;
+	byte y0, y1, u, v;
+	byte *yptr, *uptr, *vptr;
+
+	yptr = cin->y[0] + y * cin->width + x;
+	uptr = cin->u[0] + (y / 2) * cin->width_2 + x / 2;
+	vptr = cin->v[0] + (y / 2) * cin->width_2 + x / 2;
+
+	row_inc = cin->width - 4;
+	c_row_inc = cin->width_2 - 2;
+	*yptr++ = y0 = cell->y0; *uptr++ = u = cell->u; *vptr++ = v = cell->v;
+	*yptr++ = y0;
+	*yptr++ = y1 = cell->y1; *uptr++ = u; *vptr++ = v;
+	*yptr++ = y1;
+
+	yptr += row_inc;
+
+	*yptr++ = y0;
+	*yptr++ = y0;
+	*yptr++ = y1;
+	*yptr++ = y1;
+
+	yptr += row_inc; uptr += c_row_inc; vptr += c_row_inc;
+
+	*yptr++ = y0 = cell->y2; *uptr++ = u; *vptr++ = v;
+	*yptr++ = y0;
+	*yptr++ = y1 = cell->y3; *uptr++ = u; *vptr++ = v;
+	*yptr++ = y1;
+
+	yptr += row_inc;
+
+	*yptr++ = y0;
+	*yptr++ = y0;
+	*yptr++ = y1;
+	*yptr++ = y1;
+}
+
+/*
+==================
+RoQ_ApplyMotion4x4
+==================
+*/
+static void RoQ_ApplyMotion4x4(cinematics_t *cin, int x, int y, byte mv, char mean_x, char mean_y)
+{
+	int i, mx, my;
+	byte *pa, *pb;
+
+	mx = x + 8 - (mv >> 4) - mean_x;
+	my = y + 8 - (mv & 0xF) - mean_y;
+
+	pa = cin->y[0] + y * cin->width + x;
+	pb = cin->y[1] + my * cin->width + mx;
+	for (i = 0; i < 4; i++)
+	{
+		*(int *)(pa + 0) = *(int *)(pb + 0);
+		pa += cin->width;
+		pb += cin->width;
+	}
+
+	pa = cin->u[0] + (y / 2) * cin->width_2 + x / 2;
+	pb = cin->u[1] + (my / 2) * cin->width_2 + (mx + 1) / 2;
+	for (i = 0; i < 2; i++)
+	{
+		*(short *)(pa + 0) = *(short *)(pb + 0);
+		pa += cin->width_2;
+		pb += cin->width_2;
+	}
+
+	pa = cin->v[0] + (y / 2) * cin->width_2 + x / 2;
+	pb = cin->v[1] + (my / 2) * cin->width_2 + (mx + 1) / 2;
+	for (i = 0; i < 2; i++)
+	{
+		*(short *)(pa + 0) = *(short *)(pb + 0);
+		pa += cin->width_2;
+		pb += cin->width_2;
+	}
+}
+
+/*
+==================
+RoQ_ApplyMotion8x8
+==================
+*/
+static void RoQ_ApplyMotion8x8(cinematics_t *cin, int x, int y, byte mv, char mean_x, char mean_y)
+{
+	int mx, my, i;
+	byte *pa, *pb;
+
+	mx = x + 8 - (mv >> 4) - mean_x;
+	my = y + 8 - (mv & 0xF) - mean_y;
+
+	pa = cin->y[0] + y * cin->width + x;
+	pb = cin->y[1] + my * cin->width + mx;
+	for (i = 0; i < 8; i++)
+	{
+		*(int *)(pa + 0) = *(int *)(pb + 0);
+		*(int *)(pa + 4) = *(int *)(pb + 4);
+		pa += cin->width;
+		pb += cin->width;
+	}
+
+	pa = cin->u[0] + (y / 2) * cin->width_2 + x / 2;
+	pb = cin->u[1] + (my / 2) * cin->width_2 + (mx + 1) / 2;
+	for (i = 0; i < 4; i++)
+	{
+		*(int *)(pa + 0) = *(int *)(pb + 0);
+		pa += cin->width_2;
+		pb += cin->width_2;
+	}
+
+	pa = cin->v[0] + (y / 2) * cin->width_2 + x / 2;
+	pb = cin->v[1] + (my / 2) * cin->width_2 + (mx + 1) / 2;
+	for (i = 0; i < 4; i++)
+	{
+		*(int *)(pa + 0) = *(int *)(pb + 0);
+		pa += cin->width_2;
+		pb += cin->width_2;
+	}
+}
+
+#define CLAMP(x) ((((x) > 0xFFFFFF) ? 0xFF0000 : (((x) <= 0xFFFF) ? 0 : (x) & 0xFF0000)) >> 16)
+
+/*
+==================
+RoQ_DecodeImage
+==================
+*/
+static byte *RoQ_DecodeImage(cinematics_t *cin)
+{
+	roq_chunk_t *chunk = &cin->chunk;
+	int i, x, y;
+	long rgb[3], rgbs[2], u, v;
+	byte *pa, *pb, *pc, *pic;
+
+	pic = cin->buf;
+	pa = cin->y[0];
+	pb = cin->u[0];
+	pc = cin->v[0];
+
+	for (y = 0; y < cin->height; y++)
+	{
+		for (x = 0; x < cin->width_2; x++)
+		{
+			u = pb[x] - 128;
+			v = pc[x] - 128;
+			rgbs[0] = (*pa++) << 16;
+			rgbs[1] = (*pa++) << 16;
+
+			rgb[0] = 91881 * v;
+			rgb[1] = -22554 * u + -46802 * v;
+			rgb[2] = 116130 * u;
+
+			for (i = 0; i < 2; i++, pic += 4)
+			{
+				pic[0] = (byte)CLAMP(rgb[0] + rgbs[i]);
+				pic[1] = (byte)CLAMP(rgb[1] + rgbs[i]);
+				pic[2] = (byte)CLAMP(rgb[2] + rgbs[i]);
+				pic[3] = 255;
+			}
+		}
+
+		if (y & 0x01)
+		{
+			pb += cin->width_2;
+			pc += cin->width_2;
+		}
+	}
+
+	return cin->buf;
+}
+
+/*
+==================
+RoQ_ReadVideo
+==================
+*/
+byte *RoQ_ReadVideo(cinematics_t *cin)
+{
+	roq_chunk_t *chunk = &cin->chunk;
+	int i, vqflg_pos, vqid, bpos, xpos, ypos, x, y, xp, yp;
+	short vqflg, unused;
+	byte c[4], *tp;
+	roq_qcell_t *qcell;
+
+	vqflg = 0;
+	vqflg_pos = -1;
+
+	xpos = ypos = 0;
+	bpos = chunk->size;
+
+	while (bpos > 0)
+	{
+		for (yp = ypos; yp < ypos + 16; yp += 8)
+			for (xp = xpos; xp < xpos + 16; xp += 8)
+			{
+				if (vqflg_pos < 0)
+				{
+					FS_Read(&vqflg, sizeof(short), cin->file);
+					bpos -= sizeof(short);
+
+					vqflg = LittleShort(vqflg);
+					vqflg_pos = 7;
+				}
+
+				vqid = (vqflg >> (vqflg_pos * 2)) & 0x3;
+				vqflg_pos--;
+
+				switch (vqid)
+				{
+				case RoQ_ID_MOT:
+					break;
+
+				case RoQ_ID_FCC:
+					FS_Read(c, 1, cin->file);
+					bpos--;
+
+					RoQ_ApplyMotion8x8(cin, xp, yp, c[0], (char)((chunk->argument >> 8) & 0xff), (char)(chunk->argument & 0xff));
+					break;
+
+				case RoQ_ID_SLD:
+					FS_Read(c, 1, cin->file);
+					bpos--;
+
+					qcell = cin->qcells + c[0];
+					RoQ_ApplyVector4x4(cin, xp, yp, cin->cells + qcell->idx[0]);
+					RoQ_ApplyVector4x4(cin, xp + 4, yp, cin->cells + qcell->idx[1]);
+					RoQ_ApplyVector4x4(cin, xp, yp + 4, cin->cells + qcell->idx[2]);
+					RoQ_ApplyVector4x4(cin, xp + 4, yp + 4, cin->cells + qcell->idx[3]);
+					break;
+
+				case RoQ_ID_CCC:
+					for (i = 0; i < 4; i++)
+					{
+						x = xp;
+						y = yp;
+
+						if (i & 0x01)
+							x += 4;
+						if (i & 0x02)
+							y += 4;
+
+						if (vqflg_pos < 0)
+						{
+							FS_Read(&vqflg, sizeof(short), cin->file);
+							bpos -= sizeof(short);
+
+							vqflg = LittleShort(vqflg);
+							vqflg_pos = 7;
+						}
+
+						vqid = (vqflg >> (vqflg_pos * 2)) & 0x3;
+						vqflg_pos--;
+
+						switch (vqid)
+						{
+						case RoQ_ID_MOT:
+							break;
+
+						case RoQ_ID_FCC:
+							FS_Read(c, 1, cin->file);
+							bpos--;
+
+							RoQ_ApplyMotion4x4(cin, x, y, c[0], (char)((chunk->argument >> 8) & 0xff), (char)(chunk->argument & 0xff));
+							break;
+
+						case RoQ_ID_SLD:
+							FS_Read(&c, 1, cin->file);
+							bpos--;
+
+							qcell = cin->qcells + c[0];
+							RoQ_ApplyVector2x2(cin, x, y, cin->cells + qcell->idx[0]);
+							RoQ_ApplyVector2x2(cin, x + 2, y, cin->cells + qcell->idx[1]);
+							RoQ_ApplyVector2x2(cin, x, y + 2, cin->cells + qcell->idx[2]);
+							RoQ_ApplyVector2x2(cin, x + 2, y + 2, cin->cells + qcell->idx[3]);
+							break;
+
+						case RoQ_ID_CCC:
+							FS_Read(&c, 4, cin->file);
+							bpos -= 4;
+
+							RoQ_ApplyVector2x2(cin, x, y, cin->cells + c[0]);
+							RoQ_ApplyVector2x2(cin, x + 2, y, cin->cells + c[1]);
+							RoQ_ApplyVector2x2(cin, x, y + 2, cin->cells + c[2]);
+							RoQ_ApplyVector2x2(cin, x + 2, y + 2, cin->cells + c[3]);
+							break;
+						}
+					}
+					break;
+
+				default:
+					Com_DPrintf("Unknown vq code: %d\n", vqid);
+					break;
+				}
+			}
+
+		xpos += 16;
+		if (xpos >= cin->width)
+		{
+			xpos -= cin->width;
+			ypos += 16;
+		}
+		if (ypos >= cin->height && bpos)
+		{
+			FS_Read(&unused, sizeof(short), cin->file);
+			break;
+		}
+	}
+
+	cin->remaining -= chunk->size;
+
+	if (cin->frame++ == 0)
+	{
+		memcpy(cin->y[1], cin->y[0], cin->width * cin->height);
+		memcpy(cin->u[1], cin->u[0], cin->width * cin->height / 4);
+		memcpy(cin->v[1], cin->v[0], cin->width * cin->height / 4);
+	}
+	else
+	{
+		tp = cin->y[0]; cin->y[0] = cin->y[1]; cin->y[1] = tp;
+		tp = cin->u[0]; cin->u[0] = cin->u[1]; cin->u[1] = tp;
+		tp = cin->v[0]; cin->v[0] = cin->v[1]; cin->v[1] = tp;
+	}
+
+	return RoQ_DecodeImage(cin);
+}
+
+/*
+==================
+RoQ_ReadAudio
+==================
+*/
+void RoQ_ReadAudio(cinematics_t *cin)
+{
+	int i, snd_left, snd_right;
+	byte compressed[0x20000], samples[0x40000];
+	roq_chunk_t *chunk = &cin->chunk;
+
+	FS_Read(compressed, chunk->size, cin->file);
+	cin->remaining -= chunk->size;
+
+	if (chunk->id == RoQ_SOUND_MONO)
+	{
+		snd_left = chunk->argument;
+
+		for (i = 0; i < chunk->size; i++)
+		{
+			snd_left += snd_sqr_arr[compressed[i]];
+
+			samples[i * 2 + 0] = snd_left & 0xFF;
+			samples[i * 2 + 1] = ((snd_left & 0xFF00) >> 8) & 0xFF;
+		}
+
+		S_RawSamples(chunk->size / 2, cin->s_rate, 2, 1, samples);
+	}
+	else if (chunk->id == RoQ_SOUND_STEREO)
+	{
+		snd_left = chunk->argument & 0xFF00;
+		snd_right = (chunk->argument & 0xFF) << 8;
+
+		for (i = 0; i < chunk->size; i += 2)
+		{
+			snd_left += snd_sqr_arr[compressed[i]];
+			snd_right += snd_sqr_arr[compressed[i + 1]];
+
+			samples[i * 2 + 0] = snd_left & 0xFF;
+			samples[i * 2 + 1] = ((snd_left & 0xFF00) >> 8) & 0xFF;
+			samples[i * 2 + 2] = snd_right & 0xFF;
+			samples[i * 2 + 3] = ((snd_right & 0xFF00) >> 8) & 0xFF;
+		}
+
+		S_RawSamples(chunk->size / 2, cin->s_rate, 2, 2, samples);
+	}
+}
+
+
+/*
+=================================================================
+
+ROQ PLAYING
+
+=================================================================
+*/
 
 /*
 ==================
@@ -154,45 +569,51 @@ SCR_StopCinematic
 */
 void SCR_StopCinematic (void)
 {
-	cl.cinematictime = 0;	// done
+	int i;
+	cinematics_t *cin = &cl.cin;
 
-	if (cin.pic)
+	cin->time = 0; // done
+	cin->pic = NULL;
+	cin->pic_pending = NULL;
+
+	if (cin->file)
 	{
-		Z_Free (cin.pic);
-		cin.pic = NULL;
+		FS_FCloseFile(cin->file);
+		cin->file = 0;
+	}
+	if (cin->buf)
+	{
+		Z_Free(cin->buf);
+		cin->buf = NULL;
 	}
 
-	if (cin.pic_pending)
+	for (i = 0; i < 2; i++)
 	{
-		Z_Free (cin.pic_pending);
-		cin.pic_pending = NULL;
-	}
+		if (cin->y[i])
+		{
+			Z_Free(cin->y[i]);
+			cin->y[i] = NULL;
+		}
 
-	if (cl.cinematicpalette_active)
-	{
-		RE_SetPalette (NULL);
-		cl.cinematicpalette_active = false;
-	}
+		if (cin->u[i])
+		{
+			Z_Free(cin->u[i]);
+			cin->u[i] = NULL;
+		}
 
-	if (cl.cinematic_file)
-	{
-		fclose (cl.cinematic_file);
-		cl.cinematic_file = NULL;
-	}
-
-	if (cin.hnodes1)
-	{
-		Z_Free (cin.hnodes1);
-		cin.hnodes1 = NULL;
+		if (cin->v[i])
+		{
+			Z_Free(cin->v[i]);
+			cin->v[i] = NULL;
+		}
 	}
 
 	// switch back down to 11 khz sound if necessary
-	if (cin.restart_sound)
+	if (cin->restart_sound)
 	{
-		cin.restart_sound = false;
-		CL_Snd_Restart_f ();
+		cin->restart_sound = false;
+		CL_Snd_Restart_f();
 	}
-
 }
 
 /*
@@ -213,378 +634,111 @@ void SCR_FinishCinematic (void)
 
 /*
 ==================
-SmallestNode1
-==================
-*/
-int	SmallestNode1 (int numhnodes)
-{
-	int		i;
-	int		best, bestnode;
-
-	best = 99999999;
-	bestnode = -1;
-
-	for (i = 0; i < numhnodes; i++)
-	{
-		if (cin.h_used[i])
-			continue;
-
-		if (!cin.h_count[i])
-			continue;
-
-		if (cin.h_count[i] < best)
-		{
-			best = cin.h_count[i];
-			bestnode = i;
-		}
-	}
-
-	if (bestnode == -1)
-		return -1;
-
-	cin.h_used[bestnode] = true;
-	return bestnode;
-}
-
-
-/*
-==================
-Huff1TableInit
-
-Reads the 64k counts table and initializes the node trees
-==================
-*/
-void Huff1TableInit (void)
-{
-	int		prev;
-	int		j;
-	int		*node, *nodebase;
-	byte	counts[256];
-	int		numhnodes;
-
-	cin.hnodes1 = Z_Malloc (256 * 256 * 2 * 4);
-	memset (cin.hnodes1, 0, 256 * 256 * 2 * 4);
-
-	for (prev = 0; prev < 256; prev++)
-	{
-		memset (cin.h_count, 0, sizeof (cin.h_count));
-		memset (cin.h_used, 0, sizeof (cin.h_used));
-
-		// read a row of counts
-		FS_Read (counts, sizeof (counts), cl.cinematic_file);
-
-		for (j = 0; j < 256; j++)
-			cin.h_count[j] = counts[j];
-
-		// build the nodes
-		numhnodes = 256;
-		nodebase = cin.hnodes1 + prev * 256 * 2;
-
-		while (numhnodes != 511)
-		{
-			node = nodebase + (numhnodes - 256) * 2;
-
-			// pick two lowest counts
-			node[0] = SmallestNode1 (numhnodes);
-
-			if (node[0] == -1)
-				break;	// no more
-
-			node[1] = SmallestNode1 (numhnodes);
-
-			if (node[1] == -1)
-				break;
-
-			cin.h_count[numhnodes] = cin.h_count[node[0]] + cin.h_count[node[1]];
-			numhnodes++;
-		}
-
-		cin.numhnodes1[prev] = numhnodes - 1;
-	}
-}
-
-/*
-==================
-Huff1Decompress
-==================
-*/
-cblock_t Huff1Decompress (cblock_t in)
-{
-	byte		*input;
-	byte		*out_p;
-	int			nodenum;
-	int			count;
-	cblock_t	out;
-	int			inbyte;
-	int			*hnodes, *hnodesbase;
-	//int		i;
-
-	// get decompressed count
-	count = in.data[0] + (in.data[1] << 8) + (in.data[2] << 16) + (in.data[3] << 24);
-	input = in.data + 4;
-	out_p = out.data = Z_Malloc (count);
-
-	// read bits
-
-	hnodesbase = cin.hnodes1 - 256 * 2;	// nodes 0-255 aren't stored
-
-	hnodes = hnodesbase;
-	nodenum = cin.numhnodes1[0];
-
-	while (count)
-	{
-		inbyte = *input++;
-
-		//-----------
-		if (nodenum < 256)
-		{
-			hnodes = hnodesbase + (nodenum << 9);
-			*out_p++ = nodenum;
-
-			if (!--count)
-				break;
-
-			nodenum = cin.numhnodes1[nodenum];
-		}
-
-		nodenum = hnodes[nodenum*2 + (inbyte&1)];
-		inbyte >>= 1;
-
-		//-----------
-		if (nodenum < 256)
-		{
-			hnodes = hnodesbase + (nodenum << 9);
-			*out_p++ = nodenum;
-
-			if (!--count)
-				break;
-
-			nodenum = cin.numhnodes1[nodenum];
-		}
-
-		nodenum = hnodes[nodenum*2 + (inbyte&1)];
-		inbyte >>= 1;
-
-		//-----------
-		if (nodenum < 256)
-		{
-			hnodes = hnodesbase + (nodenum << 9);
-			*out_p++ = nodenum;
-
-			if (!--count)
-				break;
-
-			nodenum = cin.numhnodes1[nodenum];
-		}
-
-		nodenum = hnodes[nodenum*2 + (inbyte&1)];
-		inbyte >>= 1;
-
-		//-----------
-		if (nodenum < 256)
-		{
-			hnodes = hnodesbase + (nodenum << 9);
-			*out_p++ = nodenum;
-
-			if (!--count)
-				break;
-
-			nodenum = cin.numhnodes1[nodenum];
-		}
-
-		nodenum = hnodes[nodenum*2 + (inbyte&1)];
-		inbyte >>= 1;
-
-		//-----------
-		if (nodenum < 256)
-		{
-			hnodes = hnodesbase + (nodenum << 9);
-			*out_p++ = nodenum;
-
-			if (!--count)
-				break;
-
-			nodenum = cin.numhnodes1[nodenum];
-		}
-
-		nodenum = hnodes[nodenum*2 + (inbyte&1)];
-		inbyte >>= 1;
-
-		//-----------
-		if (nodenum < 256)
-		{
-			hnodes = hnodesbase + (nodenum << 9);
-			*out_p++ = nodenum;
-
-			if (!--count)
-				break;
-
-			nodenum = cin.numhnodes1[nodenum];
-		}
-
-		nodenum = hnodes[nodenum*2 + (inbyte&1)];
-		inbyte >>= 1;
-
-		//-----------
-		if (nodenum < 256)
-		{
-			hnodes = hnodesbase + (nodenum << 9);
-			*out_p++ = nodenum;
-
-			if (!--count)
-				break;
-
-			nodenum = cin.numhnodes1[nodenum];
-		}
-
-		nodenum = hnodes[nodenum*2 + (inbyte&1)];
-		inbyte >>= 1;
-
-		//-----------
-		if (nodenum < 256)
-		{
-			hnodes = hnodesbase + (nodenum << 9);
-			*out_p++ = nodenum;
-
-			if (!--count)
-				break;
-
-			nodenum = cin.numhnodes1[nodenum];
-		}
-
-		nodenum = hnodes[nodenum*2 + (inbyte&1)];
-		inbyte >>= 1;
-	}
-
-	if (input - in.data != in.count && input - in.data != in.count + 1)
-	{
-		Com_Printf ("Decompression overread by %i", (input - in.data) - in.count);
-	}
-
-	out.count = out_p - out.data;
-
-	return out;
-}
-
-/*
-==================
 SCR_ReadNextFrame
 ==================
 */
 byte *SCR_ReadNextFrame (void)
 {
-	int		r;
-	int		command;
-	byte	samples[22050/14*4];
-	byte	compressed[0x20000];
-	int		size;
-	byte	*pic;
-	cblock_t	in, huf1;
-	int		start, end, count;
+	cinematics_t *cin = &cl.cin;
+	roq_chunk_t *chunk = &cin->chunk;
 
-	// read the next frame
-	r = fread (&command, 4, 1, cl.cinematic_file);
-
-	if (r == 0)		// we'll give it one more chance
-		r = fread (&command, 4, 1, cl.cinematic_file);
-
-	if (r != 1)
-		return NULL;
-
-	command = LittleLong (command);
-
-	if (command == 2)
-		return NULL;	// last frame marker
-
-	if (command == 1)
+	while (cin->remaining > 0)
 	{
-		// read palette
-		FS_Read (cl.cinematicpalette, sizeof (cl.cinematicpalette), cl.cinematic_file);
-		cl.cinematicpalette_active = 0;	// dubious.... exposes an edge case
+		// get roq chunk
+		RoQ_ReadChunk(cin);
+
+		if (cin->remaining <= 0)
+			return NULL;
+		if (chunk->size <= 0)
+			continue;
+
+		if (chunk->size > cin->remaining)
+			chunk->size -= cin->remaining;
+
+		// read roq chunks
+		if (chunk->id == RoQ_INFO)
+			RoQ_ReadInfo(cin);
+		else if (chunk->id == RoQ_SOUND_MONO || chunk->id == RoQ_SOUND_STEREO)
+			RoQ_ReadAudio(cin);
+		else if (chunk->id == RoQ_QUAD_VQ)
+			return RoQ_ReadVideo(cin);
+		else if (chunk->id == RoQ_QUAD_CODEBOOK)
+			RoQ_ReadCodebook(cin);
+		else
+			RoQ_SkipChunk(cin);
 	}
 
-	// decompress the next frame
-	FS_Read (&size, 4, cl.cinematic_file);
-	size = LittleLong (size);
-
-	if (size > sizeof (compressed) || size < 1)
-		Com_Error (ERR_DROP, "Bad compressed frame size");
-
-	FS_Read (compressed, size, cl.cinematic_file);
-
-	// read sound
-	start = cl.cinematicframe * cin.s_rate / 14;
-	end = (cl.cinematicframe + 1) * cin.s_rate / 14;
-	count = end - start;
-
-	FS_Read (samples, count * cin.s_width * cin.s_channels, cl.cinematic_file);
-
-	S_RawSamples (count, cin.s_rate, cin.s_width, cin.s_channels, samples);
-
-	in.data = compressed;
-	in.count = size;
-
-	huf1 = Huff1Decompress (in);
-
-	pic = huf1.data;
-
-	cl.cinematicframe++;
-
-	return pic;
+	return NULL;
 }
 
+/*
+==================
+SCR_InitCinematic
+==================
+*/
+void SCR_InitCinematic (void)
+{
+	RoQ_Init ();
+}
+
+/*
+==================
+SCR_GetCinematicTime
+==================
+*/
+unsigned int SCR_GetCinematicTime(void)
+{
+	cinematics_t *cin = &cl.cin;
+	return (cin ? cin->time : 0);
+}
 
 /*
 ==================
 SCR_RunCinematic
-
 ==================
 */
 void SCR_RunCinematic (void)
 {
-	int		frame;
+	unsigned int frame;
+	cinematics_t *cin = &cl.cin;
 
-	if (cl.cinematictime <= 0)
+	if (!cin || cin->time == 0)
 	{
 		SCR_StopCinematic ();
 		return;
 	}
-
-	if (cl.cinematicframe == -1)
-		return;		// static image
 
 	if (cls.key_dest != key_game)
 	{
-		// pause if menu or console is up
-		cl.cinematictime = cls.realtime - cl.cinematicframe * 1000 / 14;
+		// stop if menu or console is up
+		SCR_StopCinematic();
+		SCR_FinishCinematic();
 		return;
 	}
 
-	frame = (cls.realtime - cl.cinematictime) * 14.0 / 1000;
+	if (cin->frame == -1)
+		return; // static image
 
-	if (frame <= cl.cinematicframe)
+	frame = (Sys_Milliseconds() - cin->time) * (float)(RoQ_FRAMERATE) / 1000;
+	if (frame <= cin->frame)
 		return;
 
-	if (frame > cl.cinematicframe + 1)
+	if (frame > cin->frame + 1)
 	{
-		Com_Printf ("Dropped frame: %i > %i\n", frame, cl.cinematicframe + 1);
-		cl.cinematictime = cls.realtime - cl.cinematicframe * 1000 / 14;
+		Com_Printf("Dropped frame: %i > %i\n", frame, cin->frame + 1);
+		cin->time = Sys_Milliseconds() - cin->frame * 1000 / RoQ_FRAMERATE;
 	}
 
-	if (cin.pic)
-		Z_Free (cin.pic);
+	cin->pic = cin->pic_pending;
+	cin->pic_pending = SCR_ReadNextFrame();
 
-	cin.pic = cin.pic_pending;
-	cin.pic_pending = NULL;
-	cin.pic_pending = SCR_ReadNextFrame ();
-
-	if (!cin.pic_pending)
+	if (!cin->pic_pending)
 	{
-		SCR_StopCinematic ();
-		SCR_FinishCinematic ();
-		cl.cinematictime = 1;	// hack to get the black screen behind loading
-		SCR_BeginLoadingPlaque ();
-		cl.cinematictime = 0;
+		SCR_StopCinematic();
+		SCR_FinishCinematic();
+		cin->time = 1; // hack to get the black screen behind loading
+		SCR_BeginLoadingPlaque();
+		cin->time = 0;
 		return;
 	}
 }
@@ -599,29 +753,15 @@ should be skipped
 */
 qboolean SCR_DrawCinematic (void)
 {
-	if (cl.cinematictime <= 0)
-	{
+	cinematics_t *cin = &cl.cin;
+
+	if (cin->time <= 0)
 		return false;
-	}
 
-	if (cls.key_dest == key_menu)
-	{
-		// blank screen and pause if menu is up
-		RE_SetPalette (NULL);
-		cl.cinematicpalette_active = false;
-		return true;
-	}
-
-	if (!cl.cinematicpalette_active)
-	{
-		RE_SetPalette (cl.cinematicpalette);
-		cl.cinematicpalette_active = true;
-	}
-
-	if (!cin.pic)
+	if (!cin->pic)
 		return true;
 
-	RE_Draw_StretchRaw (0, 0, viddef.width, viddef.height, cin.width, cin.height, cin.pic);
+	RE_Draw_StretchRaw (0, 0, viddef.width, viddef.height, cin->width, cin->height, cin->pic);
 
 	return true;
 }
@@ -633,10 +773,10 @@ SCR_PlayCinematic
 */
 void SCR_PlayCinematic (char *arg)
 {
-	int		width, height;
-	byte	*palette = NULL;
-	char	name[MAX_OSPATH], *dot;
+	char	*dot;
 	int		old_khz;
+	cinematics_t *cin = &cl.cin;
+	roq_chunk_t *chunk = &cin->chunk;
 
 	// make sure we clear all key states
 	Key_ClearStates ();
@@ -644,74 +784,68 @@ void SCR_PlayCinematic (char *arg)
 	// make sure music isn't playing
 	BGM_Stop ();
 
-	cl.cinematicframe = 0;
 	dot = strstr (arg, ".");
-
-	if (dot && !strcmp (dot, ".pcx"))
+	if (dot && !strcmp (dot, ".tga"))
 	{
-		// static pcx image
-		Com_sprintf (name, sizeof (name), "pics/%s", arg);
-		SCR_LoadPCX (name, &cin.pic, &palette, &cin.width, &cin.height);
-		cl.cinematicframe = -1;
-		cl.cinematictime = 1;
+#if 0
+		// static tga image
+		Com_sprintf (cin->name, sizeof(cin->name), "pics/%s", arg);
+		LoadTGAFile (cin->name, &cin->pic, &cin->width, &cin->height);
+		cin->frame = -1;
+		cin->time = 1;
 		SCR_EndLoadingPlaque ();
 		cls.state = ca_active;
 
-		if (!cin.pic)
+		if (!cin->pic)
 		{
-			Com_Printf ("%s not found.\n", name);
-			cl.cinematictime = 0;
+			Com_Printf ("%s not found.\n", cin->name);
+			cin->time = 0;
 		}
-		else
-		{
-			memcpy (cl.cinematicpalette, palette, sizeof (cl.cinematicpalette));
-			Z_Free (palette);
-		}
-
+#endif
 		return;
 	}
 
-	Com_sprintf (name, sizeof (name), "video/%s", arg);
-	FS_FOpenFile (name, &cl.cinematic_file);
+	Com_sprintf (cin->name, sizeof (cin->name), "video/%s", arg);
 
-	if (!cl.cinematic_file)
+	// nasty hack
+	cin->s_rate = 22050;
+	cin->s_width = 2;
+
+	cin->frame = 0;
+	cin->remaining = FS_FOpenFile(cin->name, &cin->file);
+	if (!cin->file || !cin->remaining)
 	{
-		//		Com_Error (ERR_DROP, "Cinematic %s not found.\n", name);
-		SCR_FinishCinematic ();
-		cl.cinematictime = 0;	// done
+		SCR_FinishCinematic();
+		cin->time = 0;	// done
 		return;
 	}
 
-	SCR_EndLoadingPlaque ();
+	SCR_EndLoadingPlaque();
 
 	cls.state = ca_active;
 
-	FS_Read (&width, 4, cl.cinematic_file);
-	FS_Read (&height, 4, cl.cinematic_file);
-	cin.width = LittleLong (width);
-	cin.height = LittleLong (height);
-
-	FS_Read (&cin.s_rate, 4, cl.cinematic_file);
-	cin.s_rate = LittleLong (cin.s_rate);
-	FS_Read (&cin.s_width, 4, cl.cinematic_file);
-	cin.s_width = LittleLong (cin.s_width);
-	FS_Read (&cin.s_channels, 4, cl.cinematic_file);
-	cin.s_channels = LittleLong (cin.s_channels);
-
-	Huff1TableInit ();
-
 	// switch up to 22 khz sound if necessary
-	old_khz = Cvar_VariableValue ("s_khz");
-
-	if (old_khz != cin.s_rate / 1000)
+	old_khz = Cvar_VariableValue("s_khz");
+	if (old_khz != cin->s_rate / 1000)
 	{
-		cin.restart_sound = true;
-		Cvar_SetValue ("s_khz", cin.s_rate / 1000);
-		CL_Snd_Restart_f ();
-		Cvar_SetValue ("s_khz", old_khz);
+		cin->restart_sound = true;
+		Cvar_SetValue("s_khz", cin->s_rate / 1000);
+		CL_Snd_Restart_f();
+		Cvar_SetValue("s_khz", old_khz);
 	}
 
-	cl.cinematicframe = 0;
-	cin.pic = SCR_ReadNextFrame ();
-	cl.cinematictime = Sys_Milliseconds ();
+	// read header
+	RoQ_ReadChunk(cin);
+
+	if (chunk->id != RoQ_HEADER1 || chunk->size != RoQ_HEADER2 || chunk->argument != RoQ_HEADER3)
+	{
+		SCR_StopCinematic();
+		SCR_FinishCinematic();
+		cin->time = 0; // done
+		return;
+	}
+
+	cin->frame = 0;
+	cin->pic = SCR_ReadNextFrame();
+	cin->time = Sys_Milliseconds();
 }

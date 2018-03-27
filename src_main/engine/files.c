@@ -258,7 +258,6 @@ int FS_FOpenFile (char *filename, FILE **file)
 			Com_sprintf (netpath, sizeof (netpath), "%s/%s", search->filename, filename);
 
 			*file = fopen (netpath, "rb");
-
 			if (!*file)
 				continue;
 
@@ -309,8 +308,8 @@ int FS_Read (void *buffer, int len, FILE *f)
 				read = -1;
 		}
 
-		if (read == -1)
-			Com_Error (ERR_FATAL, "FS_Read: could not read %i bytes", block);
+//		if (read == -1)
+//			Com_Error (ERR_FATAL, "FS_Read: could not read %i bytes", block);
 
 		len -= block;
 		buf += block;

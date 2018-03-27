@@ -117,6 +117,38 @@ typedef struct dlhandle_s
 	char		*tempBuffer;
 } dlhandle_t;
 
+// cinematics
+typedef struct
+{
+	char		name[MAX_QPATH];
+
+	roq_chunk_t chunk;
+	roq_cell_t	cells[256];
+	roq_qcell_t qcells[256];
+
+	byte		*y[2], *u[2], *v[2];
+
+	qboolean	restart_sound;
+
+	int			s_rate;
+	int			s_width;
+	int			s_channels;
+
+	int			width;
+	int			width_2;			// width / 2
+	int			height;
+
+	FILE		*file;
+	int			remaining;
+
+	unsigned int time;				// Sys_Milliseconds for first cinematic frame
+	unsigned int frame;
+
+	byte		*buf;
+	byte		*pic;
+	byte		*pic_pending;
+} cinematics_t;
+
 //
 // the client_state_t structure is wiped completely at every
 // server map change
@@ -171,14 +203,8 @@ typedef struct
 	char		layout[1024];		// general 2D overlay
 	int			inventory[MAX_ITEMS];
 
-	//
 	// non-gameserver infornamtion
-	// FIXME: move this cinematic stuff into the cin_t structure
-	FILE		*cinematic_file;
-	int			cinematictime;		// cls.realtime for first cinematic frame
-	int			cinematicframe;
-	char		cinematicpalette[768];
-	qboolean	cinematicpalette_active;
+	cinematics_t cin;
 
 	//
 	// server state information

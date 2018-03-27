@@ -342,7 +342,6 @@ void Draw_End2D (void);
 
 void RE_GL_BeginFrame (float camera_separation);
 void RE_GL_EndFrame (void);
-void RE_GL_SetPalette (const unsigned char *palette);
 
 void RE_GL_BeginRegistration(char *model);
 struct model_s *RE_GL_RegisterModel(char *name);

@@ -1061,45 +1061,6 @@ void RE_GL_EndFrame (void)
 }
 
 /*
-=============
-RE_SetPalette
-=============
-*/
-unsigned r_rawpalette[256];
-
-void RE_GL_SetPalette (const unsigned char *palette)
-{
-	int		i;
-
-	byte *rp = (byte *) r_rawpalette;
-
-	if (palette)
-	{
-		for (i = 0; i < 256; i++)
-		{
-			rp[i * 4 + 2] = palette[i * 3 + 0];
-			rp[i * 4 + 1] = palette[i * 3 + 1];
-			rp[i * 4 + 0] = palette[i * 3 + 2];
-			rp[i * 4 + 3] = 0xff;
-		}
-	}
-	else
-	{
-		for (i = 0; i < 256; i++)
-		{
-			rp[i * 4 + 2] = d_8to24table_rgba[i] & 0xff;
-			rp[i * 4 + 1] = (d_8to24table_rgba[i] >> 8) & 0xff;
-			rp[i * 4 + 0] = (d_8to24table_rgba[i] >> 16) & 0xff;
-			rp[i * 4 + 3] = 0xff;
-		}
-	}
-
-	glClearColor (0, 0, 0, 0);
-	GL_Clear (GL_COLOR_BUFFER_BIT);
-	glClearColor (1, 0, 0.5, 0.5);
-}
-
-/*
 ============
 GL_GFX_CoreInit
 
@@ -1111,8 +1072,6 @@ void GL_GFX_CoreInit(void)
 	RE_BeginFrame = RE_GL_BeginFrame;
 	RE_RenderFrame = RE_GL_RenderFrame;
 	RE_EndFrame = RE_GL_EndFrame;
-
-	RE_SetPalette = RE_GL_SetPalette;
 
 	RE_Init = RE_GL_Init;
 	RE_Shutdown = RE_GL_Shutdown;
