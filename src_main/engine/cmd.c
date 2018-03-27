@@ -23,15 +23,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
 void Cmd_ForwardToServer (void);
 
-#define	MAX_ALIAS_NAME	32
-
-typedef struct cmdalias_s
-{
-	struct cmdalias_s	*next;
-	char	name[MAX_ALIAS_NAME];
-	char	*value;
-} cmdalias_t;
-
 cmdalias_t	*cmd_alias;
 
 qboolean	cmd_wait;
@@ -563,20 +554,12 @@ void Cmd_Alias_f (void)
 =============================================================================
 */
 
-typedef struct cmd_function_s
-{
-	struct cmd_function_s	*next;
-	char					*name;
-	xcommand_t				function;
-} cmd_function_t;
-
-
 static	int			cmd_argc;
 static	char		*cmd_argv[MAX_STRING_TOKENS];
 static	char		*cmd_null_string = "";
 static	char		cmd_args[MAX_STRING_CHARS];
 
-static	cmd_function_t	*cmd_functions;		// possible commands to execute
+cmd_function_t		*cmd_functions; // possible commands to execute
 
 /*
 ============
@@ -845,7 +828,7 @@ void Cmd_RemoveCommand (char *cmd_name)
 Cmd_Exists
 ============
 */
-qboolean	Cmd_Exists (char *cmd_name)
+qboolean Cmd_Exists (char *cmd_name)
 {
 	cmd_function_t	*cmd;
 
@@ -906,7 +889,7 @@ A complete command line has been parsed, so try to execute it
 FIXME: lookupnoadd the token to speed search?
 ============
 */
-void	Cmd_ExecuteString (char *text)
+void Cmd_ExecuteString (char *text)
 {
 	cmd_function_t	*cmd;
 	cmdalias_t		*a;
