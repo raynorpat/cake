@@ -283,36 +283,41 @@ Properly handles partial reads
 =================
 */
 #define	MAX_READ	0x10000		// read in blocks of 64k
-void FS_Read (void *buffer, int len, FILE *f)
+int FS_Read (void *buffer, int len, FILE *f)
 {
-	int		block, remaining;
+	size_t	block, total;
 	int		read;
 	byte	*buf;
 
+	if (!len || !buffer)
+		return 0;
+
 	buf = (byte *) buffer;
 
-	// read in chunks for progress bar
-	remaining = len;
-
-	while (remaining)
+	// read in chunks
+	total = 0;
+	do
 	{
-		block = remaining;
-
-		if (block > MAX_READ)
-			block = MAX_READ;
+		block = min (len, MAX_READ);
 
 		read = fread (buf, 1, block, f);
-
 		if (read == 0)
-			Com_Error (ERR_FATAL, "FS_Read: 0 bytes read");
+		{
+			// try again
+			read = fread (buf, 1, block, f);
+			if (read == 0)
+				read = -1;
+		}
+
 		if (read == -1)
-			Com_Error (ERR_FATAL, "FS_Read: -1 bytes read");
+			Com_Error (ERR_FATAL, "FS_Read: could not read %i bytes", block);
 
-		// do some progress bar thing here...
+		len -= block;
+		buf += block;
+		total += block;
+	} while (len > 0);
 
-		remaining -= read;
-		buf += read;
-	}
+	return total;
 }
 
 /*

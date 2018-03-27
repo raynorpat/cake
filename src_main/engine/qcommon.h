@@ -653,7 +653,7 @@ int		FS_LoadFile (char *path, void **buffer);
 // a null buffer will just return the file length without loading
 // a -1 length is not present
 
-void	FS_Read (void *buffer, int len, FILE *f);
+int		FS_Read (void *buffer, int len, FILE *f);
 // properly handles partial reads
 
 void	FS_FreeFile (void *buffer);
