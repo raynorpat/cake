@@ -12,8 +12,9 @@ Some of the major features currently implemented are:
 
   * Easy to use modern build system via CMake
   * SDL 2 backend
-  * Rewritten OpenGL 3.3 renderer with various graphical goodness but is still true to the original
+  * OpenAL audio backend
   * Background Music support (tracker xm/s3m/it/mod, mp3, and even wav)
+  * Rewritten OpenGL 3.3 renderer with various graphical goodness but is still true to the original
   * HTTP/FTP download redirection (using cURL)
   * Many, many, many bug fixes
 
@@ -28,7 +29,7 @@ _Cake_ builds with CMake. If you've never tried it, please do so, it rocks. We r
 The main dependency to build _Cake_ is SDL2, which is provided in library format for MSVC builds, all others will need to grab it
 from source or from their distribution.
 
-Other dependencies include glew, libcurl, libmad, libmodplug, and zlib.
+Other dependencies include glew, OpenAL, libcurl, libmad, libmodplug, and zlib.
 We provide all dependencies for building everything else in src_main/libs if CMake doesn't find one.
 
 There are various scripts in the src_main directory that will give you a way to build if CMake is installed on your machine. These scripts range from
@@ -71,7 +72,7 @@ Contributions from
 
   * Ryan C. Gordon <icculus@icculus.org> - initial sdl 1.2 quake2 port - see http://www.icculus.org/quake2/
   * Stuart Dalton <badcdev@gmail.com> - ioquake3 sound codecs system
-  * O.Sezer <sezero@users.sourceforge.net> - uHexen II sound codecs system
-  * yquake2 and KMQ2 - Save game system
-  * FFmpeg - RoQ video encoder
-  * your-name-here - bug fixes
+  * O. Sezer <sezero@users.sourceforge.net> - uHexen II sound codecs system
+  * yquake2 and KMQ2 projects - Save game system
+  * FFmpeg project - RoQ video encoder
+  * Deniz Sezen - bug fixes
