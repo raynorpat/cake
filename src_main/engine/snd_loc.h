@@ -79,7 +79,7 @@ typedef struct
 	int 		pos;			// sample position in sfx
 	int			looping;		// where to loop, -1 = no looping OBSOLETE?
 	int			entnum;			// to allow overriding a specific sound
-	int			entchannel;		//
+	int			entchannel;	
 	vec3_t		origin;			// only use if fixed_origin is set
 	vec_t		dist_mult;		// distance multiplier (attenuation/clipK)
 	int			master_vol;		// 0-255 master volume
@@ -114,6 +114,7 @@ void	Snd_Memset(void* dest, const int val, const size_t count);
 
 #define	MAX_CHANNELS			32
 extern	channel_t  channels[MAX_CHANNELS];
+extern  int		s_numchannels;
 
 extern	int		paintedtime;
 extern	int		s_rawend;
@@ -135,6 +136,7 @@ extern cvar_t	*s_show;
 extern cvar_t	*s_mixahead;
 extern cvar_t	*s_testsound;
 extern cvar_t	*s_nobgm;
+extern cvar_t	*s_ambient;
 
 void S_InitScaletable (void);
 
@@ -149,3 +151,6 @@ channel_t *S_PickChannel (int entnum, int entchannel);
 
 // spatializes a channel
 void S_Spatialize (channel_t *ch);
+
+void S_BuildSoundList (int *sounds);
+

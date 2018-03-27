@@ -21,11 +21,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #include "client.h"
 #include "snd_loc.h"
 
-#if defined(_WIN32) 
 #include <SDL.h>
-#else
-#include <SDL.h>
-#endif
 
 int snd_inited = 0;
 static int dmapos = 0;
@@ -250,6 +246,7 @@ qboolean SNDDMA_Init(void)
 	dmasize = (dmabackend->samples * (dmabackend->samplebits / 8));
 	dmabackend->buffer = calloc(1, dmasize);
 
+	s_numchannels = MAX_CHANNELS;
 	S_InitScaletable();
 
 	SDL_PauseAudio(0);
