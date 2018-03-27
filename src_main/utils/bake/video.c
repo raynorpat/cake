@@ -84,9 +84,8 @@ void Cmd_Video (void)
 	// get name
 	GetToken (false);
 	strcpy (base, token);
-	strcpy (parms.videoName, base);
-	strcpy (parms.baseName, base);
-	strcpy (parms.soundName, base);
+	
+	// if building release, copy over the video and get out
 	if (g_release)
 	{
 		sprintf (base, "video/%s.roq", token);
@@ -94,8 +93,13 @@ void Cmd_Video (void)
 		return;
 	}
 
+	// set the names in the encoding parameters
+	strcpy (parms.videoName, base);
+	strcpy (parms.baseName, base);
+	strcpy (parms.soundName, base);
+
 	// set the image directory
-	sprintf(parms.imageDir, "%svideo/%s", gamedir, base);
+	sprintf (parms.imageDir, "%svideo/%s", gamedir, base);
 
 	// set start frame
 	GetToken (false);
