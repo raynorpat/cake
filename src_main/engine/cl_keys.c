@@ -177,162 +177,258 @@ keyname_t keynames[] =
 ==============================================================================
 */
 
-extern cmdalias_t		*cmd_alias;
-extern cmd_function_t	*cmd_functions;
+static char *completionString;
+static char shortestMatch[MAX_TOKEN_CHARS];
+static int	matchCount;
 
-static void Key_CompleteCommand (void)
+/*
+===============
+FindMatches
+===============
+*/
+static void FindMatches(char *s)
 {
-	cmd_function_t	*cmd, *cmdFound;
-	cmdalias_t		*alias, *aliasFound;
-	cvar_t			*cvar, *cvarFound;
-	char			*cmdName, *partial;
-	int				aliasCnt, cmdCnt, cvarCnt, len, offset;
-	qboolean		checkCmds = true;
+	int		i;
 
-	partial = key_lines[edit_line] + 1;
-
-	// skip '/' and '\'
-	if ((*partial == '\\') || (*partial == '/'))
-	{
-		offset = 1;
-		partial++;
-	}
-	else
-	{
-		offset = 0;
-	}
-
-	// HACK: set completion
-	if (!Q_strncasecmp(partial, "set ", 4))
-	{
-		checkCmds = false;
-		partial += 4;
-		offset += 4;
-	}
-
-	len = strlen(partial);
-
-	if (!len)
+	if (Q_stricmpn(s, completionString, strlen(completionString)))
 		return;
 
-	cmdName = NULL;
-
-	cmd = cmdFound = NULL;
-	alias = aliasFound = NULL;
-	cvar = cvarFound = NULL;
-	aliasCnt = cmdCnt = cvarCnt = 0;
-
-	// check for exact match
-	if (checkCmds)
+	matchCount++;
+	if (matchCount == 1)
 	{
-		for (cmd = cmd_functions; cmd; cmd = cmd->next)
-		{
-			if (!Q_stricmp(partial, cmd->name))
-			{
-				cmdCnt++;
-				cmdFound = cmd;
-			}
-		}
-
-		for (alias = cmd_alias; alias; alias = alias->next)
-		{
-			if (!Q_stricmp(partial, alias->name))
-			{
-				aliasCnt++;
-				aliasFound = alias;
-			}
-		}
+		Q_strlcpy(shortestMatch, s, sizeof(shortestMatch));
+		return;
 	}
 
-	for (cvar = cvar_vars; cvar; cvar = cvar->next)
+	// cut shortestMatch to the amount common with s
+	for (i = 0; shortestMatch[i]; i++)
 	{
-		if (!Q_stricmp(partial, cvar->name))
+		if (i >= strlen(s))
 		{
-			cvarFound = cvar;
-			cvarCnt++;
+			shortestMatch[i] = 0;
+			break;
 		}
+
+		if (tolower(shortestMatch[i]) != tolower(s[i]))
+			shortestMatch[i] = 0;
+	}
+}
+
+/*
+===============
+PrintMatches
+===============
+*/
+static void PrintMatches (char *s)
+{
+	if (!Q_stricmpn(s, shortestMatch, strlen(shortestMatch)))
+		Com_Printf("    %s\n", s);
+}
+
+/*
+===============
+PrintCvarMatches
+===============
+*/
+static void PrintCvarMatches(char *s)
+{
+	if (!Q_stricmpn(s, shortestMatch, strlen(shortestMatch)))
+		Com_Printf("    %s = \"%s\"\n", s, Cvar_VariableString(s));
+}
+
+/*
+===============
+FindFirstSeparator
+===============
+*/
+static char *FindFirstSeparator(char *s)
+{
+	int i;
+
+	for (i = 0; i < strlen(s); i++)
+	{
+		if (s[i] == ';')
+			return &s[i];
 	}
 
-	// check for partial match
-	if (checkCmds)
-	{
-		for (cmd = cmd_functions; cmd; cmd = cmd->next)
-		{
-			if (!Q_strncasecmp(partial, cmd->name, len))
-			{
-				cmdFound = cmd;
-				cmdCnt++;
-			}
-		}
+	return NULL;
+}
 
-		for (alias = cmd_alias; alias; alias = alias->next)
-		{
-			if (!Q_strncasecmp(partial, alias->name, len))
-			{
-				aliasFound = alias;
-				aliasCnt++;
-			}
-		}
+/*
+===============
+CompleteFilename
+===============
+*/
+static void CompleteFilename(char *dir, char *ext, qboolean stripExt)
+{
+	matchCount = 0;
+	shortestMatch[0] = 0;
+
+	FS_FilenameCompletion(dir, ext, stripExt, FindMatches);
+
+	if (matchCount == 0)
+		return;
+
+	strcat(key_lines[edit_line], shortestMatch + strlen(completionString));
+	key_linepos = (int)strlen(key_lines[edit_line]);
+
+	if (matchCount == 1)
+	{
+		strcat(key_lines[edit_line], " ");
+		key_linepos++;
+		return;
 	}
 
-	for (cvar = cvar_vars; cvar; cvar = cvar->next)
-	{
-		if (!Q_strncasecmp(partial, cvar->name, len))
-		{
-			cvarFound = cvar;
-			cvarCnt++;
-		}
-	}
+	Com_Printf("%s\n", key_lines[edit_line]);
 
-	// return a match if only one was found, otherwise list matches
-	if ((aliasCnt + cmdCnt + cvarCnt) == 1)
+	FS_FilenameCompletion(dir, ext, stripExt, PrintMatches);
+}
+
+static void CompleteCommand(char *cmd)
+{
+	char		*p;
+	int			completionArgument = 0;
+
+	cmd = key_lines[edit_line] + 1;
+
+	// skip '/' and '\'
+	if (*cmd == '\\' || *cmd == '/')
+		cmd++;
+
+	Cmd_TokenizeString(cmd, false);
+	completionArgument = Cmd_Argc();
+
+	// if there is trailing whitespace on the cmd
+	if (*(cmd + strlen(cmd) - 1) == ' ')
 	{
-		if (cmdFound)
-			cmdName = cmdFound->name;
-		else if (aliasFound)
-			cmdName = aliasFound->name;
-		else if (cvarFound)
-			cmdName = cvarFound->name;
-		else
-			cmdName = NULL;
+		completionString = "";
+		completionArgument++;
 	}
 	else
 	{
-		if (aliasCnt + cmdCnt + cvarCnt)
-			Com_Printf("\nPossible matches:\n");
-
-		if (aliasCnt > 0)
-		{
-			Cbuf_AddText(va("aliaslist %s\n", partial));
-		}
-
-		if (cmdCnt > 0)
-		{
-			Cbuf_AddText(va("cmdlist %s\n", partial));
-		}
-
-		if (cvarCnt > 0)
-		{
-			Cbuf_AddText(va("cvarlist %s\n", partial));
-		}
+		completionString = Cmd_Argv(completionArgument - 1);
 	}
 
-	if (cmdName)
+	if (completionArgument > 1)
 	{
-		int cmdLen = strlen(cmdName);
-		if (cmdLen + offset + 2 >= MAXCMDLINE)
+		if ((p = FindFirstSeparator(cmd)))
 		{
-			Com_DPrintf ("Key_CompleteCommand: expansion would overflow command buffer\n");
+			// compound command
+			CompleteCommand(p + 1);
+		}
+		else
+		{
+			char *baseCmd = Cmd_Argv(0);
+
+			// FIXME: all this junk should really be associated with the respective
+			// commands, instead of being hard coded here
+			if ((!Q_stricmp(baseCmd, "map") || !Q_stricmp(baseCmd, "gamemap")) && completionArgument == 2)
+			{
+				CompleteFilename("maps", "bsp", true);
+			}
+			else if ((!Q_stricmp(baseCmd, "exec") || !Q_stricmp(baseCmd, "writeconfig")) && completionArgument == 2)
+			{
+				CompleteFilename("", "cfg", false);
+			}
+			else if (!Q_stricmp(baseCmd, "condump") && completionArgument == 2)
+			{
+				CompleteFilename("", "txt", false);
+			}
+			else if (!Q_stricmp(baseCmd, "demomap") && completionArgument == 2)
+			{
+				CompleteFilename("demos", "dm2", false);
+			}
+			else if ((!Q_stricmp(baseCmd, "toggle") ||
+				!Q_stricmp(baseCmd, "vstr") ||
+				!Q_stricmp(baseCmd, "set") ||
+				!Q_stricmp(baseCmd, "seta") ||
+				!Q_stricmp(baseCmd, "setu") ||
+				!Q_stricmp(baseCmd, "sets")) &&
+				completionArgument == 2)
+			{
+				// Skip "<cmd> "
+				p = Com_SkipTokens(cmd, 1, " ");
+				if (p > cmd)
+					CompleteCommand(p);
+			}
+			else if (!Q_stricmp(baseCmd, "rcon") && completionArgument == 2)
+			{
+				// Skip "rcon "
+				p = Com_SkipTokens(cmd, 1, " ");
+				if (p > cmd)
+					CompleteCommand(p);
+			}
+			else if (!Q_stricmp(baseCmd, "bind") && completionArgument >= 3)
+			{
+				// Skip "bind <key> "
+				p = Com_SkipTokens(cmd, 2, " ");
+				if (p > cmd)
+					CompleteCommand(p);
+			}
+		}
+	}
+	else
+	{
+		if (completionString[0] == '\\' || completionString[0] == '/')
+			completionString++;
+
+		matchCount = 0;
+		shortestMatch[0] = 0;
+
+		if (strlen(completionString) == 0)
+			return;
+
+		Cmd_CommandCompletion(FindMatches);
+		Cvar_CommandCompletion(FindMatches);
+
+		if (matchCount == 0)
+			return;	// no matches
+
+		key_lines[edit_line][1] = '/';
+
+		if (cmd == key_lines[edit_line] + 1)
+		{
+			strcpy(key_lines[edit_line] + 2, shortestMatch);
+			key_linepos = (int)strlen(shortestMatch) + 2;
+		}
+		else
+		{
+			strcat(key_lines[edit_line], shortestMatch + strlen(completionString));
+			key_linepos = (int)strlen(completionString) + 2;
+		}
+
+		if (matchCount == 1)
+		{
+			key_linepos = (int)strlen(cmd) + 1;
+			strcat(key_lines[edit_line], " ");
+			key_linepos++;
+			key_lines[edit_line][key_linepos] = 0;
 			return;
 		}
 
-		strcpy(key_lines[edit_line] + offset + 1, cmdName);
-		key_linepos = 1 + offset + cmdLen;
-		key_lines[edit_line][key_linepos] = ' ';
-		key_linepos++;
-		key_lines[edit_line][key_linepos] = 0;
+		Com_Printf("%s\n", key_lines[edit_line]);
+		
+		// run through again, printing matches
+		Cmd_CommandCompletion(PrintMatches);
+		Cvar_CommandCompletion(PrintCvarMatches);
 	}
 }
+
+static void Key_CompleteCommand(void)
+{
+	char cmd;
+	
+	// actually issue the completion command
+	CompleteCommand(&cmd);
+}
+
+/*
+==============================================================================
+
+LINE TYPING INTO THE CONSOLE
+
+==============================================================================
+*/
 
 /*
 ====================

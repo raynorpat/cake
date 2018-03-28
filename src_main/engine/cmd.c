@@ -842,40 +842,25 @@ qboolean Cmd_Exists (char *cmd_name)
 }
 
 
-
 /*
 ============
-Cmd_CompleteCommand
+Cmd_CommandCompletion
 ============
 */
-char *Cmd_CompleteCommand (char *partial)
+void Cmd_CommandCompletion(void(*callback)(char *s))
 {
-	cmd_function_t	*cmd;
-	char *best = "~";
-	char *least = "~";
+	cmd_function_t *cmd;
 	cmdalias_t *alias;
 
-	// try and complete as a command
-	for (cmd = cmd_functions ; cmd ; cmd = cmd->next)
+	for (cmd = cmd_functions; cmd; cmd = cmd->next)
 	{
-		if (strcmp(cmd->name, partial) >= 0 && strcmp(best, cmd->name) > 0)
-			best = cmd->name;
-		if (strcmp(cmd->name, least) < 0)
-			least = cmd->name;
+		callback(cmd->name);
 	}
 
-	// try and complete as an alias
-	for (alias = cmd_alias ; alias ; alias = alias->next)
+	for (alias = cmd_alias; alias; alias = alias->next)
 	{
-		if (strcmp(alias->name, partial) >= 0 && strcmp(best, alias->name) > 0)
-			best = alias->name;
-		if (strcmp(alias->name, least) < 0)
-			least = alias->name;
+		callback(alias->name);
 	}
-
-	if (best[0] == '~')
-		return least;
-	return best;
 }
 
 // ugly hack to suppress warnings from default.cfg in Key_Bind_f()
