@@ -1315,7 +1315,7 @@ void SCR_UpdateScreen (void)
 	RE_EndFrame ();
 }
 
-float SCR_GetScale(void)
+static float SCR_GetScale(void)
 {
 	int i = viddef.width / 320;
 	int j = viddef.height / 240;

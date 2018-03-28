@@ -23,7 +23,6 @@ void	SCR_Init (void);
 
 void	SCR_UpdateScreen (void);
 
-float	SCR_GetScale (void);
 float	SCR_GetHUDScale (void);
 float	SCR_GetConsoleScale (void);
 float	SCR_GetMenuScale (void);

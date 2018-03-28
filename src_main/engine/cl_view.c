@@ -450,7 +450,7 @@ void SCR_DrawCrosshair (void)
 
 	if (crosshair_scale->value < 0)
 	{
-		scale = SCR_GetScale();
+		scale = SCR_GetHUDScale ();
 	}
 	else
 	{
