@@ -284,16 +284,15 @@ static void CompleteFilename(char *dir, char *ext, qboolean stripExt)
 	FS_FilenameCompletion(dir, ext, stripExt, PrintMatches);
 }
 
-static void CompleteCommand(char *cmd)
+static void CompleteCommand(char *cmd, qboolean doCommands, qboolean doCvars)
 {
 	char		*p;
 	int			completionArgument = 0;
 
 	cmd = key_lines[edit_line] + 1;
 
-	// skip '/' and '\'
-	if (*cmd == '\\' || *cmd == '/')
-		cmd++;
+	// skip leading whitespace and quotes
+	cmd = Com_SkipCharset(cmd, " \"");
 
 	Cmd_TokenizeString(cmd, false);
 	completionArgument = Cmd_Argc();
@@ -314,7 +313,7 @@ static void CompleteCommand(char *cmd)
 		if ((p = FindFirstSeparator(cmd)))
 		{
 			// compound command
-			CompleteCommand(p + 1);
+			CompleteCommand(p + 1, true, true);
 		}
 		else
 		{
@@ -338,33 +337,6 @@ static void CompleteCommand(char *cmd)
 			{
 				CompleteFilename("demos", "dm2", false);
 			}
-			else if ((!Q_stricmp(baseCmd, "toggle") ||
-				!Q_stricmp(baseCmd, "vstr") ||
-				!Q_stricmp(baseCmd, "set") ||
-				!Q_stricmp(baseCmd, "seta") ||
-				!Q_stricmp(baseCmd, "setu") ||
-				!Q_stricmp(baseCmd, "sets")) &&
-				completionArgument == 2)
-			{
-				// Skip "<cmd> "
-				p = Com_SkipTokens(cmd, 1, " ");
-				if (p > cmd)
-					CompleteCommand(p);
-			}
-			else if (!Q_stricmp(baseCmd, "rcon") && completionArgument == 2)
-			{
-				// Skip "rcon "
-				p = Com_SkipTokens(cmd, 1, " ");
-				if (p > cmd)
-					CompleteCommand(p);
-			}
-			else if (!Q_stricmp(baseCmd, "bind") && completionArgument >= 3)
-			{
-				// Skip "bind <key> "
-				p = Com_SkipTokens(cmd, 2, " ");
-				if (p > cmd)
-					CompleteCommand(p);
-			}
 		}
 	}
 	else
@@ -378,8 +350,11 @@ static void CompleteCommand(char *cmd)
 		if (strlen(completionString) == 0)
 			return;
 
-		Cmd_CommandCompletion(FindMatches);
-		Cvar_CommandCompletion(FindMatches);
+		// find matches
+		if (doCommands)
+			Cmd_CommandCompletion(FindMatches);
+		if (doCvars)
+			Cvar_CommandCompletion(FindMatches);
 
 		if (matchCount == 0)
 			return;	// no matches
@@ -409,8 +384,10 @@ static void CompleteCommand(char *cmd)
 		Com_Printf("%s\n", key_lines[edit_line]);
 		
 		// run through again, printing matches
-		Cmd_CommandCompletion(PrintMatches);
-		Cvar_CommandCompletion(PrintCvarMatches);
+		if (doCommands)
+			Cmd_CommandCompletion(PrintMatches);
+		if (doCvars)
+			Cvar_CommandCompletion(PrintCvarMatches);
 	}
 }
 
@@ -419,7 +396,7 @@ static void Key_CompleteCommand(void)
 	char cmd;
 	
 	// actually issue the completion command
-	CompleteCommand(&cmd);
+	CompleteCommand(&cmd, true, true);
 }
 
 /*
