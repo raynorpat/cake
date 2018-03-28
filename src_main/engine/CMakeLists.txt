@@ -1,3 +1,9 @@
+# add dedicated server project
+if (NOT(WIN_UWP))
+	add_subdirectory(dedicated)
+endif()
+
+# base engine
 project(cake)
 
 #

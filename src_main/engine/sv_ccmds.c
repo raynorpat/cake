@@ -680,7 +680,11 @@ void SV_Loadgame_f (void)
 }
 
 // HACK!
+#ifndef DEDICATED_ONLY
+#ifndef WIN_UWP
 void GL_MapShot_f (char *name);
+#endif
+#endif
 
 /*
 ==============
@@ -741,9 +745,11 @@ void SV_Savegame_f (void)
 	// copy it off
 	SV_CopySaveGame ("current", dir);
 
+#ifndef DEDICATED_ONLY
 #ifndef WIN_UWP
 	// HACK!
 	GL_MapShot_f (dir);
+#endif
 #endif
 
 	Com_Printf ("Done.\n");
