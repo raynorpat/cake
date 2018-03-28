@@ -15,8 +15,10 @@ Some of the major features currently implemented are:
   * OpenAL audio backend
   * Background Music support (tracker xm/s3m/it/mod, mp3, and even wav)
   * RoQ cinematic video encoder/decoder
-  * Rewritten OpenGL 3.3 renderer with various graphical goodness but is still true to the original
+  * Re-written OpenGL 3.3 renderer built for speed and a retro software look
   * HTTP/FTP download redirection (using cURL)
+  * Integrated content creation tools
+  * Master server tool
   * Many, many, many bug fixes
 
 ## Downloads
