@@ -662,7 +662,7 @@ static void R_PrintLongString (const char *string)
 	while (size > 0)
 	{
 		Q_strlcpy (buffer, p, sizeof(buffer));
-		VID_Printf (PRINT_ALL, "%s", buffer);
+		VID_Printf (PRINT_DEVELOPER, "%s", buffer);
 		p += 1023;
 		size -= 1023;
 	}
@@ -672,7 +672,7 @@ static void RMain_PrintSetExtensionList (void)
 {
 	GLint n = 0;
 
-	VID_Printf (PRINT_ALL, "GL_EXTENSIONS: ");
+	VID_Printf (PRINT_DEVELOPER, "GL_EXTENSIONS: ");
 
 	if (glGetStringi)
 	{
@@ -687,7 +687,7 @@ static void RMain_PrintSetExtensionList (void)
 			const char * extension_string = (char *)glGetStringi(GL_EXTENSIONS, i);
 
 			// print this guy out
-			VID_Printf (PRINT_ALL, "%s ", extension_string);
+			VID_Printf (PRINT_DEVELOPER, "%s ", extension_string);
 
 			// set full extension string, thanks OpenGL 3...
 			int extension_string_length = strlen(extension_string);
@@ -712,7 +712,7 @@ static void RMain_PrintSetExtensionList (void)
 		R_PrintLongString (gl_config.extension_string);
 	}
 
-	VID_Printf(PRINT_ALL, "\n");
+	VID_Printf(PRINT_DEVELOPER, "\n");
 }
 
 static void RMain_CheckExtension (char *ext)
@@ -735,7 +735,7 @@ static void RMain_CheckExtension (char *ext)
 extern int GL_Init_DSA_Emulation(qboolean inject_always_, qboolean allow_arb_dsa_, qboolean allow_ext_dsa_);
 static qboolean RMain_CheckFor_DirectStateAccess(void)
 {
-	VID_Printf(PRINT_ALL, "RMain_CheckExtension : checking for GL_EXT_direct_state_access...\n");
+	VID_Printf(PRINT_ALL, "checking for GL_EXT_direct_state_access...\n");
 
 	// check in glew first...
 	if (!glewIsSupported("GL_EXT_direct_state_access "))
@@ -770,7 +770,7 @@ static qboolean RMain_CheckFor_DirectStateAccess(void)
 
 static void RMain_CheckFor_GPUShader5(void)
 {
-	VID_Printf(PRINT_ALL, "RMain_CheckExtension : checking for GL_ARB_gpu_shader5...\n");
+	VID_Printf(PRINT_ALL, "checking for GL_ARB_gpu_shader5...\n");
 
 	// check in glew first...
 	if (!glewIsSupported("GL_ARB_gpu_shader5 "))
@@ -799,7 +799,7 @@ static void RMain_CheckFor_GPUShader5(void)
 
 static void RMain_CheckFor_ComputeShader(void)
 {
-	VID_Printf(PRINT_ALL, "RMain_CheckExtension : checking for GL_ARB_compute_shader...\n");
+	VID_Printf(PRINT_ALL, "checking for GL_ARB_compute_shader...\n");
 
 	// check in glew first...
 	if (!glewIsSupported("GL_ARB_compute_shader "))

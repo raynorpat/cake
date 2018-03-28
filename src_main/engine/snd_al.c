@@ -48,7 +48,7 @@ void AL_SoundInfo (void)
     Com_Printf ("AL_VENDOR: %s\n", qalGetString(AL_VENDOR));
     Com_Printf ("AL_RENDERER: %s\n", qalGetString(AL_RENDERER));
     Com_Printf ("AL_VERSION: %s\n", qalGetString(AL_VERSION));
-    Com_Printf ("AL_EXTENSIONS: %s\n", qalGetString(AL_EXTENSIONS));
+    Com_DPrintf ("AL_EXTENSIONS: %s\n", qalGetString(AL_EXTENSIONS));
     Com_Printf ("Number of sources: %d\n", s_numchannels + 1); // + 1 due to streams taking up a source, but we want it counted here...
 }
 
