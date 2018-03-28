@@ -285,7 +285,7 @@ void SVC_DirectConnect (void)
 
 	adr = net_from;
 
-	Com_DPrintf ("SVC_DirectConnect ()\n");
+	Com_DPrintf ("SVC_DirectConnect()\n");
 
 	version = atoi (Cmd_Argv (1));
 
@@ -354,11 +354,11 @@ void SVC_DirectConnect (void)
 		{
 			if (!NET_IsLocalAddress (adr) && (svs.realtime - cl->lastconnect) < ((int) sv_reconnect_limit->value * 1000))
 			{
-				Com_DPrintf ("%s:reconnect rejected : too soon\n", NET_AdrToString (adr));
+				Com_DPrintf ("%s: reconnect rejected : too soon\n", NET_AdrToString (adr));
 				return;
 			}
 
-			Com_Printf ("%s:reconnect\n", NET_AdrToString (adr));
+			Com_DPrintf ("%s: reconnect\n", NET_AdrToString (adr));
 			newcl = cl;
 			goto gotnewcl;
 		}
@@ -413,7 +413,7 @@ gotnewcl:
 
 	// send the connect packet to the client
 	if (sv_download_server->string[0])
-		Netchan_OutOfBandPrint(NS_SERVER, adr, "client_connect dlserver=%s", sv_download_server->string);
+		Netchan_OutOfBandPrint (NS_SERVER, adr, "client_connect dlserver=%s", sv_download_server->string);
 	else
 		Netchan_OutOfBandPrint (NS_SERVER, adr, "client_connect");
 

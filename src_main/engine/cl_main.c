@@ -833,7 +833,7 @@ void CL_ConnectionlessPacket (void)
 		return;
 	}
 
-	Com_Printf ("%s: %s\n", NET_AdrToString (net_from), c);
+	Com_DPrintf ("%s: %s\n", NET_AdrToString (net_from), c);
 
 	// server connection
 	if (!strcmp (c, "client_connect"))
