@@ -94,7 +94,7 @@ void RPostProcess_CreatePrograms(void)
 	int width, height, x, y;
 
 	// do functionality test, as we don't want to load shaders that we don't need
-	if (!GLEW_ARB_texture_gather || !gl_config.gl_ext_GPUShader5_support || !gl_config.gl_ext_computeShader_support)
+	if (!GLEW_ARB_texture_gather || !gl_config.gl_ext_computeShader_support)
 	{
 		// these won't quite work out that great on lesser hardware,
 		// so skip post-processing when the hardware doesn't support it
@@ -271,7 +271,6 @@ void RPostProcess_CreatePrograms(void)
 		// create shaders
 		gl_postprog = GL_CreateShaderFromName("glsl/post.glsl", "PostVS", "PostFS");
 		gl_ssaoprog = GL_CreateShaderFromName("glsl/ssao.glsl", "SSAOVS", "SSAOFS");
-		gl_fxaaprog = GL_CreateShaderFromName("glsl/fxaa.glsl", "FXAAVS", "FXAAFS");
 
 		// create compute shaders
 		gl_calcLumProg = GL_CreateComputeShaderFromName("glsl/calcLum.cs");
@@ -288,8 +287,6 @@ void RPostProcess_CreatePrograms(void)
 		u_ssaoZFar = glGetUniformLocation(gl_ssaoprog, "zFar");
 		u_ssaoTexScale = glGetUniformLocation(gl_ssaoprog, "texScale");
 
-		u_fxaaTexScale = glGetUniformLocation(gl_fxaaprog, "texScale");
-
 		u_deltaTime = glGetUniformLocation(gl_calcAdaptiveLumProg, "deltaTime");
 
 		glProgramUniform1i(gl_postprog, glGetUniformLocation(gl_postprog, "diffuse"), 0);
@@ -303,15 +300,21 @@ void RPostProcess_CreatePrograms(void)
 		glProgramUniform1i(gl_ssaoprog, glGetUniformLocation(gl_ssaoprog, "depthmap"), 0);
 		glProgramUniformMatrix4fv(gl_ssaoprog, glGetUniformLocation(gl_ssaoprog, "orthomatrix"), 1, GL_FALSE, r_drawmatrix.m[0]);
 
-		glProgramUniform1i(gl_fxaaprog, glGetUniformLocation(gl_fxaaprog, "diffuse"), 0);
-		glProgramUniformMatrix4fv(gl_fxaaprog, glGetUniformLocation(gl_fxaaprog, "orthomatrix"), 1, GL_FALSE, r_drawmatrix.m[0]);
-
 		glProgramUniform1i(gl_calcLumProg, glGetUniformLocation(gl_calcLumProg, "inputImage"), 0);
 		glProgramUniform1i(gl_calcLumProg, glGetUniformLocation(gl_calcLumProg, "outputImage"), 1);
 
 		glProgramUniform1i(gl_calcAdaptiveLumProg, glGetUniformLocation(gl_calcAdaptiveLumProg, "currentImage"), 0);
 		glProgramUniform1i(gl_calcAdaptiveLumProg, glGetUniformLocation(gl_calcAdaptiveLumProg, "image0"), 1);
 		glProgramUniform1i(gl_calcAdaptiveLumProg, glGetUniformLocation(gl_calcAdaptiveLumProg, "image1"), 2);
+	}
+
+	// fxaa shader
+	if (gl_config.gl_ext_GPUShader5_support)
+	{
+		gl_fxaaprog = GL_CreateShaderFromName("glsl/fxaa.glsl", "FXAAVS", "FXAAFS");
+		u_fxaaTexScale = glGetUniformLocation(gl_fxaaprog, "texScale");
+		glProgramUniform1i(gl_fxaaprog, glGetUniformLocation(gl_fxaaprog, "diffuse"), 0);
+		glProgramUniformMatrix4fv(gl_fxaaprog, glGetUniformLocation(gl_fxaaprog, "orthomatrix"), 1, GL_FALSE, r_drawmatrix.m[0]);
 	}
 }
 
@@ -531,13 +534,15 @@ void RPostProcess_FXAA(void)
 
 	if (!r_fxaa->value)
 		return;
+	if (!gl_config.gl_ext_GPUShader5_support)
+		return;
 
 	// set screen scale
 	texScale[0] = 1.0f / vid.width;
 	texScale[1] = 1.0f / vid.height;
 	
 	GL_Enable(!DEPTHTEST_BIT | !CULLFACE_BIT | BLEND_BIT);
-	GL_BlendFunc(GL_DST_COLOR, GL_ONE); // multiplicative blend
+	GL_BlendFunc(GL_DST_COLOR, GL_ZERO); // multiplicative blend
 
 	GL_UseProgram(gl_fxaaprog);
 
@@ -669,12 +674,6 @@ void RPostProcess_FinishToScreen(void)
 		// perform bloom and tonemap
 		RPostProcess_DoBloomAndTonemap();
 
-		// set currentrender image for other effects
-		RPostProcess_SetCurrentRender();
-
-		// perform FXAA pass
-		RPostProcess_FXAA();
-
 		// exchange lunimance texture for next frame
 		GLuint temp = m_lum[0];
 		m_lum[0] = m_lum[1];
@@ -686,10 +685,13 @@ void RPostProcess_FinishToScreen(void)
 
 		// perform underwater screen warp
 		RPostProcess_BasicUnderwater();
-
-		// set currentrender image for other effects
-		RPostProcess_SetCurrentRender();
 	}
+
+	// set currentrender image for other effects
+	RPostProcess_SetCurrentRender();
+
+	// perform FXAA pass
+	RPostProcess_FXAA();
 
 	// reset blending color for next frame
 	v_blend[3] = 0;
