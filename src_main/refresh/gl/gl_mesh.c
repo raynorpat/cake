@@ -146,7 +146,7 @@ void GL_DrawAliasFrameLerp (entity_t *e, dmdl_t *hdr, float backlerp, qboolean s
 		gl_meshuboupdate.backv[i] = backlerp * lastframe->scale[i];
 	}
 
-	if (!(e->flags & (RF_SHELL_RED | RF_SHELL_GREEN | RF_SHELL_BLUE | RF_SHELL_DOUBLE | RF_SHELL_HALF_DAM)))
+	if (!(e->flags & (RF_SHELL_RED | RF_SHELL_GREEN | RF_SHELL_BLUE)))
 	{
 		if (gl_monolightmap->value)
 		{
@@ -353,22 +353,9 @@ void R_DrawAliasModel (entity_t *e)
 
 	hdr = (dmdl_t *) e->model->extradata;
 
-	if (e->flags & (RF_SHELL_HALF_DAM | RF_SHELL_GREEN | RF_SHELL_RED | RF_SHELL_BLUE | RF_SHELL_DOUBLE))
+	if (e->flags & (RF_SHELL_GREEN | RF_SHELL_RED | RF_SHELL_BLUE))
 	{
 		VectorClear (gl_meshuboupdate.shadelight);
-
-		if (e->flags & RF_SHELL_HALF_DAM)
-		{
-			gl_meshuboupdate.shadelight[0] = 0.56;
-			gl_meshuboupdate.shadelight[1] = 0.59;
-			gl_meshuboupdate.shadelight[2] = 0.45;
-		}
-
-		if (e->flags & RF_SHELL_DOUBLE)
-		{
-			gl_meshuboupdate.shadelight[0] = 0.9;
-			gl_meshuboupdate.shadelight[1] = 0.7;
-		}
 
 		if (e->flags & RF_SHELL_RED) gl_meshuboupdate.shadelight[0] = 1.0;
 		if (e->flags & RF_SHELL_GREEN) gl_meshuboupdate.shadelight[1] = 1.0;
@@ -435,14 +422,6 @@ void R_DrawAliasModel (entity_t *e)
 			if (gl_meshuboupdate.shadelight[i] < min)
 				gl_meshuboupdate.shadelight[i] = min;
 		}
-	}
-
-	// PGM	ir goggles color override
-	if ((r_newrefdef.rdflags & RDF_IRGOGGLES) && (e->flags & RF_IR_VISIBLE))
-	{
-		gl_meshuboupdate.shadelight[0] = 1.0;
-		gl_meshuboupdate.shadelight[1] = 0.0;
-		gl_meshuboupdate.shadelight[2] = 0.0;
 	}
 
 	an = e->angles[1] / 180 * M_PI;

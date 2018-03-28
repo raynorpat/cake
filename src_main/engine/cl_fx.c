@@ -147,7 +147,6 @@ void CL_ClearDlights (void)
 /*
 ===============
 CL_AllocDlight
-
 ===============
 */
 cdlight_t *CL_AllocDlight (int key)
@@ -207,11 +206,9 @@ void CL_NewDlight (int key, float x, float y, float z, float radius, float time)
 	dl->die = cl.time + time;
 }
 
-
 /*
 ===============
 CL_RunDLights
-
 ===============
 */
 void CL_RunDLights (void)
@@ -289,10 +286,6 @@ void CL_ParseMuzzleFlash (void)
 	case MZ_BLASTER:
 		dl->color[0] = 1; dl->color[1] = 1; dl->color[2] = 0;
 		S_StartSound (NULL, i, CHAN_WEAPON, S_RegisterSound ("weapons/blastf1a.wav"), volume, ATTN_NORM, 0);
-		break;
-	case MZ_BLUEHYPERBLASTER:
-		dl->color[0] = 0; dl->color[1] = 0; dl->color[2] = 1;
-		S_StartSound (NULL, i, CHAN_WEAPON, S_RegisterSound ("weapons/hyprbf1a.wav"), volume, ATTN_NORM, 0);
 		break;
 	case MZ_HYPERBLASTER:
 		dl->color[0] = 1; dl->color[1] = 1; dl->color[2] = 0;
@@ -375,60 +368,6 @@ void CL_ParseMuzzleFlash (void)
 		S_StartSound (NULL, i, CHAN_WEAPON, S_RegisterSound ("weapons/grenlf1a.wav"), 1, ATTN_NORM, 0);
 		CL_LogoutEffect (pl->current.origin, weapon);
 		break;
-		// RAFAEL
-	case MZ_PHALANX:
-		dl->color[0] = 1; dl->color[1] = 0.5; dl->color[2] = 0.5;
-		S_StartSound (NULL, i, CHAN_WEAPON, S_RegisterSound ("weapons/plasshot.wav"), volume, ATTN_NORM, 0);
-		break;
-		// RAFAEL
-	case MZ_IONRIPPER:
-		dl->color[0] = 1; dl->color[1] = 0.5; dl->color[2] = 0.5;
-		S_StartSound (NULL, i, CHAN_WEAPON, S_RegisterSound ("weapons/rippfire.wav"), volume, ATTN_NORM, 0);
-		break;
-
-		// ======================
-		// PGM
-	case MZ_ETF_RIFLE:
-		dl->color[0] = 0.9; dl->color[1] = 0.7; dl->color[2] = 0;
-		S_StartSound (NULL, i, CHAN_WEAPON, S_RegisterSound ("weapons/nail1.wav"), volume, ATTN_NORM, 0);
-		break;
-	case MZ_SHOTGUN2:
-		dl->color[0] = 1; dl->color[1] = 1; dl->color[2] = 0;
-		S_StartSound (NULL, i, CHAN_WEAPON, S_RegisterSound ("weapons/shotg2.wav"), volume, ATTN_NORM, 0);
-		break;
-	case MZ_HEATBEAM:
-		dl->color[0] = 1; dl->color[1] = 1; dl->color[2] = 0;
-		dl->die = cl.time + 100;
-		//		S_StartSound (NULL, i, CHAN_WEAPON, S_RegisterSound("weapons/bfg__l1a.wav"), volume, ATTN_NORM, 0);
-		break;
-	case MZ_BLASTER2:
-		dl->color[0] = 0; dl->color[1] = 1; dl->color[2] = 0;
-		// FIXME - different sound for blaster2 ??
-		S_StartSound (NULL, i, CHAN_WEAPON, S_RegisterSound ("weapons/blastf1a.wav"), volume, ATTN_NORM, 0);
-		break;
-	case MZ_TRACKER:
-		// negative flashes handled the same in gl/soft until CL_AddDLights
-		dl->color[0] = -1; dl->color[1] = -1; dl->color[2] = -1;
-		S_StartSound (NULL, i, CHAN_WEAPON, S_RegisterSound ("weapons/disint2.wav"), volume, ATTN_NORM, 0);
-		break;
-	case MZ_NUKE1:
-		dl->color[0] = 1; dl->color[1] = 0; dl->color[2] = 0;
-		dl->die = cl.time + 100;
-		break;
-	case MZ_NUKE2:
-		dl->color[0] = 1; dl->color[1] = 1; dl->color[2] = 0;
-		dl->die = cl.time + 100;
-		break;
-	case MZ_NUKE4:
-		dl->color[0] = 0; dl->color[1] = 0; dl->color[2] = 1;
-		dl->die = cl.time + 100;
-		break;
-	case MZ_NUKE8:
-		dl->color[0] = 0; dl->color[1] = 1; dl->color[2] = 1;
-		dl->die = cl.time + 100;
-		break;
-		// PGM
-		// ======================
 	}
 }
 
@@ -522,7 +461,6 @@ void CL_ParseMuzzleFlash2 (void)
 	case MZ2_SUPERTANK_MACHINEGUN_4:
 	case MZ2_SUPERTANK_MACHINEGUN_5:
 	case MZ2_SUPERTANK_MACHINEGUN_6:
-	case MZ2_TURRET_MACHINEGUN:			// PGM
 		dl->color[0] = 1; dl->color[1] = 1; dl->color[2] = 0;
 
 		CL_ParticleEffect (origin, vec3_origin, 0, 40);
@@ -535,8 +473,6 @@ void CL_ParseMuzzleFlash2 (void)
 	case MZ2_BOSS2_MACHINEGUN_L3:
 	case MZ2_BOSS2_MACHINEGUN_L4:
 	case MZ2_BOSS2_MACHINEGUN_L5:
-	case MZ2_CARRIER_MACHINEGUN_L1:		// PMM
-	case MZ2_CARRIER_MACHINEGUN_L2:		// PMM
 		dl->color[0] = 1; dl->color[1] = 1; dl->color[2] = 0;
 
 		CL_ParticleEffect (origin, vec3_origin, 0, 40);
@@ -552,7 +488,6 @@ void CL_ParseMuzzleFlash2 (void)
 	case MZ2_SOLDIER_BLASTER_6:
 	case MZ2_SOLDIER_BLASTER_7:
 	case MZ2_SOLDIER_BLASTER_8:
-	case MZ2_TURRET_BLASTER:			// PGM
 		dl->color[0] = 1; dl->color[1] = 1; dl->color[2] = 0;
 		S_StartSound (NULL, ent, CHAN_WEAPON, S_RegisterSound ("soldier/solatck2.wav"), 1, ATTN_NORM, 0);
 		break;
@@ -625,7 +560,6 @@ void CL_ParseMuzzleFlash2 (void)
 		break;
 
 	case MZ2_CHICK_ROCKET_1:
-	case MZ2_TURRET_ROCKET:			// PGM
 		dl->color[0] = 1; dl->color[1] = 0.5; dl->color[2] = 0.2;
 		S_StartSound (NULL, ent, CHAN_WEAPON, S_RegisterSound ("chick/chkatck2.wav"), 1, ATTN_NORM, 0);
 		break;
@@ -644,10 +578,6 @@ void CL_ParseMuzzleFlash2 (void)
 	case MZ2_BOSS2_ROCKET_2:
 	case MZ2_BOSS2_ROCKET_3:
 	case MZ2_BOSS2_ROCKET_4:
-	case MZ2_CARRIER_ROCKET_1:
-		//	case MZ2_CARRIER_ROCKET_2:
-		//	case MZ2_CARRIER_ROCKET_3:
-		//	case MZ2_CARRIER_ROCKET_4:
 		dl->color[0] = 1; dl->color[1] = 0.5; dl->color[2] = 0.2;
 		S_StartSound (NULL, ent, CHAN_WEAPON, S_RegisterSound ("tank/rocket.wav"), 1, ATTN_NORM, 0);
 		break;
@@ -661,10 +591,6 @@ void CL_ParseMuzzleFlash2 (void)
 		break;
 
 	case MZ2_GLADIATOR_RAILGUN_1:
-		// PMM
-	case MZ2_CARRIER_RAILGUN:
-	case MZ2_WIDOW_RAIL:
-		// pmm
 		dl->color[0] = 0.5; dl->color[1] = 0.5; dl->color[2] = 1.0;
 		break;
 
@@ -727,90 +653,13 @@ void CL_ParseMuzzleFlash2 (void)
 	case MZ2_BOSS2_MACHINEGUN_R3:
 	case MZ2_BOSS2_MACHINEGUN_R4:
 	case MZ2_BOSS2_MACHINEGUN_R5:
-	case MZ2_CARRIER_MACHINEGUN_R1:			// PMM
-	case MZ2_CARRIER_MACHINEGUN_R2:			// PMM
-
 		dl->color[0] = 1; dl->color[1] = 1; dl->color[2] = 0;
 
 		CL_ParticleEffect (origin, vec3_origin, 0, 40);
 		CL_SmokeAndFlash (origin);
 		break;
 
-		// ======
-		// ROGUE
-	case MZ2_STALKER_BLASTER:
-	case MZ2_DAEDALUS_BLASTER:
-	case MZ2_MEDIC_BLASTER_2:
-	case MZ2_WIDOW_BLASTER:
-	case MZ2_WIDOW_BLASTER_SWEEP1:
-	case MZ2_WIDOW_BLASTER_SWEEP2:
-	case MZ2_WIDOW_BLASTER_SWEEP3:
-	case MZ2_WIDOW_BLASTER_SWEEP4:
-	case MZ2_WIDOW_BLASTER_SWEEP5:
-	case MZ2_WIDOW_BLASTER_SWEEP6:
-	case MZ2_WIDOW_BLASTER_SWEEP7:
-	case MZ2_WIDOW_BLASTER_SWEEP8:
-	case MZ2_WIDOW_BLASTER_SWEEP9:
-	case MZ2_WIDOW_BLASTER_100:
-	case MZ2_WIDOW_BLASTER_90:
-	case MZ2_WIDOW_BLASTER_80:
-	case MZ2_WIDOW_BLASTER_70:
-	case MZ2_WIDOW_BLASTER_60:
-	case MZ2_WIDOW_BLASTER_50:
-	case MZ2_WIDOW_BLASTER_40:
-	case MZ2_WIDOW_BLASTER_30:
-	case MZ2_WIDOW_BLASTER_20:
-	case MZ2_WIDOW_BLASTER_10:
-	case MZ2_WIDOW_BLASTER_0:
-	case MZ2_WIDOW_BLASTER_10L:
-	case MZ2_WIDOW_BLASTER_20L:
-	case MZ2_WIDOW_BLASTER_30L:
-	case MZ2_WIDOW_BLASTER_40L:
-	case MZ2_WIDOW_BLASTER_50L:
-	case MZ2_WIDOW_BLASTER_60L:
-	case MZ2_WIDOW_BLASTER_70L:
-	case MZ2_WIDOW_RUN_1:
-	case MZ2_WIDOW_RUN_2:
-	case MZ2_WIDOW_RUN_3:
-	case MZ2_WIDOW_RUN_4:
-	case MZ2_WIDOW_RUN_5:
-	case MZ2_WIDOW_RUN_6:
-	case MZ2_WIDOW_RUN_7:
-	case MZ2_WIDOW_RUN_8:
-		dl->color[0] = 0; dl->color[1] = 1; dl->color[2] = 0;
-		S_StartSound (NULL, ent, CHAN_WEAPON, S_RegisterSound ("tank/tnkatck3.wav"), 1, ATTN_NORM, 0);
-		break;
-
-	case MZ2_WIDOW_DISRUPTOR:
-		dl->color[0] = -1; dl->color[1] = -1; dl->color[2] = -1;
-		S_StartSound (NULL, ent, CHAN_WEAPON, S_RegisterSound ("weapons/disint2.wav"), 1, ATTN_NORM, 0);
-		break;
-
-	case MZ2_WIDOW_PLASMABEAM:
-	case MZ2_WIDOW2_BEAMER_1:
-	case MZ2_WIDOW2_BEAMER_2:
-	case MZ2_WIDOW2_BEAMER_3:
-	case MZ2_WIDOW2_BEAMER_4:
-	case MZ2_WIDOW2_BEAMER_5:
-	case MZ2_WIDOW2_BEAM_SWEEP_1:
-	case MZ2_WIDOW2_BEAM_SWEEP_2:
-	case MZ2_WIDOW2_BEAM_SWEEP_3:
-	case MZ2_WIDOW2_BEAM_SWEEP_4:
-	case MZ2_WIDOW2_BEAM_SWEEP_5:
-	case MZ2_WIDOW2_BEAM_SWEEP_6:
-	case MZ2_WIDOW2_BEAM_SWEEP_7:
-	case MZ2_WIDOW2_BEAM_SWEEP_8:
-	case MZ2_WIDOW2_BEAM_SWEEP_9:
-	case MZ2_WIDOW2_BEAM_SWEEP_10:
-	case MZ2_WIDOW2_BEAM_SWEEP_11:
-		dl->radius = 300 + (rand () & 100);
-		dl->color[0] = 1; dl->color[1] = 1; dl->color[2] = 0;
-		dl->die = cl.time + 200;
-		break;
-		// ROGUE
-		// ======
-
-		// --- Xian's shit ends ---
+	// --- Xian's shit ends ---
 
 	}
 }
@@ -971,48 +820,6 @@ void CL_ParticleEffect2 (vec3_t org, vec3_t dir, int color, int count)
 
 		p->accel[0] = p->accel[1] = 0;
 		p->accel[2] = -PARTICLE_GRAVITY;
-		p->alpha = 1.0;
-
-		p->alphavel = -1.0 / (0.5 + frand () * 0.3);
-	}
-}
-
-
-// RAFAEL
-/*
-===============
-CL_ParticleEffect3
-===============
-*/
-void CL_ParticleEffect3 (vec3_t org, vec3_t dir, int color, int count)
-{
-	int			i, j;
-	cparticle_t	*p;
-	float		d;
-
-	for (i = 0; i < count; i++)
-	{
-		if (!free_particles)
-			return;
-
-		p = free_particles;
-		free_particles = p->next;
-		p->next = active_particles;
-		active_particles = p;
-
-		p->time = cl.time;
-		p->color = color;
-
-		d = rand () & 7;
-
-		for (j = 0; j < 3; j++)
-		{
-			p->org[j] = org[j] + ((rand () & 7) - 4) + d * dir[j];
-			p->vel[j] = crand () * 20;
-		}
-
-		p->accel[0] = p->accel[1] = 0;
-		p->accel[2] = PARTICLE_GRAVITY;
 		p->alpha = 1.0;
 
 		p->alphavel = -1.0 / (0.5 + frand () * 0.3);
@@ -1508,21 +1315,6 @@ void CL_DiminishingTrail (vec3_t start, vec3_t end, centity_t *old, int flags)
 
 				p->vel[2] -= PARTICLE_GRAVITY;
 			}
-			else if (flags & EF_GREENGIB)
-			{
-				p->alpha = 1.0;
-				p->alphavel = -1.0 / (1 + frand () * 0.4);
-				p->color = 0xdb + (rand () & 7);
-
-				for (j = 0; j < 3; j++)
-				{
-					p->org[j] = move[j] + crand () * orgscale;
-					p->vel[j] = crand () * velscale;
-					p->accel[j] = 0;
-				}
-
-				p->vel[2] -= PARTICLE_GRAVITY;
-			}
 			else
 			{
 				p->alpha = 1.0;
@@ -1717,76 +1509,9 @@ void CL_RailTrail (vec3_t start, vec3_t end)
 	}
 }
 
-// RAFAEL
-/*
-===============
-CL_IonripperTrail
-===============
-*/
-void CL_IonripperTrail (vec3_t start, vec3_t ent)
-{
-	vec3_t	move;
-	vec3_t	vec;
-	float	len;
-	int		j;
-	cparticle_t *p;
-	int		dec;
-	int   left = 0;
-
-	VectorCopy (start, move);
-	VectorSubtract (ent, start, vec);
-	len = VectorNormalize (vec);
-
-	dec = 5;
-	VectorScale (vec, 5, vec);
-
-	while (len > 0)
-	{
-		len -= dec;
-
-		if (!free_particles)
-			return;
-
-		p = free_particles;
-		free_particles = p->next;
-		p->next = active_particles;
-		active_particles = p;
-		VectorClear (p->accel);
-
-		p->time = cl.time;
-		p->alpha = 0.5;
-		p->alphavel = -1.0 / (0.3 + frand () * 0.2);
-		p->color = 0xe4 + (rand () & 3);
-
-		for (j = 0; j < 3; j++)
-		{
-			p->org[j] = move[j];
-			p->accel[j] = 0;
-		}
-
-		if (left)
-		{
-			left = 0;
-			p->vel[0] = 10;
-		}
-		else
-		{
-			left = 1;
-			p->vel[0] = -10;
-		}
-
-		p->vel[1] = 0;
-		p->vel[2] = 0;
-
-		VectorAdd (move, vec, move);
-	}
-}
-
-
 /*
 ===============
 CL_BubbleTrail
-
 ===============
 */
 void CL_BubbleTrail (vec3_t start, vec3_t end)
@@ -2010,118 +1735,6 @@ void CL_BfgParticles (entity_t *ent)
 	}
 }
 
-
-/*
-===============
-CL_TrapParticles
-===============
-*/
-// RAFAEL
-void CL_TrapParticles (entity_t *ent)
-{
-	vec3_t		move;
-	vec3_t		vec;
-	vec3_t		start, end;
-	float		len;
-	int			j;
-	cparticle_t	*p;
-	int			dec;
-
-	ent->currorigin[2] -= 14;
-	VectorCopy (ent->currorigin, start);
-	VectorCopy (ent->currorigin, end);
-	end[2] += 64;
-
-	VectorCopy (start, move);
-	VectorSubtract (end, start, vec);
-	len = VectorNormalize (vec);
-
-	dec = 5;
-	VectorScale (vec, 5, vec);
-
-	// FIXME: this is a really silly way to have a loop
-	while (len > 0)
-	{
-		len -= dec;
-
-		if (!free_particles)
-			return;
-
-		p = free_particles;
-		free_particles = p->next;
-		p->next = active_particles;
-		active_particles = p;
-		VectorClear (p->accel);
-
-		p->time = cl.time;
-
-		p->alpha = 1.0;
-		p->alphavel = -1.0 / (0.3 + frand () * 0.2);
-		p->color = 0xe0;
-
-		for (j = 0; j < 3; j++)
-		{
-			p->org[j] = move[j] + crand ();
-			p->vel[j] = crand () * 15;
-			p->accel[j] = 0;
-		}
-
-		p->accel[2] = PARTICLE_GRAVITY;
-
-		VectorAdd (move, vec, move);
-	}
-
-	{
-
-
-		int			i, j, k;
-		cparticle_t	*p;
-		float		vel;
-		vec3_t		dir;
-		vec3_t		org;
-
-
-		ent->currorigin[2] += 14;
-		VectorCopy (ent->currorigin, org);
-
-
-		for (i = -2; i <= 2; i += 4)
-			for (j = -2; j <= 2; j += 4)
-				for (k = -2; k <= 4; k += 4)
-				{
-					if (!free_particles)
-						return;
-
-					p = free_particles;
-					free_particles = p->next;
-					p->next = active_particles;
-					active_particles = p;
-
-					p->time = cl.time;
-					p->color = 0xe0 + (rand () & 3);
-
-					p->alpha = 1.0;
-					p->alphavel = -1.0 / (0.3 + (rand () & 7) * 0.02);
-
-					p->org[0] = org[0] + i + ((rand () & 23) * crand ());
-					p->org[1] = org[1] + j + ((rand () & 23) * crand ());
-					p->org[2] = org[2] + k + ((rand () & 23) * crand ());
-
-					dir[0] = j * 8;
-					dir[1] = i * 8;
-					dir[2] = k * 8;
-
-					VectorNormalize (dir);
-					vel = 50 + rand () & 63;
-					VectorScale (dir, vel, p->vel);
-
-					p->accel[0] = p->accel[1] = 0;
-					p->accel[2] = -PARTICLE_GRAVITY;
-				}
-	}
-}
-
-
 /*
 ===============
 CL_BFGExplosionParticles
@@ -2231,7 +1844,7 @@ void CL_AddParticles (void)
 	{
 		next = p->next;
 
-		// PMM - added INSTANT_PARTICLE handling for heat beam
+		// PMM - added INSTANT_PARTICLE handling
 		if (p->alphavel != INSTANT_PARTICLE)
 		{
 			time = (cl.time - p->time) * 0.001;

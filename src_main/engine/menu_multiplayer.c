@@ -739,8 +739,6 @@ START SERVER MENU
 =============================================================================
 */
 
-extern int Developer_searchpath(int who);
-
 static menuframework_s s_startserver_menu;
 static char **mapnames = NULL;
 static int nummaps = 0;
@@ -767,17 +765,6 @@ void RulesChangeFunc (void *self)
 		s_maxclients_field.generic.statusbar = NULL;
 		s_startserver_dmoptions_action.generic.statusbar = NULL;
 	}
-	// PGM Ground Zero game modes
-	else if (Developer_searchpath (2) == 2)
-	{
-		// tag
-		if (s_rules_box.curvalue == 2)		
-		{
-			s_maxclients_field.generic.statusbar = NULL;
-			s_startserver_dmoptions_action.generic.statusbar = NULL;
-		}
-	}
-	//PGM
 }
 
 void StartServerActionFunc (void *self)
@@ -799,18 +786,8 @@ void StartServerActionFunc (void *self)
 	Cvar_SetValue ("fraglimit", Q_Clamp (0, fraglimit, fraglimit));
 	Cvar_Set ("hostname", s_hostname_field.buffer);
 
-	//PGM
-	if ((s_rules_box.curvalue < 2) || (Developer_searchpath (2) != 2))
-	{
-        Cvar_SetValue("deathmatch", (float)!s_rules_box.curvalue);
-        Cvar_SetValue("coop", (float)s_rules_box.curvalue);
-	}
-	else
-	{
-        Cvar_SetValue("deathmatch", 1); // deathmatch is always true for rogue games
-        Cvar_SetValue("coop", 0); // This works for at least the main game and both addons
-	}
-	//PGM
+	Cvar_SetValue("deathmatch", (float)!s_rules_box.curvalue);
+	Cvar_SetValue("coop", (float)s_rules_box.curvalue);
 
 	spot = NULL;
 
@@ -857,15 +834,6 @@ void StartServer_MenuInit (void)
 		"cooperative",
 		0
 	};
-	//PGM
-	static const char *dm_coop_names_rogue[] =
-	{
-		"deathmatch",
-		"cooperative",
-		"tag",
-		0
-	};
-	//PGM
 	char *buffer;
 	char mapsname[1024];
 	char *s;
@@ -963,14 +931,7 @@ void StartServer_MenuInit (void)
 	s_rules_box.generic.x	= 0;
 	s_rules_box.generic.y	= 20;
 	s_rules_box.generic.name	= "rules";
-
-	//PGM - rogue games only available with rogue DLL.
-	if (Developer_searchpath (2) == 2)
-		s_rules_box.itemnames = dm_coop_names_rogue;
-	else
-		s_rules_box.itemnames = dm_coop_names;
-	//PGM
-
+	s_rules_box.itemnames = dm_coop_names;
 	if (Cvar_VariableValue ("coop"))
 		s_rules_box.curvalue = 1;
 	else
@@ -1093,13 +1054,6 @@ static menulist_s	s_infinite_ammo_box;
 static menulist_s	s_fixed_fov_box;
 static menulist_s	s_quad_drop_box;
 
-//ROGUE
-static menulist_s	s_no_mines_box;
-static menulist_s	s_no_nukes_box;
-static menulist_s	s_stack_double_box;
-static menulist_s	s_no_spheres_box;
-//ROGUE
-
 static void DMFlagCallback (void *self)
 {
 	menulist_s *f = (menulist_s *) self;
@@ -1208,27 +1162,6 @@ static void DMFlagCallback (void *self)
 	{
 		bit = DF_QUAD_DROP;
 	}
-	//ROGUE
-	else if (Developer_searchpath (2) == 2)
-	{
-		if (f == &s_no_mines_box)
-		{
-			bit = DF_NO_MINES;
-		}
-		else if (f == &s_no_nukes_box)
-		{
-			bit = DF_NO_NUKES;
-		}
-		else if (f == &s_stack_double_box)
-		{
-			bit = DF_NO_STACK_DOUBLE;
-		}
-		else if (f == &s_no_spheres_box)
-		{
-			bit = DF_NO_SPHERES;
-		}
-	}
-	//ROGUE
 
 	if (f)
 	{
@@ -1379,44 +1312,7 @@ void DMOptions_MenuInit (void)
 	s_friendlyfire_box.generic.callback = DMFlagCallback;
 	s_friendlyfire_box.itemnames = yes_no_names;
 	s_friendlyfire_box.curvalue = (dmflags & DF_NO_FRIENDLY_FIRE) == 0;
-
-	//ROGUE
-	if (Developer_searchpath (2) == 2)
-	{
-		s_no_mines_box.generic.type = MTYPE_SPINCONTROL;
-		s_no_mines_box.generic.x	= 0;
-		s_no_mines_box.generic.y	= y += 10;
-		s_no_mines_box.generic.name	= "remove mines";
-		s_no_mines_box.generic.callback = DMFlagCallback;
-		s_no_mines_box.itemnames = yes_no_names;
-		s_no_mines_box.curvalue = (dmflags & DF_NO_MINES) != 0;
-
-		s_no_nukes_box.generic.type = MTYPE_SPINCONTROL;
-		s_no_nukes_box.generic.x	= 0;
-		s_no_nukes_box.generic.y	= y += 10;
-		s_no_nukes_box.generic.name	= "remove nukes";
-		s_no_nukes_box.generic.callback = DMFlagCallback;
-		s_no_nukes_box.itemnames = yes_no_names;
-		s_no_nukes_box.curvalue = (dmflags & DF_NO_NUKES) != 0;
-
-		s_stack_double_box.generic.type = MTYPE_SPINCONTROL;
-		s_stack_double_box.generic.x	= 0;
-		s_stack_double_box.generic.y	= y += 10;
-		s_stack_double_box.generic.name	= "2x/4x stacking off";
-		s_stack_double_box.generic.callback = DMFlagCallback;
-		s_stack_double_box.itemnames = yes_no_names;
-		s_stack_double_box.curvalue = (dmflags & DF_NO_STACK_DOUBLE) != 0;
-
-		s_no_spheres_box.generic.type = MTYPE_SPINCONTROL;
-		s_no_spheres_box.generic.x	= 0;
-		s_no_spheres_box.generic.y	= y += 10;
-		s_no_spheres_box.generic.name	= "remove spheres";
-		s_no_spheres_box.generic.callback = DMFlagCallback;
-		s_no_spheres_box.itemnames = yes_no_names;
-		s_no_spheres_box.curvalue = (dmflags & DF_NO_SPHERES) != 0;
-	}
-	//ROGUE
-
+	
 	Menu_AddItem (&s_dmoptions_menu, &s_falls_box);
 	Menu_AddItem (&s_dmoptions_menu, &s_weapons_stay_box);
 	Menu_AddItem (&s_dmoptions_menu, &s_instant_powerups_box);
@@ -1432,17 +1328,7 @@ void DMOptions_MenuInit (void)
 	Menu_AddItem (&s_dmoptions_menu, &s_fixed_fov_box);
 	Menu_AddItem (&s_dmoptions_menu, &s_quad_drop_box);
 	Menu_AddItem (&s_dmoptions_menu, &s_friendlyfire_box);
-
-	//ROGUE
-	if (Developer_searchpath (2) == 2)
-	{
-		Menu_AddItem (&s_dmoptions_menu, &s_no_mines_box);
-		Menu_AddItem (&s_dmoptions_menu, &s_no_nukes_box);
-		Menu_AddItem (&s_dmoptions_menu, &s_stack_double_box);
-		Menu_AddItem (&s_dmoptions_menu, &s_no_spheres_box);
-	}
-	//ROGUE
-
+	
 	s_dmoptions_menu.draw = NULL;
 	s_dmoptions_menu.key = NULL;
 

@@ -64,10 +64,10 @@ glmatrix *GL_PerspectiveMatrix (glmatrix *m, float fovy, float aspect, float zNe
 void GL_TransformPoint (glmatrix *m, float *in, float *out);
 
 
-#define	MAX_DLIGHTS		32
-#define	MAX_ENTITIES	1024	// same as max_edicts
-#define	MAX_PARTICLES	16000
-#define	MAX_LIGHTSTYLES	256
+#define	MAX_DLIGHTS			32
+#define	MAX_ENTITIES		1024	// same as max_edicts
+#define	MAX_PARTICLES		16000
+#define	MAX_LIGHTSTYLES		256
 
 #define POWERSUIT_SCALE		4.0f
 
@@ -78,12 +78,6 @@ void GL_TransformPoint (glmatrix *m, float *in, float *out);
 #define SHELL_RG_COLOR		0xDC
 #define SHELL_RB_COLOR		0x68
 #define SHELL_BG_COLOR		0x78
-
-//ROGUE
-#define SHELL_DOUBLE_COLOR	0xDF // 223
-#define	SHELL_HALF_DAM_COLOR	0x90
-#define SHELL_CYAN_COLOR	0x72
-//ROGUE
 
 #define SHELL_WHITE_COLOR	0xD7
 

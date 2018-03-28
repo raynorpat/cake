@@ -678,14 +678,11 @@ void PM_AirMove (void)
 		pml.velocity[2] = 0; //!!! this is before the accel
 		PM_Accelerate (wishdir, wishspeed, pm_accelerate);
 
-		// PGM	-- fix for negative trigger_gravity fields
-		//		pml.velocity[2] = 0;
+		// PGM - fix for negative trigger_gravity fields
 		if (pm->s.gravity > 0)
 			pml.velocity[2] = 0;
 		else
 			pml.velocity[2] -= pm->s.gravity * pml.frametime;
-
-		// PGM
 
 		if (!pml.velocity[0] && !pml.velocity[1])
 			return;

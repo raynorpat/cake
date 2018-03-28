@@ -122,7 +122,6 @@ set(CLIENT_SOURCES
 	cl_input.c
 	cl_inv.c
 	cl_main.c
-	cl_newfx.c
 	cl_parse.c
 	cl_pred.c
 	cl_scrn.c

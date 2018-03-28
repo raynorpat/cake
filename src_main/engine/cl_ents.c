@@ -695,13 +695,9 @@ struct model_s *S_RegisterSexedModel (entity_state_t *ent, char *base)
 	return mdl;
 }
 
-// PMM - used in shell code
-extern int Developer_searchpath (int who);
-// pmm
 /*
 ===============
 CL_AddPacketEntities
-
 ===============
 */
 void CL_AddPacketEntities (frame_t *frame)
@@ -752,7 +748,6 @@ void CL_AddPacketEntities (frame_t *frame)
 			effects |= EF_COLOR_SHELL;
 			renderfx |= RF_SHELL_RED;
 		}
-
 		if (effects & EF_QUAD)
 		{
 			effects &= ~EF_QUAD;
@@ -760,24 +755,6 @@ void CL_AddPacketEntities (frame_t *frame)
 			renderfx |= RF_SHELL_BLUE;
 		}
 
-		//======
-		// PMM
-		if (effects & EF_DOUBLE)
-		{
-			effects &= ~EF_DOUBLE;
-			effects |= EF_COLOR_SHELL;
-			renderfx |= RF_SHELL_DOUBLE;
-		}
-
-		if (effects & EF_HALF_DAMAGE)
-		{
-			effects &= ~EF_HALF_DAMAGE;
-			effects |= EF_COLOR_SHELL;
-			renderfx |= RF_SHELL_HALF_DAM;
-		}
-
-		// pmm
-		//======
 		ent.lastframe = cent->prev.frame;
 		ent.backlerp = 1.0 - cl.lerpfrac;
 
@@ -823,30 +800,6 @@ void CL_AddPacketEntities (frame_t *frame)
 					ent.skin = cl.baseclientinfo.skin;
 					ent.model = cl.baseclientinfo.model;
 				}
-
-				//============
-				//PGM
-				if (renderfx & RF_USE_DISGUISE)
-				{
-					if (!strncmp ((char *) ent.skin, "players/male", 12))
-					{
-						ent.skin = RE_RegisterSkin ("players/male/disguise.pcx");
-						ent.model = RE_RegisterModel ("players/male/tris.md2");
-					}
-					else if (!strncmp ((char *) ent.skin, "players/female", 14))
-					{
-						ent.skin = RE_RegisterSkin ("players/female/disguise.pcx");
-						ent.model = RE_RegisterModel ("players/female/tris.md2");
-					}
-					else if (!strncmp ((char *) ent.skin, "players/cyborg", 14))
-					{
-						ent.skin = RE_RegisterSkin ("players/cyborg/disguise.pcx");
-						ent.model = RE_RegisterModel ("players/cyborg/tris.md2");
-					}
-				}
-
-				//PGM
-				//============
 			}
 			else
 			{
@@ -874,21 +827,6 @@ void CL_AddPacketEntities (frame_t *frame)
 			ent.angles[1] = autorotate;
 			ent.angles[2] = 0;
 		}
-		// RAFAEL
-		else if (effects & EF_SPINNINGLIGHTS)
-		{
-			ent.angles[0] = 0;
-			ent.angles[1] = anglemod (cl.time / 2) + s1->angles[1];
-			ent.angles[2] = 180;
-			{
-				vec3_t forward;
-				vec3_t start;
-
-				AngleVectors (ent.angles, forward, NULL, NULL);
-				VectorMA (ent.currorigin, 64, forward, start);
-				V_AddLight (start, 100, 1, 0, 0);
-			}
-		}
 		else
 		{
 			// interpolate angles
@@ -911,10 +849,6 @@ void CL_AddPacketEntities (frame_t *frame)
 				V_AddLight (ent.currorigin, 225, 1.0, 0.1, 0.1);
 			else if (effects & EF_FLAG2)
 				V_AddLight (ent.currorigin, 225, 0.1, 0.1, 1.0);
-			else if (effects & EF_TAGTRAIL)						//PGM
-				V_AddLight (ent.currorigin, 225, 1.0, 1.0, 0.0);	//PGM
-			else if (effects & EF_TRACKERTRAIL)					//PGM
-				V_AddLight (ent.currorigin, 225, -1.0, -1.0, -1.0);	//PGM
 
 			continue;
 		}
@@ -929,74 +863,12 @@ void CL_AddPacketEntities (frame_t *frame)
 			ent.alpha = 0.30;
 		}
 
-		// RAFAEL
-		if (effects & EF_PLASMA)
-		{
-			ent.flags |= RF_TRANSLUCENT;
-			ent.alpha = 0.6;
-		}
-
-		if (effects & EF_SPHERETRANS)
-		{
-			ent.flags |= RF_TRANSLUCENT;
-
-			// PMM - *sigh* yet more EF overloading
-			if (effects & EF_TRACKERTRAIL)
-				ent.alpha = 0.6;
-			else
-				ent.alpha = 0.3;
-		}
-
-		//pmm
-
 		// add to refresh list
 		V_AddEntity (&ent);
-
 
 		// color shells generate a seperate entity for the main model
 		if (effects & EF_COLOR_SHELL)
 		{
-			// PMM - at this point, all of the shells have been handled
-			// if we're in the rogue pack, set up the custom mixing, otherwise just
-			// keep going
-			//			if(Developer_searchpath(2) == 2)
-			//			{
-			// all of the solo colors are fine. we need to catch any of the combinations that look bad
-			// (double & half) and turn them into the appropriate color, and make double/quad something special
-			if (renderfx & RF_SHELL_HALF_DAM)
-			{
-				if (Developer_searchpath (2) == 2)
-				{
-					// ditch the half damage shell if any of red, blue, or double are on
-					if (renderfx & (RF_SHELL_RED | RF_SHELL_BLUE | RF_SHELL_DOUBLE))
-						renderfx &= ~RF_SHELL_HALF_DAM;
-				}
-			}
-
-			if (renderfx & RF_SHELL_DOUBLE)
-			{
-				if (Developer_searchpath (2) == 2)
-				{
-					// lose the yellow shell if we have a red, blue, or green shell
-					if (renderfx & (RF_SHELL_RED | RF_SHELL_BLUE | RF_SHELL_GREEN))
-						renderfx &= ~RF_SHELL_DOUBLE;
-
-					// if we have a red shell, turn it to purple by adding blue
-					if (renderfx & RF_SHELL_RED)
-						renderfx |= RF_SHELL_BLUE;
-					// if we have a blue shell (and not a red shell), turn it to cyan by adding green
-					else if (renderfx & RF_SHELL_BLUE)
-
-						// go to green if it's on already, otherwise do cyan (flash green)
-						if (renderfx & RF_SHELL_GREEN)
-							renderfx &= ~RF_SHELL_BLUE;
-						else
-							renderfx |= RF_SHELL_GREEN;
-				}
-			}
-
-			//			}
-			// pmm
 			ent.flags = renderfx | RF_TRANSLUCENT;
 			ent.alpha = 0.30;
 			V_AddEntity (&ent);
@@ -1033,22 +905,11 @@ void CL_AddPacketEntities (frame_t *frame)
 			else
 				ent.model = cl.model_draw[s1->modelindex2];
 
-			// PMM - check for the defender sphere shell .. make it translucent
-			// replaces the previous version which used the high bit on modelindex2 to determine transparency
-			if (!Q_strcasecmp (cl.configstrings[CS_MODELS+ (s1->modelindex2)], "models/items/shell/tris.md2"))
-			{
-				ent.alpha = 0.32;
-				ent.flags = RF_TRANSLUCENT;
-			}
-
-			// pmm
-
 			V_AddEntity (&ent);
 
-			//PGM - make sure these get reset.
+			// PGM - make sure these get reset.
 			ent.flags = 0;
 			ent.alpha = 0;
-			//PGM
 		}
 
 		if (s1->modelindex3)
@@ -1089,37 +950,12 @@ void CL_AddPacketEntities (frame_t *frame)
 			}
 			else if (effects & EF_BLASTER)
 			{
-//PGM
-				if (effects & EF_TRACKER)
-				{
-					CL_BlasterTrail (cent->lerp_origin, ent.currorigin, 0xd0);
-					V_AddLight (ent.currorigin, 200, 0, 1, 0);		
-				}
-				else if (effects & EF_BLUEHYPERBLASTER)
-				{
-					CL_BlasterTrail (cent->lerp_origin, ent.currorigin, 0x74);
-					V_AddLight (ent.currorigin, 200, 0.15, 0.15, 1);		
-				}
-				else if (effects & EF_IONRIPPER)
-				{
-					CL_BlasterTrail (cent->lerp_origin, ent.currorigin, 0xe4);
-					V_AddLight (ent.currorigin, 200, 1, 0.15, 0.15);		
-				}
-				else
-				{
-					CL_BlasterTrail (cent->lerp_origin, ent.currorigin, 0xe0);
-					V_AddLight (ent.currorigin, 200, 1, 1, 0);
-				}
-//PGM
+				CL_BlasterTrail (cent->lerp_origin, ent.currorigin, 0xe0);
+				V_AddLight (ent.currorigin, 200, 1, 1, 0);
 			}
 			else if (effects & EF_HYPERBLASTER)
 			{
-				if (effects & EF_TRACKER)						// PGM	overloaded for blaster2.
-					V_AddLight (ent.currorigin, 200, 0, 1, 0);		// PGM
-				else if (effects & EF_IONRIPPER)				// overloaded for EF_REDHYPERBLASTER
-					V_AddLight (ent.currorigin, 200, 1, 0.15, 0.15);
-				else											// PGM
-					V_AddLight (ent.currorigin, 200, 1, 1, 0);
+				V_AddLight (ent.currorigin, 200, 1, 1, 0);
 			}
 			else if (effects & EF_GIB)
 			{
@@ -1149,14 +985,6 @@ void CL_AddPacketEntities (frame_t *frame)
 
 				V_AddLight (ent.currorigin, i, 0, 1, 0);
 			}
-			// RAFAEL
-			else if (effects & EF_TRAP)
-			{
-				ent.currorigin[2] += 32;
-				CL_TrapParticles (&ent);
-				i = (rand () % 100) + 100;
-				V_AddLight (ent.currorigin, i, 1, 0.8, 0.1);
-			}
 			else if (effects & EF_FLAG1)
 			{
 				if (effects & EF_FLAG2)
@@ -1174,59 +1002,6 @@ void CL_AddPacketEntities (frame_t *frame)
 			{
 				CL_FlagTrail (cent->lerp_origin, ent.currorigin, 115);
 				V_AddLight (ent.currorigin, 225, 0.1, 0.1, 1);
-			}
-			//======
-			//ROGUE
-			else if (effects & EF_TAGTRAIL)
-			{
-				CL_TagTrail (cent->lerp_origin, ent.currorigin, 220);
-				V_AddLight (ent.currorigin, 225, 1.0, 1.0, 0.0);
-			}
-			else if (effects & EF_TRACKERTRAIL)
-			{
-				if (effects & EF_TRACKER)
-				{
-					float intensity = 50 + (500 * (sin (cl.time / 500.0) + 1.0));
-					V_AddLight (ent.currorigin, intensity, -1.0, -1.0, -1.0);
-				}
-				else
-				{
-					CL_Tracker_Shell (cent->lerp_origin);
-					V_AddLight (ent.currorigin, 155, -1.0, -1.0, -1.0);
-				}
-			}
-			else if (effects & EF_TRACKER)
-			{
-				CL_TrackerTrail (cent->lerp_origin, ent.currorigin, 0);
-				V_AddLight (ent.currorigin, 200, -1, -1, -1);
-			}
-			//ROGUE
-			//======
-			// RAFAEL
-			else if (effects & EF_GREENGIB)
-			{
-				CL_DiminishingTrail (cent->lerp_origin, ent.currorigin, cent, effects);
-			}
-			// RAFAEL
-			else if (effects & EF_IONRIPPER)
-			{
-				CL_IonripperTrail (cent->lerp_origin, ent.currorigin);
-				V_AddLight (ent.currorigin, 100, 1, 0.5, 0.5);
-			}
-			// RAFAEL
-			else if (effects & EF_BLUEHYPERBLASTER)
-			{
-				V_AddLight (ent.currorigin, 200, 0, 0, 1);
-			}
-			// RAFAEL
-			else if (effects & EF_PLASMA)
-			{
-				if (effects & EF_ANIM_ALLFAST)
-				{
-					CL_BlasterTrail (cent->lerp_origin, ent.currorigin, 0xe0);
-				}
-
-				V_AddLight (ent.currorigin, 130, 1, 0.5, 0.5);
 			}
 		}
 

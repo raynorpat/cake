@@ -860,11 +860,8 @@ void Master_Heartbeat (void)
 	char		*string;
 	int			i;
 
-	// pgm post3.19 change, cvar pointer not validated before dereferencing
 	if (!dedicated || !dedicated->value)
 		return;		// only dedicated servers send heartbeats
-
-	// pgm post3.19 change, cvar pointer not validated before dereferencing
 	if (!public_server || !public_server->value)
 		return;		// a private dedicated game
 
@@ -900,11 +897,8 @@ void Master_Shutdown (void)
 {
 	int			i;
 
-	// pgm post3.19 change, cvar pointer not validated before dereferencing
 	if (!dedicated || !dedicated->value)
 		return;		// only dedicated servers send heartbeats
-
-	// pgm post3.19 change, cvar pointer not validated before dereferencing
 	if (!public_server || !public_server->value)
 		return;		// a private dedicated game
 

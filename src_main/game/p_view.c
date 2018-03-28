@@ -772,7 +772,7 @@ void G_SetClientEffects (edict_t *ent)
 	}
 
 	ent->s.effects = 0;
-	ent->s.renderfx = RF_IR_VISIBLE;
+	ent->s.renderfx = 0;
 
 	if ((ent->health <= 0) || level.intermissiontime)
 		return;
