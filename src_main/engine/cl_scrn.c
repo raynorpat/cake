@@ -1317,8 +1317,8 @@ void SCR_UpdateScreen (void)
 
 static float SCR_GetScale(void)
 {
-	int i = viddef.width / 320;
-	int j = viddef.height / 240;
+	int i = round((float)viddef.width / 640);
+	int j = round((float)viddef.height / 480);
 
 	if (i > j)
 	{
@@ -1343,10 +1343,6 @@ float SCR_GetHUDScale(void)
 	else if (cl_hudscale->value < 0)
 	{
 		scale = SCR_GetScale();
-	}
-	else if (cl_hudscale->value == 0) // HACK: allow scale 0 to hide the HUD
-	{
-		scale = 0;
 	}
 	else
 	{
