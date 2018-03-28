@@ -875,6 +875,38 @@ void COM_StripExtension (char *in, char *out)
 
 /*
 ============
+COM_StripExtensionSafe
+============
+*/
+void COM_StripExtensionSafe (const char *in, char *out, int destsize)
+{
+	const char *dot = strrchr(in, '.'), *slash;
+
+	if (dot && (!(slash = strrchr(in, '/')) || slash < dot))
+		destsize = (destsize < dot - in + 1 ? destsize : dot - in + 1);
+
+	if (in == out && destsize > 1)
+		out[destsize - 1] = '\0';
+	else
+		Q_strlcpy (out, in, destsize);
+}
+
+/*
+===========
+COM_StripPathFromFilename
+===========
+*/
+char *COM_StripPathFromFilename(const char *in)
+{
+	char *s = strrchr(in, '/');
+	if (s == NULL)
+		return strdup(in);
+	else
+		return strdup(s + 1);
+}
+
+/*
+============
 COM_FileExtension
 ============
 */
@@ -1216,6 +1248,71 @@ skipwhite:
 	return com_token;
 }
 
+/*
+==================
+Com_CharIsOneOfCharset
+==================
+*/
+static qboolean Com_CharIsOneOfCharset(char c, char *set)
+{
+	int i;
+
+	for (i = 0; i < strlen(set); i++)
+	{
+		if (set[i] == c)
+			return true;
+	}
+
+	return false;
+}
+
+/*
+==================
+Com_SkipCharset
+==================
+*/
+char *Com_SkipCharset(char *s, char *sep)
+{
+	char	*p = s;
+
+	while (p)
+	{
+		if (Com_CharIsOneOfCharset(*p, sep))
+			p++;
+		else
+			break;
+	}
+
+	return p;
+}
+
+/*
+==================
+Com_SkipTokens
+==================
+*/
+char *Com_SkipTokens(char *s, int numTokens, char *sep)
+{
+	int		sepCount = 0;
+	char	*p = s;
+
+	while (sepCount < numTokens)
+	{
+		if (Com_CharIsOneOfCharset(*p++, sep))
+		{
+			sepCount++;
+			while (Com_CharIsOneOfCharset(*p, sep))
+				p++;
+		}
+		else if (*p == '\0')
+			break;
+	}
+
+	if (sepCount == numTokens)
+		return p;
+	else
+		return s;
+}
 
 /*
 ===============
@@ -1261,6 +1358,44 @@ int Q_stricmp (char *s1, char *s2)
 #else
 	return strcasecmp (s1, s2);
 #endif
+}
+
+int Q_stricmpn(const char *s1, const char *s2, int n)
+{
+	int		c1, c2;
+
+	if (s1 == NULL)
+	{
+		if (s2 == NULL)
+			return 0;
+		else
+			return -1;
+	}
+	else if (s2 == NULL)
+	{
+		return 1;
+	}
+
+	do {
+		c1 = *s1++;
+		c2 = *s2++;
+
+		if (!n--)
+			return 0; // strings are equal until end point
+
+		if (c1 != c2)
+		{
+			if (c1 >= 'a' && c1 <= 'z')
+				c1 -= ('a' - 'A');
+			if (c2 >= 'a' && c2 <= 'z')
+				c2 -= ('a' - 'A');
+
+			if (c1 != c2)
+				return c1 < c2 ? -1 : 1;
+		}
+	} while (c1);
+
+	return 0; // strings are equal
 }
 
 int Q_strncasecmp (char *s1, char *s2, int n)

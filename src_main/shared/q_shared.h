@@ -229,6 +229,8 @@ float clamp(float minf, float maxf, float value);
 
 char *COM_SkipPath (char *pathname);
 void COM_StripExtension (char *in, char *out);
+void COM_StripExtensionSafe (const char *in, char *out, int destsize);
+char *COM_StripPathFromFilename (const char *in);
 char *COM_FileExtension (char *in);
 void COM_FileBase (char *in, char *out);
 void COM_FilePath (char *in, char *out);
@@ -236,6 +238,9 @@ void COM_DefaultExtension (char *path, char *extension);
 
 char *COM_Parse (char **data_p);
 // data is an in/out parm, returns a parsed out token
+
+char *Com_SkipCharset (char *s, char *sep);
+char *Com_SkipTokens (char *s, int numTokens, char *sep);
 
 void Com_sprintf (char *dest, int size, char *fmt, ...);
 void Com_strcpy (char *dest, int destSize, const char *src);
@@ -249,6 +254,7 @@ void Q_getwd (char *out);
 
 // portable case insensitive compare
 int Q_stricmp (char *s1, char *s2);
+int Q_stricmpn (const char *s1, const char *s2, int n);
 int Q_strcasecmp (char *s1, char *s2);
 int Q_strncasecmp (char *s1, char *s2, int n);
 

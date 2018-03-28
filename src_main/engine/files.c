@@ -813,6 +813,71 @@ qboolean FS_ExistsInGameDir(char *filename)
 	return false;
 }
 
+/*
+===========
+FS_ConvertPath
+===========
+*/
+void FS_ConvertPath(char *s)
+{
+	while (*s)
+	{
+		if (*s == '\\' || *s == ':')
+			*s = '/';
+		s++;
+	}
+}
+
+static void FS_FreeFileList(char **list, int n)
+{
+	int i;
+
+	for (i = 0; i < n; i++)
+	{
+		if (list[i])
+		{
+			free(list[i]);
+			list[i] = 0;
+		}
+	}
+
+	free(list);
+}
+
+/*
+===========
+FS_FilenameCompletion
+===========
+*/
+void FS_FilenameCompletion(char *dir, char *ext, qboolean stripExt, void(*callback)(char *s))
+{
+	char	**filenames = NULL;
+	int		nfiles;
+	int		i;
+	char	path[MAX_STRING_CHARS];
+	char	filename[MAX_STRING_CHARS];
+
+	strcpy(path, va("%s/%s/*.%s", fs_gamedir, dir, ext));
+	filenames = FS_ListFiles(path, &nfiles);
+
+	for (i = 0; i < nfiles; i++)
+	{
+		if (filenames[i] == 0)
+			continue;
+
+		FS_ConvertPath(filenames[i]);
+		Q_strlcpy(filename, filenames[i], MAX_STRING_CHARS);
+
+		strcpy(filename, COM_StripPathFromFilename(filename));
+
+		if (stripExt)
+			COM_StripExtensionSafe(filename, filename, sizeof(filename));
+
+		callback(filename);
+	}
+
+	FS_FreeFileList(filenames, nfiles);
+}
 
 /* The following FS_*() stdio replacements are necessary if one is
 * to perform non-sequential reads on files reopened on pak files
