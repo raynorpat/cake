@@ -52,7 +52,8 @@ static char *names[] =
 	0
 };
 
-typedef struct mainMenu_s {
+typedef struct mainMenu_s
+{
 	menuframework_s	menu;
 	menubitmap_s bitmaps[MAIN_ITEMS];
 } mainMenu_t;
@@ -96,7 +97,7 @@ static void MainMenu_CursorDraw(void *self)
 	menubitmap_s *b;
 
 	b = (menubitmap_s *)self;
-	M_DrawCursor(b->generic.x - 100, b->generic.y + 5, (int)(cls.realtime / 100) % NUM_CURSOR_FRAMES);
+	M_DrawCursor(b->generic.x - 50, b->generic.y + 5, (int)(cls.realtime / 100) % NUM_CURSOR_FRAMES);
 }
 
 void M_Main_Draw (menuframework_s *self)
