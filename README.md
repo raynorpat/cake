@@ -76,4 +76,5 @@ Contributions from
   * O. Sezer <sezero@users.sourceforge.net> - uHexen II sound codecs system
   * yquake2 and KMQ2 projects - Save game system
   * FFmpeg project - RoQ video encoder
+  * Frank Sapone - master server - see https://bitbucket.org/maraakate/gsmaster
   * Deniz Sezen - bug fixes
