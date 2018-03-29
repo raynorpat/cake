@@ -267,7 +267,7 @@ void RSurf_SelectProgramAndStates (glmatrix *matrix, float alpha)
 R_DrawAlphaSurfaces
 
 Draw water surfaces and windows.
-The BSP tree is waled front to back, so unwinding the chain
+The BSP tree is walked front to back, so unwinding the chain
 of alpha_surfaces will draw back to front, giving proper ordering.
 ================
 */
