@@ -668,11 +668,9 @@ void Sys_Print (char *string)
 {
 #ifdef DEDICATED_ONLY
 	CON_Hide();
-#endif
 
 	CON_Print(string);
 
-#ifdef DEDICATED_ONLY
 	CON_Show();
 #endif
 }
