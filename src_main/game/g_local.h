@@ -350,6 +350,7 @@ typedef struct
 	char		*sky;
 	float		skyrotate;
 	vec3_t		skyaxis;
+	vec4_t		fog;
 	char		*nextmap;
 
 	int			lip;

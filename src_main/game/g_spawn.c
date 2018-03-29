@@ -783,9 +783,10 @@ char *dm_statusbar =
 /*QUAKED worldspawn (0 0 0) ?
 
 Only used for the world.
-"sky"	environment map name
+"sky"		environment map name
 "skyaxis"	vector axis for rotating sky
 "skyrotate"	speed of rotation in degrees/second
+"fog"		color and density of global fog
 "sounds"	music cd track number
 "gravity"	800 is default gravity
 "message"	text to print at user logon
@@ -827,11 +828,10 @@ void SP_worldspawn (edict_t *ent)
 		gi.configstring (CS_SKY, st.sky);
 	else
 		gi.configstring (CS_SKY, "unit1_");
-
 	gi.configstring (CS_SKYROTATE, va("%f", st.skyrotate) );
+	gi.configstring (CS_SKYAXIS, va("%f %f %f", st.skyaxis[0], st.skyaxis[1], st.skyaxis[2]) );
 
-	gi.configstring (CS_SKYAXIS, va("%f %f %f",
-		st.skyaxis[0], st.skyaxis[1], st.skyaxis[2]) );
+	gi.configstring (CS_FOG, va("%f %f %f %f", st.fog[0], st.fog[1], st.fog[2], st.fog[3]));
 
 	gi.configstring (CS_CDTRACK, va("%i", ent->sounds) );
 

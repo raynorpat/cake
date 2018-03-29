@@ -937,6 +937,7 @@ typedef enum
 #define	CS_SKYAXIS			3		// %f %f %f format
 #define	CS_SKYROTATE		4
 #define	CS_STATUSBAR		5		// display program string
+#define	CS_FOG				6		// %f %f %f %f format (r,g,b and then density)
 
 #define CS_AIRACCEL			29		// air acceleration control
 #define	CS_MAXCLIENTS		30
