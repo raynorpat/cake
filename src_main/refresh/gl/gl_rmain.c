@@ -1096,6 +1096,7 @@ void GL_GFX_CoreInit(void)
 	RE_RegisterSkin = RE_GL_RegisterSkin;
 	RE_Draw_RegisterPic = RE_GL_Draw_RegisterPic;
 	RE_SetSky = RE_GL_SetSky;
+	RE_SetFog = RE_GL_SetFog;
 	RE_EndRegistration = RE_GL_EndRegistration;
 }
 

@@ -353,6 +353,7 @@ struct model_s *RE_GL_RegisterModel(char *name);
 struct image_s *RE_GL_RegisterSkin(char *name);
 struct image_s *RE_GL_Draw_RegisterPic(char *name);
 void RE_GL_SetSky(char *name, float rotate, vec3_t axis);
+void RE_GL_SetFog(vec4_t axis);
 void RE_GL_EndRegistration(void);
 
 int	Draw_GetPalette (void);

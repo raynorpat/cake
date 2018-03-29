@@ -48,6 +48,7 @@ struct model_s * (* RE_RegisterModel)( char *name ) = NULL;
 struct image_s * (* RE_RegisterSkin)( char *name ) = NULL;
 struct image_s * (* RE_Draw_RegisterPic)( char *name ) = NULL;
 void            (* RE_SetSky)( char *name, float rotate, vec3_t axis ) = NULL;
+void			(* RE_SetFog)( vec4_t fog ) = NULL;
 void            (* RE_EndRegistration)( void ) = NULL;
 
 int				RE_gfxVal;

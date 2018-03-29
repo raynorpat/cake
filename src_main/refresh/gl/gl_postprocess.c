@@ -46,7 +46,7 @@ GLuint u_globalfogViewOrigin = 0;
 GLuint u_globalfogColorDensity = 0;
 GLuint u_globalfogUnprojectMatrix = 0;
 vec3_t post_fogColor;
-float post_fogDensity;
+float post_fogDensity = 0.0f;
 
 qboolean r_fogwater = false;
 qboolean r_foglava = false;
@@ -655,6 +655,18 @@ void RPostProcess_BasicPostProcess(void)
 	glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
 }
 
+void RE_GL_SetFog(vec4_t fog)
+{
+	// check values fog color and density values
+	if (gl_forcefog->value <= 0 && VectorLength(post_fogColor) <= 0)
+		return;
+	if (gl_forcefog->value <= 0 && post_fogDensity <= 0)
+		return;
+
+	VectorCopy(fog, post_fogColor);
+	post_fogDensity = fog[3];
+}
+
 void RPostProcess_GlobalFog(void)
 {
 	vec2_t texScale;
@@ -662,11 +674,7 @@ void RPostProcess_GlobalFog(void)
 
 	if (r_nofog->integer)
 		return;
-
-	// check values fog color and density values
-	if (gl_forcefog->value <= 0 && VectorLength(post_fogColor) <= 0)
-		return;
-	if (gl_forcefog->value <= 0 && post_fogDensity <= 0)
+	if (!gl_forcefog->value && !r_dowaterwarppost)
 		return;
 
 	// set screen scale
