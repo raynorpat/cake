@@ -37,6 +37,15 @@ GLuint u_compositeTexScale = 0;
 GLuint u_compositeMode = 0;
 GLuint u_compositeBrightParam = 0;
 
+GLuint gl_globalfogprog = 0;
+GLuint u_globalfogTexScale = 0;
+GLuint u_globalfogViewOrigin = 0;
+GLuint u_globalfogColorDensity = 0;
+GLuint u_globalfogWorldMatrix = 0;
+GLuint u_globalfogUnprojectMatrix = 0;
+vec3_t post_fogColor;
+float post_fogDensity;
+
 GLuint gl_postprog = 0;
 GLuint u_postsurfcolor = 0;
 GLuint u_postExposure = 0;
@@ -252,6 +261,19 @@ void RPostProcess_CreatePrograms(void)
 	u_compositeMode = glGetUniformLocation(gl_compositeprog, "compositeMode");
 	u_compositeTexScale = glGetUniformLocation(gl_compositeprog, "texScale");
 	u_compositeBrightParam = glGetUniformLocation(gl_compositeprog, "brightParam");
+
+	// create global fog shader
+	gl_globalfogprog = GL_CreateShaderFromName("glsl/globalFog.glsl", "GlobalFogVS", "GlobalFogFS");
+
+	glProgramUniform1i(gl_globalfogprog, glGetUniformLocation(gl_globalfogprog, "diffuse"), 0);
+	glProgramUniform1i(gl_globalfogprog, glGetUniformLocation(gl_globalfogprog, "depth"), 1);
+	glProgramUniformMatrix4fv(gl_globalfogprog, glGetUniformLocation(gl_globalfogprog, "orthomatrix"), 1, GL_FALSE, r_drawmatrix.m[0]);
+
+	u_globalfogTexScale = glGetUniformLocation(gl_globalfogprog, "texScale");
+	u_globalfogViewOrigin = glGetUniformLocation(gl_globalfogprog, "viewOrigin");
+	u_globalfogColorDensity = glGetUniformLocation(gl_globalfogprog, "fogColorDensity");
+	u_globalfogWorldMatrix = glGetUniformLocation(gl_globalfogprog, "worldmatrix");
+	u_globalfogUnprojectMatrix = glGetUniformLocation(gl_globalfogprog, "unprojectmatrix");
 
 	// create barebones shaders
 	if (r_skipHDRPost)
@@ -615,6 +637,55 @@ void RPostProcess_BasicUnderwater(void)
 	glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
 }
 
+void RPostProcess_GlobalFog(void)
+{
+	vec2_t texScale;
+	glmatrix unprojectionmatrix;
+
+	if (r_nofog->integer)
+		return;
+
+	// check values fog color and density values
+	if (gl_forcefog->value <= 0 && VectorLength(post_fogColor) <= 0)
+		return;
+	if (gl_forcefog->value <= 0 && post_fogDensity <= 0)
+		return;
+
+	// skip if underwater
+	if (!r_dowaterwarppost)
+		return;
+
+	// set screen scale
+	texScale[0] = 1.0f / vid.width;
+	texScale[1] = 1.0f / vid.height;
+
+	// create a matrix with similar functionality like gluUnproject, project from window space to world space
+	GL_LoadMatrix(&unprojectionmatrix, &r_mvpmatrix);
+	GL_InvertMatrix(&unprojectionmatrix, NULL, &unprojectionmatrix);
+	GL_TranslateMatrix(&unprojectionmatrix, -1.0, -1.0, -1.0);
+	GL_ScaleMatrix(&unprojectionmatrix, 2.0 * texScale[0], 2.0 * texScale[1], 2.0);
+
+	GL_Enable(!DEPTHTEST_BIT | !CULLFACE_BIT);
+
+	GL_UseProgram(gl_globalfogprog);
+
+	glProgramUniform2f(gl_globalfogprog, u_globalfogTexScale, texScale[0], texScale[1]);
+	glProgramUniform3f(gl_globalfogprog, u_globalfogViewOrigin, r_origin[0], r_origin[1], r_origin[2]);
+	if (gl_forcefog->value)
+		glProgramUniform4f(gl_globalfogprog, u_globalfogColorDensity, 0.3, 0.3, 0.3, gl_forcefog->value);
+	else
+		glProgramUniform4f(gl_globalfogprog, u_globalfogColorDensity, post_fogColor[0], post_fogColor[1], post_fogColor[2], post_fogDensity);
+
+	glProgramUniformMatrix4fv(gl_globalfogprog, u_globalfogUnprojectMatrix, 1, GL_FALSE, unprojectionmatrix.m[0]);
+	glProgramUniformMatrix4fv(gl_globalfogprog, u_globalfogWorldMatrix, 1, GL_FALSE, r_worldmatrix.m[0]);
+
+	GL_BindTexture(GL_TEXTURE0, GL_TEXTURE_2D, r_drawnearestclampsampler, r_currentRenderImage);
+	GL_BindTexture(GL_TEXTURE1, GL_TEXTURE_2D, r_drawnearestclampsampler, r_currentDepthRenderImage);
+
+	GL_BindVertexArray(r_postvao);
+	glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+}
+
 void RPostProcess_Begin(void)
 {
 	mleaf_t *leaf;
@@ -662,11 +733,17 @@ void RPostProcess_FinishToScreen(void)
 
 	R_BindNullFBO();
 
+	// set currentrender image for other effects
+	RPostProcess_SetCurrentRender();
+
 	// perform HDR post processing
 	if (!r_skipHDRPost)
 	{
 		// perform screenspace ambient occlusion
 		RPostProcess_SSAO();
+
+		// perform global fog pass
+		RPostProcess_GlobalFog();
 
 		// downscale to 64x64
 		RPostProcess_DownscaleTo64();
@@ -689,12 +766,12 @@ void RPostProcess_FinishToScreen(void)
 	{
 		// perform basic post processing
 
+		// perform global fog pass
+		RPostProcess_GlobalFog();
+
 		// perform underwater screen warp
 		RPostProcess_BasicUnderwater();
 	}
-
-	// set currentrender image for other effects
-	RPostProcess_SetCurrentRender();
 
 	// perform FXAA pass
 	RPostProcess_FXAA();

@@ -254,6 +254,7 @@ extern	cvar_t	*r_speeds;
 extern	cvar_t	*r_fullbright;
 extern	cvar_t	*r_novis;
 extern	cvar_t	*r_nocull;
+extern  cvar_t  *r_nofog;
 extern	cvar_t	*r_lerpmodels;
 extern	cvar_t	*r_postprocessing;
 
@@ -272,6 +273,7 @@ extern	cvar_t	*gl_swapinterval;
 extern	cvar_t	*gl_texturemode;
 extern	cvar_t	*gl_textureanisotropy;
 extern  cvar_t  *gl_lockpvs;
+extern  cvar_t  *gl_forcefog;
 
 extern	cvar_t	*vid_fullscreen;
 extern	cvar_t	*vid_gamma;
@@ -290,6 +292,9 @@ extern GLuint r_drawwrapsampler;
 extern GLuint r_drawnearestclampsampler;
 extern GLuint r_skysampler;
 extern GLuint r_modelsampler;
+
+extern vec3_t post_fogColor;
+extern float post_fogDensity;
 
 void RImage_CreateSamplers (void);
 

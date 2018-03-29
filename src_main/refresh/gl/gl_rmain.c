@@ -76,6 +76,7 @@ cvar_t	*r_speeds;
 cvar_t	*r_fullbright;
 cvar_t	*r_novis;
 cvar_t	*r_nocull;
+cvar_t	*r_nofog;
 cvar_t	*r_lerpmodels;
 cvar_t	*r_lefthand;
 
@@ -98,6 +99,7 @@ cvar_t	*gl_texturemode;
 cvar_t	*gl_textureanisotropy;
 cvar_t	*gl_lockpvs;
 cvar_t	*gl_lockfrustum;
+cvar_t  *gl_forcefog;
 
 cvar_t	*vid_fullscreen;
 cvar_t	*vid_gamma;
@@ -511,6 +513,7 @@ static void R_Register (void)
 	r_drawworld = Cvar_Get ("r_drawworld", "1", 0);
 	r_novis = Cvar_Get ("r_novis", "0", 0);
 	r_nocull = Cvar_Get ("r_nocull", "0", 0);
+	r_nofog = Cvar_Get ("r_nofog", "0", 0);
 	r_lerpmodels = Cvar_Get ("r_lerpmodels", "1", 0);
 	r_speeds = Cvar_Get ("r_speeds", "0", 0);
 
@@ -532,6 +535,7 @@ static void R_Register (void)
 	gl_textureanisotropy = Cvar_Get ("gl_textureanisotropy", "1", CVAR_ARCHIVE);
 	gl_lockpvs = Cvar_Get ("gl_lockpvs", "0", 0);
 	gl_lockfrustum = Cvar_Get ("gl_lockfrustum", "0", 0);
+	gl_forcefog = Cvar_Get ("gl_forcefog", "0", CVAR_ARCHIVE);
 	
 	gl_swapinterval = Cvar_Get ("gl_swapinterval", "1", CVAR_ARCHIVE);
 
