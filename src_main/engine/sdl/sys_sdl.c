@@ -25,6 +25,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
 #include "SDL.h"
 
+#include <signal.h>
 #include <errno.h>
 #include <float.h>
 #include <fcntl.h>
@@ -854,6 +855,29 @@ void *Sys_GetGameAPI (void *parms)
 
 //=======================================================================
 
+/*
+=================
+Sys_SigHandler
+=================
+*/
+void Sys_SigHandler(int signal)
+{
+	static qboolean signalcaught = false;
+
+	if (signalcaught)
+	{
+		fprintf(stderr, "DOUBLE SIGNAL FAULT: Received signal %d, exiting...\n", signal);
+	}
+	else
+	{
+		signalcaught = true;
+		fprintf(stderr, "Received signal %d, exiting...\n", signal);
+		SV_Shutdown("Signal caught", false);
+	}
+
+	Sys_Shutdown(); // exit with 0 to avoid recursive signals
+}
+
 #ifndef DEDICATED_ONLY
 #define FRAMEDELAY 5
 #else
@@ -873,6 +897,12 @@ int main(int argc, char **argv)
 	printf("=====================\n\n");
 
 	Qcommon_Init(argc, argv);
+
+	// set signal handlers now that everything should be initialized
+	signal(SIGILL, Sys_SigHandler);
+	signal(SIGFPE, Sys_SigHandler);
+	signal(SIGSEGV, Sys_SigHandler);
+	signal(SIGTERM, Sys_SigHandler);
 
 	nostdout = Cvar_Get("nostdout", "0", 0);
 	busywait = Cvar_Get("busywait", "1", CVAR_ARCHIVE);
