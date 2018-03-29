@@ -21,7 +21,6 @@ void GlobalFogVS ()
 uniform sampler2D diffuse;
 uniform sampler2D depth;
 
-uniform mat4 worldmatrix;
 uniform mat4 unprojectmatrix;
 
 uniform vec2 texScale;

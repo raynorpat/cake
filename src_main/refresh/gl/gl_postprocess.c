@@ -41,7 +41,6 @@ GLuint gl_globalfogprog = 0;
 GLuint u_globalfogTexScale = 0;
 GLuint u_globalfogViewOrigin = 0;
 GLuint u_globalfogColorDensity = 0;
-GLuint u_globalfogWorldMatrix = 0;
 GLuint u_globalfogUnprojectMatrix = 0;
 vec3_t post_fogColor;
 float post_fogDensity;
@@ -272,7 +271,6 @@ void RPostProcess_CreatePrograms(void)
 	u_globalfogTexScale = glGetUniformLocation(gl_globalfogprog, "texScale");
 	u_globalfogViewOrigin = glGetUniformLocation(gl_globalfogprog, "viewOrigin");
 	u_globalfogColorDensity = glGetUniformLocation(gl_globalfogprog, "fogColorDensity");
-	u_globalfogWorldMatrix = glGetUniformLocation(gl_globalfogprog, "worldmatrix");
 	u_globalfogUnprojectMatrix = glGetUniformLocation(gl_globalfogprog, "unprojectmatrix");
 
 	// create barebones shaders
@@ -677,7 +675,6 @@ void RPostProcess_GlobalFog(void)
 		glProgramUniform4f(gl_globalfogprog, u_globalfogColorDensity, post_fogColor[0], post_fogColor[1], post_fogColor[2], post_fogDensity);
 
 	glProgramUniformMatrix4fv(gl_globalfogprog, u_globalfogUnprojectMatrix, 1, GL_FALSE, unprojectionmatrix.m[0]);
-	glProgramUniformMatrix4fv(gl_globalfogprog, u_globalfogWorldMatrix, 1, GL_FALSE, r_worldmatrix.m[0]);
 
 	GL_BindTexture(GL_TEXTURE0, GL_TEXTURE_2D, r_drawnearestclampsampler, r_currentRenderImage);
 	GL_BindTexture(GL_TEXTURE1, GL_TEXTURE_2D, r_drawnearestclampsampler, r_currentDepthRenderImage);
