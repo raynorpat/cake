@@ -359,22 +359,19 @@ static void CompleteCommand(char *cmd, qboolean doCommands, qboolean doCvars)
 		if (matchCount == 0)
 			return;	// no matches
 
-		key_lines[edit_line][1] = '/';
-
 		if (cmd == key_lines[edit_line] + 1)
 		{
-			strcpy(key_lines[edit_line] + 2, shortestMatch);
-			key_linepos = (int)strlen(shortestMatch) + 2;
+			strcpy(key_lines[edit_line] + 1, shortestMatch);
+			key_linepos = (int)strlen(shortestMatch) + 1;
 		}
 		else
 		{
 			strcat(key_lines[edit_line], shortestMatch + strlen(completionString));
-			key_linepos = (int)strlen(completionString) + 2;
+			key_linepos = (int)strlen(completionString) + 1;
 		}
 
 		if (matchCount == 1)
 		{
-			key_linepos = (int)strlen(cmd) + 1;
 			strcat(key_lines[edit_line], " ");
 			key_linepos++;
 			key_lines[edit_line][key_linepos] = 0;
