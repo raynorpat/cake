@@ -661,8 +661,15 @@ qboolean FS_ExistsInGameDir(char *filename);
 void	FS_ConvertPath(char *s);
 // converts dos path to unix path
 
-void FS_FilenameCompletion (char *dir, char *ext, qboolean stripExt, void(*callback)(char *s));
+void	FS_FilenameCompletion (char *dir, char *ext, qboolean stripExt, void(*callback)(char *s));
 // allows command completion for functions that open files, like maps, demos, etc
+
+char	**FS_ListFiles(char *, int *);
+char	**FS_ListFiles2(char *findname, int *numfiles);
+// generates a list of files
+
+void	FS_FreeFileList (char **list, int n);
+// frees file list that was previously generated
 
 /* The following FS_*() stdio replacements are necessary if one is
 * to perform non-sequential reads on files reopened on pak files

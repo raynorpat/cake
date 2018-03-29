@@ -835,35 +835,21 @@ void StartServer_MenuInit (void)
 		0
 	};
 	char *buffer;
-	char mapsname[1024];
 	char *s;
 	int length;
 	int i;
-	FILE *fp;
 	float scale = SCR_GetMenuScale();
 
     // initialize list of maps once, reuse it afterwards (=> it isn't freed)
     if (mapnames == NULL)
     {
 		// load the list of map names
-		Com_sprintf (mapsname, sizeof (mapsname), "%s/maps.lst", FS_Gamedir());
-	
-		if ((fp = fopen (mapsname, "rb")) == 0)
+		if ((length = FS_LoadFile("maps.lst", (void **)&buffer)) == -1)
 		{
-			if ((length = FS_LoadFile ("maps.lst", (void **) &buffer)) == -1)
-				Com_Error (ERR_DROP, "couldn't find maps.lst\n");
-		}
-		else
-		{
-			fseek (fp, 0, SEEK_END);
-			length = ftell (fp);
-			fseek (fp, 0, SEEK_SET);
-			buffer = malloc (length);
-			fread (buffer, length, 1, fp);
+			Com_Error (ERR_DROP, "couldn't find maps.lst\n");
 		}
 	
-		s = buffer;
-	
+		s = buffer;	
 		i = 0;
 	
 		while (i < length)
@@ -887,7 +873,7 @@ void StartServer_MenuInit (void)
 			char shortname[MAX_TOKEN_CHARS];
 			char longname[MAX_TOKEN_CHARS];
 			char scratch[200];
-			int		j, l;
+			int	j, l;
 	
 			strcpy (shortname, COM_Parse (&s));
 			l = strlen (shortname);
@@ -904,16 +890,7 @@ void StartServer_MenuInit (void)
 	
 		mapnames[nummaps] = 0;
 	
-		if (fp != 0)
-		{
-			fclose(fp);
-			fp = 0;
-			free (buffer);
-		}
-		else
-		{
-			FS_FreeFile (buffer);
-		}
+		FS_FreeFile (buffer);
     }
 
 	// initialize the menu stuff
@@ -1609,22 +1586,6 @@ static void ModelCallback (void *unused)
 	s_player_skin_box.curvalue = 0;
 }
 
-static void FreeFileList (char **list, int n)
-{
-	int i;
-
-	for (i = 0; i < n; i++)
-	{
-		if (list[i])
-		{
-			free (list[i]);
-			list[i] = 0;
-		}
-	}
-
-	free (list);
-}
-
 static qboolean IconOfSkinExists (char *skin, char **pcxfiles, int npcxfiles)
 {
 	int i;
@@ -1645,32 +1606,15 @@ static qboolean IconOfSkinExists (char *skin, char **pcxfiles, int npcxfiles)
 
 static qboolean PlayerConfig_ScanDirectories (void)
 {
-	char findname[1024];
 	char scratch[1024];
 	int ndirs = 0, npms = 0;
 	char **dirnames = NULL;
-	char *path = NULL;
 	int i;
-
-	extern char **FS_ListFiles (char *, int *);
 
 	s_numplayermodels = 0;
 
 	// get a list of directories
-	do
-	{
-		path = FS_NextPath (path);
-		if (path == NULL)
-			break;
-
-		Com_sprintf (findname, sizeof (findname), "%s/players/*.*", path);
-
-		if ((dirnames = FS_ListFiles (findname, &ndirs)) != 0)
-			break;
-	}
-	while (path);
-
-	if (!dirnames)
+	if ((dirnames = FS_ListFiles2("players/*", &ndirs)) == NULL)
 		return false;
 
 	// go through the subdirectories
@@ -1685,6 +1629,7 @@ static qboolean PlayerConfig_ScanDirectories (void)
 		char *a, *b, *c;
 		char **pcxnames;
 		char **skinnames;
+		FILE *f;
 		int npcxfiles;
 		int nskins = 0;
 
@@ -1695,22 +1640,21 @@ static qboolean PlayerConfig_ScanDirectories (void)
 		strcpy (scratch, dirnames[i]);
 		strcat (scratch, "/tris.md2");
 
-		if (!Sys_FindFirst (scratch))
+		if (FS_FOpenFile(scratch, &f) == -1)
 		{
 			free (dirnames[i]);
 			dirnames[i] = 0;
-			Sys_FindClose ();
 			continue;
 		}
-
-		Sys_FindClose ();
+		else
+		{
+			FS_FCloseFile(f);
+		}
 
 		// verify the existence of at least one pcx skin
 		strcpy (scratch, dirnames[i]);
 		strcat (scratch, "/*.pcx");
-		pcxnames = FS_ListFiles (scratch, &npcxfiles);
-
-		if (!pcxnames)
+		if ((pcxnames = FS_ListFiles2(scratch, &npcxfiles)) == NULL)
 		{
 			free (dirnames[i]);
 			dirnames[i] = 0;
@@ -1776,16 +1720,16 @@ static qboolean PlayerConfig_ScanDirectories (void)
 		else
 			c = b;
 
-		strncpy (s_pmi[s_numplayermodels].displayname, c + 1, MAX_DISPLAYNAME - 1);
-		strcpy (s_pmi[s_numplayermodels].directory, c + 1);
+		Q_strlcpy(s_pmi[s_numplayermodels].displayname, c + 1, sizeof(s_pmi[s_numplayermodels].displayname));
+		Q_strlcpy(s_pmi[s_numplayermodels].directory, c + 1, sizeof(s_pmi[s_numplayermodels].directory));
 
-		FreeFileList (pcxnames, npcxfiles);
+		FS_FreeFileList (pcxnames, npcxfiles);
 
 		s_numplayermodels++;
 	}
 
 	if (dirnames)
-		FreeFileList (dirnames, ndirs);
+		FS_FreeFileList (dirnames, ndirs);
 
 	return true;
 }

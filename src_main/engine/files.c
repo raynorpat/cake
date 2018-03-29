@@ -190,6 +190,11 @@ int FS_FOpenFile (char *filename, FILE **file)
 		{
 			packfile_t *found = NULL;
 
+			// HACK: for maps.lst and players/, we do not want to search the pak, as most player
+			// models are stored outside the pak and id put an updated maps.lst outside the paks in the 3.14 update
+			if ((strcmp(filename, "maps.lst") == 0) || (strncmp(filename, "players/", 8) == 0))
+				continue;
+
 			// look through all the pak file elements
 			pak = search->pack;
 
@@ -773,20 +778,140 @@ qboolean FS_ExistsInGameDir(char *filename)
 
 /*
 ===========
-FS_ConvertPath
+CompareAttributesPack
+
+Compare file attributes in packed files.
+Returns a boolean value, true if the attributes match the file.
 ===========
 */
-void FS_ConvertPath(char *s)
+static qboolean ComparePackFiles(const char *findname, const char *name, char *output, int size)
 {
-	while (*s)
-	{
-		if (*s == '\\' || *s == ':')
-			*s = '/';
-		s++;
-	}
+	qboolean	 retval;
+	char		 buffer[MAX_OSPATH];
+
+	strncpy(buffer, name, sizeof(buffer));
+
+	retval = glob_match((char *)findname, buffer);
+	if (retval && output != NULL)
+		strncpy(output, buffer, size);
+
+	return (retval);
 }
 
-static void FS_FreeFileList(char **list, int n)
+/*
+===========
+FS_ListFiles2
+
+Create a list of files that match a criteria.
+Searchs are relative to the game directory and use all the search paths
+including .pak files.
+===========
+*/
+char **FS_ListFiles2 (char *findname, int *numfiles)
+{
+	searchpath_t	*search;
+	int				i, j;
+	int				nfiles;
+	int				tmpnfiles;
+	char			**tmplist;
+	char			**list;
+	char			path[MAX_OSPATH];
+
+	nfiles = 0;
+	list = malloc(sizeof(char *));
+
+	for (search = fs_searchpaths; search != NULL; search = search->next)
+	{
+		if (search->pack != NULL)
+		{
+			// search pak files
+			for (i = 0, j = 0; i < search->pack->numfiles; i++)
+			{
+				if (ComparePackFiles(findname, search->pack->files[i].name, NULL, 0))
+					j++;
+			}
+			if (j == 0)
+				continue;
+			nfiles += j;
+			list = realloc(list, nfiles * sizeof(char *));
+			for (i = 0, j = nfiles - j; i < search->pack->numfiles; i++)
+			{
+				if (ComparePackFiles(findname, search->pack->files[i].name,	path, sizeof(path)))
+					list[j++] = strdup(path);
+			}
+		}
+		else if (search->filename != NULL)
+		{
+			// search base filesystem
+			Com_sprintf(path, sizeof(path), "%s/%s", search->filename, findname);
+			tmplist = FS_ListFiles(path, &tmpnfiles);
+			if (tmplist != NULL)
+			{
+				tmpnfiles--;
+				nfiles += tmpnfiles;
+				list = realloc(list, nfiles * sizeof(char *));
+				for (i = 0, j = nfiles - tmpnfiles;	i < tmpnfiles; i++, j++)
+					list[j] = strdup(tmplist[i] + strlen(search->filename) + 1);
+				FS_FreeFileList(tmplist, tmpnfiles + 1);
+			}
+		}
+	}
+
+	// delete any duplicates
+	tmpnfiles = 0;
+	for (i = 0; i < nfiles; i++)
+	{
+		if (list[i] == NULL)
+			continue;
+
+		for (j = i + 1; j < nfiles; j++)
+		{
+			if (list[j] != NULL && strcmp(list[i], list[j]) == 0)
+			{
+				free(list[j]);
+				list[j] = NULL;
+				tmpnfiles++;
+			}
+		}
+	}
+
+	if (tmpnfiles > 0)
+	{
+		nfiles -= tmpnfiles;
+		tmplist = malloc(nfiles * sizeof(char *));
+		for (i = 0, j = 0; i < nfiles + tmpnfiles; i++)
+		{
+			if (list[i] != NULL)
+				tmplist[j++] = list[i];
+		}
+		free(list);
+		list = tmplist;
+	}
+
+	// add a guard
+	if (nfiles > 0)
+	{
+		nfiles++;
+		list = realloc(list, nfiles * sizeof(char *));
+		list[nfiles - 1] = NULL;
+	}
+	else
+	{
+		free(list);
+		list = NULL;
+	}
+
+	*numfiles = nfiles;
+
+	return (list);
+}
+
+/*
+===========
+FS_FreeFileList
+===========
+*/
+void FS_FreeFileList(char **list, int n)
 {
 	int i;
 
@@ -804,6 +929,21 @@ static void FS_FreeFileList(char **list, int n)
 
 /*
 ===========
+FS_ConvertPath
+===========
+*/
+void FS_ConvertPath(char *s)
+{
+	while (*s)
+	{
+		if (*s == '\\' || *s == ':')
+			*s = '/';
+		s++;
+	}
+}
+
+/*
+===========
 FS_FilenameCompletion
 ===========
 */
@@ -815,8 +955,8 @@ void FS_FilenameCompletion(char *dir, char *ext, qboolean stripExt, void(*callba
 	char	path[MAX_STRING_CHARS];
 	char	filename[MAX_STRING_CHARS];
 
-	strcpy(path, va("%s/%s/*.%s", fs_gamedir, dir, ext));
-	filenames = FS_ListFiles(path, &nfiles);
+	strcpy(path, va("%s/*.%s", dir, ext));
+	filenames = FS_ListFiles2(path, &nfiles);
 
 	for (i = 0; i < nfiles; i++)
 	{
