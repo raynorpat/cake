@@ -355,6 +355,9 @@ static void RPostProcess_SetCurrentRender(void)
 {
 	GL_BindTexture(GL_TEXTURE0, GL_TEXTURE_2D, r_drawnearestclampsampler, r_currentRenderImage);
 	glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, vid.width, vid.height);
+
+	GL_BindTexture(GL_TEXTURE0, GL_TEXTURE_2D, r_drawnearestclampsampler, r_currentDepthRenderImage);
+	glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, vid.width, vid.height);
 }
 
 static void RPostProcess_DownscaleTo64(void)
@@ -560,6 +563,9 @@ void RPostProcess_FXAA(void)
 void RPostProcess_MenuBackground(void)
 {
 	vec2_t texScale;
+
+	// reset current render image
+	RPostProcess_SetCurrentRender();
 	
 	// set screen scale
 	texScale[0] = 1.0f / vid.width;
