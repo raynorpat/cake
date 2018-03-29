@@ -22,18 +22,40 @@ void WaterWarpVS ()
 #ifdef FRAGMENTSHADER
 uniform sampler2D diffuse;
 uniform sampler2D gradient;
+
 uniform vec4 surfcolor;
+uniform int waterwarppost;
+uniform vec2 texScale;
+uniform vec2 brightnessContrastAmount;
 uniform vec2 rescale;
-uniform float gamma;
 
 out vec4 fragColor;
 
 void WaterWarpFS ()
 {
-	vec4 distort1 = texture (gradient, texcoords[1].yx);
-	vec4 distort2 = texture (gradient, texcoords[1].xy);
-	vec2 warpcoords = texcoords[0].xy + (distort1.ba + distort2.ab);
+	vec2 st = gl_FragCoord.st * texScale;
+	vec4 scene;
 
-	fragColor = mix (texture (diffuse, warpcoords * rescale), surfcolor, surfcolor.a);
+	// mix in water warp post effect
+	if (waterwarppost == 1)
+	{
+		vec4 distort1 = texture (gradient, texcoords[1].yx);
+		vec4 distort2 = texture (gradient, texcoords[1].xy);
+		vec2 warpcoords = texcoords[0].xy + (distort1.ba + distort2.ab);
+		scene = texture(diffuse, warpcoords * rescale);
+	}
+	else
+	{
+		scene = texture(diffuse, st);
+	}
+	
+	// mix scene with possible modulation (eg item pickups, getting shot, etc)
+	scene = mix(scene, surfcolor, surfcolor.a);
+
+	// brightness
+	scene.rgb = doBrightnessAndContrast(scene.rgb, brightnessContrastAmount.x, brightnessContrastAmount.y);
+
+	// output
+	fragColor = scene;
 }
 #endif
