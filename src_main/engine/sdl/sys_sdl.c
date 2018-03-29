@@ -17,8 +17,8 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
 */
-// sys.c
 
+// sys_sdl.c - system services provided by SDL
 #include "qcommon.h"
 #include "input.h"
 #include "game.h"
@@ -261,10 +261,19 @@ SYSTEM IO
 ===============================================================================
 */
 
+void Sys_ShowMessageBox(const char* title, const char* message)
+{
+	SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_WARNING, title, message, NULL);
+}
+
 void Sys_Error (char *error, ...)
 {
 	va_list		argptr;
 	char		text[1024];
+
+#ifdef DEDICATED_ONLY
+	CON_Hide ();
+#endif
 
 	CL_Shutdown ();
 	Qcommon_Shutdown ();
@@ -273,22 +282,11 @@ void Sys_Error (char *error, ...)
 	vsprintf (text, error, argptr);
 	va_end (argptr);
 
-	SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Error", text, NULL);
+#ifndef DEDICATED_ONLY
+	SDL_ShowSimpleMessageBox (SDL_MESSAGEBOX_ERROR, "Error", text, NULL);
+#endif
 
 	exit (1);
-}
-
-void Sys_Quit (void)
-{
-	CL_Shutdown ();
-	Qcommon_Shutdown ();
-
-	exit (0);
-}
-
-void Sys_ShowMessageBox (const char* title, const char* message)
-{
-	SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_WARNING, title, message, NULL);
 }
 
 void Sys_Mkdir (char *path)
@@ -621,8 +619,28 @@ void Sys_Init (void)
 
 	// setup FPU if necessary
 	Sys_SetupFPU();
+
+#ifdef DEDICATED_ONLY
+	CON_Init();
+#endif
 }
 
+/*
+================
+Sys_Shutdown
+================
+*/
+void Sys_Shutdown (void)
+{
+	CL_Shutdown();
+	Qcommon_Shutdown();
+
+#ifdef DEDICATED_ONLY
+	CON_Shutdown();
+#endif
+
+	exit(0);
+}
 
 /*
 ================
@@ -631,70 +649,31 @@ Sys_ConsoleInput
 */
 char *Sys_ConsoleInput (void)
 {
-#ifndef WIN_UWP
-	static char text[256];
-	int len;
-	fd_set fdset;
-	struct timeval timeout;
-
-	if (!dedicated || !dedicated->value)
-	{
-		return (NULL);
-	}
-
-	if (!stdin_active)
-	{
-		return (NULL);
-	}
-
-	FD_ZERO(&fdset);
-	FD_SET(0, &fdset); // stdin
-	timeout.tv_sec = 0;
-	timeout.tv_usec = 0;
-
-	if ((select(1, &fdset, NULL, NULL, &timeout) == -1) || !FD_ISSET(0, &fdset))
-	{
-		return (NULL);
-	}
-
-	len = read(0, text, sizeof(text));
-
-	if (len == 0) // eof!
-	{
-		stdin_active = false;
-		return (NULL);
-	}
-
-	if (len < 1)
-	{
-		return (NULL);
-	}
-
-	text[len - 1] = 0; // rip off the /n and terminate
-
-	return (text);
-#else
-	return NULL;
+#ifdef DEDICATED_ONLY
+	return CON_ConsoleInput();
 #endif
+
+	return NULL;
 }
 
 
 /*
 ================
-Sys_ConsoleOutput
+Sys_Print
 
 Print text to the dedicated console
 ================
 */
-void Sys_ConsoleOutput (char *string)
+void Sys_Print (char *string)
 {
-#ifndef WIN_UWP
-	if (nostdout && nostdout->value)
-	{
-		return;
-	}
+#ifdef DEDICATED_ONLY
+	CON_Hide();
+#endif
 
-	fputs(string, stdout);
+	CON_Print(string);
+
+#ifdef DEDICATED_ONLY
+	CON_Show();
 #endif
 }
 
@@ -709,8 +688,10 @@ char *Sys_GetClipboardData (void)
 	char *data = NULL;
 	char *cliptext;
 
-	if ((cliptext = SDL_GetClipboardText()) != NULL) {
-		if (cliptext[0] != '\0') {
+	if ((cliptext = SDL_GetClipboardText()) != NULL)
+	{
+		if (cliptext[0] != '\0')
+		{
 			size_t bufsize = strlen(cliptext) + 1;
 
 			data = Z_Malloc(bufsize);

@@ -771,8 +771,19 @@ NON-PORTABLE SYSTEM SERVICES
 ==============================================================
 */
 
+// console
+void	CON_Hide (void);
+void	CON_Show (void);
+
+void	CON_Shutdown (void);
+void	CON_Init (void);
+
+char	*CON_ConsoleInput (void);
+void	CON_Print (char *string);
+
+// system init and shutdown
 void	Sys_Init (void);
-void	Sys_Quit (void);
+void	Sys_Shutdown (void);
 
 void	*Sys_GetProcAddress (void *handle, const char *sym);
 void	Sys_FreeLibrary (void *handle);
@@ -784,7 +795,8 @@ void	*Sys_GetGameAPI (void *parms);
 // loads the game dll and calls the api init function
 
 char	*Sys_ConsoleInput (void);
-void	Sys_ConsoleOutput (char *string);
+void	Sys_Print (char *string);
+// console input and output
 
 void	Sys_Error (char *error, ...);
 

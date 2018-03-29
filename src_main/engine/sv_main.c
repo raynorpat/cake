@@ -1059,7 +1059,7 @@ void SV_FinalMessage (char *message, qboolean reconnect)
 SV_Shutdown
 
 Called when each game quits,
-before Sys_Quit or Sys_Error
+before Sys_Shutdown or Sys_Error
 ================
 */
 void SV_Shutdown (char *finalmsg, qboolean reconnect)

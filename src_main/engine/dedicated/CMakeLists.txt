@@ -94,13 +94,22 @@ file(GLOB GAME_SOURCES ../../game/*.c)
 source_group("game" FILES ${GAME_INCLUDES})
 source_group("game" FILES ${GAME_SOURCES})
 
-# windows resources
+# windows code and resources
 set(WIN32_RESOURCES
 	../win32/q2.ico
 	../win32/q2.rc
 	)
+set(WIN32_SOURCES
+	../win32/con_win32.c
+	)
+source_group("system\\win32" FILES ${WIN32_SOURCES})
 source_group("system\\win32\\Resources" FILES ${WIN32_RESOURCES})
 
+# posix code
+set(POSIX_SOURCES
+	../sdl/con_tty.c
+	)
+source_group("system\\posix" FILES ${POSIX_SOURCES})
 
 #
 # Engine Executable
@@ -144,11 +153,11 @@ include_directories(
 # build it
 if(MSVC)
 
-	list(APPEND CAKE_SOURCES ${WIN32_RESOURCES})
+	list(APPEND CAKE_SOURCES ${WIN32_RESOURCES} ${WIN32_SOURCES})
 	list(REMOVE_DUPLICATES CAKE_SOURCES)
 
 	# build the engine
-	add_executable(cake_ded WIN32 ${CAKE_INCLUDES} ${CAKE_SOURCES})
+	add_executable(cake_ded ${CAKE_INCLUDES} ${CAKE_SOURCES})
 	target_link_libraries(cake_ded PRIVATE
 		${SDL2_LIBRARY}
 		dbghelp
@@ -160,6 +169,7 @@ if(MSVC)
 	
 else()
 
+	list(APPEND CAKE_SOURCES ${POSIX_SOURCES})
 	list(REMOVE_DUPLICATES CAKE_SOURCES)
 
 	GET_DIRECTORY_PROPERTY(_directory_flags DEFINITIONS)
@@ -167,7 +177,7 @@ else()
 	SEPARATE_ARGUMENTS(_compiler_FLAGS)
 
 	# build the engine
-	add_executable(cake_ded WIN32 ${CAKE_SOURCES})
+	add_executable(cake_ded ${CAKE_SOURCES})
 	if(NOT WIN32)
 		if(NOT "${CMAKE_SYSTEM}" MATCHES "Darwin")
 			set(RT_LIBRARY rt)

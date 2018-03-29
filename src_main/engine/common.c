@@ -183,8 +183,8 @@ void Com_Printf (char *fmt, ...)
 
 	Con_Print (msg);
 
-	// also echo to debugging console
-	Sys_ConsoleOutput (msg);
+	// also echo to console
+	Sys_Print (msg);
 
 	// logfile
 	if (logfile_active && logfile_active->value)
@@ -305,7 +305,7 @@ void Com_Quit (void)
 		logfile = NULL;
 	}
 
-	Sys_Quit ();
+	Sys_Shutdown ();
 }
 
 
@@ -1890,4 +1890,6 @@ Qcommon_Shutdown
 void Qcommon_Shutdown (void)
 {
 	Cvar_Shutdown ();
+
+	Sys_Shutdown ();
 }
