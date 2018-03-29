@@ -264,6 +264,7 @@ void CL_PrepRefresh (void)
 	char		name[MAX_QPATH];
 	float		rotate;
 	vec3_t		axis;
+	vec4_t		fog;
 
 	if (!cl.configstrings[CS_MODELS+1][0])
 		return;		// no map loaded
@@ -327,6 +328,13 @@ void CL_PrepRefresh (void)
 	rotate = atof (cl.configstrings[CS_SKYROTATE]);
 	sscanf (cl.configstrings[CS_SKYAXIS], "%f %f %f", &axis[0], &axis[1], &axis[2]);
 	RE_SetSky (cl.configstrings[CS_SKY], rotate, axis);
+
+	// set fog
+	if (cl.configstrings[CS_FOG])
+	{
+		sscanf(cl.configstrings[CS_FOG], "%f %f %f %f", &fog[0], &fog[1], &fog[2], &fog[3]);
+		RE_SetFog(fog);
+	}
 
 	// the renderer can now free unneeded stuff
 	RE_EndRegistration ();
