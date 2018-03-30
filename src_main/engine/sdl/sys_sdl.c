@@ -652,11 +652,10 @@ char *Sys_ConsoleInput (void)
 {
 #ifdef DEDICATED_ONLY
 	return CON_ConsoleInput();
-#endif
-
+#else
 	return NULL;
+#endif	
 }
-
 
 /*
 ================

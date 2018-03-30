@@ -293,6 +293,13 @@ char *CON_ConsoleInput (void)
 		}
 		else if (key == VK_TAB)
 		{
+			// TODO: command completion
+			/*
+			Q_strncpyz(buffer, qconsole_line, sizeof(buffer));
+			CommandComplete(buffer);
+			Q_strncpyz(qconsole_line, buffer, sizeof(qconsole_line));
+			qconsole_linelen = strlen(qconsole_line);
+			*/
 			break;
 		}
 
@@ -302,9 +309,7 @@ char *CON_ConsoleInput (void)
 
 			if (key == VK_BACK)
 			{
-				int pos = (qconsole_linelen > 0) ?
-					qconsole_linelen - 1 : 0;
-
+				int pos = (qconsole_linelen > 0) ? qconsole_linelen - 1 : 0;
 				qconsole_line[pos] = '\0';
 				qconsole_linelen = pos;
 			}
