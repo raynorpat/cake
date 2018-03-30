@@ -92,11 +92,26 @@ else (CURL_FOUND)
 	message(STATUS "Using builtin libcurl")
 endif (CURL_FOUND)
 
+# zlib
+find_package(ZLIB)
+if (ZLIB_FOUND)
+    include_directories(${ZLIB_INCLUDE_DIRS})
+    set(ZLIB_LIBRARY ${ZLIB_LIBRARIES})
+else (ZLIB_FOUND)
+    include_directories("../libs/zlib")
+    set(ZLIB_LIBRARY "" )
+	message(STATUS "Using builtin zlib")
+endif (ZLIB_FOUND)
+
 # gamespy library
 include_directories("../libs/gamespy")
 
 # stb headers
 include_directories("../libs/stb")
+
+# minizip headers
+include_directories("../libs/minizip")
+
 
 #
 # Source groups
@@ -312,6 +327,23 @@ endif (NOT CURL_FOUND)
 source_group("libs\\curl" FILES ${CURL_INCLUDES})
 source_group("libs\\curl" FILES ${CURL_SOURCES})
 
+# zlib
+if (NOT ZLIB_FOUND)
+	file(GLOB ZLIB_INCLUDES ../libs/zlib/*.h)
+	file(GLOB ZLIB_SOURCES ../libs/zlib/*.c)
+else (NOT ZLIB_FOUND)
+    set(ZLIB_INCLUDES "")
+    set(ZLIB_SOURCES "")
+endif (NOT ZLIB_FOUND)
+source_group("libs\\zlib" FILES ${ZLIB_INCLUDES})
+source_group("libs\\zlib" FILES ${ZLIB_SOURCES})
+
+# minizip
+file(GLOB MINIZIP_INCLUDES ../libs/minizip/*.h)
+file(GLOB MINIZIP_SOURCES ../libs/minizip/*.c)
+source_group("libs\\minizip" FILES ${MINIZIP_INCLUDES})
+source_group("libs\\minizip" FILES ${MINIZIP_SOURCES})
+
 # gamespy library
 file(GLOB GAMESPY_INCLUDES ../libs/gamespy/*.h ../libs/gamespy/CEngine/*.h)
 file(GLOB GAMESPY_SOURCES ../libs/gamespy/*.c ../libs/gamespy/CEngine/*.c)
@@ -337,6 +369,8 @@ set(CAKE_INCLUDES
 			${MODPLUG_INCLUDES}
 			${GAMESPY_INCLUDES}
 			${CURL_INCLUDES}
+			${ZLIB_INCLUDES}
+			${MINIZIP_INCLUDES}
 			)
 set(CAKE_SOURCES
 			${CLIENT_SOURCES}
@@ -351,6 +385,8 @@ set(CAKE_SOURCES
 			${MODPLUG_SOURCES}
 			${GAMESPY_SOURCES}
 			${CURL_SOURCES}
+			${ZLIB_SOURCES}
+			${MINIZIP_SOURCES}
 			)
 
 if (MONOLITH)
@@ -436,6 +472,7 @@ if (NOT WIN_UWP)
 		${MODPLUG_LIBRARY}
 		${MAD_LIBRARY}
         ${GLEW_LIBRARY}
+		${ZLIB_LIBRARY}
 		${CMAKE_DL_LIBS}
 		${OPENAL_LIBRARY}
 		refresh
@@ -443,6 +480,7 @@ if (NOT WIN_UWP)
 else()
 	target_link_libraries(cake PRIVATE
 		${SDL2_LIBRARY}
+		${ZLIB_LIBRARY}
 		${CMAKE_DL_LIBS}
 		refresh
 		)
@@ -480,6 +518,7 @@ else()
 			${CURL_LIBRARY}
 			${MODPLUG_LIBRARY}
 			${MAD_LIBRARY}
+			${ZLIB_LIBRARY}
 			${OPENGL_LIBRARY}
 			${OPENAL_LIBRARY}
 			${CMAKE_DL_LIBS}
