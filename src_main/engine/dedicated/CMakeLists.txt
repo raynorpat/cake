@@ -70,6 +70,7 @@ set(SYSTEM_INCLUDES
 	)
 set(SYSTEM_SOURCES
 	../sdl/sys_sdl.c
+	../sys_misc.c
 	)
 source_group("system\\sdl" FILES ${SYSTEM_INCLUDES})
 source_group("system\\sdl" FILES ${SYSTEM_SOURCES})
