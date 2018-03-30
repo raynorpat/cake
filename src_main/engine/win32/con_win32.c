@@ -293,13 +293,17 @@ char *CON_ConsoleInput (void)
 		}
 		else if (key == VK_TAB)
 		{
-			// TODO: command completion
-			/*
-			Q_strncpyz(buffer, qconsole_line, sizeof(buffer));
-			CommandComplete(buffer);
-			Q_strncpyz(qconsole_line, buffer, sizeof(qconsole_line));
+			// command completion
+			field_t f;
+			
+			Field_Clear(&f);
+
+			Q_strlcpy(f.buffer, qconsole_line, sizeof(f.buffer));
+			
+			Field_AutoComplete(&f);
+			
+			Q_strlcpy(qconsole_line, f.buffer, sizeof(qconsole_line));
 			qconsole_linelen = strlen(qconsole_line);
-			*/
 			break;
 		}
 

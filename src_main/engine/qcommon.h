@@ -700,6 +700,26 @@ long FS_ffilelength(fshandle_t *fh);
 /*
 ==============================================================
 
+COMMAND COMPLETION
+
+==============================================================
+*/
+
+#define	MAX_EDIT_LINE	256
+typedef struct {
+	int		cursor;
+	char	buffer[MAX_EDIT_LINE];
+} field_t;
+
+void Field_Clear (field_t *edit);
+void Field_AutoComplete (field_t *field);
+void Field_CompleteFilename (char *dir, char *ext, qboolean stripExt);
+void Field_CompleteCommand (char *cmd, qboolean doCommands, qboolean doCvars);
+
+
+/*
+==============================================================
+
 MISC
 
 ==============================================================

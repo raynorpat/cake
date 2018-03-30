@@ -172,237 +172,36 @@ keyname_t keynames[] =
 /*
 ==============================================================================
 
-			LINE TYPING INTO THE CONSOLE
-
-==============================================================================
-*/
-
-static char *completionString;
-static char shortestMatch[MAX_TOKEN_CHARS];
-static int	matchCount;
-
-/*
-===============
-FindMatches
-===============
-*/
-static void FindMatches(char *s)
-{
-	int		i;
-
-	if (Q_stricmpn(s, completionString, strlen(completionString)))
-		return;
-
-	matchCount++;
-	if (matchCount == 1)
-	{
-		Q_strlcpy(shortestMatch, s, sizeof(shortestMatch));
-		return;
-	}
-
-	// cut shortestMatch to the amount common with s
-	for (i = 0; shortestMatch[i]; i++)
-	{
-		if (i >= strlen(s))
-		{
-			shortestMatch[i] = 0;
-			break;
-		}
-
-		if (tolower(shortestMatch[i]) != tolower(s[i]))
-			shortestMatch[i] = 0;
-	}
-}
-
-/*
-===============
-PrintMatches
-===============
-*/
-static void PrintMatches (char *s)
-{
-	if (!Q_stricmpn(s, shortestMatch, strlen(shortestMatch)))
-		Com_Printf("    %s\n", s);
-}
-
-/*
-===============
-PrintCvarMatches
-===============
-*/
-static void PrintCvarMatches(char *s)
-{
-	if (!Q_stricmpn(s, shortestMatch, strlen(shortestMatch)))
-		Com_Printf("    %s = \"%s\"\n", s, Cvar_VariableString(s));
-}
-
-/*
-===============
-FindFirstSeparator
-===============
-*/
-static char *FindFirstSeparator(char *s)
-{
-	int i;
-
-	for (i = 0; i < strlen(s); i++)
-	{
-		if (s[i] == ';')
-			return &s[i];
-	}
-
-	return NULL;
-}
-
-/*
-===============
-CompleteFilename
-===============
-*/
-static void CompleteFilename(char *dir, char *ext, qboolean stripExt)
-{
-	matchCount = 0;
-	shortestMatch[0] = 0;
-
-	FS_FilenameCompletion(dir, ext, stripExt, FindMatches);
-
-	if (matchCount == 0)
-		return;
-
-	strcat(key_lines[edit_line], shortestMatch + strlen(completionString));
-	key_linepos = (int)strlen(key_lines[edit_line]);
-
-	if (matchCount == 1)
-	{
-		strcat(key_lines[edit_line], " ");
-		key_linepos++;
-		return;
-	}
-
-	Com_Printf("%s\n", key_lines[edit_line]);
-
-	FS_FilenameCompletion(dir, ext, stripExt, PrintMatches);
-}
-
-static void CompleteCommand(char *cmd, qboolean doCommands, qboolean doCvars)
-{
-	char		*p;
-	int			completionArgument = 0;
-
-	cmd = key_lines[edit_line] + 1;
-
-	// skip leading whitespace and quotes
-	cmd = Com_SkipCharset(cmd, " \"");
-
-	Cmd_TokenizeString(cmd, false);
-	completionArgument = Cmd_Argc();
-
-	// if there is trailing whitespace on the cmd
-	if (*(cmd + strlen(cmd) - 1) == ' ')
-	{
-		completionString = "";
-		completionArgument++;
-	}
-	else
-	{
-		completionString = Cmd_Argv(completionArgument - 1);
-	}
-
-	if (completionArgument > 1)
-	{
-		if ((p = FindFirstSeparator(cmd)))
-		{
-			// compound command
-			CompleteCommand(p + 1, true, true);
-		}
-		else
-		{
-			char *baseCmd = Cmd_Argv(0);
-
-			// FIXME: all this junk should really be associated with the respective
-			// commands, instead of being hard coded here
-			if ((!Q_stricmp(baseCmd, "map") || !Q_stricmp(baseCmd, "gamemap")) && completionArgument == 2)
-			{
-				CompleteFilename("maps", "bsp", true);
-			}
-			else if ((!Q_stricmp(baseCmd, "exec") || !Q_stricmp(baseCmd, "writeconfig")) && completionArgument == 2)
-			{
-				CompleteFilename("", "cfg", false);
-			}
-			else if (!Q_stricmp(baseCmd, "condump") && completionArgument == 2)
-			{
-				CompleteFilename("", "txt", false);
-			}
-			else if (!Q_stricmp(baseCmd, "demomap") && completionArgument == 2)
-			{
-				CompleteFilename("demos", "dm2", false);
-			}
-		}
-	}
-	else
-	{
-		if (completionString[0] == '\\' || completionString[0] == '/')
-			completionString++;
-
-		matchCount = 0;
-		shortestMatch[0] = 0;
-
-		if (strlen(completionString) == 0)
-			return;
-
-		// find matches
-		if (doCommands)
-			Cmd_CommandCompletion(FindMatches);
-		if (doCvars)
-			Cvar_CommandCompletion(FindMatches);
-
-		if (matchCount == 0)
-			return;	// no matches
-
-		if (cmd == key_lines[edit_line] + 1)
-		{
-			strcpy(key_lines[edit_line] + 1, shortestMatch);
-			key_linepos = (int)strlen(shortestMatch) + 1;
-		}
-		else
-		{
-			strcat(key_lines[edit_line], shortestMatch + strlen(completionString));
-			key_linepos = (int)strlen(completionString) + 1;
-		}
-
-		if (matchCount == 1)
-		{
-			strcat(key_lines[edit_line], " ");
-			key_linepos++;
-			key_lines[edit_line][key_linepos] = 0;
-			return;
-		}
-
-		Com_Printf("%s\n", key_lines[edit_line]);
-		
-		// run through again, printing matches
-		if (doCommands)
-			Cmd_CommandCompletion(PrintMatches);
-		if (doCvars)
-			Cvar_CommandCompletion(PrintCvarMatches);
-	}
-}
-
-static void Key_CompleteCommand(void)
-{
-	char cmd;
-	
-	// actually issue the completion command
-	CompleteCommand(&cmd, true, true);
-}
-
-/*
-==============================================================================
-
 LINE TYPING INTO THE CONSOLE
 
 ==============================================================================
 */
+
+/*
+====================
+Key_CompleteCommand
+
+Console command completion
+====================
+*/
+static void Key_CompleteCommand(void)
+{
+	field_t f;
+
+	// clear field
+	Field_Clear(&f);
+
+	// copy into field struct
+	Q_strlcpy(f.buffer, key_lines[edit_line] + 1, sizeof(f.buffer));
+	f.cursor = key_linepos;
+
+	// actually issue the completion command
+	Field_AutoComplete(&f);
+
+	// copy back out to key
+	Q_strlcpy(key_lines[edit_line] + 1, f.buffer, sizeof(key_lines[edit_line]));
+	key_linepos = f.cursor;
+}
 
 /*
 ====================

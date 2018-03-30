@@ -1891,3 +1891,251 @@ void Qcommon_Shutdown (void)
 {
 	Cvar_Shutdown ();
 }
+
+/*
+==============================================================================
+
+COMMAND COMPLETION
+
+==============================================================================
+*/
+
+// field we are working on, passed to Field_AutoComplete()
+static field_t *completionField;
+
+static char *completionString;
+static char shortestMatch[MAX_TOKEN_CHARS];
+static int	matchCount;
+
+/*
+==================
+Field_Clear
+==================
+*/
+void Field_Clear(field_t *edit)
+{
+	memset(edit->buffer, 0, MAX_EDIT_LINE);
+	edit->cursor = 0;
+}
+
+/*
+===============
+Field_AutoComplete
+
+Perform Tab expansion
+===============
+*/
+void Field_AutoComplete(field_t *field)
+{
+	completionField = field;
+	Field_CompleteCommand(completionField->buffer, true, true);
+}
+
+/*
+===============
+FindMatches
+===============
+*/
+static void FindMatches(char *s)
+{
+	int		i;
+
+	if (Q_stricmpn(s, completionString, strlen(completionString)))
+		return;
+
+	matchCount++;
+	if (matchCount == 1)
+	{
+		Q_strlcpy(shortestMatch, s, sizeof(shortestMatch));
+		return;
+	}
+
+	// cut shortestMatch to the amount common with s
+	for (i = 0; shortestMatch[i]; i++)
+	{
+		if (i >= strlen(s))
+		{
+			shortestMatch[i] = 0;
+			break;
+		}
+
+		if (tolower(shortestMatch[i]) != tolower(s[i]))
+			shortestMatch[i] = 0;
+	}
+}
+
+/*
+===============
+PrintMatches
+===============
+*/
+static void PrintMatches(char *s)
+{
+	if (!Q_stricmpn(s, shortestMatch, strlen(shortestMatch)))
+		Com_Printf("    %s\n", s);
+}
+
+/*
+===============
+PrintCvarMatches
+===============
+*/
+static void PrintCvarMatches(char *s)
+{
+	if (!Q_stricmpn(s, shortestMatch, strlen(shortestMatch)))
+		Com_Printf("    %s = \"%s\"\n", s, Cvar_VariableString(s));
+}
+
+/*
+===============
+FindFirstSeparator
+===============
+*/
+static char *FindFirstSeparator(char *s)
+{
+	int i;
+
+	for (i = 0; i < strlen(s); i++)
+	{
+		if (s[i] == ';')
+			return &s[i];
+	}
+
+	return NULL;
+}
+
+/*
+===============
+Field_CompleteFilename
+===============
+*/
+void Field_CompleteFilename(char *dir, char *ext, qboolean stripExt)
+{
+	int completionOffset;
+
+	matchCount = 0;
+	shortestMatch[0] = 0;
+
+	FS_FilenameCompletion(dir, ext, stripExt, FindMatches);
+
+	if (matchCount == 0)
+		return;
+
+	completionOffset = strlen(completionField->buffer) - strlen(completionString);
+
+	Q_strlcpy(&completionField->buffer[completionOffset], shortestMatch, sizeof(completionField->buffer) - completionOffset);
+	completionField->cursor = strlen(completionField->buffer) + 1;
+
+	if (matchCount == 1)
+	{
+		strcat(completionField->buffer, " ");
+		completionField->cursor++;
+		return;
+	}
+
+	Com_Printf("]%s\n", completionField->buffer);
+
+	FS_FilenameCompletion(dir, ext, stripExt, PrintMatches);
+}
+
+/*
+===============
+Field_CompleteCommand
+===============
+*/
+void Field_CompleteCommand(char *cmd, qboolean doCommands, qboolean doCvars)
+{
+	char		*p;
+	int			completionArgument = 0;
+
+	// skip leading whitespace and quotes
+	cmd = Com_SkipCharset(cmd, " \"");
+
+	Cmd_TokenizeString(cmd, false);
+	completionArgument = Cmd_Argc();
+
+	// if there is trailing whitespace on the cmd
+	if (*(cmd + strlen(cmd) - 1) == ' ')
+	{
+		completionString = "";
+		completionArgument++;
+	}
+	else
+	{
+		completionString = Cmd_Argv(completionArgument - 1);
+	}
+
+	if (completionArgument > 1)
+	{
+		if ((p = FindFirstSeparator(cmd)))
+		{
+			// compound command
+			Field_CompleteCommand(p + 1, true, true);
+		}
+		else
+		{
+			char *baseCmd = Cmd_Argv(0);
+
+			// FIXME: all this junk should really be associated with the respective
+			// commands, instead of being hard coded here
+			if ((!Q_stricmp(baseCmd, "map") || !Q_stricmp(baseCmd, "gamemap")) && completionArgument == 2)
+			{
+				Field_CompleteFilename("maps", "bsp", true);
+			}
+			else if ((!Q_stricmp(baseCmd, "exec") || !Q_stricmp(baseCmd, "writeconfig")) && completionArgument == 2)
+			{
+				Field_CompleteFilename("", "cfg", false);
+			}
+			else if (!Q_stricmp(baseCmd, "condump") && completionArgument == 2)
+			{
+				Field_CompleteFilename("", "txt", false);
+			}
+			else if (!Q_stricmp(baseCmd, "demomap") && completionArgument == 2)
+			{
+				Field_CompleteFilename("demos", "dm2", false);
+			}
+		}
+	}
+	else
+	{
+		int completionOffset;
+
+		if (completionString[0] == '\\' || completionString[0] == '/')
+			completionString++;
+
+		matchCount = 0;
+		shortestMatch[0] = 0;
+
+		if (strlen(completionString) == 0)
+			return;
+
+		// find matches
+		if (doCommands)
+			Cmd_CommandCompletion(FindMatches);
+		if (doCvars)
+			Cvar_CommandCompletion(FindMatches);
+
+		if (matchCount == 0)
+			return;	// no matches
+
+		completionOffset = strlen(completionField->buffer) - strlen(completionString);
+	
+		Q_strlcpy(&completionField->buffer[completionOffset], shortestMatch, sizeof(completionField->buffer) - completionOffset);
+		completionField->cursor = strlen(completionField->buffer) + 1;
+
+		if (matchCount == 1)
+		{
+			strcat(completionField->buffer, " ");
+			completionField->cursor++;
+			return;
+		}
+
+		Com_Printf("]%s\n", completionField->buffer);
+
+		// run through again, printing matches
+		if (doCommands)
+			Cmd_CommandCompletion(PrintMatches);
+		if (doCvars)
+			Cvar_CommandCompletion(PrintCvarMatches);
+	}
+}
