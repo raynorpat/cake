@@ -380,7 +380,6 @@ int FS_FOpenFileRead(fsHandle_t * handle)
 						// PAK
 						file_from_pak = 1;
 						handle->file = fopen(pack->name, "rb");
-
 						if (handle->file)
 						{
 							fseek(handle->file, pack->files[i].offset, SEEK_SET);
