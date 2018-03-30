@@ -29,13 +29,14 @@ QUAKE FILESYSTEM
 =============================================================================
 */
 
-#define MAX_HANDLES	1024
-#define MAX_READ	0x10000
-#define MAX_WRITE	0x10000
+#define MAX_HANDLES		1024
+#define MAX_READ		0x10000
+#define MAX_WRITE		0x10000
 #define MAX_FIND_FILES	0x04000
-#define MAX_PAKS	100
+#define MAX_PAKS		100
 
-typedef struct {
+typedef struct
+{
 	char		name[MAX_QPATH];
 	fsMode_t	mode;
 	FILE        *file;	// Only one will be used.
@@ -46,25 +47,28 @@ typedef struct {
 #endif
 } fsHandle_t;
 
-typedef struct fsLink_s {
+typedef struct fsLink_s
+{
 	char        *from;
 	char        *to;
 	int			length;
 	struct fsLink_s *next;
 } fsLink_t;
 
-typedef struct {
+typedef struct
+{
 	char		name[MAX_QPATH];
 	int			size;
-	int			offset;		// Ignored in PK3 files.
+	int			offset;		// Ignored in PKZ files.
 } fsPackFile_t;
 
-typedef struct {
+typedef struct
+{
 	char		name[MAX_OSPATH];
 	int			numFiles;
 	FILE        *pak;
 #ifdef USE_ZIP
-	unzFile     *pk3;
+	unzFile     *pkz;
 #endif
 	fsPackFile_t *files;
 } fsPack_t;
@@ -79,7 +83,7 @@ typedef struct fsSearchPath_s
 typedef enum
 {
 	PAK,
-	PK3
+	PKZ
 } fsPackFormat_t;
 
 typedef struct
@@ -96,10 +100,7 @@ fsSearchPath_t *fs_baseSearchPaths;
 // Pack formats / suffixes
 fsPackTypes_t	fs_packtypes[] = {	
 	{ "pak", PAK },
-	{ "pkz", PK3 },
-	{ "pk2", PK3 },
-	{ "pk3", PK3 },
-	{ "zip", PK3 }
+	{ "pkz", PKZ }
 };
 
 char			fs_gamedir[MAX_OSPATH];
@@ -110,8 +111,8 @@ static qboolean	fs_fileInPack;
 
 // Set by FS_FOpenFile.
 int				file_from_pak = 0;
-int				file_from_pk3 = 0;
-char			file_from_pk3_name[MAX_QPATH];
+int				file_from_pkz = 0;
+char			file_from_pkz_name[MAX_QPATH];
 
 cvar_t         *fs_homepath;
 cvar_t         *fs_basedir;
@@ -362,7 +363,7 @@ int FS_FOpenFileWrite(fsHandle_t * handle)
 FS_FOpenFileRead
 
 Returns file size or -1 if not found. Can open separate files as well as
-files inside pack files (both PAK and PK3).
+files inside pack files (both PAK and PKZ).
 =================
 */
 int FS_FOpenFileRead(fsHandle_t * handle)
@@ -374,7 +375,7 @@ int FS_FOpenFileRead(fsHandle_t * handle)
 
 	// HACK: for autodownloads
 	file_from_pak = 0;
-	file_from_pk3 = 0;
+	file_from_pkz = 0;
 
 	// search through the path, one element at a time.
 	for (search = fs_searchPaths; search; search = search->next)
@@ -407,11 +408,11 @@ int FS_FOpenFileRead(fsHandle_t * handle)
 						}
 					}
 #ifdef USE_ZIP
-					else if (pack->pk3)
+					else if (pack->pkz)
 					{
-						// PK3
-						file_from_pk3 = 1;
-						strncpy(file_from_pk3_name, strrchr(pack->name, '/') + 1, sizeof(file_from_pk3_name));
+						// PKZ
+						file_from_pkz = 1;
+						strncpy(file_from_pkz_name, strrchr(pack->name, '/') + 1, sizeof(file_from_pkz_name));
 						handle->zip = unzOpen(pack->name);
 						if (handle->zip)
 						{
@@ -645,7 +646,7 @@ int FS_FRead(void *buffer, int size, int count, fileHandle_t f)
 				else
 				{
 					// already tried once
-					return (size - remaining);
+					return size - remaining;
 				}
 			}
 			else if (r == -1)
@@ -694,14 +695,9 @@ int FS_Write(const void *buffer, int size, fileHandle_t f)
 			return 0;
 
 		if (w == 0)
-		{
-			Com_Printf("FS_Write: 0 bytes written to '%s'.\n", handle->name);
 			return size - remaining;
-		}
 		else if (w == -1)
-		{
 			Com_Error(ERR_FATAL, "FS_Write: -1 bytes written to '%s'", handle->name);
-		}
 
 		remaining -= w;
 		buf += w;
@@ -1042,7 +1038,7 @@ fsPack_t *FS_LoadPAK(const char *packPath)
 	strncpy(pack->name, packPath, sizeof(pack->name));
 	pack->pak = handle;
 #ifdef USE_ZIP
-	pack->pk3 = NULL;
+	pack->pkz = NULL;
 #endif
 	pack->numFiles = numFiles;
 	pack->files = files;
@@ -1054,7 +1050,7 @@ fsPack_t *FS_LoadPAK(const char *packPath)
 
 /*
 =================
-FS_LoadPK3
+FS_LoadPKZ
 
 Takes an explicit (not game tree related) path to a pack file.
 
@@ -1062,7 +1058,7 @@ Loads the header and directory, adding the files at the beginning of the list
 so they override previous pack files.
 =================
 */
-fsPack_t *FS_LoadPK3(const char *packPath)
+fsPack_t *FS_LoadPKZ(const char *packPath)
 {
 #ifdef USE_ZIP
 	char			fileName[MAX_QPATH];
@@ -1082,14 +1078,14 @@ fsPack_t *FS_LoadPK3(const char *packPath)
 	if (unzGetGlobalInfo(handle, &global) != UNZ_OK)
 	{
 		unzClose(handle);
-		Com_Error(ERR_FATAL, "FS_LoadPK3: '%s' is not a pack file", packPath);
+		Com_Error(ERR_FATAL, "FS_LoadPKZ: '%s' is not a pack file", packPath);
 	}
 	numFiles = global.number_entry;
 
 	if (numFiles > MAX_FILES_IN_PACK || numFiles == 0)
 	{
 		unzClose(handle);
-		Com_Error(ERR_FATAL, "FS_LoadPK3: '%s' has %i files", packPath, numFiles);
+		Com_Error(ERR_FATAL, "FS_LoadPKZ: '%s' has %i files", packPath, numFiles);
 	}
 	files = Z_Malloc(numFiles * sizeof(fsPackFile_t));
 
@@ -1109,7 +1105,7 @@ fsPack_t *FS_LoadPK3(const char *packPath)
 	pack = Z_Malloc(sizeof(fsPack_t));
 	strncpy(pack->name, packPath, sizeof(pack->name));
 	pack->pak = NULL;
-	pack->pk3 = handle;
+	pack->pkz = handle;
 	pack->numFiles = numFiles;
 	pack->files = files;
 
@@ -1162,8 +1158,8 @@ void FS_AddGameDirectory (char *dir)
 				case PAK:
 					pack = FS_LoadPAK(path);
 					break;
-				case PK3:
-					pack = FS_LoadPK3(path);
+				case PKZ:
+					pack = FS_LoadPKZ(path);
 					break;
 			}
 
@@ -1176,7 +1172,7 @@ void FS_AddGameDirectory (char *dir)
 		}
 	}
 
-	// add not numbered pack files.
+	// add non-numbered pack files
 	for (i = 0; i < sizeof(fs_packtypes) / sizeof(fs_packtypes[0]); i++)
 	{
 		Com_sprintf(path, sizeof(path), "%s/*.%s", dir, fs_packtypes[i].suffix);
@@ -1197,8 +1193,8 @@ void FS_AddGameDirectory (char *dir)
 				case PAK:
 					pack = FS_LoadPAK(list[j]);
 					break;
-				case PK3:
-					pack = FS_LoadPK3(list[j]);
+				case PKZ:
+					pack = FS_LoadPKZ(list[j]);
 					break;
 			}
 
@@ -1341,7 +1337,7 @@ void FS_Path_f(void)
 		Com_Printf("Link %i: '%s' -> '%s'.\n", i, link->from, link->to);
 
 	Com_Printf("----------------------\n");
-	Com_Printf("%i files in PAK/PKZ/PK2/PK3/ZIP files.\n", totalFiles);
+	Com_Printf("%i files in PAK/PKZ files.\n", totalFiles);
 }
 
 /*
@@ -1371,8 +1367,8 @@ void FS_SetGamedir(char *dir)
 			if (fs_searchPaths->pack->pak)
 				fclose(fs_searchPaths->pack->pak);
 #ifdef USE_ZIP
-			if (fs_searchPaths->pack->pk3)
-				unzClose(fs_searchPaths->pack->pk3);
+			if (fs_searchPaths->pack->pkz)
+				unzClose(fs_searchPaths->pack->pkz);
 #endif
 			Z_Free(fs_searchPaths->pack->files);
 			Z_Free(fs_searchPaths->pack);
@@ -1845,8 +1841,8 @@ void FS_Shutdown (void)
 			if (pack->pak != NULL)
 				fclose(pack->pak);
 #ifdef USE_ZIP
-			if (pack->pk3 != NULL)
-				unzClose(pack->pk3);
+			if (pack->pkz != NULL)
+				unzClose(pack->pkz);
 #endif
 			Z_Free(pack->files);
 			Z_Free(pack);
