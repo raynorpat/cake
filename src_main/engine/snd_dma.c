@@ -833,7 +833,6 @@ void S_StartLocalSound (char *sound)
 		return;
 
 	sfx = S_RegisterSound (sound);
-
 	if (!sfx)
 	{
 		Com_Printf ("S_StartLocalSound: can't cache %s\n", sound);
