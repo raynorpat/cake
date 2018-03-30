@@ -306,6 +306,10 @@ static void BGM_UpdateStream (void)
 	if (s_nobgm->value)
 		return;
 
+	// FIXME
+	if (sound_started == SS_OAL)
+		return;
+
 	if (bgmstream->status != STREAM_PLAY)
 		return;
 
