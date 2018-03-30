@@ -104,17 +104,27 @@ Creates any directories needed to store the given filename
 */
 void FS_CreatePath (char *path)
 {
-	char	*ofs;
+	char	*cur;
+	char	*old;
 
-	for (ofs = path + 1; *ofs; ofs++)
+	if (strstr(path, "..") != NULL)
 	{
-		if (*ofs == '/')
+		Com_Printf("WARNING: refusing to create relative path '%s'.\n", path);
+		return;
+	}
+
+	cur = old = path;
+	while (cur != NULL)
+	{
+		if ((cur - old) > 1)
 		{
 			// create the directory
-			*ofs = 0;
+			*cur = '\0';
 			Sys_Mkdir (path);
-			*ofs = '/';
+			*cur = '/';
 		}
+		old = cur;
+		cur = strchr(old + 1, '/');
 	}
 }
 
