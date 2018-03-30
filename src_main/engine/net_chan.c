@@ -72,6 +72,7 @@ If there is no information that needs to be transfered on a given frame,
 such as during the connection stage while waiting for the client to load,
 then a packet only needs to be delivered if there is something in the
 unacknowledged reliable
+
 */
 
 cvar_t		*showpackets;
