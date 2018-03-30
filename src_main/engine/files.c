@@ -199,7 +199,6 @@ void FS_CreatePath (char *path)
 	}
 }
 
-
 /*
 ============
 FS_Gamedir
@@ -383,7 +382,7 @@ int FS_FOpenFileRead(fsHandle_t * handle)
 						if (handle->file)
 						{
 							fseek(handle->file, pack->files[i].offset, SEEK_SET);
-							return (pack->files[i].size);
+							return pack->files[i].size;
 						}
 					}
 					else if (pack->pkz)
@@ -397,7 +396,7 @@ int FS_FOpenFileRead(fsHandle_t * handle)
 							if (unzLocateFile(handle->zip, handle->name, 2) == UNZ_OK)
 							{
 								if (unzOpenCurrentFile(handle->zip) == UNZ_OK)
-									return (pack->files[i].size);
+									return pack->files[i].size;
 							}
 							unzClose(handle->zip);
 						}
@@ -693,6 +692,53 @@ int FS_FTell(fileHandle_t f)
 		return unztell(handle->zip);
 
 	return 0;
+}
+
+/*
+=================
+FS_FEof
+=================
+*/
+int FS_FEof(fileHandle_t f)
+{
+	fsHandle_t *handle;
+
+	handle = FS_GetFileByHandle(f);
+
+	if (handle->file)
+		return feof(handle->file);
+	else if (handle->zip)
+		return unzeof(handle->zip);
+
+	return 0;
+}
+
+/*
+=================
+FS_FError
+=================
+*/
+int FS_FError(fileHandle_t f)
+{
+	fsHandle_t *handle;
+
+	handle = FS_GetFileByHandle(f);
+
+	if (handle->file)
+		return ferror(handle->file);
+
+	return 0;
+}
+
+/*
+=================
+FS_Rewind
+=================
+*/
+void FS_Rewind(fileHandle_t f, int offset, int *pos)
+{
+	FS_Seek(f, offset, FS_SEEK_SET);
+	pos = 0;
 }
 
 /*

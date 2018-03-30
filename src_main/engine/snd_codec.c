@@ -335,7 +335,7 @@ snd_stream_t *S_CodecUtilOpen(char *filename, snd_codec_t *codec)
 
 void S_CodecUtilClose(snd_stream_t **stream)
 {
-	FS_FCloseFile((fileHandle_t)(*stream)->fh.file);
+	fclose((*stream)->fh.file);
 	Z_Free(*stream);
 	*stream = NULL;
 }
