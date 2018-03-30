@@ -24,6 +24,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #define	VERSION		0.10
 
 #define	BASEDIRNAME	"baseq2"
+#define	CFGDIRNAME	".cake"
 
 //============================================================================
 
@@ -612,7 +613,6 @@ int			CM_WriteAreaBits (byte *buffer, int area);
 qboolean	CM_HeadnodeVisible (int headnode, byte *visbits);
 
 void		CM_WritePortalState (FILE *f);
-void		CM_ReadPortalState (FILE *f);
 
 /*
 ==============================================================
@@ -636,65 +636,65 @@ FILESYSTEM
 ==============================================================
 */
 
-void	FS_InitFilesystem (void);
-void	FS_SetGamedir (char *dir);
-char	*FS_Gamedir (void);
-char	*FS_NextPath (char *prevpath);
+extern int file_from_pak;
 
-int		FS_FOpenFile (char *filename, FILE **file);
-void	FS_FCloseFile (FILE *f);
-// note: this can't be called from another DLL, due to MS libc issues
+typedef int	fileHandle_t;
 
-int		FS_LoadFile (char *path, void **buffer);
-// a null buffer will just return the file length without loading
+typedef enum
+{
+	FS_READ,
+	FS_WRITE,
+	FS_APPEND
+} fsMode_t;
+
+typedef enum
+{
+	FS_SEEK_CUR,
+	FS_SEEK_SET,
+	FS_SEEK_END
+} fsOrigin_t;
+
+typedef enum
+{
+	FS_SEARCH_PATH_EXTENSION,
+	FS_SEARCH_BY_FILTER,
+	FS_SEARCH_FULL_PATH
+} fsSearchType_t;
+
+void		FS_Shutdown(void);
+FILE		*FS_FileForHandle(fileHandle_t f);
+int			FS_FOpenFile(const char *name, fileHandle_t * f, fsMode_t mode);
+void		FS_FCloseFile(fileHandle_t f);
+int			FS_Read(void *buffer, int size, fileHandle_t f);
+int			FS_FRead(void *buffer, int size, int count, fileHandle_t f);
+int			FS_Write(const void *buffer, int size, fileHandle_t f);
+void		FS_Seek(fileHandle_t f, int offset, fsOrigin_t origin);
+int			FS_FTell(fileHandle_t f);
+int			FS_Tell(fileHandle_t f);
+int			FS_FileLength(FILE *f);
+qboolean	FS_FileExists(char *path);
+void		FS_RenameFile(const char *oldPath, const char *newPath);
+void		FS_DeleteFile(const char *path);
+char        **FS_ListPak(char *find, int *num);
+char        **FS_ListFiles(char *findname, int *numfiles);
+char        **FS_ListFiles2(char *findname, int *numfiles);
+void		FS_FreeFileList(char **list, int nfiles);
+
+void		FS_InitFilesystem(void);
+void		FS_SetGamedir(char *dir);
+char		*FS_Gamedir(void);
+char        *FS_NextPath(char *prevpath);
+
+void		FS_FilenameCompletion(char *dir, char *ext, qboolean stripExt, void(*callback)(char *s));
+
+int			FS_LoadFile (char *path, void **buffer);
+// a null buffer will just return the file length without loading 
 // a -1 length is not present
-
-int		FS_Read (void *buffer, int len, FILE *f);
 // properly handles partial reads
 
-void	FS_FreeFile (void *buffer);
+void		FS_FreeFile(void *buffer);
 
-void	FS_CreatePath (char *path);
-
-qboolean FS_ExistsInGameDir(char *filename);
-
-void	FS_ConvertPath(char *s);
-// converts dos path to unix path
-
-void	FS_FilenameCompletion (char *dir, char *ext, qboolean stripExt, void(*callback)(char *s));
-// allows command completion for functions that open files, like maps, demos, etc
-
-char	**FS_ListFiles(char *, int *);
-char	**FS_ListFiles2(char *findname, int *numfiles);
-// generates a list of files
-
-void	FS_FreeFileList (char **list, int n);
-// frees file list that was previously generated
-
-/* The following FS_*() stdio replacements are necessary if one is
-* to perform non-sequential reads on files reopened on pak files
-* because we need the bookkeeping about file start/end positions.
-* Allocating and filling in the fshandle_t structure is the users'
-* responsibility when the file is initially opened. */
-typedef struct _fshandle_t
-{
-	FILE *file;
-	qboolean pak;	// is the file read from a pak
-	long start;		// file or data start position
-	long length;	// file or data size
-	long pos;		// current position relative to start
-} fshandle_t;
-
-size_t FS_fread(void *ptr, size_t size, size_t nmemb, fshandle_t *fh);
-int FS_fseek(fshandle_t *fh, long offset, int whence);
-long FS_ftell(fshandle_t *fh);
-void FS_rewind(fshandle_t *fh);
-int FS_feof(fshandle_t *fh);
-int FS_ferror(fshandle_t *fh);
-int FS_fclose(fshandle_t *fh);
-int FS_fgetc(fshandle_t *fh);
-char *FS_fgets(char *s, int size, fshandle_t *fh);
-long FS_ffilelength(fshandle_t *fh);
+void		FS_CreatePath(char *path);
 
 
 /*
@@ -817,6 +817,10 @@ void	*Sys_GetGameAPI (void *parms);
 char	*Sys_ConsoleInput (void);
 void	Sys_Print (char *string);
 // console input and output
+
+char	*Sys_GetHomeDir (void);
+char	*Sys_GetBinaryDir (void);
+char	*Sys_GetCurrentDir (void);
 
 void	Sys_Error (char *error, ...);
 

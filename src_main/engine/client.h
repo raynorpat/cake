@@ -138,7 +138,7 @@ typedef struct
 	int			width_2;			// width / 2
 	int			height;
 
-	FILE		*file;
+	fileHandle_t file;
 	int			remaining;
 
 	unsigned int time;				// Sys_Milliseconds for first cinematic frame

@@ -72,15 +72,22 @@ qboolean CL_CheckOrDownloadFile (char *filename)
 	char	*p;
 	char	name[MAX_OSPATH];
 
-	if (strstr (filename, ".."))
+	// fix backslashes
+	while ((p = strchr(filename, '\\')))
 	{
-		Com_Printf ("Refusing to download a path with ..\n");
-		return true;
+		*p = '/';
 	}
 
 	if (FS_LoadFile (filename, NULL) != -1)
 	{
 		// it exists, no need to download
+		return true;
+	}
+
+	// make sure path is valid
+	if (strstr(filename, "..") || strstr(filename, ":") || (*filename == '.') || (*filename == '/'))
+	{
+		Com_Printf("Refusing to download a path with ..: %s\n", filename);
 		return true;
 	}
 
@@ -93,8 +100,6 @@ qboolean CL_CheckOrDownloadFile (char *filename)
 	}
 
 	strncpy (cls.downloadname, filename, sizeof(cls.downloadname) - 1);
-	while ((p = strstr(cls.downloadname, "\\")))
-		*p = '/';
 
 	// download to a temp name, and only rename
 	// to the real name when done, so if interrupted

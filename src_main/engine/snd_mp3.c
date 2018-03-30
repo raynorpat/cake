@@ -170,7 +170,7 @@ static int mp3_inputdata(snd_stream_t *stream)
 	 */
 	memmove(p->mp3_buffer, p->Stream.next_frame, remaining);
 
-	bytes_read = FS_fread(p->mp3_buffer + remaining, 1,	MP3_BUFFER_SIZE - remaining, &stream->fh);
+	bytes_read = FS_FRead(p->mp3_buffer + remaining, 1,	MP3_BUFFER_SIZE - remaining, (fileHandle_t)stream->fh.file);
 	if (bytes_read == 0)
 	{
 		return -1;
@@ -196,10 +196,10 @@ static int mp3_startread(snd_stream_t *stream)
 	 * format.  The decoded frame will be saved off so that it
 	 * can be processed later.
 	 */
-	ReadSize = FS_fread(p->mp3_buffer, 1, MP3_BUFFER_SIZE, &stream->fh);
+	ReadSize = FS_FRead(p->mp3_buffer, 1, MP3_BUFFER_SIZE, (fileHandle_t)stream->fh.file);
 	if (ReadSize != MP3_BUFFER_SIZE)
 	{
-		if (FS_feof(&stream->fh) || FS_ferror(&stream->fh))
+		if (feof(stream->fh.file) || ferror(stream->fh.file))
 			return -1;
 	}
 
@@ -412,7 +412,7 @@ static int S_MP3_CodecRewindStream (snd_stream_t *stream)
 {
 	/* FIXME: do this better */
 	mp3_stopread(stream);
-	FS_rewind(&stream->fh);
+	rewind(stream->fh.file);
 	return mp3_startread(stream);
 }
 
