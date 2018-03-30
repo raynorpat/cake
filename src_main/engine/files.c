@@ -21,10 +21,21 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #include "qcommon.h"
 #include <errno.h>
 
+#include "unzip.h"
+
 /*
 =============================================================================
 
 QUAKE FILESYSTEM
+
+All of Quake's data access is through a hierchal file system, but the contents of the file system can be transparently merged from several sources.
+
+The "base directory" is the path to the directory holding the quake.exe and all game directories. The base directory is only used during filesystem
+initialization.
+
+The "game directory" is the first tree on the search path and directory that all generated files (savegames, screenshots, demos, config files) will be
+saved to. This can be overridden with the "-game" command line parameter. The game directory can never be changed while quake is executing.
+This is a precacution against having a malicious server instruct clients to write files over areas they shouldn't.
 
 =============================================================================
 */
@@ -40,11 +51,7 @@ typedef struct
 	char		name[MAX_QPATH];
 	fsMode_t	mode;
 	FILE        *file;	// Only one will be used.
-#ifdef USE_ZIP
 	unzFile     *zip;	// (file or zip)
-#else
-	FILE        *zip;
-#endif
 } fsHandle_t;
 
 typedef struct fsLink_s
@@ -67,9 +74,7 @@ typedef struct
 	char		name[MAX_OSPATH];
 	int			numFiles;
 	FILE        *pak;
-#ifdef USE_ZIP
 	unzFile     *pkz;
-#endif
 	fsPackFile_t *files;
 } fsPack_t;
 
@@ -121,19 +126,6 @@ cvar_t         *fs_gamedirvar;
 cvar_t         *fs_debug;
 
 fsHandle_t     *FS_GetFileByHandle(fileHandle_t f);
-
-/*
-
-All of Quake's data access is through a hierchal file system, but the contents of the file system can be transparently merged from several sources.
-
-The "base directory" is the path to the directory holding the quake.exe and all game directories. The base directory is only used during filesystem
-initialization.
-
-The "game directory" is the first tree on the search path and directory that all generated files (savegames, screenshots, demos, config files) will be
-saved to. This can be overridden with the "-game" command line parameter. The game directory can never be changed while quake is executing.
-This is a precacution against having a malicious server instruct clients to write files over areas they shouldn't.
-
-*/
 
 /*
 ============
@@ -246,10 +238,8 @@ FILE *FS_FileForHandle(fileHandle_t f)
 
 	handle = FS_GetFileByHandle(f);
 
-#ifdef USE_ZIP
 	if (handle->zip != NULL)
 		Com_Error(ERR_DROP, "FS_FileForHandle: can't get FILE on zip file");
-#endif
 	if (handle->file == NULL)
 		Com_Error(ERR_DROP, "FS_FileForHandle: NULL");
 
@@ -407,7 +397,6 @@ int FS_FOpenFileRead(fsHandle_t * handle)
 							return (pack->files[i].size);
 						}
 					}
-#ifdef USE_ZIP
 					else if (pack->pkz)
 					{
 						// PKZ
@@ -424,7 +413,6 @@ int FS_FOpenFileRead(fsHandle_t * handle)
 							unzClose(handle->zip);
 						}
 					}
-#endif
 
 					Com_Error(ERR_FATAL, "Couldn't reopen '%s'", pack->name);
 				}
@@ -486,13 +474,12 @@ void FS_FCloseFile(fileHandle_t f)
 	{
 		fclose(handle->file);
 	}
-#ifdef USE_ZIP
 	else if (handle->zip)
 	{
 		unzCloseCurrentFile(handle->zip);
 		unzClose(handle->zip);
 	}
-#endif
+
 	memset(handle, 0, sizeof(*handle));
 }
 
@@ -565,10 +552,8 @@ int FS_Read(void *buffer, int size, fileHandle_t f)
 	{
 		if (handle->file)
 			r = fread(buf, 1, remaining, handle->file);
-#ifdef USE_ZIP
 		else if (handle->zip)
 			r = unzReadCurrentFile(handle->zip, buf, remaining);
-#endif
 		else
 			return 0;
 
@@ -629,10 +614,8 @@ int FS_FRead(void *buffer, int size, int count, fileHandle_t f)
 		{
 			if (handle->file)
 				r = fread(buf, 1, remaining, handle->file);
-#ifdef USE_ZIP
 			else if (handle->zip)
 				r = unzReadCurrentFile(handle->zip, buf, remaining);
-#endif
 			else
 				return 0;
 
@@ -687,10 +670,8 @@ int FS_Write(const void *buffer, int size, fileHandle_t f)
 	{
 		if (handle->file)
 			w = fwrite(buf, 1, remaining, handle->file);
-#ifdef USE_ZIP
 		else if (handle->zip)
 			Com_Error(ERR_FATAL, "FS_Write: can't write to zip file '%s'", handle->name);
-#endif
 		else
 			return 0;
 
@@ -719,10 +700,8 @@ int FS_FTell(fileHandle_t f)
 
 	if (handle->file)
 		return ftell(handle->file);
-#ifdef USE_ZIP
 	else if (handle->zip)
 		return unztell(handle->zip);
-#endif
 
 	return 0;
 }
@@ -789,16 +768,12 @@ FS_Seek
 */
 void FS_Seek(fileHandle_t f, int offset, fsOrigin_t origin)
 {
-#ifdef USE_ZIP
 	byte		dummy[0x8000];
 	int			len;
 	int			r;
-#endif
 	int			remaining = 0;
 	fsHandle_t  *handle;
-#ifdef USE_ZIP
 	unz_file_info info;
-#endif
 
 	handle = FS_GetFileByHandle(f);
 
@@ -820,7 +795,6 @@ void FS_Seek(fileHandle_t f, int offset, fsOrigin_t origin)
 				break;
 		}
 	}
-#ifdef USE_ZIP
 	else if (handle->zip)
 	{
 		switch (origin)
@@ -858,15 +832,14 @@ void FS_Seek(fileHandle_t f, int offset, fsOrigin_t origin)
 			remaining -= r;
 		}
 	}
-#endif
 }
 
 /*
-* =================
-* FS_Tell
-*
-* Returns -1 if an error occurs.
-* =================
+=================
+FS_Tell
+
+Returns -1 if an error occurs.
+=================
 */
 int FS_Tell(fileHandle_t f)
 {
@@ -876,10 +849,8 @@ int FS_Tell(fileHandle_t f)
 
 	if (handle->file)
 		return ftell(handle->file);
-#ifdef USE_ZIP
 	else if (handle->zip)
 		return unztell(handle->zip);
-#endif
 
 	return -1;
 }
@@ -1037,9 +1008,7 @@ fsPack_t *FS_LoadPAK(const char *packPath)
 	pack = Z_Malloc(sizeof(fsPack_t));
 	strncpy(pack->name, packPath, sizeof(pack->name));
 	pack->pak = handle;
-#ifdef USE_ZIP
 	pack->pkz = NULL;
-#endif
 	pack->numFiles = numFiles;
 	pack->files = files;
 
@@ -1060,7 +1029,6 @@ so they override previous pack files.
 */
 fsPack_t *FS_LoadPKZ(const char *packPath)
 {
-#ifdef USE_ZIP
 	char			fileName[MAX_QPATH];
 	int				i = 0;
 	int				numFiles;
@@ -1112,9 +1080,6 @@ fsPack_t *FS_LoadPKZ(const char *packPath)
 	Com_Printf("Added packfile '%s' (%i files).\n", pack, numFiles);
 
 	return pack;
-#else
-	return NULL;
-#endif
 }
 
 /*
@@ -1366,10 +1331,8 @@ void FS_SetGamedir(char *dir)
 		{
 			if (fs_searchPaths->pack->pak)
 				fclose(fs_searchPaths->pack->pak);
-#ifdef USE_ZIP
 			if (fs_searchPaths->pack->pkz)
 				unzClose(fs_searchPaths->pack->pkz);
-#endif
 			Z_Free(fs_searchPaths->pack->files);
 			Z_Free(fs_searchPaths->pack);
 		}
@@ -1823,13 +1786,11 @@ void FS_Shutdown (void)
 	{
 		if (handle->file != NULL)
 			fclose(handle->file);
-#ifdef USE_ZIP
 		if (handle->zip != NULL)
 		{
 			unzCloseCurrentFile(handle->zip);
 			unzClose(handle->zip);
 		}
-#endif
 	}
 
 	// free the search paths
@@ -1840,10 +1801,8 @@ void FS_Shutdown (void)
 			pack = fs_searchPaths->pack;
 			if (pack->pak != NULL)
 				fclose(pack->pak);
-#ifdef USE_ZIP
 			if (pack->pkz != NULL)
 				unzClose(pack->pkz);
-#endif
 			Z_Free(pack->files);
 			Z_Free(pack);
 		}
