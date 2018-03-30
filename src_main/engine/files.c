@@ -134,28 +134,18 @@ COM_FilePath
 Returns the path up to, but not including the last /
 ============
 */
-void COM_FilePath(const char *path, char *dst, int dstSize)
+void COM_FilePath(const char* in, char* out, size_t size)
 {
-	char *pos;
+	const char* s = in + strlen(in) - 1;
 
-	if ((pos = strrchr(path, '/')) != NULL)
-	{
-		pos--;
-		if ((pos - path) < dstSize)
-		{
-			memcpy(dst, path, pos - path);
-			dst[pos - path] = '\0';
-		}
-		else
-		{
-			Com_Printf("Com_FilePath: not enough space.\n");
-			return;
-		}
-	}
-	else
-	{
-		strncpy(dst, path, dstSize);
-	}
+	while (s != in && *s != '/')
+		s--;
+
+	const size_t pathLength = s - in + 1;
+	if (pathLength <= size)
+		Q_strlcpy(out, in, pathLength);
+	else if (size >= 1)
+		out[0] = '\0';
 }
 
 /*
