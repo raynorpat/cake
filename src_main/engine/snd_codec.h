@@ -43,11 +43,20 @@ typedef enum {
 	STREAM_PLAY
 } stream_status_t;
 
+typedef struct codec_fileHandle_s
+{
+	FILE *file;
+	qboolean pak;		// is the file read from a pak
+	long start;			// file or data start position
+	long length;		// file or data size
+	long pos;			// current position relative to start
+} codec_fileHandle_t;
+
 typedef struct snd_codec_s snd_codec_t;
 
 typedef struct snd_stream_s
 {
-	fshandle_t fh;
+	codec_fileHandle_t fh;
 	qboolean pak;
 	snd_info_t info;
 	stream_status_t status;

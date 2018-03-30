@@ -73,9 +73,9 @@ static snd_stream_t *S_MODPLUG_CodecOpenStream(char *filename)
 		return NULL;
 
 	// need to load the whole file into memory and pass it to libmodplug
-	len = FS_ffilelength(&stream->fh);
+	len = FS_FileLength(stream->fh.file);
 	moddata = (byte *)malloc(len);
-	FS_fread(moddata, 1, len, &stream->fh);
+	fread(moddata, 1, len, stream->fh.file);
 
 	S_MODPLUG_SetSettings(stream);
 	stream->priv = ModPlug_Load(moddata, len);

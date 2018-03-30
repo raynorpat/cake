@@ -215,15 +215,14 @@ static menuaction_s s_savegame_actions[MAX_SAVESLOTS];
 
 void Create_Savestrings (void)
 {
-	int		i;
-	FILE	*f;
-	char	name[MAX_OSPATH];
+	int				i;
+	fileHandle_t	*f;
+	char			name[MAX_OSPATH];
 
 	for (i = 0; i < MAX_SAVESLOTS; i++)
 	{
 		Com_sprintf (name, sizeof (name), "%s/save/save%i/server.ssv", FS_Gamedir(), m_loadsave_page * MAX_SAVESLOTS + i);
-		f = fopen (name, "rb");
-
+		FS_FOpenFile(name, (fileHandle_t *)&f, FS_READ);
 		if (!f)
 		{
 			strcpy (m_savestrings[i], "<empty>");
@@ -231,8 +230,8 @@ void Create_Savestrings (void)
 		}
 		else
 		{
-			FS_Read (m_savestrings[i], sizeof (m_savestrings[i]), f);
-			fclose (f);
+			FS_Read (m_savestrings[i], sizeof (m_savestrings[i]), (fileHandle_t)f);
+			FS_FCloseFile((fileHandle_t)f);
 			m_savevalid[i] = true;
 		}
 	}

@@ -16,6 +16,20 @@ endif()
 find_package(SDL2 REQUIRED)
 include_directories(${SDL2_INCLUDE_DIR})
 
+# zlib
+find_package(ZLIB)
+if (ZLIB_FOUND)
+    include_directories(${ZLIB_INCLUDE_DIRS})
+    set(ZLIB_LIBRARY ${ZLIB_LIBRARIES})
+else (ZLIB_FOUND)
+    include_directories("../../libs/zlib")
+    set(ZLIB_LIBRARY "" )
+	message(STATUS "Using builtin zlib")
+endif (ZLIB_FOUND)
+
+# minizip headers
+include_directories("../../libs/minizip")
+
 #
 # Source groups
 #
@@ -70,6 +84,7 @@ set(SYSTEM_INCLUDES
 	)
 set(SYSTEM_SOURCES
 	../sdl/sys_sdl.c
+	../sys_misc.c
 	)
 source_group("system\\sdl" FILES ${SYSTEM_INCLUDES})
 source_group("system\\sdl" FILES ${SYSTEM_SOURCES})
@@ -111,6 +126,23 @@ set(POSIX_SOURCES
 	)
 source_group("system\\posix" FILES ${POSIX_SOURCES})
 
+# zlib
+if (NOT ZLIB_FOUND)
+	file(GLOB ZLIB_INCLUDES ../../libs/zlib/*.h)
+	file(GLOB ZLIB_SOURCES ../../libs/zlib/*.c)
+else (NOT ZLIB_FOUND)
+    set(ZLIB_INCLUDES "")
+    set(ZLIB_SOURCES "")
+endif (NOT ZLIB_FOUND)
+source_group("libs\\zlib" FILES ${ZLIB_INCLUDES})
+source_group("libs\\zlib" FILES ${ZLIB_SOURCES})
+
+# minizip
+file(GLOB MINIZIP_INCLUDES ../../libs/minizip/*.h)
+file(GLOB MINIZIP_SOURCES ../../libs/minizip/*.c)
+source_group("libs\\minizip" FILES ${MINIZIP_INCLUDES})
+source_group("libs\\minizip" FILES ${MINIZIP_SOURCES})
+
 #
 # Engine Executable
 #
@@ -122,6 +154,9 @@ set(CAKE_INCLUDES
 			${SERVER_INCLUDES}
 			${SYSTEM_INCLUDES}
 			${SHARED_INCLUDES}
+			
+			${ZLIB_INCLUDES}
+			${MINIZIP_INCLUDES}
 			)
 set(CAKE_SOURCES
 			${CLIENT_SOURCES}
@@ -129,6 +164,9 @@ set(CAKE_SOURCES
 			${SERVER_SOURCES}
 			${SYSTEM_SOURCES}
 			${SHARED_SOURCES}
+			
+			${ZLIB_SOURCES}
+			${MINIZIP_SOURCES}
 			)
 
 if (MONOLITH)
@@ -160,6 +198,7 @@ if(MSVC)
 	add_executable(cake_ded ${CAKE_INCLUDES} ${CAKE_SOURCES})
 	target_link_libraries(cake_ded PRIVATE
 		${SDL2_LIBRARY}
+		${ZLIB_LIBRARY}
 		dbghelp
 		iphlpapi
 		wsock32.lib
@@ -186,6 +225,7 @@ else()
 			pthread
 			${RT_LIBRARY}
 			${SDL2_LIBRARY}
+			${ZLIB_LIBRARY}
 			${CMAKE_DL_LIBS}
 			)
 	endif()

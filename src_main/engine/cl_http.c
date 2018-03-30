@@ -610,7 +610,7 @@ static void CL_CheckAndQueueDownload (char *path)
 		}
 		else
 		{
-			exists = FS_ExistsInGameDir (path);
+			exists = FS_LoadFile(path, NULL);
 		}
 
 		if (!exists)

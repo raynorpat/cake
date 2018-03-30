@@ -217,19 +217,22 @@ S_WAV_CodecLoad
 */
 void *S_WAV_CodecLoad(char *filename, snd_info_t *info)
 {
-	FILE *file;
+	fileHandle_t file;
+	FILE *fileHandle;
 	void *buffer;
 	
 	// Try to open the file
-	FS_FOpenFile(filename, &file);
+	FS_FOpenFile(filename, &file, FS_READ);
 	if (!file)
 	{
 		Com_Printf("Can't read sound file %s\n", filename);
 		return NULL;
 	}
+
+	fileHandle = FS_FileForHandle(file);
 	
 	// Read the RIFF header
-	if (!WAV_ReadRIFFHeader(filename, file, info))
+	if (!WAV_ReadRIFFHeader(filename, fileHandle, info))
 	{
 		FS_FCloseFile(file);
 		Com_Printf("Can't understand wav file %s\n", filename);
@@ -323,7 +326,7 @@ static void S_WAV_CodecCloseStream (snd_stream_t *stream)
 
 static int S_WAV_CodecRewindStream (snd_stream_t *stream)
 {
-	FS_rewind(&stream->fh);
+	rewind(stream->fh.file);
 	return 0;
 }
 

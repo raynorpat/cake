@@ -1629,7 +1629,7 @@ static qboolean PlayerConfig_ScanDirectories (void)
 		char *a, *b, *c;
 		char **pcxnames;
 		char **skinnames;
-		FILE *f;
+		fileHandle_t f;
 		int npcxfiles;
 		int nskins = 0;
 
@@ -1640,7 +1640,7 @@ static qboolean PlayerConfig_ScanDirectories (void)
 		strcpy (scratch, dirnames[i]);
 		strcat (scratch, "/tris.md2");
 
-		if (FS_FOpenFile(scratch, &f) == -1)
+		if (FS_FOpenFile(scratch, &f, FS_READ) == -1)
 		{
 			free (dirnames[i]);
 			dirnames[i] = 0;

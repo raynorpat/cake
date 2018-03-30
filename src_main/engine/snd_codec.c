@@ -309,12 +309,12 @@ extern int file_from_pak;
 snd_stream_t *S_CodecUtilOpen(char *filename, snd_codec_t *codec)
 {
 	snd_stream_t *stream;
-	FILE *handle;
+	fileHandle_t handle;
 	qboolean pak;
 	size_t length;
 	
 	// Try to open the file
-	length = FS_FOpenFile(filename, &handle);
+	length = FS_FOpenFile(filename, &handle, FS_READ);
 	pak = file_from_pak;
 	if (length == (size_t)-1)
 	{
@@ -325,8 +325,8 @@ snd_stream_t *S_CodecUtilOpen(char *filename, snd_codec_t *codec)
 	// Allocate a stream, Z_Malloc zeroes its content
 	stream = (snd_stream_t *) Z_Malloc(sizeof(snd_stream_t));
 	stream->codec = codec;
-	stream->fh.file = handle;
-	stream->fh.start = ftell(handle);
+	stream->fh.file = FS_FileForHandle(handle);
+	stream->fh.start = FS_FTell(handle);
 	stream->fh.pos = 0;
 	stream->fh.length = (int) length;
 	stream->fh.pak = stream->pak = pak;
@@ -335,7 +335,7 @@ snd_stream_t *S_CodecUtilOpen(char *filename, snd_codec_t *codec)
 
 void S_CodecUtilClose(snd_stream_t **stream)
 {
-	FS_FCloseFile((*stream)->fh.file);
+	fclose((*stream)->fh.file);
 	Z_Free(*stream);
 	*stream = NULL;
 }

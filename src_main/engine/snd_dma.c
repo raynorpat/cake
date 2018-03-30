@@ -654,7 +654,7 @@ struct sfx_s *S_RegisterSexedSound (entity_state_t *ent, char *base)
 	int				n;
 	char			*p;
 	struct sfx_s	*sfx;
-	FILE			*f;
+	fileHandle_t	*f;
 	char			model[MAX_QPATH];
 	char			sexedFilename[MAX_QPATH];
 	char			maleFilename[MAX_QPATH];
@@ -689,12 +689,11 @@ struct sfx_s *S_RegisterSexedSound (entity_state_t *ent, char *base)
 	if (!sfx)
 	{
 		// no, so see if it exists
-		FS_FOpenFile (&sexedFilename[1], &f);
-
+		FS_FOpenFile (&sexedFilename[1], (fileHandle_t *)&f, FS_READ);
 		if (f)
 		{
 			// yes, close the file and register it
-			FS_FCloseFile (f);
+			FS_FCloseFile ((fileHandle_t)f);
 			sfx = S_RegisterSound (sexedFilename);
 		}
 		else
@@ -834,7 +833,6 @@ void S_StartLocalSound (char *sound)
 		return;
 
 	sfx = S_RegisterSound (sound);
-
 	if (!sfx)
 	{
 		Com_Printf ("S_StartLocalSound: can't cache %s\n", sound);

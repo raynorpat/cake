@@ -326,19 +326,19 @@ void SV_WriteLevelFile (void)
 /*
 ==============
 SV_ReadLevelFile
-
 ==============
 */
+void CM_ReadPortalState(fileHandle_t f);
+
 void SV_ReadLevelFile (void)
 {
-	char	name[MAX_OSPATH];
-	FILE	*f;
+	char			name[MAX_OSPATH];
+	fileHandle_t	f;
 
 	Com_DPrintf ("SV_ReadLevelFile()\n");
 
-	Com_sprintf (name, sizeof (name), "%s/save/current/%s.sv2", FS_Gamedir(), sv.name);
-	f = fopen (name, "rb");
-
+	Com_sprintf (name, sizeof (name), "save/current/%s.sv2", sv.name);
+	FS_FOpenFile (name, &f, FS_READ);
 	if (!f)
 	{
 		Com_Printf ("Failed to open %s\n", name);
@@ -347,7 +347,7 @@ void SV_ReadLevelFile (void)
 
 	FS_Read (sv.configstrings, sizeof (sv.configstrings), f);
 	CM_ReadPortalState (f);
-	fclose (f);
+	FS_FCloseFile (f);
 
 	Com_sprintf (name, sizeof (name), "%s/save/current/%s.sav", FS_Gamedir(), sv.name);
 	ge->ReadLevel (name);
@@ -356,7 +356,6 @@ void SV_ReadLevelFile (void)
 /*
 ==============
 SV_WriteServerFile
-
 ==============
 */
 void SV_WriteServerFile (qboolean autosave)
@@ -372,7 +371,6 @@ void SV_WriteServerFile (qboolean autosave)
 
 	Com_sprintf (name, sizeof (name), "%s/save/current/server.ssv", FS_Gamedir());
 	f = fopen (name, "wb");
-
 	if (!f)
 	{
 		Com_Printf ("Couldn't write %s\n", name);
@@ -432,21 +430,19 @@ void SV_WriteServerFile (qboolean autosave)
 /*
 ==============
 SV_ReadServerFile
-
 ==============
 */
 void SV_ReadServerFile (void)
 {
-	FILE	*f;
-	char	name[MAX_OSPATH], string[128];
-	char	comment[32];
-	char	mapcmd[MAX_TOKEN_CHARS];
+	fileHandle_t	f;
+	char			name[MAX_OSPATH], string[128];
+	char			comment[32];
+	char			mapcmd[MAX_TOKEN_CHARS];
 
 	Com_DPrintf ("SV_ReadServerFile()\n");
 
-	Com_sprintf (name, sizeof (name), "%s/save/current/server.ssv", FS_Gamedir());
-	f = fopen (name, "rb");
-
+	Com_sprintf (name, sizeof (name), "save/current/server.ssv");
+	FS_FOpenFile(name, &f, FS_READ);
 	if (!f)
 	{
 		Com_Printf ("Couldn't read %s\n", name);
@@ -463,7 +459,7 @@ void SV_ReadServerFile (void)
 	// these will be things like coop, skill, deathmatch, etc
 	while (1)
 	{
-		if (!fread (name, 1, sizeof (name), f))
+		if (!FS_FRead(name, 1, sizeof(name), f))
 			break;
 
 		FS_Read (string, sizeof (string), f);
@@ -471,7 +467,7 @@ void SV_ReadServerFile (void)
 		Cvar_ForceSet (name, string);
 	}
 
-	fclose (f);
+	FS_FCloseFile(f);
 
 	// start a new game fresh with new cvars
 	SV_InitGame ();

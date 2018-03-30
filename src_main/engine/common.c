@@ -1890,6 +1890,8 @@ Qcommon_Shutdown
 void Qcommon_Shutdown (void)
 {
 	Cvar_Shutdown ();
+
+	FS_Shutdown ();
 }
 
 /*

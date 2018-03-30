@@ -227,7 +227,7 @@ void BGM_PlayCDtrack (int track, qboolean looping)
 	const char *ext;
 	unsigned int type;
 	music_handler_t *handler;
-	FILE *h;
+	fileHandle_t h;
 
 	BGM_Stop();
 
@@ -239,7 +239,7 @@ void BGM_PlayCDtrack (int track, qboolean looping)
 		if (! handler->is_available)
 			goto _next;
 		snprintf(tmp, sizeof(tmp), "%s/track%02d%s", MUSIC_DIRNAME, (int)track, handler->ext);
-		if (FS_FOpenFile(tmp, &h) == -1)
+		if (FS_FOpenFile(tmp, &h, FS_READ) == -1)
 		{
 			goto _next;
 		}
@@ -304,6 +304,10 @@ static void BGM_UpdateStream (void)
 
 	// don't bother playing anything if disabled
 	if (s_nobgm->value)
+		return;
+
+	// FIXME
+	if (sound_started == SS_OAL)
 		return;
 
 	if (bgmstream->status != STREAM_PLAY)
