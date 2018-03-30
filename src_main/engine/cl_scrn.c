@@ -969,7 +969,7 @@ void SCR_ExecuteLayoutString (char *s)
 
 			DrawAltStringScaled (x + scale * 32, y, ci->name, scale);
 			DrawStringScaled(x + scale * 32, y + scale * 8, "Score: ", scale);
-			DrawAltStringScaled (x + scale * 32 + 7 * 8, y + scale * 8, va ("%i", score), scale);
+			DrawAltStringScaled (x + scale * (32 + 7 * 8), y + scale * 8, va ("%i", score), scale);
 			DrawStringScaled (x + scale * 32, y + scale * 16, va ("Ping: %i", ping), scale);
 			DrawStringScaled (x + scale * 32, y + scale * 24, va ("Time: %i", time), scale);
 

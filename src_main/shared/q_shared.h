@@ -233,7 +233,7 @@ void COM_StripExtensionSafe (const char *in, char *out, int destsize);
 char *COM_StripPathFromFilename (const char *in);
 char *COM_FileExtension (char *in);
 void COM_FileBase (char *in, char *out);
-void COM_FilePath (char *in, char *out);
+void COM_FilePath (const char *path, char *dst, int dstSize);
 void COM_DefaultExtension (char *path, char *extension);
 
 char *COM_Parse (char **data_p);
