@@ -315,7 +315,7 @@ char *Sys_FindFirst(char *path)
 
 	findhandle = 0;
 
-	COM_FilePath(path, findbase);
+	COM_FilePath(path, findbase, sizeof(findbase));
 	findhandle = _findfirst(path, &findinfo);
 
 	if (findhandle == -1)

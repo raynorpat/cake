@@ -52,7 +52,6 @@ char	fs_gamedir[MAX_OSPATH];
 cvar_t	*fs_basedir;
 cvar_t	*fs_gamedirvar;
 
-
 typedef struct searchpath_s
 {
 	char	filename[MAX_OSPATH];
@@ -63,18 +62,50 @@ typedef struct searchpath_s
 searchpath_t	*fs_searchpaths;
 searchpath_t	*fs_base_searchpaths;	// without gamedirs
 
-
 /*
 
 All of Quake's data access is through a hierchal file system, but the contents of the file system can be transparently merged from several sources.
 
-The "base directory" is the path to the directory holding the quake.exe and all game directories. The sys_* files pass this to host_init in quakeparms_t->basedir. This can be overridden with the "-basedir" command line parm to allow code debugging in a different directory. The base directory is
-only used during filesystem initialization.
+The "base directory" is the path to the directory holding the quake.exe and all game directories. The sys_* files pass this to host_init in quakeparms_t->basedir.
+This can be overridden with the "-basedir" command line parm to allow code debugging in a different directory. The base directory is only used during filesystem
+initialization.
 
-The "game directory" is the first tree on the search path and directory that all generated files (savegames, screenshots, demos, config files) will be saved to. This can be overridden with the "-game" command line parameter. The game directory can never be changed while quake is executing. This is a precacution against having a malicious server instruct clients to write files over areas they shouldn't.
+The "game directory" is the first tree on the search path and directory that all generated files (savegames, screenshots, demos, config files) will be saved to.
+This can be overridden with the "-game" command line parameter. The game directory can never be changed while quake is executing. This is a precacution against
+having a malicious server instruct clients to write files over areas they shouldn't.
 
 */
 
+/*
+============
+COM_FilePath
+
+Returns the path up to, but not including the last /
+============
+*/
+void COM_FilePath(const char *path, char *dst, int dstSize)
+{
+	char *pos;
+
+	if ((pos = strrchr(path, '/')) != NULL)
+	{
+		pos--;
+		if ((pos - path) < dstSize)
+		{
+			memcpy(dst, path, pos - path);
+			dst[pos - path] = '\0';
+		}
+		else
+		{
+			Com_Printf("Com_FilePath: not enough space.\n");
+			return;
+		}
+	}
+	else
+	{
+		strncpy(dst, path, dstSize);
+	}
+}
 
 /*
 ================
@@ -104,8 +135,8 @@ Creates any directories needed to store the given filename
 */
 void FS_CreatePath (char *path)
 {
-	char	*cur;
-	char	*old;
+	char *cur;
+	char *old;
 
 	if (strstr(path, "..") != NULL)
 	{

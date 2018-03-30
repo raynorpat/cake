@@ -962,31 +962,6 @@ void COM_FileBase (char *in, char *out)
 }
 
 /*
-============
-COM_FilePath
-
-Returns the path up to, but not including the last /
-============
-*/
-void COM_FilePath (char *in, char *out)
-{
-	char *s;
-
-	if (!*in) {
-		*out = 0;
-		return;
-	}
-	s = in + strlen (in) - 1;
-
-	while (s != in && *s != '/')
-		s--;
-
-	strncpy (out, in, s - in);
-	out[s-in] = 0;
-}
-
-
-/*
 ==================
 COM_DefaultExtension
 ==================
