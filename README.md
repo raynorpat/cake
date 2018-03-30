@@ -17,8 +17,8 @@ Some of the major features currently implemented are:
   * RoQ cinematic video encoder/decoder
   * Re-written OpenGL 3.3 renderer built for speed and a retro software look
   * HTTP/FTP download redirection (using cURL)
-  * Integrated content creation tools
-  * Master server tool
+  * Portable content creation tools (q2map, bake)
+  * Master server and dedicated server tool
   * Many, many, many bug fixes
 
 ## Downloads
@@ -80,3 +80,4 @@ Contributions from
   * FFmpeg project - RoQ video encoder
   * Frank Sapone - master server - see https://bitbucket.org/maraakate/gsmaster
   * Deniz Sezen - bug fixes
+  * Lucas Zadrozny - testing and bug fixes
