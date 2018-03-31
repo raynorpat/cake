@@ -32,20 +32,32 @@ void CompositeFS ()
 	vec4 color = vec4(0.0);
 	vec2 st = gl_FragCoord.st * texScale;
 		
-	// brightpass
+	// downsampled brightness-pass
 	if(compositeMode == 1)
 	{
+		// set constants
+		float hdrLinearThreshold = brightParam.x;
+		float hdrKnee = hdrLinearThreshold * brightParam.y + 1e-5;
+		vec3 hdrCurve = vec3(hdrLinearThreshold - hdrKnee, hdrKnee * 2.0, 0.25f / hdrKnee);
+		
 		// multiply with 4 because the FBO is only 1/4th of the screen resolution
 		st *= vec2(4.0, 4.0);
 		
 		// grab scene
-		color = texture (diffuse, st);
+		color = texture(diffuse, st);
+		vec3 linearColor = GammaToLinearSpace(color.rgb);
+		
+		// grab brightness
+		float br = Brightness(linearColor);
+		
+		// set under-threshold quadratic curve
+		float rq = clamp(br - hdrCurve.x, 0, hdrCurve.y);
+		rq = hdrCurve.z * rq * rq;
 
-		// adjust contrast
-		float hdrContrastThreshold = brightParam.x;
-		float hdrContrastScaler = brightParam.y;
-
-		fragColor = max((color - hdrContrastThreshold) * hdrContrastScaler, vec4(0.0,0.0,0.0,0.0));
+		// combine and apply the brightness response curve.
+		linearColor *= max(rq, br - hdrLinearThreshold) / max(br, 1e-5);
+	
+		fragColor = vec4(linearColor.rgb, 1.0);
 		return;
 	}
 	// horizontal gaussian blur pass

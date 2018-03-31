@@ -91,11 +91,11 @@ GLuint r_currentAORenderImage;
 GLuint m_lum[2];
 GLuint m_lumCurrent;
 
-cvar_t *r_hdrContrastThreshold;
-cvar_t *r_hdrContrastScale;
+cvar_t *r_hdrLinearThreshold;
+cvar_t *r_hdrKneeCoeff;
 cvar_t *r_hdrExposureCompensation;
 cvar_t *r_hdrExposureAdjust;
-cvar_t *r_hdrBlurAmount;
+cvar_t *r_hdrBloomIntensity;
 cvar_t *r_hdrBlurPasses;
 cvar_t *r_postprocessing;
 cvar_t *r_ssao;
@@ -350,11 +350,11 @@ void RPostProcess_CreatePrograms(void)
 
 void RPostProcess_Init(void)
 {
-	r_hdrContrastThreshold = Cvar_Get("r_hdrContrastThreshold", "1.0", 0);
-	r_hdrContrastScale = Cvar_Get("r_hdrContrastScale", "300", 0);
+	r_hdrLinearThreshold = Cvar_Get("r_hdrLinearThreshold", "0.8", 0);
+	r_hdrKneeCoeff = Cvar_Get("r_hdrKneeCoeff", "0.5", 0);
 	r_hdrExposureCompensation = Cvar_Get("r_hdrExposureCompensation", "3.0", 0);
 	r_hdrExposureAdjust = Cvar_Get("r_hdrExposureAdjust", "1.4", 0);
-	r_hdrBlurAmount = Cvar_Get("r_hdrBlurAmount", "0.33", 0);
+	r_hdrBloomIntensity = Cvar_Get("r_hdrBloomIntensity", "0.66", 0);
 	r_hdrBlurPasses = Cvar_Get("r_hdrBlurPasses", "8", 0);
 
 	r_postprocessing = Cvar_Get("r_postprocessing", "1", CVAR_ARCHIVE);
@@ -417,8 +417,8 @@ static void RPostProcess_DownscaleBrightpass(void)
 	// do downscaled brightpass
 	GL_UseProgram(gl_compositeprog);
 
-	brightParam[0] = r_hdrContrastThreshold->value;
-	brightParam[1] = r_hdrContrastScale->value;
+	brightParam[0] = r_hdrLinearThreshold->value;
+	brightParam[1] = r_hdrKneeCoeff->value;
 	brightParam[2] = 0;
 	brightParam[3] = 0;
 	glProgramUniform4f(gl_compositeprog, u_compositeBrightParam, brightParam[0], brightParam[1], brightParam[2], brightParam[3]);
@@ -505,8 +505,8 @@ static void RPostProcess_DoBloomAndTonemap(void)
 		glProgramUniform1i(gl_hdrpostprog, u_postwaterwarp, 0);
 	}
 
-	// set brightness, contrast, and blur levels along with SSAO value
-	glProgramUniform4f(gl_hdrpostprog, u_postBrightnessContrastBlurSSAOAmount, vid_gamma->value, vid_contrast->value, r_hdrBlurAmount->value, r_ssao->value);
+	// set brightness, contrast, and bloom levels along with SSAO value
+	glProgramUniform4f(gl_hdrpostprog, u_postBrightnessContrastBlurSSAOAmount, vid_gamma->value, vid_contrast->value, r_hdrBloomIntensity->value, r_ssao->value);
 
 	GL_Enable(BLEND_BIT);
 

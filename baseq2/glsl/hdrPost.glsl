@@ -95,7 +95,7 @@ void HDRPostFS ()
 {
 	vec2 st = gl_FragCoord.st * texScale;
 	vec4 scene;
-	
+
 	// mix in water warp post effect
 	if (waterwarppost == 1)
 	{
@@ -103,23 +103,23 @@ void HDRPostFS ()
 		vec4 distort2 = texture (warpgradient, texcoords[1].xy);
 		vec2 warpcoords = texcoords[0].xy + (distort1.ba + distort2.ab);
 
-		scene = texture(precomposite, warpcoords * rescale);
+		scene = GammaToLinearSpace(texture(precomposite, warpcoords * rescale));
 	}
 	else
 	{
-		scene = texture(precomposite, st);
+		scene = GammaToLinearSpace(texture(precomposite, st));
 	}
-	
+
 	// multiply scene with ambient occlusion
 	if (brightnessContrastBlurSSAOAmount.w > 0)
 	{
 		vec4 AOScene = texture(AOTex, st);
 		scene *= AOScene;
 	}
-	
+
 	// then mix in the previously generated bloom
 	vec4 hdrScene = texture(diffuse, st);
-	vec4 color = mix(scene, hdrScene, brightnessContrastBlurSSAOAmount.z);
+	vec4 color = vec4(hdrScene.rgb + scene.rgb * brightnessContrastBlurSSAOAmount.z, hdrScene.a);
 
 	// vignette effect
 #if USE_VIGNETTE
@@ -141,13 +141,16 @@ void HDRPostFS ()
 	FilmgrainPass(color);
 #endif
 
-	// mix scene with possible modulation (eg item pickups, getting shot, etc)
-	color = mix(color, surfcolor, surfcolor.a);
-
 	// brightness
 	color.rgb = doBrightnessAndContrast(color.rgb, brightnessContrastBlurSSAOAmount.x, brightnessContrastBlurSSAOAmount.y);
 	
+	// convert back out to gamma space
+	vec4 finalColor = LinearToGammaSpace(color);
+	
+	// mix scene with possible modulation (eg item pickups, getting shot, etc)
+	finalColor = mix(finalColor, surfcolor, surfcolor.a);
+	
 	// send it out to the screen
-	fragColor = color;
+	fragColor = finalColor;
 }
 #endif
