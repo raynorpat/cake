@@ -9,14 +9,8 @@ project(cake)
 #
 # Options
 #
-if (USE_CODEC_WAV)
-	add_definitions(-DUSE_CODEC_WAVE)
-endif()
-if (USE_CODEC_MP3)
-	add_definitions(-DUSE_CODEC_MP3)
-endif()
-if (USE_CODEC_MODPLUG)
-	add_definitions(-DUSE_CODEC_MODPLUG)
+if (USE_CODEC_OGG)
+	add_definitions(-DUSE_CODEC_OGG)
 endif()
 if (USE_OPENAL)
 	add_definitions(-DUSE_OPENAL)
@@ -53,32 +47,6 @@ else (GLEW_FOUND)
     add_definitions(-DGLEW_STATIC)
 	message(STATUS "Using builtin glew")
 endif (GLEW_FOUND)
-
-# libmad
-if (USE_CODEC_MP3)
-	find_package(MAD)
-	if (MAD_FOUND)
-		include_directories(${MAD_INCLUDE_DIRS})
-		set(MAD_LIBRARY ${MAD_LIBRARIES})
-	else (MAD_FOUND)
-		include_directories("../libs/mad/include")
-		set(MAD_LIBRARY "" )
-		message(STATUS "Using builtin libmad")
-	endif (MAD_FOUND)
-endif()
-
-# libmodplug
-if (USE_CODEC_MODPLUG)
-	find_package(MODPLUG)
-	if (MODPLUG_FOUND)
-		include_directories(${MODPLUG_INCLUDE_DIRS})
-		set(MODPLUG_LIBRARY ${MODPLUG_LIBRARIES})
-	else (MODPLUG_FOUND)
-		include_directories("../libs/modplug/src")
-		set(MODPLUG_LIBRARY "" )
-		message(STATUS "Using builtin libmodplug")
-	endif (MODPLUG_FOUND)
-endif()
 
 # libcurl
 find_package(CURL)
@@ -120,14 +88,12 @@ include_directories("../libs/minizip")
 # engine side code
 set(CLIENT_INCLUDES
 	client.h
-	cl_bgmusic.h
 	console.h
 	keys.h
 	screen.h
 	sound.h
 	)
 set(CLIENT_SOURCES
-	cl_bgmusic.c
 	cl_cin.c
 	cl_console.c
 	cl_ents.c
@@ -163,28 +129,15 @@ source_group("client\\menu" FILES ${MENU_INCLUDES})
 source_group("client\\menu" FILES ${MENU_SOURCES})
 
 set(SOUND_INCLUDES
-	snd_codec.h
-	snd_codeci.h
 	snd_loc.h
+	snd_wave.h
 	)
 set(SOUND_SOURCES
-	snd_codec.c
 	snd_dma.c
 	snd_mem.c
 	snd_mix.c
+	snd_wave.c
 	)
-if (USE_CODEC_WAV)
-	list(APPEND SOUND_INCLUDES snd_wave.h)
-	list(APPEND SOUND_SOURCES snd_wave.c)
-endif()
-if (USE_CODEC_MP3)
-	list(APPEND SOUND_INCLUDES snd_mp3.h)
-	list(APPEND SOUND_SOURCES snd_mp3.c)
-endif()
-if (USE_CODEC_MODPLUG)
-	list(APPEND SOUND_INCLUDES snd_modplug.h)
-	list(APPEND SOUND_SOURCES snd_modplug.c)
-endif()
 if (USE_OPENAL)
 	list(APPEND SOUND_INCLUDES snd_qal.h)
 	list(APPEND SOUND_SOURCES snd_qal.c snd_al.c)
@@ -279,40 +232,6 @@ endif (NOT GLEW_FOUND)
 source_group("libs\\glew" FILES ${GLEW_INCLUDES})
 source_group("libs\\glew" FILES ${GLEW_SOURCES})
 
-# libmad
-if (USE_CODEC_MP3)
-	if (NOT MAD_FOUND)
-		file(GLOB MAD_INCLUDES ../libs/mad/include/*.h)
-		file(GLOB MAD_SOURCES ../libs/mad/src/*.c)
-	else (NOT MAD_FOUND)
-		set(MAD_INCLUDES "")
-		set(MAD_SOURCES "")
-	endif (NOT MAD_FOUND)
-	source_group("libs\\mad" FILES ${MAD_INCLUDES})
-	source_group("libs\\mad" FILES ${MAD_SOURCES})
-else()
-	set(MAD_INCLUDES "")
-	set(MAD_SOURCES "")
-endif()
-
-# libmodplug
-if (USE_CODEC_MODPLUG)
-	if (NOT MODPLUG_FOUND)
-		file(GLOB MODPLUG_INCLUDES ../libs/modplug/src/*.h)
-		file(GLOB MODPLUG_SOURCES ../libs/modplug/src/*.cpp)
-		add_definitions(-DMODPLUG_STATIC)
-	else (NOT MODPLUG_FOUND)
-		set(MODPLUG_INCLUDES "")
-		set(MODPLUG_SOURCES "")
-		add_definitions(-DUSE_SYSTEM_MODPLUG)
-	endif (NOT MODPLUG_FOUND)
-	source_group("libs\\modplug" FILES ${MODPLUG_INCLUDES})
-	source_group("libs\\modplug" FILES ${MODPLUG_SOURCES})
-else()
-	set(MODPLUG_INCLUDES "")
-	set(MODPLUG_SOURCES "")
-endif()
-
 # libcurl
 if (NOT CURL_FOUND)
 	file(GLOB CURL_INCLUDES ../libs/libcurl/include/curl/*.h)
@@ -365,8 +284,6 @@ set(CAKE_INCLUDES
 			${SYSTEM_INCLUDES}
 			${SHARED_INCLUDES}
 
-			${MAD_INCLUDES}
-			${MODPLUG_INCLUDES}
 			${GAMESPY_INCLUDES}
 			${CURL_INCLUDES}
 			${ZLIB_INCLUDES}
@@ -381,8 +298,6 @@ set(CAKE_SOURCES
 			${SYSTEM_SOURCES}
 			${SHARED_SOURCES}
 
-			${MAD_SOURCES}
-			${MODPLUG_SOURCES}
 			${GAMESPY_SOURCES}
 			${CURL_SOURCES}
 			${ZLIB_SOURCES}
@@ -469,9 +384,7 @@ if (NOT WIN_UWP)
 		iphlpapi
 		wsock32.lib
 		${CURL_LIBRARY}
-		${MODPLUG_LIBRARY}
-		${MAD_LIBRARY}
-        ${GLEW_LIBRARY}
+        	${GLEW_LIBRARY}
 		${ZLIB_LIBRARY}
 		${CMAKE_DL_LIBS}
 		${OPENAL_LIBRARY}
@@ -514,10 +427,8 @@ else()
 			pthread
 			${RT_LIBRARY}
 			${SDL2_LIBRARY}
-            ${GLEW_LIBRARY}
+            		${GLEW_LIBRARY}
 			${CURL_LIBRARY}
-			${MODPLUG_LIBRARY}
-			${MAD_LIBRARY}
 			${ZLIB_LIBRARY}
 			${OPENGL_LIBRARY}
 			${OPENAL_LIBRARY}
