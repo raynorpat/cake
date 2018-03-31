@@ -13,7 +13,7 @@ Some of the major features currently implemented are:
   * Easy to use modern build system via CMake
   * SDL 2 backend
   * OpenAL audio backend
-  * Background Music support (tracker xm/s3m/it/mod, mp3, and even wav)
+  * OGG Vorbis background music support
   * RoQ cinematic video encoder/decoder
   * Re-written OpenGL 3.3 renderer built for speed and a retro software look
   * HTTP/FTP download redirection (using cURL)
@@ -74,10 +74,9 @@ Maintainers
 Contributions from
 
   * Ryan C. Gordon <icculus@icculus.org> - initial sdl 1.2 quake2 port - see http://www.icculus.org/quake2/
-  * Stuart Dalton <badcdev@gmail.com> - ioquake3 sound codecs system
-  * O. Sezer <sezero@users.sourceforge.net> - uHexen II sound codecs system
   * yquake2 and KMQ2 projects - Save game system
   * FFmpeg project - RoQ video encoder
+  * Xiph.org - OGG Vorbis encoder
   * Frank Sapone - master server - see https://bitbucket.org/maraakate/gsmaster
   * Deniz Sezen - bug fixes
   * Lucas Zadrozny - testing and bug fixes
