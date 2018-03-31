@@ -152,7 +152,7 @@ source_group("client\\menu" FILES ${MENU_INCLUDES})
 source_group("client\\menu" FILES ${MENU_SOURCES})
 
 set(SOUND_INCLUDES
-	snd_loc.h
+	snd_local.h
 	snd_wave.h
 	)
 set(SOUND_SOURCES
