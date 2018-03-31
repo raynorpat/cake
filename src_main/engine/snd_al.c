@@ -21,7 +21,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
 #include "client.h"
 #include "snd_loc.h"
-#include "snd_codec.h"
+#include "snd_wave.h"
 #include "snd_qal.h"
 
 // translates from AL coordinate system to quake
@@ -137,7 +137,7 @@ void AL_Shutdown (void)
     QAL_Shutdown ();
 }
 
-sfxcache_t *AL_UploadSfx(sfx_t *s, snd_info_t *s_info, byte *data)
+sfxcache_t *AL_UploadSfx(sfx_t *s, wavinfo_t *s_info, byte *data)
 {
     sfxcache_t *sc;
     ALsizei size = s_info->samples * s_info->width;

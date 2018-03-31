@@ -141,7 +141,7 @@ void	Snd_Memset(void* dest, const int val, const size_t count);
 void	AL_SoundInfo (void);
 qboolean AL_Init (void);
 void	AL_Shutdown (void);
-sfxcache_t * AL_UploadSfx (sfx_t *s, struct snd_info_s *s_info, byte *data);
+sfxcache_t * AL_UploadSfx (sfx_t *s, struct wavinfo_s *s_info, byte *data);
 void	AL_DeleteSfx (sfx_t *s);
 void	AL_StopChannel (channel_t *ch);
 void	AL_PlayChannel (channel_t *ch);

@@ -18,10 +18,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
 */
 // snd_mem.c: sound caching
-
 #include "client.h"
 #include "snd_loc.h"
-#include "snd_codec.h"
+#include "snd_wave.h"
 
 /*
 ================
@@ -101,8 +100,8 @@ sfxcache_t *S_LoadSound (sfx_t *s)
 {
 	char	namebuffer[MAX_QPATH];
 	byte	*data;
-	snd_info_t info;
-	int		len;
+	wavinfo_t info;
+	int		size, len;
 	float	stepscale;
 	sfxcache_t	*sc;
 	char	*name;
@@ -127,9 +126,19 @@ sfxcache_t *S_LoadSound (sfx_t *s)
 	else
 		Com_sprintf (namebuffer, sizeof (namebuffer), "sound/%s", name);
 	
-	data = S_CodecLoad (namebuffer, &info);
+	size = FS_LoadFile(namebuffer, (void **)&data);
 	if (!data)
 	{
+		s->cache = NULL;
+		Com_DPrintf("Couldn't load %s\n", namebuffer);
+		return NULL;
+	}
+
+	info = GetWavinfo(s->name, data, size);
+	if (info.channels != 1)
+	{
+		Com_Printf("%s is a stereo sample\n", s->name);
+		FS_FreeFile(data);
 		return NULL;
 	}
 	
@@ -144,7 +153,7 @@ sfxcache_t *S_LoadSound (sfx_t *s)
 
 		if (!sc)
 		{
-			Z_Free(data);
+			FS_FreeFile(data);
 			return NULL;
 		}
 
@@ -162,7 +171,6 @@ sfxcache_t *S_LoadSound (sfx_t *s)
 #endif
 		ResampleSfx (s, sc->speed, sc->width, data + info.dataofs);
 
-	Z_Free(data);
-
+	FS_FreeFile(data);
 	return sc;
 }
