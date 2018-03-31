@@ -46,10 +46,14 @@ void GlobalFogFS ()
 
 	// calculate fog factor
 	float fogFactor = exp2(-abs(fogExponent));
+	
+	// don't fog the skybox, since it mangles with depth, fog doesn't work
+	if (zdepth >= 0.999999)
+		fogFactor = 1.0;
 
 	// grab scene
 	vec3 currentScene = texture(diffuse, st).rgb;
-	
+
 	// compute final color, lerp between fog color and current color by fog factor
 	vec4 color;
 	color.r = (1.0 - fogFactor) * fogColorDensity.r + currentScene.r * fogFactor;
