@@ -599,7 +599,19 @@ void CL_ParseConfigString (void)
 	else if (i == CS_CDTRACK)
 	{
 		if (cl.refresh_prepped)
-			BGM_PlayCDtrack (atoi (cl.configstrings[CS_CDTRACK]), true);
+		{
+#ifdef USE_CODEC_OGG
+			if ((int)strtol(cl.configstrings[CS_CDTRACK], (char **)NULL, 10) < 10)
+			{
+				char tmp[3] = "0";
+				OGG_ParseCmd (strcat(tmp, cl.configstrings[CS_CDTRACK]));
+			}
+			else
+			{
+				OGG_ParseCmd (cl.configstrings[CS_CDTRACK]);
+			}
+#endif
+		}
 	}
 	else if (i >= CS_MODELS && i < CS_MODELS + MAX_MODELS)
 	{

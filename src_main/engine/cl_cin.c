@@ -782,7 +782,9 @@ void SCR_PlayCinematic (char *arg)
 	Key_ClearStates ();
 
 	// make sure music isn't playing
-	BGM_Stop ();
+#ifdef USE_CODEC_OGG
+	OGG_Stop ();
+#endif
 
 	dot = strstr (arg, ".");
 	if (dot && !strcmp (dot, ".tga"))

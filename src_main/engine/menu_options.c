@@ -308,7 +308,7 @@ static void MouseSpeedFunc (void *unused)
 static void ControlsSetMenuItemValues (void)
 {
 	s_options_sfxvolume_slider.curvalue		= Cvar_VariableValue ("s_volume") * 10;
-	s_options_cdvolume_box.curvalue 		= !Cvar_VariableValue("s_nobgm");
+	s_options_cdvolume_box.curvalue 		= !Cvar_VariableValue("ogg_enable");
 
 	switch((int)Cvar_VariableValue("s_khz"))
 	{
@@ -370,7 +370,7 @@ static void UpdateVolumeFunc (void *unused)
 
 static void UpdateCDVolumeFunc( void *unused )
 {
-	Cvar_SetValue( "s_nobgm", !s_options_cdvolume_box.curvalue );
+	Cvar_SetValue( "ogg_enable", !s_options_cdvolume_box.curvalue );
 }
 
 static void ConsoleFunc (void *unused)
@@ -547,7 +547,7 @@ void Options_MenuInit (void)
 	s_options_cdvolume_box.generic.name		= "background music";
 	s_options_cdvolume_box.generic.callback	= UpdateCDVolumeFunc;
 	s_options_cdvolume_box.itemnames		= cd_music_items;
-	s_options_cdvolume_box.curvalue 		= !Cvar_VariableValue("s_nobgm");
+	s_options_cdvolume_box.curvalue 		= !Cvar_VariableValue("ogg_enable");
 
 	s_options_sensitivity_slider.generic.type	= MTYPE_SLIDER;
 	s_options_sensitivity_slider.generic.x		= 0;
