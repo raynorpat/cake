@@ -632,7 +632,7 @@ void S_IssuePlaysound (playsound_t *ps)
 	if (sound_started == SS_OAL)
 	{
 		// this is clamped to 1.0 in AL_PlayChannel()
-		ch->oal_vol = ps->volume * (s_volume->value);
+		ch->oal_vol = ps->volume * s_volume->value;
 		AL_PlayChannel (ch);
 	}
 	else
@@ -1064,7 +1064,7 @@ void S_RawSamples (int samples, int rate, int width, int channels, byte *data)
 	}
 #endif
 
-	snd_vol = (int)(s_volume->value * 256);
+	snd_vol = (int)(Q_Clamp(0, 1, s_volume->value) * 256);
 	scale = (float) rate / dma.speed;
 
 	if (channels == 2 && width == 2)

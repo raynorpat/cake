@@ -232,9 +232,7 @@ void AL_PlayChannel (channel_t *ch)
         Com_Printf ("%s: %s\n", __func__, ch->sfx->name);
 
 	// clamp volume
-	vol = ch->oal_vol;
-	if (vol > 1.0f)
-		vol = 1.0f;
+	vol = Q_Clamp(0, 1, ch->oal_vol);	
 
     ch->srcnum = s_srcnums[ch - channels];
 
@@ -360,7 +358,7 @@ static void AL_AddLoopSounds (void)
         ch->end = paintedtime + sc->length;
 
 		// set it to full volume (1.0 * s_volume)
-		ch->oal_vol = s_volume->value;
+		ch->oal_vol = Q_Clamp(0, 1, s_volume->value);
 
         AL_PlayChannel (ch);
     }
