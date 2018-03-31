@@ -48,8 +48,7 @@ option(WIN_UWP "Build for Microsoft Universal Windows Platform" OFF)
 option(UTILS "Build utilities and tools" ON)
 
 option(USE_CODEC_WAV "Build with wav sound codec" ON)
-option(USE_CODEC_MP3 "Build with mp3 sound codec and libmad" ON)
-option(USE_CODEC_MODPLUG "Build with tracker xm/s3/it/mod sound codecs and libmodplug" ON)
+option(USE_CODEC_OGG "Build with ogg vorbis sound codec and libogg/libvorbis" ON)
 option(USE_OPENAL "Build with OpenAL sound backend" ON)
 
 set(CPU_OPTIMIZATION "-mmmx -msse -msse2" CACHE STRING "Which CPU specific optimitations should be used beside the compiler's default?")

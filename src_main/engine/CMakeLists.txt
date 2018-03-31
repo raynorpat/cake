@@ -36,6 +36,29 @@ if (USE_OPENAL)
 	include_directories(${OPENAL_INCLUDE_DIR})
 endif()
 
+# libogg & libvorbis
+if (USE_CODEC_OGG)
+	find_package(OGG)
+	if (OGG_FOUND)
+		include_directories(${OGG_INCLUDE_DIRS})
+		set(OGG_LIBRARY ${OGG_LIBRARIES})
+	else (OGG_FOUND)
+		include_directories("../libs/libogg/include")
+		set(OGG_LIBRARY "")
+		message(STATUS "Using builtin libogg")
+	endif (OGG_FOUND)
+	
+	find_package(VORBIS)
+	if (VORBIS_FOUND)
+		include_directories(${VORBIS_INCLUDE_DIRS})
+		set(VORBIS_LIBRARY ${VORBIS_LIBRARIES})
+	else (VORBIS_FOUND)
+		include_directories("../libs/libvorbis/include")
+		set(VORBIS_LIBRARY "")
+		message(STATUS "Using builtin libvorbis")
+	endif (VORBIS_FOUND)
+endif()	
+
 # glew
 find_package(GLEW)
 if (GLEW_FOUND)
@@ -246,6 +269,33 @@ endif (NOT CURL_FOUND)
 source_group("libs\\curl" FILES ${CURL_INCLUDES})
 source_group("libs\\curl" FILES ${CURL_SOURCES})
 
+# libogg and libvorbis
+if (USE_CODEC_OGG)
+	if (NOT OGG_FOUND)
+		file(GLOB OGG_INCLUDES ../libs/libogg/include/ogg/*.h)
+		file(GLOB OGG_SOURCES ../libs/libogg/src/*.c)
+	else (NOT OGG_FOUND)
+		set(OGG_INCLUDES "")
+		set(OGG_SOURCES "")
+	endif (NOT OGG_FOUND)
+	source_group("libs\\libogg" FILES ${OGG_INCLUDES})
+	source_group("libs\\libogg" FILES ${OGG_SOURCES})
+	
+	if (NOT VORBIS_FOUND)
+		file(GLOB VORBIS_INCLUDES ../libs/libvorbis/include/vorbis/*.h
+									../libs/libvorbis/lib/modes/*.h
+									../libs/libvorbis/lib/books/uncoupled/*.h
+									../libs/libvorbis/lib/books/floor/*.h
+									../libs/libvorbis/lib/books/coupled/*.h)
+		file(GLOB VORBIS_SOURCES ../libs/libvorbis/lib/*.c)
+	else (NOT VORBIS_FOUND)
+		set(VORBIS_INCLUDES "")
+		set(VORBIS_SOURCES "")
+	endif (NOT VORBIS_FOUND)
+	source_group("libs\\libvorbis" FILES ${VORBIS_INCLUDES})
+	source_group("libs\\libvorbis" FILES ${VORBIS_SOURCES})	
+endif()
+
 # zlib
 if (NOT ZLIB_FOUND)
 	file(GLOB ZLIB_INCLUDES ../libs/zlib/*.h)
@@ -286,6 +336,8 @@ set(CAKE_INCLUDES
 
 			${GAMESPY_INCLUDES}
 			${CURL_INCLUDES}
+			${OGG_INCLUDES}
+			${VORBIS_INCLUDES}
 			${ZLIB_INCLUDES}
 			${MINIZIP_INCLUDES}
 			)
@@ -300,6 +352,8 @@ set(CAKE_SOURCES
 
 			${GAMESPY_SOURCES}
 			${CURL_SOURCES}
+			${OGG_SOURCES}
+			${VORBIS_SOURCES}
 			${ZLIB_SOURCES}
 			${MINIZIP_SOURCES}
 			)
@@ -384,8 +438,10 @@ if (NOT WIN_UWP)
 		iphlpapi
 		wsock32.lib
 		${CURL_LIBRARY}
-        	${GLEW_LIBRARY}
+        ${GLEW_LIBRARY}
 		${ZLIB_LIBRARY}
+		${OGG_LIBRARY}
+		${VORBIS_LIBRARY}
 		${CMAKE_DL_LIBS}
 		${OPENAL_LIBRARY}
 		refresh
@@ -394,6 +450,9 @@ else()
 	target_link_libraries(cake PRIVATE
 		${SDL2_LIBRARY}
 		${ZLIB_LIBRARY}
+		${CURL_LIBRARY}
+		${OGG_LIBRARY}
+		${VORBIS_LIBRARY}
 		${CMAKE_DL_LIBS}
 		refresh
 		)
@@ -427,8 +486,10 @@ else()
 			pthread
 			${RT_LIBRARY}
 			${SDL2_LIBRARY}
-            		${GLEW_LIBRARY}
+            ${GLEW_LIBRARY}
 			${CURL_LIBRARY}
+			${OGG_LIBRARY}
+			${VORBIS_LIBRARY}
 			${ZLIB_LIBRARY}
 			${OPENGL_LIBRARY}
 			${OPENAL_LIBRARY}
