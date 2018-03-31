@@ -687,7 +687,7 @@ void RPostProcess_GlobalFog(void)
 	GL_TranslateMatrix(&unprojectionmatrix, -1.0, -1.0, -1.0);
 	GL_ScaleMatrix(&unprojectionmatrix, 2.0 * texScale[0], 2.0 * texScale[1], 2.0);
 
-	GL_Enable(!DEPTHTEST_BIT | !CULLFACE_BIT);
+	GL_Enable(!DEPTHTEST_BIT | !CULLFACE_BIT | BLEND_BIT);
 
 	GL_UseProgram(gl_globalfogprog);
 
