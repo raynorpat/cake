@@ -1,14 +1,19 @@
-/* WAV codec support. */
+// WAV codec support
 
 #if !defined(_SND_WAVE_H_)
 #define _SND_WAVE_H_
 
-#if defined(USE_CODEC_WAVE)
+// Information read from wave file header.
+typedef struct wavinfo_s
+{
+	int rate;
+	int width;
+	int channels;
+	int loopstart;
+	int samples;
+	int dataofs; // chunk starts this many bytes from file start
+} wavinfo_t;
 
-#define WAV_FORMAT_PCM 1
+wavinfo_t GetWavinfo (char *name, byte *wav, int wavlength);
 
-extern snd_codec_t wav_codec;
-
-#endif	/* USE_CODEC_WAVE */
-
-#endif	/* ! _SND_WAVE_H_ */
+#endif
