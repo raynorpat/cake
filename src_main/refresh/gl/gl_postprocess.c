@@ -779,9 +779,6 @@ void RPostProcess_FinishToScreen(void)
 		// perform screenspace ambient occlusion
 		RPostProcess_SSAO();
 
-		// perform global fog pass
-		RPostProcess_GlobalFog();
-
 		// downscale to 64x64
 		RPostProcess_DownscaleTo64();
 
@@ -793,6 +790,9 @@ void RPostProcess_FinishToScreen(void)
 
 		// perform bloom and tonemap
 		RPostProcess_DoBloomAndTonemap();
+
+		// perform global fog pass
+		RPostProcess_GlobalFog();
 
 		// exchange lunimance texture for next frame
 		GLuint temp = m_lum[0];
