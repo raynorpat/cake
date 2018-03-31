@@ -657,12 +657,6 @@ void RPostProcess_BasicPostProcess(void)
 
 void RE_GL_SetFog(vec4_t fog)
 {
-	// check values fog color and density values
-	if (gl_forcefog->value <= 0 && VectorLength(post_fogColor) <= 0)
-		return;
-	if (gl_forcefog->value <= 0 && post_fogDensity <= 0)
-		return;
-
 	VectorCopy(fog, post_fogColor);
 	post_fogDensity = fog[3];
 }
@@ -674,7 +668,11 @@ void RPostProcess_GlobalFog(void)
 
 	if (r_nofog->integer)
 		return;
-	if (!gl_forcefog->value && !r_dowaterwarppost)
+
+	// check fog color and density values
+	if (gl_forcefog->value <= 0 && VectorLength(post_fogColor) <= 0)
+		return;
+	if (gl_forcefog->value <= 0 && post_fogDensity <= 0)
 		return;
 
 	// set screen scale
