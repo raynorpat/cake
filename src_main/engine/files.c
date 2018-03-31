@@ -1359,6 +1359,10 @@ void FS_SetGamedir(char *dir)
 		return;
 	}
 
+	// do not set BASEDIR as gamedir. It was already set by FS_InitFilesystem()
+	if (!Q_stricmp(dir, BASEDIRNAME))
+		return;
+
 	// free up any current game dir info
 	while (fs_searchPaths != fs_baseSearchPaths)
 	{
