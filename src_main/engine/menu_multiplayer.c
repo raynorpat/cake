@@ -1640,7 +1640,7 @@ static qboolean PlayerConfig_ScanDirectories (void)
 		strcpy (scratch, dirnames[i]);
 		strcat (scratch, "/tris.md2");
 
-		if (FS_FOpenFile(scratch, &f, FS_READ) == -1)
+		if (FS_FOpenFile(scratch, &f, FS_READ, false) == -1)
 		{
 			free (dirnames[i]);
 			dirnames[i] = 0;

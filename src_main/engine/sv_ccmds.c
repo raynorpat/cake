@@ -338,7 +338,7 @@ void SV_ReadLevelFile (void)
 	Com_DPrintf ("SV_ReadLevelFile()\n");
 
 	Com_sprintf (name, sizeof (name), "save/current/%s.sv2", sv.name);
-	FS_FOpenFile (name, &f, FS_READ);
+	FS_FOpenFile (name, &f, FS_READ, true);
 	if (!f)
 	{
 		Com_Printf ("Failed to open %s\n", name);
@@ -442,7 +442,7 @@ void SV_ReadServerFile (void)
 	Com_DPrintf ("SV_ReadServerFile()\n");
 
 	Com_sprintf (name, sizeof (name), "save/current/server.ssv");
-	FS_FOpenFile(name, &f, FS_READ);
+	FS_FOpenFile(name, &f, FS_READ, true);
 	if (!f)
 	{
 		Com_Printf ("Couldn't read %s\n", name);

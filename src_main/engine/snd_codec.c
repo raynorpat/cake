@@ -314,7 +314,7 @@ snd_stream_t *S_CodecUtilOpen(char *filename, snd_codec_t *codec)
 	size_t length;
 	
 	// Try to open the file
-	length = FS_FOpenFile(filename, &handle, FS_READ);
+	length = FS_FOpenFile(filename, &handle, FS_READ, false);
 	pak = file_from_pak;
 	if (length == (size_t)-1)
 	{

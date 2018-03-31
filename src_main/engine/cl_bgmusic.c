@@ -239,7 +239,7 @@ void BGM_PlayCDtrack (int track, qboolean looping)
 		if (! handler->is_available)
 			goto _next;
 		snprintf(tmp, sizeof(tmp), "%s/track%02d%s", MUSIC_DIRNAME, (int)track, handler->ext);
-		if (FS_FOpenFile(tmp, &h, FS_READ) == -1)
+		if (FS_FOpenFile(tmp, &h, FS_READ, false) == -1)
 		{
 			goto _next;
 		}

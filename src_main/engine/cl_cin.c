@@ -812,7 +812,7 @@ void SCR_PlayCinematic (char *arg)
 	cin->s_width = 2;
 
 	cin->frame = 0;
-	cin->remaining = FS_FOpenFile(cin->name, &cin->file, FS_READ);
+	cin->remaining = FS_FOpenFile(cin->name, &cin->file, FS_READ, false);
 	if (!cin->file || !cin->remaining)
 	{
 		SCR_FinishCinematic();

@@ -345,7 +345,7 @@ Returns file size or -1 if not found. Can open separate files as well as
 files inside pack files (both PAK and PKZ).
 =================
 */
-int FS_FOpenFileRead(fsHandle_t * handle)
+int FS_FOpenFileRead(fsHandle_t * handle, qboolean gamedirOnly)
 {
 	char		path[MAX_OSPATH];
 	int		i;
@@ -359,6 +359,12 @@ int FS_FOpenFileRead(fsHandle_t * handle)
 	// search through the path, one element at a time.
 	for (search = fs_searchPaths; search; search = search->next)
 	{
+		if (gamedirOnly)
+		{
+			if (strstr(search->path, FS_Gamedir()) == NULL)
+				continue;
+		}
+
 		// search inside a pack file.
 		if (search->pack)
 		{
@@ -479,7 +485,7 @@ Finds the file in the search path. Returns filesize and an open FILE *. Used
 for streaming data out of either a pak file or a seperate file.
 ===========
 */
-int FS_FOpenFile(const char *name, fileHandle_t *f, fsMode_t mode)
+int FS_FOpenFile(const char *name, fileHandle_t *f, fsMode_t mode, qboolean gamedirOnly)
 {
 	int	size = 0;
 	fsHandle_t *handle;
@@ -492,7 +498,7 @@ int FS_FOpenFile(const char *name, fileHandle_t *f, fsMode_t mode)
 	switch (mode)
 	{
 		case FS_READ:
-			size = FS_FOpenFileRead(handle);
+			size = FS_FOpenFileRead(handle, gamedirOnly);
 			break;
 		case FS_WRITE:
 			size = FS_FOpenFileWrite(handle);
@@ -899,7 +905,7 @@ qboolean FS_FileExists(char *path)
 {
 	fileHandle_t	f;
 
-	FS_FOpenFile(path, &f, FS_READ);
+	FS_FOpenFile(path, &f, FS_READ, false);
 
 	if (f != 0)
 	{
@@ -950,7 +956,7 @@ int FS_LoadFile(char *path, void **buffer)
 	fileHandle_t f;
 
 	buf = NULL;
-	size = FS_FOpenFile(path, &f, FS_READ);
+	size = FS_FOpenFile(path, &f, FS_READ, false);
 
 	if (size <= 0)
 	{

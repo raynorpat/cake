@@ -689,7 +689,7 @@ struct sfx_s *S_RegisterSexedSound (entity_state_t *ent, char *base)
 	if (!sfx)
 	{
 		// no, so see if it exists
-		FS_FOpenFile (&sexedFilename[1], (fileHandle_t *)&f, FS_READ);
+		FS_FOpenFile (&sexedFilename[1], (fileHandle_t *)&f, FS_READ, false);
 		if (f)
 		{
 			// yes, close the file and register it

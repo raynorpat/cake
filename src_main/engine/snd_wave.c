@@ -222,7 +222,7 @@ void *S_WAV_CodecLoad(char *filename, snd_info_t *info)
 	void *buffer;
 	
 	// Try to open the file
-	FS_FOpenFile(filename, &file, FS_READ);
+	FS_FOpenFile(filename, &file, FS_READ, false);
 	if (!file)
 	{
 		Com_Printf("Can't read sound file %s\n", filename);
