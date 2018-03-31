@@ -11,7 +11,7 @@ layout(location = 0) in vec4 position;
 layout(location = 2) in vec4 texcoord;
 
 
-void PostVS ()
+void HDRPostVS ()
 {
 	gl_Position = orthomatrix * position;
 	texcoords[0] = texcoord;
@@ -91,7 +91,7 @@ void FilmgrainPass( inout vec4 color )
 
 out vec4 fragColor;
 
-void PostFS ()
+void HDRPostFS ()
 {
 	vec2 st = gl_FragCoord.st * texScale;
 	vec4 scene;

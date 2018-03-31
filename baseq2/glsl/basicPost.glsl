@@ -10,7 +10,7 @@ uniform mat4 orthomatrix;
 layout(location = 0) in vec4 position;
 layout(location = 2) in vec4 texcoord;
 
-void WaterWarpVS ()
+void BasicPostVS ()
 {
 	gl_Position = orthomatrix * position;
 	texcoords[0] = texcoord;
@@ -31,7 +31,7 @@ uniform vec2 rescale;
 
 out vec4 fragColor;
 
-void WaterWarpFS ()
+void BasicPostFS ()
 {
 	vec2 st = gl_FragCoord.st * texScale;
 	vec4 scene;

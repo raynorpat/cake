@@ -27,7 +27,7 @@ GLuint u_ssaoZFar = 0;
 GLuint gl_fxaaprog = 0;
 GLuint u_fxaaTexScale = 0;
 
-GLuint gl_underwaterprog = 0;
+GLuint gl_basicpostprog = 0;
 GLuint u_uwTexScale = 0;
 GLuint u_uwwarpparams = 0;
 GLuint u_uwsurfcolor = 0;
@@ -52,7 +52,7 @@ qboolean r_fogwater = false;
 qboolean r_foglava = false;
 qboolean r_fogslime = false;
 
-GLuint gl_postprog = 0;
+GLuint gl_hdrpostprog = 0;
 GLuint u_postsurfcolor = 0;
 GLuint u_postExposure = 0;
 GLuint u_postBrightnessContrastBlurSSAOAmount = 0;
@@ -283,23 +283,23 @@ void RPostProcess_CreatePrograms(void)
 	// create barebones shaders
 	if (r_skipHDRPost)
 	{
-		gl_underwaterprog = GL_CreateShaderFromName("glsl/underwater.glsl", "WaterWarpVS", "WaterWarpFS");
+		gl_basicpostprog = GL_CreateShaderFromName("glsl/basicPost.glsl", "BasicPostVS", "BasicPostFS");
 
-		u_uwwarpparams = glGetUniformLocation(gl_underwaterprog, "warpparams");
-		u_uwsurfcolor = glGetUniformLocation(gl_underwaterprog, "surfcolor");
-		u_uwwaterwarp = glGetUniformLocation(gl_underwaterprog, "waterwarppost");
-		u_uwTexScale = glGetUniformLocation(gl_underwaterprog, "texScale");
-		u_uwBrightnessContrastAmount = glGetUniformLocation(gl_underwaterprog, "brightnessContrastAmount");
+		u_uwwarpparams = glGetUniformLocation(gl_basicpostprog, "warpparams");
+		u_uwsurfcolor = glGetUniformLocation(gl_basicpostprog, "surfcolor");
+		u_uwwaterwarp = glGetUniformLocation(gl_basicpostprog, "waterwarppost");
+		u_uwTexScale = glGetUniformLocation(gl_basicpostprog, "texScale");
+		u_uwBrightnessContrastAmount = glGetUniformLocation(gl_basicpostprog, "brightnessContrastAmount");
 
-		glProgramUniform1i(gl_underwaterprog, glGetUniformLocation(gl_underwaterprog, "diffuse"), 0);
-		glProgramUniform1i(gl_underwaterprog, glGetUniformLocation(gl_underwaterprog, "gradient"), 1);
-		glProgramUniform2f(gl_underwaterprog, glGetUniformLocation(gl_underwaterprog, "rescale"), 1.0 / r_warpmaxs, 1.0 / r_warpmaxt);
-		glProgramUniformMatrix4fv(gl_underwaterprog, glGetUniformLocation(gl_underwaterprog, "orthomatrix"), 1, GL_FALSE, r_drawmatrix.m[0]);
+		glProgramUniform1i(gl_basicpostprog, glGetUniformLocation(gl_basicpostprog, "diffuse"), 0);
+		glProgramUniform1i(gl_basicpostprog, glGetUniformLocation(gl_basicpostprog, "gradient"), 1);
+		glProgramUniform2f(gl_basicpostprog, glGetUniformLocation(gl_basicpostprog, "rescale"), 1.0 / r_warpmaxs, 1.0 / r_warpmaxt);
+		glProgramUniformMatrix4fv(gl_basicpostprog, glGetUniformLocation(gl_basicpostprog, "orthomatrix"), 1, GL_FALSE, r_drawmatrix.m[0]);
 	}
 	else
 	{
 		// create shaders
-		gl_postprog = GL_CreateShaderFromName("glsl/post.glsl", "PostVS", "PostFS");
+		gl_hdrpostprog = GL_CreateShaderFromName("glsl/hdrPost.glsl", "HDRPostVS", "HDRPostFS");
 		gl_ssaoprog = GL_CreateShaderFromName("glsl/ssao.glsl", "SSAOVS", "SSAOFS");
 
 		// create compute shaders
@@ -307,25 +307,25 @@ void RPostProcess_CreatePrograms(void)
 		gl_calcAdaptiveLumProg = GL_CreateComputeShaderFromName("glsl/calcAdaptiveLum.cs");
 
 		// set up shader uniforms
-		u_postsurfcolor = glGetUniformLocation(gl_postprog, "surfcolor");
-		u_postBrightnessContrastBlurSSAOAmount = glGetUniformLocation(gl_postprog, "brightnessContrastBlurSSAOAmount");
-		u_postExposure = glGetUniformLocation(gl_postprog, "exposure");
-		u_postTexScale = glGetUniformLocation(gl_postprog, "texScale");
-		u_postwaterwarpparam = glGetUniformLocation(gl_postprog, "waterwarpParam");
-		u_postwaterwarp = glGetUniformLocation(gl_postprog, "waterwarppost");
+		u_postsurfcolor = glGetUniformLocation(gl_hdrpostprog, "surfcolor");
+		u_postBrightnessContrastBlurSSAOAmount = glGetUniformLocation(gl_hdrpostprog, "brightnessContrastBlurSSAOAmount");
+		u_postExposure = glGetUniformLocation(gl_hdrpostprog, "exposure");
+		u_postTexScale = glGetUniformLocation(gl_hdrpostprog, "texScale");
+		u_postwaterwarpparam = glGetUniformLocation(gl_hdrpostprog, "waterwarpParam");
+		u_postwaterwarp = glGetUniformLocation(gl_hdrpostprog, "waterwarppost");
 
 		u_ssaoZFar = glGetUniformLocation(gl_ssaoprog, "zFar");
 		u_ssaoTexScale = glGetUniformLocation(gl_ssaoprog, "texScale");
 
 		u_deltaTime = glGetUniformLocation(gl_calcAdaptiveLumProg, "deltaTime");
 
-		glProgramUniform1i(gl_postprog, glGetUniformLocation(gl_postprog, "diffuse"), 0);
-		glProgramUniform1i(gl_postprog, glGetUniformLocation(gl_postprog, "precomposite"), 1);
-		glProgramUniform1i(gl_postprog, glGetUniformLocation(gl_postprog, "warpgradient"), 2);
-		glProgramUniform1i(gl_postprog, glGetUniformLocation(gl_postprog, "lumTex"), 3);
-		glProgramUniform1i(gl_postprog, glGetUniformLocation(gl_postprog, "AOTex"), 4);
-		glProgramUniform2f(gl_postprog, glGetUniformLocation(gl_postprog, "rescale"), 1.0 / r_warpmaxs, 1.0 / r_warpmaxt);
-		glProgramUniformMatrix4fv(gl_postprog, glGetUniformLocation(gl_postprog, "orthomatrix"), 1, GL_FALSE, r_drawmatrix.m[0]);
+		glProgramUniform1i(gl_hdrpostprog, glGetUniformLocation(gl_hdrpostprog, "diffuse"), 0);
+		glProgramUniform1i(gl_hdrpostprog, glGetUniformLocation(gl_hdrpostprog, "precomposite"), 1);
+		glProgramUniform1i(gl_hdrpostprog, glGetUniformLocation(gl_hdrpostprog, "warpgradient"), 2);
+		glProgramUniform1i(gl_hdrpostprog, glGetUniformLocation(gl_hdrpostprog, "lumTex"), 3);
+		glProgramUniform1i(gl_hdrpostprog, glGetUniformLocation(gl_hdrpostprog, "AOTex"), 4);
+		glProgramUniform2f(gl_hdrpostprog, glGetUniformLocation(gl_hdrpostprog, "rescale"), 1.0 / r_warpmaxs, 1.0 / r_warpmaxt);
+		glProgramUniformMatrix4fv(gl_hdrpostprog, glGetUniformLocation(gl_hdrpostprog, "orthomatrix"), 1, GL_FALSE, r_drawmatrix.m[0]);
 
 		glProgramUniform1i(gl_ssaoprog, glGetUniformLocation(gl_ssaoprog, "depthmap"), 0);
 		glProgramUniformMatrix4fv(gl_ssaoprog, glGetUniformLocation(gl_ssaoprog, "orthomatrix"), 1, GL_FALSE, r_drawmatrix.m[0]);
@@ -478,39 +478,39 @@ static void RPostProcess_DoBloomAndTonemap(void)
 
 	// then we can do a final post-process pass
 	if (v_blend[3])
-		glProgramUniform4f(gl_postprog, u_postsurfcolor, v_blend[0], v_blend[1], v_blend[2], v_blend[3] * 0.5);
+		glProgramUniform4f(gl_hdrpostprog, u_postsurfcolor, v_blend[0], v_blend[1], v_blend[2], v_blend[3] * 0.5);
 	else
-		glProgramUniform4f(gl_postprog, u_postsurfcolor, 0, 0, 0, 0);
+		glProgramUniform4f(gl_hdrpostprog, u_postsurfcolor, 0, 0, 0, 0);
 
 	texScale[0] = 1.0f / vid.width;
 	texScale[1] = 1.0f / vid.height;
-	glProgramUniform2f(gl_postprog, u_postTexScale, texScale[0], texScale[1]);
+	glProgramUniform2f(gl_hdrpostprog, u_postTexScale, texScale[0], texScale[1]);
 
 	// adaptive exposure adjustment in log space
 	float newExp = r_hdrExposureCompensation->value * log(r_hdrExposureAdjust->value + 0.0001f);
-	glProgramUniform1f(gl_postprog, u_postExposure, newExp);
+	glProgramUniform1f(gl_hdrpostprog, u_postExposure, newExp);
 
 	// water-warp parameters
 	waterwarpParam[0] = r_newrefdef.time * (128.0 / M_PI);
 	waterwarpParam[1] = 2.0f;
 	waterwarpParam[2] = M_PI / 128.0;
 	waterwarpParam[3] = 0.125f;
-	glProgramUniform4f(gl_postprog, u_postwaterwarpparam, waterwarpParam[0], waterwarpParam[1], waterwarpParam[2], waterwarpParam[3]);
+	glProgramUniform4f(gl_hdrpostprog, u_postwaterwarpparam, waterwarpParam[0], waterwarpParam[1], waterwarpParam[2], waterwarpParam[3]);
 	if (r_dowaterwarppost)
 	{
-		glProgramUniform1i(gl_postprog, u_postwaterwarp, 1);
+		glProgramUniform1i(gl_hdrpostprog, u_postwaterwarp, 1);
 	}
 	else
 	{
-		glProgramUniform1i(gl_postprog, u_postwaterwarp, 0);
+		glProgramUniform1i(gl_hdrpostprog, u_postwaterwarp, 0);
 	}
 
 	// set brightness, contrast, and blur levels along with SSAO value
-	glProgramUniform4f(gl_postprog, u_postBrightnessContrastBlurSSAOAmount, vid_gamma->value, vid_contrast->value, r_hdrBlurAmount->value, r_ssao->value);
+	glProgramUniform4f(gl_hdrpostprog, u_postBrightnessContrastBlurSSAOAmount, vid_gamma->value, vid_contrast->value, r_hdrBlurAmount->value, r_ssao->value);
 
 	GL_Enable(BLEND_BIT);
 
-	GL_UseProgram(gl_postprog);
+	GL_UseProgram(gl_hdrpostprog);
 
 	GL_BindTexture(GL_TEXTURE1, GL_TEXTURE_2D, r_drawnearestclampsampler, r_currentRenderHDRImage);
 	GL_BindTexture(GL_TEXTURE2, GL_TEXTURE_2D, r_drawwrapsampler, r_warpGradientImage);
@@ -629,20 +629,20 @@ void RPostProcess_BasicPostProcess(void)
 	warpparams[2] = M_PI / 128.0;
 	warpparams[3] = 0.125f;
 
-	glProgramUniform2f(gl_underwaterprog, u_uwTexScale, texScale[0], texScale[1]);
-	glProgramUniform4fv(gl_underwaterprog, u_uwwarpparams, 1, warpparams);
+	glProgramUniform2f(gl_basicpostprog, u_uwTexScale, texScale[0], texScale[1]);
+	glProgramUniform4fv(gl_basicpostprog, u_uwwarpparams, 1, warpparams);
 	if (r_dowaterwarppost)
-		glProgramUniform1i(gl_underwaterprog, u_uwwaterwarp, 1);
+		glProgramUniform1i(gl_basicpostprog, u_uwwaterwarp, 1);
 	else
-		glProgramUniform1i(gl_underwaterprog, u_uwwaterwarp, 0);
+		glProgramUniform1i(gl_basicpostprog, u_uwwaterwarp, 0);
 
 	if (v_blend[3])
-		glProgramUniform4f(gl_underwaterprog, u_uwsurfcolor, v_blend[0], v_blend[1], v_blend[2], v_blend[3]);
+		glProgramUniform4f(gl_basicpostprog, u_uwsurfcolor, v_blend[0], v_blend[1], v_blend[2], v_blend[3]);
 	else
-		glProgramUniform4f(gl_underwaterprog, u_uwsurfcolor, 0, 0, 0, 0);
+		glProgramUniform4f(gl_basicpostprog, u_uwsurfcolor, 0, 0, 0, 0);
 
 	// set brightness and contrast levels
-	glProgramUniform2f(gl_underwaterprog, u_uwBrightnessContrastAmount, vid_gamma->value, vid_contrast->value);
+	glProgramUniform2f(gl_basicpostprog, u_uwBrightnessContrastAmount, vid_gamma->value, vid_contrast->value);
 
 	GL_Enable(BLEND_BIT);
 
@@ -650,7 +650,7 @@ void RPostProcess_BasicPostProcess(void)
 	GL_BindTexture(GL_TEXTURE1, GL_TEXTURE_2D, r_drawwrapsampler, r_warpGradientImage);
 
 	GL_BindVertexArray(r_postvao);
-	GL_UseProgram(gl_underwaterprog);
+	GL_UseProgram(gl_basicpostprog);
 
 	glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
 }
@@ -706,10 +706,9 @@ void RPostProcess_GlobalFog(void)
 
 	glProgramUniformMatrix4fv(gl_globalfogprog, u_globalfogUnprojectMatrix, 1, GL_FALSE, unprojectionmatrix.m[0]);
 
-	if (r_skipHDRPost)
-		GL_BindTexture(GL_TEXTURE0, GL_TEXTURE_2D, r_drawnearestclampsampler, r_currentRenderImage);
-	else
-		GL_BindTexture(GL_TEXTURE0, GL_TEXTURE_2D, r_drawnearestclampsampler, r_currentRenderHDRImage);
+	GL_BindTexture(GL_TEXTURE0, GL_TEXTURE_2D, r_drawnearestclampsampler, r_currentRenderImage);
+	if (!r_skipHDRPost)
+		glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, vid.width, vid.height);
 	GL_BindTexture(GL_TEXTURE1, GL_TEXTURE_2D, r_drawnearestclampsampler, r_currentDepthRenderImage);
 
 	GL_BindVertexArray(r_postvao);
