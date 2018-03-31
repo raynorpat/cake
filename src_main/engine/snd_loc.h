@@ -138,16 +138,33 @@ void	Snd_Memset(void* dest, const int val, const size_t count);
 //
 // snd_al.c
 //
+extern int active_buffers;
+
 void	AL_SoundInfo (void);
 qboolean AL_Init (void);
 void	AL_Shutdown (void);
-sfxcache_t * AL_UploadSfx (sfx_t *s, struct snd_info_s *s_info, byte *data);
+sfxcache_t * AL_UploadSfx (sfx_t *s, struct wavinfo_s *s_info, byte *data);
 void	AL_DeleteSfx (sfx_t *s);
 void	AL_StopChannel (channel_t *ch);
 void	AL_PlayChannel (channel_t *ch);
 void	AL_StopAllChannels (void);
 void	AL_Update (void);
 void	AL_RawSamples (int samples, int rate, int width, int channels, byte *data, float volume);
+void	AL_UnqueueRawSamples (void);
+
+#endif
+
+//====================================================================
+
+#ifdef USE_CODEC_OGG
+
+//
+// snd_ogg.c
+//
+void	OGG_Init (void);
+void	OGG_Shutdown (void);
+
+void	OGG_Stream (void);
 
 #endif
 
@@ -176,7 +193,6 @@ extern cvar_t	*s_khz;
 extern cvar_t	*s_show;
 extern cvar_t	*s_mixahead;
 extern cvar_t	*s_testsound;
-extern cvar_t	*s_nobgm;
 extern cvar_t	*s_ambient;
 
 void S_InitScaletable (void);

@@ -21,7 +21,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
 #include "client.h"
 #include "snd_loc.h"
-#include "snd_codec.h"
+#include "snd_wave.h"
 #include "snd_qal.h"
 
 // translates from AL coordinate system to quake
@@ -34,6 +34,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 // avg US male height / q2PlayerHeight = 1.764f / 56.0f = 0.0315f
 #define AL_METERS_TO_Q2_UNITS 0.0315f
 
+int active_buffers;
 qboolean streamPlaying;
 static ALuint streamSource;
 
@@ -64,7 +65,7 @@ static void AL_InitStreamSource (void)
 }
 
 qboolean AL_Init (void)
- {
+{
     int i;
 
     if (!QAL_Init())
@@ -137,7 +138,7 @@ void AL_Shutdown (void)
     QAL_Shutdown ();
 }
 
-sfxcache_t *AL_UploadSfx(sfx_t *s, snd_info_t *s_info, byte *data)
+sfxcache_t *AL_UploadSfx(sfx_t *s, wavinfo_t *s_info, byte *data)
 {
     sfxcache_t *sc;
     ALsizei size = s_info->samples * s_info->width;
@@ -150,6 +151,7 @@ sfxcache_t *AL_UploadSfx(sfx_t *s, snd_info_t *s_info, byte *data)
     qalGetError ();
     qalGenBuffers (1, &name);
     qalBufferData (name, format, data, size, s_info->rate);
+	active_buffers++;
     if (qalGetError() != AL_NO_ERROR)
 	{
         return NULL;
@@ -177,6 +179,7 @@ void AL_DeleteSfx (sfx_t *s)
 
     name = sc->bufnum;
     qalDeleteBuffers (1, &name);
+	active_buffers--;
 }
 
 void AL_StopChannel (channel_t *ch)
@@ -444,6 +447,11 @@ void AL_Update (void)
 	// issue playsounds
     AL_IssuePlaysounds ();
 
+	// add music
+#ifdef USE_CODEC_OGG
+	OGG_Stream ();
+#endif
+
 	// update stream
 	S_AL_StreamUpdate ();
 }
@@ -462,6 +470,7 @@ static void S_AL_StreamDie(void)
 		ALuint buffer;
 		qalSourceUnqueueBuffers (streamSource, 1, &buffer);
 		qalDeleteBuffers (1, &buffer);
+		active_buffers--;
 	}
 }
 
@@ -485,6 +494,7 @@ static void S_AL_StreamUpdate(void)
 			ALuint buffer;
 			qalSourceUnqueueBuffers(streamSource, 1, &buffer);
 			qalDeleteBuffers(1, &buffer);
+			active_buffers--;
 		}
 	}
 
@@ -530,6 +540,7 @@ void AL_RawSamples (int samples, int rate, int width, int channels, byte *data, 
 	// create a buffer, and stuff the data into it
 	qalGenBuffers (1, &buffer);
 	qalBufferData (buffer, format, (ALvoid *)data, (samples * width * channels), rate);
+	active_buffers++;
 
 	// clamp volume
 	if (volume > 1.0f)
@@ -543,4 +554,15 @@ void AL_RawSamples (int samples, int rate, int width, int channels, byte *data, 
 
 	// emulate behavior of S_RawSamples for s_rawend
 	s_rawend += samples;
+}
+
+/*
+AL_UnqueueRawSamples
+
+Kills all raw samples still in flight.
+This is used to stop music playback when silence is triggered.
+*/
+void AL_UnqueueRawSamples(void)
+{
+	S_AL_StreamDie();
 }

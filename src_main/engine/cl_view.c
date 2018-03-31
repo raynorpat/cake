@@ -349,7 +349,17 @@ void CL_PrepRefresh (void)
 	cl.force_refdef = true;	// make sure we have a valid refdef
 
 	// start the cd track
-	BGM_PlayCDtrack (atoi (cl.configstrings[CS_CDTRACK]), true);
+#ifdef USE_CODEC_OGG
+	if ((int)strtol(cl.configstrings[CS_CDTRACK], (char **)NULL, 10) < 10)
+	{
+		char tmp[3] = "0";
+		OGG_ParseCmd(strcat(tmp, cl.configstrings[CS_CDTRACK]));
+	}
+	else
+	{
+		OGG_ParseCmd(cl.configstrings[CS_CDTRACK]);
+	}
+#endif
 }
 
 /*

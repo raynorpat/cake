@@ -9,14 +9,8 @@ project(cake)
 #
 # Options
 #
-if (USE_CODEC_WAV)
-	add_definitions(-DUSE_CODEC_WAVE)
-endif()
-if (USE_CODEC_MP3)
-	add_definitions(-DUSE_CODEC_MP3)
-endif()
-if (USE_CODEC_MODPLUG)
-	add_definitions(-DUSE_CODEC_MODPLUG)
+if (USE_CODEC_OGG)
+	add_definitions(-DUSE_CODEC_OGG)
 endif()
 if (USE_OPENAL)
 	add_definitions(-DUSE_OPENAL)
@@ -42,6 +36,29 @@ if (USE_OPENAL)
 	include_directories(${OPENAL_INCLUDE_DIR})
 endif()
 
+# libogg & libvorbis
+if (USE_CODEC_OGG)
+	find_package(OGG)
+	if (OGG_FOUND)
+		include_directories(${OGG_INCLUDE_DIRS})
+		set(OGG_LIBRARY ${OGG_LIBRARIES})
+	else (OGG_FOUND)
+		include_directories("../libs/libogg/include")
+		set(OGG_LIBRARY "")
+		message(STATUS "Using builtin libogg")
+	endif (OGG_FOUND)
+	
+	find_package(VORBIS)
+	if (VORBIS_FOUND)
+		include_directories(${VORBIS_INCLUDE_DIRS})
+		set(VORBIS_LIBRARY ${VORBIS_LIBRARIES})
+	else (VORBIS_FOUND)
+		include_directories("../libs/libvorbis/include")
+		set(VORBIS_LIBRARY "")
+		message(STATUS "Using builtin libvorbis")
+	endif (VORBIS_FOUND)
+endif()	
+
 # glew
 find_package(GLEW)
 if (GLEW_FOUND)
@@ -53,32 +70,6 @@ else (GLEW_FOUND)
     add_definitions(-DGLEW_STATIC)
 	message(STATUS "Using builtin glew")
 endif (GLEW_FOUND)
-
-# libmad
-if (USE_CODEC_MP3)
-	find_package(MAD)
-	if (MAD_FOUND)
-		include_directories(${MAD_INCLUDE_DIRS})
-		set(MAD_LIBRARY ${MAD_LIBRARIES})
-	else (MAD_FOUND)
-		include_directories("../libs/mad/include")
-		set(MAD_LIBRARY "" )
-		message(STATUS "Using builtin libmad")
-	endif (MAD_FOUND)
-endif()
-
-# libmodplug
-if (USE_CODEC_MODPLUG)
-	find_package(MODPLUG)
-	if (MODPLUG_FOUND)
-		include_directories(${MODPLUG_INCLUDE_DIRS})
-		set(MODPLUG_LIBRARY ${MODPLUG_LIBRARIES})
-	else (MODPLUG_FOUND)
-		include_directories("../libs/modplug/src")
-		set(MODPLUG_LIBRARY "" )
-		message(STATUS "Using builtin libmodplug")
-	endif (MODPLUG_FOUND)
-endif()
 
 # libcurl
 find_package(CURL)
@@ -120,14 +111,12 @@ include_directories("../libs/minizip")
 # engine side code
 set(CLIENT_INCLUDES
 	client.h
-	cl_bgmusic.h
 	console.h
 	keys.h
 	screen.h
 	sound.h
 	)
 set(CLIENT_SOURCES
-	cl_bgmusic.c
 	cl_cin.c
 	cl_console.c
 	cl_ents.c
@@ -163,31 +152,22 @@ source_group("client\\menu" FILES ${MENU_INCLUDES})
 source_group("client\\menu" FILES ${MENU_SOURCES})
 
 set(SOUND_INCLUDES
-	snd_codec.h
-	snd_codeci.h
 	snd_loc.h
+	snd_wave.h
 	)
 set(SOUND_SOURCES
-	snd_codec.c
 	snd_dma.c
 	snd_mem.c
 	snd_mix.c
+	snd_wave.c
 	)
-if (USE_CODEC_WAV)
-	list(APPEND SOUND_INCLUDES snd_wave.h)
-	list(APPEND SOUND_SOURCES snd_wave.c)
-endif()
-if (USE_CODEC_MP3)
-	list(APPEND SOUND_INCLUDES snd_mp3.h)
-	list(APPEND SOUND_SOURCES snd_mp3.c)
-endif()
-if (USE_CODEC_MODPLUG)
-	list(APPEND SOUND_INCLUDES snd_modplug.h)
-	list(APPEND SOUND_SOURCES snd_modplug.c)
-endif()
 if (USE_OPENAL)
 	list(APPEND SOUND_INCLUDES snd_qal.h)
 	list(APPEND SOUND_SOURCES snd_qal.c snd_al.c)
+endif()
+if (USE_CODEC_OGG)
+	list(APPEND SOUND_INCLUDES snd_ogg.h)
+	list(APPEND SOUND_SOURCES snd_ogg.c)
 endif()
 source_group("client\\sound" FILES ${SOUND_INCLUDES})
 source_group("client\\sound" FILES ${SOUND_SOURCES})
@@ -279,40 +259,6 @@ endif (NOT GLEW_FOUND)
 source_group("libs\\glew" FILES ${GLEW_INCLUDES})
 source_group("libs\\glew" FILES ${GLEW_SOURCES})
 
-# libmad
-if (USE_CODEC_MP3)
-	if (NOT MAD_FOUND)
-		file(GLOB MAD_INCLUDES ../libs/mad/include/*.h)
-		file(GLOB MAD_SOURCES ../libs/mad/src/*.c)
-	else (NOT MAD_FOUND)
-		set(MAD_INCLUDES "")
-		set(MAD_SOURCES "")
-	endif (NOT MAD_FOUND)
-	source_group("libs\\mad" FILES ${MAD_INCLUDES})
-	source_group("libs\\mad" FILES ${MAD_SOURCES})
-else()
-	set(MAD_INCLUDES "")
-	set(MAD_SOURCES "")
-endif()
-
-# libmodplug
-if (USE_CODEC_MODPLUG)
-	if (NOT MODPLUG_FOUND)
-		file(GLOB MODPLUG_INCLUDES ../libs/modplug/src/*.h)
-		file(GLOB MODPLUG_SOURCES ../libs/modplug/src/*.cpp)
-		add_definitions(-DMODPLUG_STATIC)
-	else (NOT MODPLUG_FOUND)
-		set(MODPLUG_INCLUDES "")
-		set(MODPLUG_SOURCES "")
-		add_definitions(-DUSE_SYSTEM_MODPLUG)
-	endif (NOT MODPLUG_FOUND)
-	source_group("libs\\modplug" FILES ${MODPLUG_INCLUDES})
-	source_group("libs\\modplug" FILES ${MODPLUG_SOURCES})
-else()
-	set(MODPLUG_INCLUDES "")
-	set(MODPLUG_SOURCES "")
-endif()
-
 # libcurl
 if (NOT CURL_FOUND)
 	file(GLOB CURL_INCLUDES ../libs/libcurl/include/curl/*.h)
@@ -326,6 +272,33 @@ else (NOT CURL_FOUND)
 endif (NOT CURL_FOUND)
 source_group("libs\\curl" FILES ${CURL_INCLUDES})
 source_group("libs\\curl" FILES ${CURL_SOURCES})
+
+# libogg and libvorbis
+if (USE_CODEC_OGG)
+	if (NOT OGG_FOUND)
+		file(GLOB OGG_INCLUDES ../libs/libogg/include/ogg/*.h)
+		file(GLOB OGG_SOURCES ../libs/libogg/src/*.c)
+	else (NOT OGG_FOUND)
+		set(OGG_INCLUDES "")
+		set(OGG_SOURCES "")
+	endif (NOT OGG_FOUND)
+	source_group("libs\\libogg" FILES ${OGG_INCLUDES})
+	source_group("libs\\libogg" FILES ${OGG_SOURCES})
+	
+	if (NOT VORBIS_FOUND)
+		file(GLOB VORBIS_INCLUDES ../libs/libvorbis/include/vorbis/*.h
+									../libs/libvorbis/lib/modes/*.h
+									../libs/libvorbis/lib/books/uncoupled/*.h
+									../libs/libvorbis/lib/books/floor/*.h
+									../libs/libvorbis/lib/books/coupled/*.h)
+		file(GLOB VORBIS_SOURCES ../libs/libvorbis/lib/*.c)
+	else (NOT VORBIS_FOUND)
+		set(VORBIS_INCLUDES "")
+		set(VORBIS_SOURCES "")
+	endif (NOT VORBIS_FOUND)
+	source_group("libs\\libvorbis" FILES ${VORBIS_INCLUDES})
+	source_group("libs\\libvorbis" FILES ${VORBIS_SOURCES})	
+endif()
 
 # zlib
 if (NOT ZLIB_FOUND)
@@ -365,10 +338,10 @@ set(CAKE_INCLUDES
 			${SYSTEM_INCLUDES}
 			${SHARED_INCLUDES}
 
-			${MAD_INCLUDES}
-			${MODPLUG_INCLUDES}
 			${GAMESPY_INCLUDES}
 			${CURL_INCLUDES}
+			${OGG_INCLUDES}
+			${VORBIS_INCLUDES}
 			${ZLIB_INCLUDES}
 			${MINIZIP_INCLUDES}
 			)
@@ -381,10 +354,10 @@ set(CAKE_SOURCES
 			${SYSTEM_SOURCES}
 			${SHARED_SOURCES}
 
-			${MAD_SOURCES}
-			${MODPLUG_SOURCES}
 			${GAMESPY_SOURCES}
 			${CURL_SOURCES}
+			${OGG_SOURCES}
+			${VORBIS_SOURCES}
 			${ZLIB_SOURCES}
 			${MINIZIP_SOURCES}
 			)
@@ -469,10 +442,10 @@ if (NOT WIN_UWP)
 		iphlpapi
 		wsock32.lib
 		${CURL_LIBRARY}
-		${MODPLUG_LIBRARY}
-		${MAD_LIBRARY}
         ${GLEW_LIBRARY}
 		${ZLIB_LIBRARY}
+		${OGG_LIBRARY}
+		${VORBIS_LIBRARY}
 		${CMAKE_DL_LIBS}
 		${OPENAL_LIBRARY}
 		refresh
@@ -481,6 +454,9 @@ else()
 	target_link_libraries(cake PRIVATE
 		${SDL2_LIBRARY}
 		${ZLIB_LIBRARY}
+		${CURL_LIBRARY}
+		${OGG_LIBRARY}
+		${VORBIS_LIBRARY}
 		${CMAKE_DL_LIBS}
 		refresh
 		)
@@ -516,8 +492,8 @@ else()
 			${SDL2_LIBRARY}
             ${GLEW_LIBRARY}
 			${CURL_LIBRARY}
-			${MODPLUG_LIBRARY}
-			${MAD_LIBRARY}
+			${OGG_LIBRARY}
+			${VORBIS_LIBRARY}
 			${ZLIB_LIBRARY}
 			${OPENGL_LIBRARY}
 			${OPENAL_LIBRARY}

@@ -21,7 +21,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
 #include "client.h"
 #include "snd_loc.h"
-#include "snd_codec.h"
 
 void S_Play (void);
 void S_SoundList (void);
@@ -73,7 +72,6 @@ cvar_t		*s_loadas8bit;
 cvar_t		*s_khz;
 cvar_t		*s_show;
 cvar_t		*s_mixahead;
-cvar_t		*s_nobgm;
 cvar_t		*s_ambient;
 
 int			s_rawend;
@@ -123,7 +121,6 @@ void S_Init (void)
 	s_mixahead = Cvar_Get ("s_mixahead", "0.2", CVAR_ARCHIVE);
 	s_show = Cvar_Get ("s_show", "0", 0);
 	s_testsound = Cvar_Get ("s_testsound", "0", 0);
-	s_nobgm = Cvar_Get ("s_nobgm", "0", CVAR_ARCHIVE);
 	s_ambient = Cvar_Get ("s_ambient", "1", 0);
 
 	Cmd_AddCommand ("play", S_Play);
@@ -147,18 +144,20 @@ void S_Init (void)
 	}
 
 	// init playsound list
-	// clear DMA buffer
-	S_StopAllSounds();
-
 	num_sfx = 0;
 
 	soundtime = 0;
 	paintedtime = 0;
 
+#ifdef USE_CODEC_OGG
+	OGG_Init ();
+#endif
+
 	// display info on the sound system
 	S_SoundInfo_f ();
 
-	S_CodecInit ();
+	// clear DMA buffer
+	S_StopAllSounds();
 
 	Com_Printf ("------------------------------------\n");
 }
@@ -178,25 +177,11 @@ void S_Shutdown (void)
 	if (!sound_started)
 		return;
 
-	S_CodecShutdown ();
-
-#if USE_OPENAL
-	if (sound_started == SS_OAL)
-		AL_Shutdown ();
-	else
-#endif
-	SNDDMA_Shutdown ();
-
-	sound_started = SS_NOT;
-
-	s_numchannels = 0;
-
-	Cmd_RemoveCommand ("play");
-	Cmd_RemoveCommand ("stopsound");
-	Cmd_RemoveCommand ("soundlist");
-	Cmd_RemoveCommand ("soundinfo");
-
 	S_StopAllSounds ();
+
+#ifdef USE_CODEC_OGG
+	OGG_Shutdown ();
+#endif
 
 	// free all sounds
 	for (i = 0, sfx = known_sfx; i < num_sfx; i++, sfx++)
@@ -219,6 +204,21 @@ void S_Shutdown (void)
 	}
 
 	num_sfx = 0;
+
+#if USE_OPENAL
+	if (sound_started == SS_OAL)
+		AL_Shutdown();
+	else
+#endif
+		SNDDMA_Shutdown();
+
+	sound_started = SS_NOT;
+	s_numchannels = 0;
+
+	Cmd_RemoveCommand("play");
+	Cmd_RemoveCommand("stopsound");
+	Cmd_RemoveCommand("soundlist");
+	Cmd_RemoveCommand("soundinfo");
 }
 
 /*
@@ -901,10 +901,15 @@ void S_StopAllSounds (void)
 		AL_StopAllChannels ();
 	else
 #endif
-		S_ClearBuffer();
+		S_ClearBuffer ();
 
 	// clear all the channels
 	memset (channels, 0, sizeof (channels));
+
+	// stop any music streaming
+#ifdef USE_CODEC_OGG
+	OGG_Stop ();
+#endif
 }
 
 /*
@@ -1260,6 +1265,11 @@ void S_Update (vec3_t origin, vec3_t forward, vec3_t right, vec3_t up)
 
 		Com_Printf ("----(%i)---- painted: %i\n", total, paintedtime);
 	}
+
+#ifdef USE_CODEC_OGG
+	// add music
+	OGG_Stream ();
+#endif
 
 	// mix some sound
 	SNDDMA_BeginPainting ();
