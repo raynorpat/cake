@@ -21,7 +21,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
 #include "client.h"
 #include "snd_loc.h"
-#include "snd_codec.h"
 
 void S_Play (void);
 void S_SoundList (void);
@@ -158,8 +157,6 @@ void S_Init (void)
 	// display info on the sound system
 	S_SoundInfo_f ();
 
-	S_CodecInit ();
-
 	Com_Printf ("------------------------------------\n");
 }
 
@@ -177,8 +174,6 @@ void S_Shutdown (void)
 
 	if (!sound_started)
 		return;
-
-	S_CodecShutdown ();
 
 #if USE_OPENAL
 	if (sound_started == SS_OAL)
