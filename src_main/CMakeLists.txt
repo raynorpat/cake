@@ -47,7 +47,6 @@ option(ONATIVE "Optimize for the host CPU" OFF)
 option(WIN_UWP "Build for Microsoft Universal Windows Platform" OFF)
 option(UTILS "Build utilities and tools" ON)
 
-option(USE_CODEC_WAV "Build with wav sound codec" ON)
 option(USE_CODEC_OGG "Build with ogg vorbis sound codec and libogg/libvorbis" ON)
 option(USE_OPENAL "Build with OpenAL sound backend" ON)
 
