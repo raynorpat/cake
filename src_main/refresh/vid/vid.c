@@ -307,10 +307,6 @@ void VID_WriteScreenshot(int width, int height, int comp, const void* data)
 	int argc = Cmd_Argc();
 	char* gameDir = FS_Gamedir();
 	
-	// create the scrnshots directory if it doesn't exist
-	Com_sprintf(checkname, sizeof(checkname), "%s/scrnshot", gameDir);
-	Sys_Mkdir(checkname);
-
 	// check if we have any args
 	if (argc > 1)
 	{

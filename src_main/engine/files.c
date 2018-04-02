@@ -119,7 +119,6 @@ int				file_from_pak = 0;
 int				file_from_pkz = 0;
 char			file_from_pkz_name[MAX_QPATH];
 
-cvar_t         *fs_homepath;
 cvar_t         *fs_basedir;
 cvar_t         *fs_cddir;
 cvar_t         *fs_gamedirvar;
@@ -1356,6 +1355,7 @@ Sets the gamedir and path to a different directory.
 void FS_SetGamedir(char *dir)
 {
 	int				i;
+	char			path[MAX_OSPATH];
 	fsSearchPath_t	*next;
 
 	// make sure dir is valid
@@ -1399,21 +1399,30 @@ void FS_SetGamedir(char *dir)
 
 	Com_sprintf(fs_gamedir, sizeof(fs_gamedir), "%s/%s", fs_basedir->string, dir);
 
+	// see if we were reset or loaded a mod
 	if (strcmp(dir, BASEDIRNAME) == 0 || (*dir == 0))
 	{
+		// we were reset to baseq2
 		Cvar_FullSet("gamedir", "", CVAR_SERVERINFO | CVAR_NOSET);
 		Cvar_FullSet("game", "", CVAR_LATCH | CVAR_SERVERINFO);
 	}
 	else
 	{
+		// set all cvars
 		Cvar_FullSet("gamedir", dir, CVAR_SERVERINFO | CVAR_NOSET);
 		if (fs_cddir->string[0] == '\0')
 			FS_AddGameDirectory(va("%s/%s", fs_cddir->string, dir));
 
+		// add in mod directory
 		FS_AddGameDirectory(va("%s/%s", fs_basedir->string, dir));
 		FS_AddBinaryDirAsGameDirectory(dir);
 		FS_AddHomeAsGameDirectory(dir);
 	}
+
+	// create the screenshots directory if it doesn't exist
+	// do this here, since the refresh shouldn't have any contact with the filesystem
+	Com_sprintf(path, sizeof(path), "%s/scrnshot", dir);
+	FS_CreatePath(path);
 }
 
 /*
@@ -1786,9 +1795,6 @@ void FS_InitFilesystem(void)
 
 	// game directory
 	fs_gamedirvar = Cvar_Get("game", "", CVAR_LATCH | CVAR_SERVERINFO);
-
-	// current directory
-	fs_homepath = Cvar_Get("homepath", Sys_GetCurrentDir(), CVAR_NOSET);
 
 	// Add baseq2 to search path
 	FS_AddGameDirectory(va("%s/" BASEDIRNAME, fs_basedir->string));

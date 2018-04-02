@@ -206,17 +206,3 @@ char *Sys_GetHomeDir (void)
 	return gdir;
 #endif	
 }
-
-char *Sys_GetCurrentDir (void)
-{
-	static char dir[MAX_OSPATH];
-
-#ifdef WIN32
-	if (!_getcwd(dir, sizeof(dir)))
-#else
-	if (!getcwd(dir, sizeof(dir)))
-#endif
-		Sys_Error("Couldn't get current working directory");
-
-	return dir;
-}

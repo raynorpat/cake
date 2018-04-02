@@ -823,7 +823,6 @@ void	Sys_Print (char *string);
 
 char	*Sys_GetHomeDir (void);
 char	*Sys_GetBinaryDir (void);
-char	*Sys_GetCurrentDir (void);
 
 void	Sys_Error (char *error, ...);
 
