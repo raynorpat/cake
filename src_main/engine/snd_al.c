@@ -24,6 +24,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #include "snd_wave.h"
 #include "snd_qal.h"
 
+// cvars
+cvar_t *s_alDopplerSpeed;
+cvar_t *s_alDopplerFactor;
+
 // translates from AL coordinate system to quake
 #define AL_UnpackVector(v)  -v[1],v[2],-v[0]
 #define AL_CopyVector(a,b)  ((b)[0]=-(a)[1],(b)[1]=(a)[2],(b)[2]=-(a)[0])
@@ -73,6 +77,10 @@ qboolean AL_Init (void)
         Com_Printf("OpenAL failed to initialize.\n");
         return false;
     }
+
+	// init cvars
+	s_alDopplerFactor = Cvar_Get("s_alDopplerFactor", "2.0", CVAR_ARCHIVE);
+	s_alDopplerSpeed = Cvar_Get("s_alDopplerSpeed", "2200", CVAR_ARCHIVE);
 
     // check for linear distance extension
     if (!qalIsExtensionPresent("AL_EXT_LINEAR_DISTANCE"))
@@ -396,6 +404,8 @@ void AL_Update (void)
 	qalListener3f (AL_POSITION, AL_UnpackVector(listener_origin));
     qalListenerfv (AL_ORIENTATION, orientation);
 	qalDistanceModel (AL_LINEAR_DISTANCE_CLAMPED);
+	qalDopplerFactor (s_alDopplerFactor->value);
+	qalSpeedOfSound (s_alDopplerSpeed->value);
 
 	CL_GetViewVelocity (listener_velocity);
 	VectorScale (listener_velocity, AL_METERS_TO_Q2_UNITS, listener_velocity);
