@@ -67,7 +67,6 @@ int			s_beginofs;
 
 cvar_t		*s_enable;
 cvar_t		*s_volume;
-cvar_t		*s_testsound;
 cvar_t		*s_loadas8bit;
 cvar_t		*s_khz;
 cvar_t		*s_show;
@@ -120,7 +119,6 @@ void S_Init (void)
 	s_loadas8bit = Cvar_Get ("s_loadas8bit", "0", CVAR_ARCHIVE);
 	s_mixahead = Cvar_Get ("s_mixahead", "0.2", CVAR_ARCHIVE);
 	s_show = Cvar_Get ("s_show", "0", 0);
-	s_testsound = Cvar_Get ("s_testsound", "0", 0);
 	s_ambient = Cvar_Get ("s_ambient", "1", 0);
 
 	Cmd_AddCommand ("play", S_Play);
