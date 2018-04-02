@@ -48,14 +48,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 	QAL( LPALCGETSTRINGISOFT, alcGetStringiSOFT ); \
 	QAL( LPALCRESETDEVICESOFT, alcResetDeviceSOFT );
 
-#ifdef _WIN32
-#define ALDRIVER_DEFAULT "OpenAL32.dll"
-#elif defined(MACOS_X)
-#define ALDRIVER_DEFAULT "/System/Library/Frameworks/OpenAL.framework/OpenAL"
-#else
-#define ALDRIVER_DEFAULT "libopenal.so.0"
-#endif
-
 static cvar_t *al_driver;
 static cvar_t *al_device;
 
@@ -179,32 +171,84 @@ QAL_IMP
 
 qboolean QAL_Init (void)
 {
-	ALCint num_hrtf;
+#ifdef _WIN32
+	char *libraries[] = { "soft_oal.dll", "openal32.dll", 0 };
+#elif defined(__APPLE__)
+	char *libraries[] = { "libopenal.dylib", "OpenAL-Soft.framework/OpenAL-Soft", "/System/Library/Frameworks/OpenAL.framework/OpenAL", 0 };
+#else
+	char *libraries[] = { "libopenal.so", "libopenal.so.0", "libopenal.so.1", 0 };
+#endif
+	char name[256];
 
+	// init cvars
 	al_device = Cvar_Get ("al_device", "", CVAR_ARCHIVE);
-	al_driver = Cvar_Get ("al_driver", ALDRIVER_DEFAULT, CVAR_ARCHIVE);
+	al_driver = Cvar_Get ("al_driver", "", CVAR_ARCHIVE);
 
-    Sys_LoadLibrary (al_driver->string, NULL, &handle);
-    if (!handle)
-        return false;
+	// prevent the user from screwing themselves by setting an invalid library
+	strncpy(name, al_driver->string, sizeof(name));
+	Com_DPrintf("LoadLibrary (%s)\n", name);
+	Sys_LoadLibrary(name, NULL, &handle);
+	for (int i = 0; !handle && libraries[i] != NULL; i++)
+	{
+		Com_DPrintf("LoadLibrary (%s)\n", libraries[i]);
+		Sys_LoadLibrary(libraries[i], NULL, &handle);
+		if (handle)
+		{
+			// hey we got one!
+			Cvar_Set("al_driver", libraries[i]);
+		}
+	}
+
+	if (!handle)
+	{
+		Com_Printf("Loading %s failed! Disabling OpenAL.\n", al_driver->string);
+		return false;
+	}
 
 #define QAL(type,func)  q##func = Sys_GetProcAddress (handle, #func);
 QALC_IMP
 QAL_IMP
 #undef QAL
 
-    Com_DPrintf ("...opening OpenAL device: ");
-    device = qalcOpenDevice (al_device->string[0] ? al_device->string : NULL);
+	// open the OpenAL device
+	Com_DPrintf("...opening OpenAL device: ");
+
+	// get list of OpenAL devices
+	{
+		char* devices = (char*)qalcGetString(NULL, ALC_DEVICE_SPECIFIER);
+		while (!device && devices && *devices != 0)
+		{
+			Com_DPrintf("...found OpenAL device: %s\n",devices);
+			devices += strlen(devices) + 1; // on to the next device
+		}
+	}
+
+	// try and open what the user has set as the device
+	{
+		const char *dev = al_device->string[0] ? al_device->string : qalcGetString(NULL, ALC_DEFAULT_DEVICE_SPECIFIER);
+		Com_DPrintf("...attempting to open OpenAL device '%s': ", dev);
+		device = qalcOpenDevice(dev);
+	}
+
+	// ugh, no device still, so open the default
+	if (!device)
+	{
+		Com_DPrintf("failed!\n...attempting to open default OpenAL device: ");
+		device = qalcOpenDevice(qalcGetString(NULL, ALC_DEFAULT_DEVICE_SPECIFIER));
+	}
+
     if (!device)
         goto fail;
     Com_DPrintf ("ok\n");
 
+	// create OpenAL context
     Com_DPrintf ("...creating OpenAL context: ");
     context = qalcCreateContext (device, NULL);
     if (!context)
         goto fail;
     Com_DPrintf ("ok\n");
 
+	// make OpenAL context current
     Com_DPrintf ("...making context current: ");
     if (!qalcMakeContextCurrent(context))
         goto fail;
@@ -213,7 +257,9 @@ QAL_IMP
 	// enumerate available HRTFs, and reset the device using one
 	if (qalcIsExtensionPresent(device, "ALC_SOFT_HRTF"))
 	{
-		alcGetIntegerv(device, ALC_NUM_HRTF_SPECIFIERS_SOFT, 1, &num_hrtf);
+		ALCint num_hrtf;
+
+		qalcGetIntegerv(device, ALC_NUM_HRTF_SPECIFIERS_SOFT, 1, &num_hrtf);
 		if (!num_hrtf)
 		{
 			Com_DPrintf("...no HRTFs found\n");
