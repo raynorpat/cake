@@ -69,6 +69,69 @@ QALC_IMP
 QAL_IMP
 #undef QAL
 
+void QAL_Info(void)
+{
+	Com_Printf("AL_VENDOR: %s\n", qalGetString(AL_VENDOR));
+	Com_Printf("AL_RENDERER: %s\n", qalGetString(AL_RENDERER));
+	Com_Printf("AL_VERSION: %s\n", qalGetString(AL_VERSION));
+	Com_DPrintf("AL_EXTENSIONS: %s\n", qalGetString(AL_EXTENSIONS));
+
+	// print out available devices
+	if (qalcIsExtensionPresent(NULL, "ALC_ENUMERATE_ALL_EXT"))
+	{
+		const char *devs = qalcGetString(NULL, ALC_ALL_DEVICES_SPECIFIER);
+
+		Com_Printf("\nAvailable OpenAL devices:\n");
+
+		if (devs == NULL)
+		{
+			// no devices, might be an old OpenAL 1.0 or prior system...
+			Com_Printf("- No devices found. Depending on your\n");
+			Com_Printf("  platform this may be expected and\n");
+			Com_Printf("  doesn't indicate a problem!\n");
+		}
+		else
+		{
+			while (devs && *devs)
+			{
+				Com_Printf("- %s\n", devs);
+				devs += strlen(devs) + 1;
+			}
+		}
+	}
+
+	// print out current device
+	if (qalcIsExtensionPresent(NULL, "ALC_ENUMERATE_ALL_EXT"))
+	{
+		const char *devs = qalcGetString(device, ALC_DEVICE_SPECIFIER);
+
+		Com_Printf("\nCurrent OpenAL device:\n");
+
+		if (devs == NULL)
+		{
+			Com_Printf("- No OpenAL device in use\n");
+		}
+		else
+		{
+			Com_Printf("- %s\n", devs);
+		}
+	}
+
+	// grab frequency for device
+	{
+		ALCint attr_size;
+		ALCint * attributes;
+		int i = 0;
+		qalcGetIntegerv(device, ALC_ATTRIBUTES_SIZE, sizeof(attr_size), &attr_size);
+		attributes = (ALCint *)Z_TagMalloc(attr_size * sizeof(ALCint), 0);
+		qalcGetIntegerv(device, ALC_ALL_ATTRIBUTES, attr_size, attributes);
+		for (i = 0; i < attr_size; i += 2)
+		{
+			if (attributes[i] == ALC_FREQUENCY)
+				Com_Printf("ALC_FREQUENCY: %i\n", attributes[i + 1]);
+		}
+		Z_Free(attributes);
+	}
 void QAL_Shutdown (void)
 {
     if (context)

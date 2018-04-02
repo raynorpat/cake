@@ -21,6 +21,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 // snd_qal.h: OpenAL loading subsystem
 #define AL_NO_PROTOTYPES
 #include <al.h>
+#include <alc.h>
+#include <alext.h>
 
 #define QAL_IMP \
     QAL( LPALENABLE, alEnable ); \
@@ -103,3 +105,5 @@ QAL_IMP
 
 qboolean QAL_Init (void);
 void QAL_Shutdown (void);
+
+void QAL_Info (void);
