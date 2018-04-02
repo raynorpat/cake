@@ -451,13 +451,8 @@ void OGG_Stream(void)
 #ifdef USE_OPENAL
 		if (sound_started == SS_OAL)
 		{
-			// calculate the number of buffers used for storing decoded OGG/Vorbis data. We take the number of active buffers
-			// and add 256. 256 is about 12 seconds worth of sound, more than enough to be resilent against underruns
-			if (ogg_numbufs == 0 || active_buffers < ogg_numbufs - 256)
-				ogg_numbufs = active_buffers + 256;
-
-			// active_buffers are all active OpenAL buffers, buffering normal sfx _and_ ogg/vorbis samples
-			while (active_buffers <= ogg_numbufs)
+			// activeStreamBuffers is the count of stream buffers, maxStreamBuffers is the total available stream buffers
+			while (activeStreamBuffers < maxStreamBuffers)
 				OGG_Read ();
 		}
 		else

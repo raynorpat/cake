@@ -138,7 +138,8 @@ void	Snd_Memset(void* dest, const int val, const size_t count);
 //
 // snd_al.c
 //
-extern int active_buffers;
+extern int activeStreamBuffers;
+extern int maxStreamBuffers;
 
 void	AL_SoundInfo (void);
 qboolean AL_Init (void);
