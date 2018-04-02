@@ -123,7 +123,7 @@ qboolean AL_Init (void)
 	}
 
     s_numchannels = i;
-	Com_Printf("Preallocated %i OpenAL Channels\n", s_numchannels + 1);
+	Com_DPrintf("Preallocated %i OpenAL Channels\n", s_numchannels + 1);
 	AL_InitStreamSource ();
 
 	maxStreamBuffers = 0;
@@ -524,7 +524,7 @@ static void S_AL_AllocStreamBuffers(int numBuffers)
 
 	maxStreamBuffers = numBuffers;
 	currentStreamBuffer = 0;
-	Com_Printf("Preallocated %i OpenAL Stream Buffers\n", maxStreamBuffers);
+	Com_DPrintf("Preallocated %i OpenAL Stream Buffers\n", maxStreamBuffers);
 }
 
 static void S_AL_StreamUpdate(void)
