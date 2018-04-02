@@ -487,7 +487,6 @@ else()
 		endif()
 		target_link_libraries(cake PRIVATE
 			refresh
-			pthread
 			${RT_LIBRARY}
 			${SDL2_LIBRARY}
             ${GLEW_LIBRARY}
