@@ -35,8 +35,8 @@ cvar_t *s_alDopplerFactor;
 // OpenAL implementation should support at least this number of sources
 #define MIN_CHANNELS 16
 
-// avg US male height / q2PlayerHeight = 1.764f / 56.0f = 0.0315f
-#define AL_METERS_TO_Q2_UNITS 0.0315f
+#define AL_METERS_TO_Q2_UNITS 0.0315f // avg US male height / q2PlayerHeight = 1.764f / 56.0f = 0.0315f
+#define AL_SPEED_OF_SOUND_IN_Q2_UNITS "19225" // OpenAL speed of sound in meters * q2 units = 343.3f * 56.0f = 19224.8f
 
 int active_buffers;
 qboolean streamPlaying;
@@ -80,7 +80,7 @@ qboolean AL_Init (void)
 
 	// init cvars
 	s_alDopplerFactor = Cvar_Get("s_alDopplerFactor", "2.0", CVAR_ARCHIVE);
-	s_alDopplerSpeed = Cvar_Get("s_alDopplerSpeed", "2200", CVAR_ARCHIVE);
+	s_alDopplerSpeed = Cvar_Get("s_alDopplerSpeed", AL_SPEED_OF_SOUND_IN_Q2_UNITS, CVAR_ARCHIVE);
 
     // check for linear distance extension
     if (!qalIsExtensionPresent("AL_EXT_LINEAR_DISTANCE"))
