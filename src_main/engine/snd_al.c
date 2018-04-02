@@ -304,7 +304,7 @@ void AL_StopAllChannels (void)
 
 	s_rawend = 0;
 
-	S_AL_DeallocStreamBuffers ();
+	S_AL_StreamDie ();
 }
 
 static channel_t *AL_FindLoopingSound (int entnum, sfx_t *sfx)
