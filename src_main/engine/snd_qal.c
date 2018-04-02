@@ -44,7 +44,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
     QAL( LPALCCAPTURECLOSEDEVICE, alcCaptureCloseDevice ); \
     QAL( LPALCCAPTURESTART, alcCaptureStart ); \
     QAL( LPALCCAPTURESTOP, alcCaptureStop ); \
-    QAL( LPALCCAPTURESAMPLES, alcCaptureSamples );
+    QAL( LPALCCAPTURESAMPLES, alcCaptureSamples ); \
+	QAL( LPALCGETSTRINGISOFT, alcGetStringiSOFT ); \
+	QAL( LPALCRESETDEVICESOFT, alcResetDeviceSOFT );
 
 #ifdef _WIN32
 #define ALDRIVER_DEFAULT "OpenAL32.dll"
@@ -68,6 +70,8 @@ QALC_IMP
 #define QAL(type,func)  type q##func;
 QAL_IMP
 #undef QAL
+
+ALCint hrtf_state;
 
 void QAL_Info(void)
 {
@@ -132,6 +136,23 @@ void QAL_Info(void)
 		}
 		Z_Free(attributes);
 	}
+
+	// check for hrtf support
+	if (qalcIsExtensionPresent(device, "ALC_SOFT_HRTF"))
+	{
+		alcGetIntegerv(device, ALC_HRTF_SOFT, 1, &hrtf_state);
+		if (!hrtf_state)
+		{
+			Com_Printf("HRTF not enabled!\n");
+		}
+		else
+		{
+			const ALchar *name = alcGetString(device, ALC_HRTF_SPECIFIER_SOFT);
+			Com_Printf("HRTF enabled, using %s\n", name);
+		}
+	}
+}
+
 void QAL_Shutdown (void)
 {
     if (context)
@@ -158,6 +179,8 @@ QAL_IMP
 
 qboolean QAL_Init (void)
 {
+	ALCint num_hrtf;
+
 	al_device = Cvar_Get ("al_device", "", CVAR_ARCHIVE);
 	al_driver = Cvar_Get ("al_driver", ALDRIVER_DEFAULT, CVAR_ARCHIVE);
 
@@ -186,6 +209,51 @@ QAL_IMP
     if (!qalcMakeContextCurrent(context))
         goto fail;
     Com_DPrintf ("ok\n");
+
+	// enumerate available HRTFs, and reset the device using one
+	if (qalcIsExtensionPresent(device, "ALC_SOFT_HRTF"))
+	{
+		alcGetIntegerv(device, ALC_NUM_HRTF_SPECIFIERS_SOFT, 1, &num_hrtf);
+		if (!num_hrtf)
+		{
+			Com_DPrintf("...no HRTFs found\n");
+		}
+		else
+		{
+			const char *hrtfname = "hrtf\\default-44100"; // default 44hz HRTF
+			ALCint attr[5];
+			ALCint index = -1;
+			ALCint i;
+			Com_DPrintf("...available HRTFs:\n");
+			for (i = 0; i < num_hrtf; i++)
+			{
+				const ALCchar *name = qalcGetStringiSOFT(device, ALC_HRTF_SPECIFIER_SOFT, i);
+				Com_DPrintf("    %d: %s\n", i, name);
+
+				// Check if this is the HRTF the user requested
+				if (hrtfname && strcmp(name, hrtfname) == 0)
+					index = i;
+			}
+			i = 0;
+			attr[i++] = ALC_HRTF_SOFT;
+			attr[i++] = ALC_TRUE;
+			if (index == -1)
+			{
+				if (hrtfname)
+					Com_DPrintf("HRTF \"%s\" not found\n", hrtfname);
+				Com_DPrintf("Using default HRTF...\n");
+			}
+			else
+			{
+				Com_DPrintf("Selecting HRTF %d...\n", index);
+				attr[i++] = ALC_HRTF_ID_SOFT;
+				attr[i++] = index;
+			}
+			attr[i] = 0;
+			if (!qalcResetDeviceSOFT(device, attr))
+				goto fail;
+		}
+	}
 
     return true;
 
