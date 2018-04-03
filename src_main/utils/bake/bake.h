@@ -66,6 +66,8 @@ void Cmd_Mipdir (void);
 
 void Cmd_Video (void);
 
+void Cmd_Music (void);
+
 void RemapZero (byte *pixels, byte *palette, int width, int height);
 
 void ReleaseFile (char *filename);

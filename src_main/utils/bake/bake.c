@@ -416,6 +416,11 @@ void ParseScript (void)
 		else if (!strcmp (token, "$video"))
 			Cmd_Video ();
 		//
+		// music
+		//
+		else if (!strcmp(token, "$music"))
+			Cmd_Music();
+		//
 		// misc
 		//
 		else if (!strcmp (token, "$file"))
