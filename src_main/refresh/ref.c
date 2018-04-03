@@ -27,8 +27,6 @@ void            (* RE_BeginFrame)( float camera_separation ) = NULL;
 void			(* RE_RenderFrame)( refdef_t *fd ) = NULL;
 void			(* RE_EndFrame)( void ) = NULL;
 
-void            (* RE_SetPalette)( const unsigned char *palette ) = NULL;
-
 int		        (* RE_Init)( void ) = NULL;
 void            (* RE_Shutdown)( void ) = NULL;
 
