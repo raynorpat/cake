@@ -63,65 +63,35 @@ void CompositeFS ()
 	// horizontal gaussian blur pass
 	else if(compositeMode == 2)
 	{
-		float Usigma = 3.0;
-		vec2 UblurMultiplyVec = vec2(1.0, 0.0);
-		float UnumBlurPixelsPerSide = 4.0;
-	
-		// Incremental Gaussian Coefficient Calculation (See GPU Gems 3 pg. 877 - 889)
-		vec3 incrementalGaussian;
-		incrementalGaussian.x = 1.0 / (sqrt(2.0 * pi) * Usigma);
-		incrementalGaussian.y = exp(-0.5 / (Usigma * Usigma));
-		incrementalGaussian.z = incrementalGaussian.y * incrementalGaussian.y;
-
-		vec4 avgValue = vec4(0.0, 0.0, 0.0, 0.0);
-		float coefficientSum = 0.0;
-
-		// take the central sample first
-		avgValue += texture(diffuse, st) * incrementalGaussian.x;
-		coefficientSum += incrementalGaussian.x;
-		incrementalGaussian.xy *= incrementalGaussian.yz;
-
-		vec2 offset = texScale * UblurMultiplyVec; // component-wise
-		for (float i = 1.0; i <= UnumBlurPixelsPerSide; i++) {
-			avgValue += texture(diffuse, st - i * offset) * incrementalGaussian.x;
-			avgValue += texture(diffuse, st + i * offset) * incrementalGaussian.x;
-			coefficientSum += 2 * incrementalGaussian.x;
-			incrementalGaussian.xy *= incrementalGaussian.yz;
+		float gaussFact[7] = float[7](1.0, 6.0, 15.0, 20.0, 15.0, 6.0, 1.0);
+		float gaussSum = 64.0;
+		const int tap = 3;
+		
+		// do a full gaussian blur
+		for(int t = -tap; t <= tap; t++)
+		{
+			float weight = gaussFact[t + tap];
+			color += texture(diffuse, st + vec2(t, 0) * texScale) * weight;
 		}
 
-		fragColor = avgValue / coefficientSum;
+		fragColor = color * (1.0 / gaussSum);
 		return;
 	}
 	// vertical gaussian blur pass
 	else if(compositeMode == 3)
 	{
-		float Usigma = 3.0;
-		vec2 UblurMultiplyVec = vec2(0.0, 1.0);
-		float UnumBlurPixelsPerSide = 4.0;
+		float gaussFact[7] = float[7](1.0, 6.0, 15.0, 20.0, 15.0, 6.0, 1.0);
+		float gaussSum = 64.0;
+		const int tap = 3;
 	
-		// Incremental Gaussian Coefficient Calculation (See GPU Gems 3 pg. 877 - 889)
-		vec3 incrementalGaussian;
-		incrementalGaussian.x = 1.0 / (sqrt(2.0 * pi) * Usigma);
-		incrementalGaussian.y = exp(-0.5 / (Usigma * Usigma));
-		incrementalGaussian.z = incrementalGaussian.y * incrementalGaussian.y;
-
-		vec4 avgValue = vec4(0.0, 0.0, 0.0, 0.0);
-		float coefficientSum = 0.0;
-
-		// take the central sample first
-		avgValue += texture(diffuse, st) * incrementalGaussian.x;
-		coefficientSum += incrementalGaussian.x;
-		incrementalGaussian.xy *= incrementalGaussian.yz;
-
-		vec2 offset = texScale * UblurMultiplyVec; // component-wise
-		for (float i = 1.0; i <= UnumBlurPixelsPerSide; i++) {
-			avgValue += texture(diffuse, st - i * offset) * incrementalGaussian.x;
-			avgValue += texture(diffuse, st + i * offset) * incrementalGaussian.x;
-			coefficientSum += 2 * incrementalGaussian.x;
-			incrementalGaussian.xy *= incrementalGaussian.yz;
+		// do a full gaussian blur
+		for(int t = -tap; t <= tap; t++)
+		{
+			float weight = gaussFact[t + tap];
+			color += texture(diffuse, st + vec2(0, t) * texScale) * weight;
 		}
 
-		fragColor = avgValue / coefficientSum;
+		fragColor = color * (1.0 / gaussSum);
 		return;
 	}
 	// sepia pass for menu and loading background
