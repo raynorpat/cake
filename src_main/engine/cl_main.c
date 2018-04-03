@@ -58,6 +58,9 @@ cvar_t	*cl_showfps;
 
 cvar_t	*cl_paused;
 
+cvar_t	*cl_aviFrameRate;
+cvar_t	*cl_aviMotionJpeg;
+
 cvar_t	*lookstrafe;
 cvar_t	*sensitivity;
 
@@ -604,10 +607,16 @@ void CL_Disconnect (void)
 
 	cls.connect_time = 0;
 
+	// stop any cinematics
 	SCR_StopCinematic ();
 
+	// stop any demos playing
 	if (cls.demorecording)
 		CL_Stop_f ();
+
+	// stop recording any video
+	if (CL_VideoRecording())
+		CL_CloseAVI ();
 
 	// send a disconnect message to the server
 	final[0] = clc_stringcmd;
@@ -1437,6 +1446,71 @@ void CL_Precache_f (void)
 	CL_RequestNextDownload ();
 }
 
+//===========================================================================================
+
+
+/*
+===============
+CL_Video_f
+
+video
+video [filename]
+===============
+*/
+void CL_Video_f(void)
+{
+	char  filename[MAX_OSPATH];
+	int   i, last;
+
+	if (Cmd_Argc() == 2)
+	{
+		// explicit filename
+		Com_sprintf(filename, MAX_OSPATH, "videos/%s.avi", Cmd_Argv(1));
+	}
+	else
+	{
+		// scan for a free filename
+		for (i = 0; i <= 9999; i++)
+		{
+			int a, b, c, d;
+
+			last = i;
+
+			a = last / 1000;
+			last -= a * 1000;
+			b = last / 100;
+			last -= b * 100;
+			c = last / 10;
+			last -= c * 10;
+			d = last;
+
+			Com_sprintf(filename, MAX_OSPATH, "videos/video%d%d%d%d.avi", a, b, c, d);
+			if (!FS_FileExists(filename))
+				break; // file doesn't exist
+		}
+
+		if (i > 9999)
+		{
+			Com_Printf("ERROR: no free file names to create video\n");
+			return;
+		}
+	}
+
+	CL_OpenAVIForWriting(filename);
+}
+
+/*
+===============
+CL_StopVideo_f
+===============
+*/
+void CL_StopVideo_f(void)
+{
+	CL_CloseAVI();
+}
+
+//============================================================================
+
 
 /*
 =================
@@ -1500,6 +1574,9 @@ void CL_InitLocal (void)
 	cl_timeout = Cvar_Get ("cl_timeout", "120", 0);
 	cl_paused = Cvar_Get ("paused", "0", 0);
 
+	cl_aviFrameRate = Cvar_Get ("cl_aviFrameRate", "25", CVAR_ARCHIVE);
+	cl_aviMotionJpeg = Cvar_Get ("cl_aviMotionJpeg", "1", CVAR_ARCHIVE);
+
 	rcon_client_password = Cvar_Get ("rcon_password", "", 0);
 	rcon_address = Cvar_Get ("rcon_address", "", 0);
 
@@ -1550,6 +1627,9 @@ void CL_InitLocal (void)
 	Cmd_AddCommand ("precache", CL_Precache_f);
 	Cmd_AddCommand ("download", CL_Download_f);
 
+	Cmd_AddCommand ("video", CL_Video_f);
+	Cmd_AddCommand ("stopvideo", CL_StopVideo_f);
+
 	// forward to server commands
 	// the only thing this does is allow command completion
 	// to work -- all unknown commands are automatically
@@ -1574,8 +1654,6 @@ void CL_InitLocal (void)
 	Cmd_AddCommand ("weapnext", NULL);
 	Cmd_AddCommand ("weapprev", NULL);
 }
-
-
 
 /*
 ===============
@@ -1609,7 +1687,6 @@ void CL_WriteConfiguration (void)
 
 	Cvar_WriteVariables (path);
 }
-
 
 //============================================================================
 
@@ -1694,6 +1771,14 @@ void CL_Frame (int packetdelta, int renderdelta, int timedelta, qboolean packetf
 			// run downloads at full speed when connecting
 			CL_RunHTTPDownloads();
 		}
+	}
+
+	// if recording an avi, lock to a fixed fps
+	if (CL_VideoRecording() && cl_aviFrameRate->integer)
+	{
+		// save the current screen
+		if (cls.state == ca_active)
+			CL_TakeVideoFrame();
 	}
 
 	if (packetframe || renderframe)

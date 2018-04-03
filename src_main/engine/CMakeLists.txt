@@ -117,6 +117,7 @@ set(CLIENT_INCLUDES
 	sound.h
 	)
 set(CLIENT_SOURCES
+	cl_avi.c
 	cl_cin.c
 	cl_console.c
 	cl_ents.c

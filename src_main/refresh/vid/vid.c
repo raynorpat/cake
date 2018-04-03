@@ -127,6 +127,10 @@ Console command to re-start the video mode and refresh.
 */
 void VID_Restart_f (void)
 {
+	// Settings may have changed so stop recording now
+	if (CL_VideoRecording())
+		CL_CloseAVI ();
+
 	vid_ref->modified = true;
 }
 

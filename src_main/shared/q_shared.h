@@ -59,11 +59,15 @@ char *strtok_r(char *s, const char *delim, char **last);
 
 #define ARRAY_LEN(x)		(sizeof(x) / sizeof(*(x)))
 
+#define PAD(x,y)			(((x)+(y)-1) & ~((y)-1))
+#define PADLEN(x, y)		(PAD((x), (y)) - (x))
+
 #define CL_MASTER_ADDR		"maraakate.org" /* FS: master.gamespy.com & co are dead */
 #define CL_MASTER_PORT		"28900"
 #define SV_MASTER_IP		"maraakate.org" /* FS: master.gamespy.com & co are dead */
 #define SV_MASTER_PORT		"27900"
 
+#define AVI_LINE_PADDING	4
 
 // angle indexes
 #define	PITCH				0		// up / down

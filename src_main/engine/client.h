@@ -357,6 +357,9 @@ extern	cvar_t	*cl_lightlevel;	// FIXME HACK
 extern	cvar_t	*cl_paused;
 extern	cvar_t	*cl_timedemo;
 
+extern	cvar_t	*cl_aviFrameRate;
+extern	cvar_t	*cl_aviMotionJpeg;
+
 extern	cvar_t	*cl_vwep;
 
 extern  cvar_t	*cl_hudscale;
@@ -633,3 +636,13 @@ void CL_RunHTTPDownloads (void);
 qboolean CL_PendingHTTPDownloads (void);
 void CL_SetHTTPServer (const char *URL);
 void CL_HTTP_Cleanup (qboolean fullShutdown);
+
+//
+// cl_avi.c
+//
+qboolean CL_OpenAVIForWriting (const char *filename);
+void CL_TakeVideoFrame (void);
+void CL_WriteAVIVideoFrame (const byte *imageBuffer, int size);
+void CL_WriteAVIAudioFrame (const byte *pcmBuffer, int size);
+qboolean CL_CloseAVI (void);
+qboolean CL_VideoRecording (void);

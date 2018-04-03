@@ -74,6 +74,7 @@ Maintainers
 Contributions from
 
   * Ryan C. Gordon <icculus@icculus.org> - initial SDL Quake2 port - see http://www.icculus.org/quake2/
+  * Tim Angus and Thilo Schulz - ioQuake3 AVI recording
   * yquake2 and KMQ2 projects - Save game system
   * FFmpeg project - RoQ video encoder/decoder
   * Xiph.org - OGG Vorbis example encoder/decoder
