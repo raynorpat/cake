@@ -51,10 +51,6 @@ vec3 ACESFilmRec2020( vec3 x )
 
 vec3 ToneMap(vec3 c, float avglum)
 {
-#if 1
-	// calculate basic exposure value
-	vec3 exposedColor = c * (exposure / avglum);
-#else
 	// calculation from: Perceptual Effects in Real-time Tone Mapping - Krawczyk et al.
 	float hdrKey = 1.03 - (2.0 / (2.0 + (avglum + 1.0f)));
 
@@ -62,15 +58,14 @@ vec3 ToneMap(vec3 c, float avglum)
 	float avgLuminance = max( avglum, 0.001 );
 	float linearExposure = ( hdrKey / avgLuminance );
 	float newExposure = log2( max( linearExposure, 0.0001 ) );
-	
+
 	// exposure curves ranges from 0.0625 to 16.0
 	vec3 exposedColor = exp2( newExposure ) * c.rgb;
-#endif
-	
+
 	float exposureBias = 1.0;
 	vec3 curr = ACESFilmRec2020( exposedColor * exposureBias );
 	vec3 whiteScale = 1.0 / ACESFilmRec2020( vec3( Uncharted2WhitePoint ) );
-	
+
 	return curr * whiteScale;
 }
 
