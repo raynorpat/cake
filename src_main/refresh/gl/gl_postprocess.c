@@ -354,8 +354,8 @@ void RPostProcess_Init(void)
 	r_hdrKneeCoeff = Cvar_Get("r_hdrKneeCoeff", "0.5", 0);
 	r_hdrExposureCompensation = Cvar_Get("r_hdrExposureCompensation", "3.0", 0);
 	r_hdrExposureAdjust = Cvar_Get("r_hdrExposureAdjust", "1.4", 0);
-	r_hdrBloomIntensity = Cvar_Get("r_hdrBloomIntensity", "0.66", 0);
-	r_hdrBlurPasses = Cvar_Get("r_hdrBlurPasses", "8", 0);
+	r_hdrBloomIntensity = Cvar_Get("r_hdrBloomIntensity", "1.75", 0);
+	r_hdrBlurPasses = Cvar_Get("r_hdrBlurPasses", "16", 0);
 
 	r_postprocessing = Cvar_Get("r_postprocessing", "1", CVAR_ARCHIVE);
 	r_ssao = Cvar_Get("r_ssao", "1", CVAR_ARCHIVE);
