@@ -292,9 +292,8 @@ int FS_FOpenFileAppend(fsHandle_t * handle)
 {
 	char path[MAX_OSPATH];
 
-	FS_CreatePath(handle->name);
-
 	Com_sprintf(path, sizeof(path), "%s/%s", fs_gamedir, handle->name);
+	FS_CreatePath(path);
 
 	handle->file = fopen(path, "ab");
 	if (handle->file)
@@ -320,15 +319,18 @@ int FS_FOpenFileWrite(fsHandle_t * handle)
 {
 	char path[MAX_OSPATH];
 
-	FS_CreatePath(handle->name);
-
 	Com_sprintf(path, sizeof(path), "%s/%s", fs_gamedir, handle->name);
+	FS_CreatePath(path);
 
 	if ((handle->file = fopen(path, "wb")) == NULL)
 	{
 		if (fs_debug->value)
 			Com_Printf("FS_FOpenFileWrite: '%s'.\n", path);
-		return (0);
+		return 0;
+	}
+	else
+	{
+		return 1;
 	}
 	if (fs_debug->value)
 		Com_Printf("FS_FOpenFileWrite: couldn't open '%s'.\n", path);
@@ -511,7 +513,7 @@ int FS_FOpenFile(const char *name, fileHandle_t *f, fsMode_t mode, qboolean game
 	}
 
 	if (size != -1)
-		return (size);
+		return size;
 
 	// couldn't open, so free the handle.
 	memset(handle, 0, sizeof(*handle));
