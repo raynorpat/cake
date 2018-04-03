@@ -15,7 +15,7 @@ Some of the major features currently implemented are:
   * OpenAL audio backend
   * OGG Vorbis background music support
   * RoQ cinematic video encoder/decoder
-  * Re-written OpenGL 3.3 renderer built for speed and a retro software look
+  * Brand new OpenGL 3.x renderer
   * HTTP/FTP download redirection (using cURL)
   * Portable content creation tools (q2map, bake)
   * Master server and dedicated server tool
@@ -73,10 +73,10 @@ Maintainers
   
 Contributions from
 
-  * Ryan C. Gordon <icculus@icculus.org> - initial sdl 1.2 quake2 port - see http://www.icculus.org/quake2/
+  * Ryan C. Gordon <icculus@icculus.org> - initial SDL Quake2 port - see http://www.icculus.org/quake2/
   * yquake2 and KMQ2 projects - Save game system
-  * FFmpeg project - RoQ video encoder
-  * Xiph.org - OGG Vorbis encoder
+  * FFmpeg project - RoQ video encoder/decoder
+  * Xiph.org - OGG Vorbis example encoder/decoder
   * Frank Sapone - master server - see https://bitbucket.org/maraakate/gsmaster
-  * Deniz Sezen - bug fixes
+  * Deniz Sezen - testing and bug fixes
   * Lucas Zadrozny - testing and bug fixes
