@@ -55,7 +55,6 @@ typedef struct aviFileData_s
 	int           width, height;
 	int           numVideoFrames;
 	int           maxRecordSize;
-	qboolean      motionJpeg;
 
 	qboolean      audio;
 	audioFormat_t a;
@@ -204,10 +203,7 @@ void CL_WriteAVIHeader( void )
 					WRITE_4BYTES( 56 );          		//"strh" "chunk" size
 					WRITE_STRING( "vids" );
 
-					if( afd.motionJpeg )
-						WRITE_STRING( "MJPG" );
-					else
-						WRITE_4BYTES( 0 );      		// BI_RGB
+					WRITE_4BYTES( 0 );      			// BI_RGB
 
 					WRITE_4BYTES( 0 );                  //dwFlags
 					WRITE_4BYTES( 0 );                  //dwPriority
@@ -234,16 +230,8 @@ void CL_WriteAVIHeader( void )
 					WRITE_2BYTES( 1 );                  //biPlanes
 					WRITE_2BYTES( 24 );                 //biBitCount
 
-					if( afd.motionJpeg )                //biCompression
-					{
-						WRITE_STRING( "MJPG" );
-						WRITE_4BYTES( afd.width * afd.height ); //biSizeImage
-					}
-					else
-					{
-						WRITE_4BYTES( 0 );              // BI_RGB
-						WRITE_4BYTES( afd.width * afd.height * 3 ); //biSizeImage
-					}
+					WRITE_4BYTES( 0 );              // BI_RGB
+					WRITE_4BYTES( afd.width * afd.height * 3 ); //biSizeImage
 
 					WRITE_4BYTES( 0 );                    //biXPelsPetMeter
 					WRITE_4BYTES( 0 );                    //biYPelsPetMeter
@@ -341,18 +329,12 @@ qboolean CL_OpenAVIForWriting( const char *fileName )
 	afd.width = viddef.width;
 	afd.height = viddef.height;
 
-	if( cl_aviMotionJpeg->integer )
-		afd.motionJpeg = true;
-	else
-		afd.motionJpeg = false;
-
 	// Buffers only need to store RGB pixels.
 	// Allocate a bit more space for the capture buffer to account for possible
 	// padding at the end of pixel lines, and padding for alignment
 	#define MAX_PACK_LEN 16
-	afd.cBuffer = Z_Malloc((afd.width * 3 + MAX_PACK_LEN - 1) * afd.height + MAX_PACK_LEN - 1);
-	// raw avi files have pixel lines start on 4-byte boundaries
-	afd.eBuffer = Z_Malloc(PAD(afd.width * 3, AVI_LINE_PADDING) * afd.height);
+	afd.cBuffer = malloc((afd.width * 3 + MAX_PACK_LEN - 1) * afd.height + MAX_PACK_LEN - 1);
+	afd.eBuffer = malloc(PAD(afd.width * 3, AVI_LINE_PADDING) * afd.height); // raw avi files have pixel lines start on 4-byte boundaries
 
 	afd.a.rate = dma.speed;
 	afd.a.format = WAV_FORMAT_PCM;
@@ -360,6 +342,7 @@ qboolean CL_OpenAVIForWriting( const char *fileName )
 	afd.a.bits = dma.samplebits;
 	afd.a.sampleSize = ( afd.a.bits / 8 ) * afd.a.channels;
 
+	// check frame rate and audio rate
 	if( afd.a.rate % afd.frameRate )
 	{
 		int suggestRate = afd.frameRate;
@@ -370,12 +353,14 @@ qboolean CL_OpenAVIForWriting( const char *fileName )
 		Com_Printf( "WARNING: cl_aviFrameRate is not a divisor of the audio rate, suggest %d\n", suggestRate );
 	}
 
+	// check sound system backend
 	if( !Cvar_VariableInteger( "s_enable" ) )
 	{
 		afd.audio = false;
 	}
 	else if( Cvar_VariableInteger( "s_enable" ) == 1 )
 	{
+		// make sure we are 16bit, 2 channel
 		if( afd.a.bits != 16 || afd.a.channels != 2 )
 		{
 			Com_Printf( "WARNING: Audio format of %d bit/%d channels not supported", afd.a.bits, afd.a.channels );
@@ -392,8 +377,15 @@ qboolean CL_OpenAVIForWriting( const char *fileName )
 		Com_Printf( "WARNING: Audio capture is not supported with OpenAL. Set s_enable to 1 for audio capture\n" );
 	}
 
-	// This doesn't write a real header, but allocates the
-	// correct amount of space at the beginning of the file
+	// check sound system mix ahead
+	if( Cvar_VariableValue( "s_mixahead" ) < 1.0f / afd.frameRate )
+		Com_Printf( "WARNING: you may want to increase s_mixahead to %g!\n", 1.0f / afd.frameRate );
+
+	// check client max framerate
+	if( Cvar_VariableValue( "cl_maxfps" ) < afd.frameRate )
+		Com_Printf( "WARNING: you may need to increase cl_maxfps!\n" );
+
+	// This doesn't write a real header, but allocates the correct amount of space at the beginning of the file
 	CL_WriteAVIHeader( );
 
 	SafeFS_Write( buffer, bufIndex, afd.f );
@@ -561,7 +553,11 @@ void CL_TakeVideoFrame( void )
 	if( !afd.fileOpen )
 		return;
 
-	//re.TakeVideoFrame( afd.width, afd.height, afd.cBuffer, afd.eBuffer, afd.motionJpeg );
+	// make sure client is active or refresh has been prepped
+	if( cls.state != ca_active || !cl.refresh_prepped )
+		return;
+
+	VID_TakeVideoFrame( afd.width, afd.height, afd.cBuffer, afd.eBuffer );
 }
 
 /*
@@ -628,8 +624,8 @@ qboolean CL_CloseAVI( void )
 
 	SafeFS_Write( buffer, bufIndex, afd.f );
 
-	Z_Free( afd.cBuffer );
-	Z_Free( afd.eBuffer );
+	free( afd.cBuffer );
+	free( afd.eBuffer );
 	FS_FCloseFile( afd.f );
 
 	Com_Printf( "Wrote %d:%d frames to %s\n", afd.numVideoFrames, afd.numAudioFrames, afd.fileName );

@@ -43,6 +43,9 @@ extern qboolean R_GetModeInfo(int *width, int *height, float *windowAspect, int 
 extern void Draw_End2D(void);
 extern void GL_UseProgram(GLuint progid);
 
+// used for video export
+extern void CL_WriteAVIVideoFrame(const byte *imageBuffer, int size);
+
 /*
 ===============
 VID_CompareModes
@@ -618,4 +621,20 @@ void VID_GL_EndFrame (void)
 	GL_UseProgram (0);
 
 	SDL_GL_SwapWindow(window);
+}
+
+/*
+VID_GL_TakeVideoFrame
+*/
+void VID_GL_TakeVideoFrame(int width, int height, byte *captureBuffer, byte *encodeBuffer)
+{
+	int frameSize = 0;
+
+	if (!captureBuffer)
+		return;
+
+	glReadPixels(0, 0, width, height, GL_BGR, GL_UNSIGNED_BYTE, captureBuffer);
+
+	frameSize = width * height * 3;
+	CL_WriteAVIVideoFrame(captureBuffer, frameSize);
 }

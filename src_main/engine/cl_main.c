@@ -59,7 +59,6 @@ cvar_t	*cl_showfps;
 cvar_t	*cl_paused;
 
 cvar_t	*cl_aviFrameRate;
-cvar_t	*cl_aviMotionJpeg;
 
 cvar_t	*lookstrafe;
 cvar_t	*sensitivity;
@@ -1575,7 +1574,6 @@ void CL_InitLocal (void)
 	cl_paused = Cvar_Get ("paused", "0", 0);
 
 	cl_aviFrameRate = Cvar_Get ("cl_aviFrameRate", "25", CVAR_ARCHIVE);
-	cl_aviMotionJpeg = Cvar_Get ("cl_aviMotionJpeg", "1", CVAR_ARCHIVE);
 
 	rcon_client_password = Cvar_Get ("rcon_password", "", 0);
 	rcon_address = Cvar_Get ("rcon_address", "", 0);
@@ -1773,14 +1771,6 @@ void CL_Frame (int packetdelta, int renderdelta, int timedelta, qboolean packetf
 		}
 	}
 
-	// if recording an avi, lock to a fixed fps
-	if (CL_VideoRecording() && cl_aviFrameRate->integer)
-	{
-		// save the current screen
-		if (cls.state == ca_active)
-			CL_TakeVideoFrame();
-	}
-
 	if (packetframe || renderframe)
 	{
 		// fetch input packets
@@ -1816,6 +1806,10 @@ void CL_Frame (int packetdelta, int renderdelta, int timedelta, qboolean packetf
 
 	if (renderframe)
 	{		
+		// if recording an avi, save the current screen
+		if (CL_VideoRecording() && cl_aviFrameRate->integer)
+			CL_TakeVideoFrame ();
+
 		// check any video changes
 		VID_CheckChanges();
 

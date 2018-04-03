@@ -1602,6 +1602,19 @@ void Qcommon_Frame (int msec)
 		}
 	}
 
+	// if recording an avi, lock to a fixed fps
+#ifndef DEDICATED_ONLY
+	extern cvar_t *cl_aviFrameRate;
+	extern qboolean CL_VideoRecording(void);
+	if (CL_VideoRecording() && cl_aviFrameRate->integer)
+	{
+		// fixed time for next frame
+		msec = (int)ceil((1000.0f / cl_aviFrameRate->value) * timescale->value);
+		if (msec == 0)
+			msec = 1;
+	}
+#endif
+
 	// timing debug
 	if (fixedtime->value)
 	{
@@ -1611,19 +1624,6 @@ void Qcommon_Frame (int msec)
 	{
 		msec *= timescale->value;
 	}
-
-	// if recording an avi, lock to a fixed fps
-#ifndef DEDICATED_ONLY
-	extern cvar_t *cl_aviFrameRate;
-	extern qboolean CL_VideoRecording (void);
-	if (CL_VideoRecording() && cl_aviFrameRate->integer && msec)
-	{
-		// fixed time for next frame
-		msec = (int)ceil((1000.0f / cl_aviFrameRate->value) * timescale->value);
-		if (msec == 0)
-			msec = 1;
-	}
-#endif
 
 	// content tracing debug
 	if (showtrace->value)

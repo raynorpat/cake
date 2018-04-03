@@ -57,6 +57,7 @@ void	VID_Init(void);
 void	VID_Shutdown(void);
 
 void	VID_WriteScreenshot(int width, int height, int comp, const void* data);
+void	VID_TakeVideoFrame(int width, int height, byte *captureBuffer, byte *encodeBuffer);
 
 void	VID_CheckChanges(void);
 qboolean VID_GetModeInfo(int *width, int *height, int mode);
@@ -70,6 +71,7 @@ void	VID_Shutdown_GL(qboolean contextOnly);
 int		VID_GL_GetRefreshRate(void);
 void	VID_GL_BeginFrame(float camera_separation);
 void	VID_GL_EndFrame(void);
+void	VID_GL_TakeVideoFrame(int width, int height, byte *captureBuffer, byte *encodeBuffer);
 
 // Video menu
 void	VID_MenuInit(void);

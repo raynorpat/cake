@@ -297,8 +297,14 @@ void VID_CheckChanges (void)
 	}
 }
 
-// called with image data of width*height pixel which comp bytes per pixel (must be 3 or 4 for RGB or RGBA)
-// expects the pixels data to be row-wise, starting at top left
+/*
+============
+VID_WriteScreenshot
+
+Called with image data of width * height pixel which comp bytes per pixel (must be 3 or 4 for RGB or RGBA)
+Expects the pixels data to be row-wise, starting at top left
+============
+*/
 void VID_WriteScreenshot(int width, int height, int comp, const void* data)
 {
 	char picname[80];
@@ -401,6 +407,14 @@ void VID_WriteScreenshot(int width, int height, int comp, const void* data)
 	{
 		Com_Printf("VID_WriteScreenshot: Couldn't write %s\n", picname);
 	}
+}
+
+/*
+VID_TakeVideoFrame
+*/
+void VID_TakeVideoFrame(int width, int height, byte *captureBuffer, byte *encodeBuffer)
+{
+	VID_GL_TakeVideoFrame (width, height, captureBuffer, encodeBuffer);
 }
 
 
