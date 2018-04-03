@@ -37,7 +37,6 @@ uniform vec2 texScale;
 
 #define USE_TONEMAP						1
 float Uncharted2WhitePoint = 11.2; // linear white point
-	
 vec3 ACESFilmRec2020( vec3 x )
 {
     float a = 15.8f;
@@ -116,10 +115,10 @@ void HDRPostFS ()
 	vec4 hdrScene = texture(diffuse, st);
 	vec4 color = vec4(hdrScene.rgb + scene.rgb * brightnessContrastBlurSSAOAmount.z, hdrScene.a);
 
-	// vignette effect
+	// filmic vignette effect
 #if USE_VIGNETTE
 	vec2 vignetteST = st;
-    vignetteST *= 1.0 - vignetteST.yx;   
+    vignetteST *= 1.0 - vignetteST.yx;
     float vig = vignetteST.x * vignetteST.y * 15.0;
     vig = pow(vig, 0.25);
 	color.rgb *= vig;
