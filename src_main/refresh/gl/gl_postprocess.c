@@ -570,24 +570,23 @@ void RPostProcess_FXAA(void)
 	if (!gl_config.gl_ext_GPUShader5_support)
 		return;
 
+	// reset current render image
+	RPostProcess_SetCurrentRender();
+
 	// set screen scale
 	texScale[0] = 1.0f / vid.width;
 	texScale[1] = 1.0f / vid.height;
 	
-	GL_Enable(!DEPTHTEST_BIT | !CULLFACE_BIT | BLEND_BIT);
-	GL_BlendFunc(GL_DST_COLOR, GL_ZERO); // multiplicative blend
+	GL_Enable(!DEPTHTEST_BIT | !CULLFACE_BIT | !BLEND_BIT);
 
 	GL_UseProgram(gl_fxaaprog);
 
-	glProgramUniform2f(gl_fxaaprog, u_ssaoTexScale, texScale[0], texScale[1]);
+	glProgramUniform2f(gl_fxaaprog, u_fxaaTexScale, texScale[0], texScale[1]);
 
 	GL_BindTexture(GL_TEXTURE0, GL_TEXTURE_2D, r_drawnearestclampsampler, r_currentRenderImage);
 
 	GL_BindVertexArray(r_postvao);
 	glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
-
-	// reset blend mode
-	GL_BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 }
 
 void RPostProcess_MenuBackground(void)
