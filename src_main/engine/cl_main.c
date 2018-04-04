@@ -149,9 +149,41 @@ void CL_Stop_f (void)
 }
 
 /*
+==================
+CL_DemoFileName
+==================
+*/
+static void CL_DemoFileName (char *buffer, int bufferSize)
+{
+	qtime_t         now;
+	char           *nowString;
+	char           *p;
+	char            mapName[MAX_QPATH];
+	char            serverName[MAX_OSPATH];
+
+	Com_RealTime (&now);
+	nowString = va ("%04d%02d%02d%02d%02d%02d", 1900 + now.tm_year, 1 + now.tm_mon, now.tm_mday, now.tm_hour, now.tm_min, now.tm_sec);
+
+	Q_strlcpy (serverName, cls.servername, MAX_OSPATH);
+
+	// Replace the ":" in the address as it is not a valid file name character
+	p = strstr (serverName, ":");
+	if (p)
+	{
+		*p = '.';
+	}
+
+	Q_strlcpy (mapName, COM_SkipPath(cl.configstrings[CS_MODELS + 1]), sizeof(cl.configstrings[CS_MODELS + 1]));
+	COM_StripExtension (mapName, mapName);
+
+	Com_sprintf (buffer, bufferSize, "%s/demos/%s-%s-%s.dm2", FS_Gamedir(), nowString, serverName, mapName);
+}
+
+/*
 ====================
 CL_Record_f
 
+record
 record <demoname>
 
 Begins recording a demo from the current position
@@ -161,13 +193,15 @@ void CL_Record_f (void)
 {
 	char	name[MAX_OSPATH];
 	char	buf_data[MAX_MSGLEN];
+	char	demoName[MAX_QPATH];
+	char	*s;
 	sizebuf_t	buf;
 	int		i;
 	int		len;
 	entity_state_t	*ent;
 	entity_state_t	nullstate;
 
-	if (Cmd_Argc() != 2)
+	if (Cmd_Argc() > 2)
 	{
 		Com_Printf ("record <demoname>\n");
 		return;
@@ -188,7 +222,16 @@ void CL_Record_f (void)
 	//
 	// open the demo file
 	//
-	Com_sprintf (name, sizeof (name), "%s/demos/%s.dm2", FS_Gamedir(), Cmd_Argv (1));
+	if (Cmd_Argc() == 2)
+	{
+		s = Cmd_Argv (1);
+		Q_strlcpy (demoName, s, sizeof(demoName));
+		Com_sprintf (name, sizeof(name), "%s/demos/%s.dm2", FS_Gamedir(), demoName);
+	}
+	else
+	{
+		CL_DemoFileName (name, sizeof(name));
+	}
 
 	FS_CreatePath (name);
 	cls.demofile = fopen (name, "wb");
@@ -238,7 +281,6 @@ void CL_Record_f (void)
 			MSG_WriteShort (&buf, i);
 			MSG_WriteString (&buf, cl.configstrings[i]);
 		}
-
 	}
 
 	// baselines
