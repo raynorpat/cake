@@ -279,7 +279,6 @@ enum clc_ops_e
 #define	U_SOUND		(1<<26)
 #define	U_SOLID		(1<<27)
 
-
 /*
 ==============================================================
 
@@ -752,6 +751,23 @@ void		Com_SetServerState (int state);
 
 unsigned	Com_BlockChecksum (void *buffer, int length);
 byte		COM_BlockSequenceCRCByte (byte *base, int length, int sequence);
+
+// real time
+//=============================================
+typedef struct qtime_s
+{
+	int             tm_sec;		// seconds after the minute - [0,59]
+	int             tm_min;		// minutes after the hour - [0,59]
+	int             tm_hour;	// hours since midnight - [0,23]
+	int             tm_mday;	// day of the month - [1,31]
+	int             tm_mon;		// months since January - [0,11]
+	int             tm_year;	// years since 1900
+	int             tm_wday;	// days since Sunday - [0,6]
+	int             tm_yday;	// days since January 1 - [0,365]
+	int             tm_isdst;	// daylight savings time flag
+} qtime_t;
+
+int			Com_RealTime (qtime_t * qtime);
 
 float	frand (void);	// 0 ti 1
 float	crand (void);	// -1 to 1
