@@ -117,7 +117,7 @@ void RPostProcess_CreatePrograms(void)
 	}
 
 	// create texture for underwater warp gradient
-	LoadTGAFile("env/warpgradient.tga", &data, &width, &height);
+	LoadImageThruSTB ("env/warpgradient.tga", "tga", &data, &width, &height);
 	if (data)
 		r_warpGradientImage = GL_UploadTexture (data, width, height, false, 32);
 

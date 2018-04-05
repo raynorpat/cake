@@ -5607,6 +5607,8 @@ static void *stbi__tga_load(stbi__context *s, int *x, int *y, int *comp, int req
 		}
 	}
 
+	// raynorpat: disabled this, since we upload textures as BGR anyway in GL_UploadTexture() in gl_image.c
+#if 0
 	// swap RGB - if the source data was RGB16, it already is in the right order
 	if (tga_comp >= 3 && !tga_rgb16)
 	{
@@ -5619,6 +5621,7 @@ static void *stbi__tga_load(stbi__context *s, int *x, int *y, int *comp, int req
 			tga_pixel += tga_comp;
 		}
 	}
+#endif
 
 	// convert to target component count
 	if (req_comp && req_comp != tga_comp)
