@@ -26,11 +26,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
 extern float r_avertexnormals[NUMVERTEXNORMALS][3];
 
-#define SHADOW_SKEW_X -0.7f		// skew along x axis. -0.7 to mimic glquake shadows
-#define SHADOW_SKEW_Y 0			// skew along y axis. 0 to mimic glquake shadows
-#define SHADOW_VSCALE 0			// 0 = completely flat
-#define SHADOW_HEIGHT 0.1f		// how far above the floor to render the shadow
-
 typedef struct meshubo_s
 {
 	glmatrix localMatrix;
@@ -43,7 +38,6 @@ typedef struct meshubo_s
 	float powersuitscale;
 	float shellmix;
 } meshubo_t;
-
 
 #define MESH_UBO_MAX_BLOCKS		128
 
@@ -112,7 +106,7 @@ interpolates between two frames and origins
 FIXME: batch lerp all vertexes
 =============
 */
-void GL_DrawAliasFrameLerp (entity_t *e, dmdl_t *hdr, float backlerp, qboolean shadow)
+void GL_DrawAliasFrameLerp (entity_t *e, dmdl_t *hdr, float backlerp)
 {
 	int		i;
 	float	frontlerp;
@@ -496,7 +490,7 @@ void R_DrawAliasModel (entity_t *e)
 	if (!r_lerpmodels->value)
 		e->backlerp = 0;
 
-	GL_DrawAliasFrameLerp (e, hdr, e->backlerp, false);
+	GL_DrawAliasFrameLerp (e, hdr, e->backlerp);
 
 	if ((e->flags & RF_WEAPONMODEL) && (r_lefthand->value == 1.0F))
 	{
@@ -505,52 +499,6 @@ void R_DrawAliasModel (entity_t *e)
 
 	if (e->flags & RF_DEPTHHACK)
 		glDepthRange (gldepthmin, gldepthmax);
-
-	if (gl_shadows->value && !(e->flags & (RF_TRANSLUCENT | RF_WEAPONMODEL | RF_NOSHADOW)))
-	{
-		glmatrix shadowmatrix;
-
-		// recreate the local matrix for the model, this time appropriately for shadows
-		GL_LoadIdentity(&gl_meshuboupdate.localMatrix);
-
-		// run the scale first which is the same as using a depth hack in our shader
-		if (e->flags & RF_DEPTHHACK)
-			GL_ScaleMatrix(&gl_meshuboupdate.localMatrix, 1.0f, 1.0f, 0.3f);
-
-		float lheight = e->currorigin[2] - lightspot[2];
-
-		GL_MultMatrix(&gl_meshuboupdate.localMatrix, &gl_meshuboupdate.localMatrix, &r_worldmatrix);
-		GL_TranslateMatrix(&gl_meshuboupdate.localMatrix, e->currorigin[0], e->currorigin[1], e->currorigin[2]);
-		GL_TranslateMatrix(&gl_meshuboupdate.localMatrix, 0.0f, 0.0f, -lheight);
-
-		shadowmatrix.m[0][0] = 1;
-		shadowmatrix.m[0][1] = 0;
-		shadowmatrix.m[0][2] = 0;
-		shadowmatrix.m[0][3] = 0;
-
-		shadowmatrix.m[1][0] = 0;
-		shadowmatrix.m[1][1] = 1;
-		shadowmatrix.m[1][2] = 0;
-		shadowmatrix.m[1][3] = 0;
-
-		shadowmatrix.m[2][0] = SHADOW_SKEW_X;
-		shadowmatrix.m[2][1] = SHADOW_SKEW_Y;
-		shadowmatrix.m[2][2] = SHADOW_VSCALE;
-		shadowmatrix.m[2][3] = 0;
-
-		shadowmatrix.m[3][0] = 0;
-		shadowmatrix.m[3][1] = 0;
-		shadowmatrix.m[3][2] = SHADOW_HEIGHT;
-		shadowmatrix.m[3][3] = 1;
-
-		GL_MultMatrix(&gl_meshuboupdate.localMatrix, &gl_meshuboupdate.localMatrix, &shadowmatrix);
-
-		GL_TranslateMatrix(&gl_meshuboupdate.localMatrix, 0.0f, 0.0f, lheight);
-		GL_RadianRotateMatrix(&gl_meshuboupdate.localMatrix, e->angles[YAW], e->angles[PITCH], -e->angles[ROLL]);
-
-		// shadow pass
-		GL_DrawAliasFrameLerp(e, hdr, e->backlerp, true);
-	}
 }
 
 
