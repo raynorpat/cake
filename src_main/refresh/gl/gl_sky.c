@@ -62,7 +62,7 @@ void RE_GL_SetSky (char *name, float rotate, vec3_t axis)
 
 	// load all faces in the correct order for drawing with
 	for (i = 0; i < 6; i++)
-		LoadTGAFile (va ("env/%s%s.tga", skyname, suf[i]), &skycube[i].data, &skycube[i].width, &skycube[i].height);
+		LoadImageThruSTB (va ("env/%s%s.tga", skyname, suf[i]), "tga", &skycube[i].data, &skycube[i].width, &skycube[i].height);
 
 	// and make a cubemap of them
 	r_skytexture = GL_LoadCubeMap (skycube);

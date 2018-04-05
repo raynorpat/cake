@@ -792,7 +792,7 @@ void SCR_PlayCinematic (char *arg)
 #if 0
 		// static tga image
 		Com_sprintf (cin->name, sizeof(cin->name), "pics/%s", arg);
-		LoadTGAFile (cin->name, &cin->pic, &cin->width, &cin->height);
+		LoadImageThruSTB (cin->name, "tga", &cin->pic, &cin->width, &cin->height);
 		cin->frame = -1;
 		cin->time = 1;
 		SCR_EndLoadingPlaque ();

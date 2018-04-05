@@ -100,8 +100,7 @@ void RPostProcess_Begin (void);
 void RPostProcess_FinishToScreen (void);
 void RPostProcess_MenuBackground (void);
 
-void LoadTGAFile (char *name, byte **pic, int *width, int *height);
-
+qboolean LoadImageThruSTB (char *origname, char* type, byte **pic, int *width, int *height);
 
 // up / down
 #define	PITCH	0
