@@ -106,10 +106,6 @@ void V_AddParticle(vec3_t org, int color, float alpha)
 	p->color = d_8to24table_rgba[color & 255];
 	((byte *)&p->color)[3] = (alpha > 1) ? 255 : ((alpha < 0) ? 0 : alpha * 255);
 #endif
-
-	// these are leftover for software refresh
-	p->soft_color = color;
-	p->alpha = alpha;
 }
 
 
@@ -176,8 +172,12 @@ void V_TestParticles (void)
 		for (j = 0; j<3; j++)
 			p->origin[j] = cl.refdef.vieworg[j] + cl.v_forward[j] * d + cl.v_right[j] * r + cl.v_up[j] * u;
 
-		p->color = 8;
-		p->alpha = cl_testparticles->value;
+#ifndef WIN_UWP
+		// transform 8bit colors into RGBA
+		extern unsigned d_8to24table_rgba[];
+		p->color = d_8to24table_rgba[8 & 255];
+		((byte *)&p->color)[3] = (cl_testparticles->value > 1) ? 255 : ((cl_testparticles->value < 0) ? 0 : cl_testparticles->value * 255);
+#endif
 	}
 }
 
