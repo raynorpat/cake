@@ -396,6 +396,12 @@ void R_DrawTextureChains (entity_t *e)
 
 		GL_BindTexture (GL_TEXTURE0, GL_TEXTURE_2D, r_surfacesampler, image->texnum);
 
+		// set dynamic lights
+		if (surf->dlightframe == r_lightframe)
+			R_EnableLights(surf->dlightbits);
+		else
+			R_EnableLights(0);
+
 		// reverse the chain to get f2b ordering
 		for (; surf; surf = surf->texturechain)
 		{
@@ -424,6 +430,12 @@ void R_DrawTextureChains (entity_t *e)
 		if (!(surf->flags & SURF_DRAWTURB)) continue;
 
 		GL_BindTexture (GL_TEXTURE0, GL_TEXTURE_2D, r_surfacesampler, mod->texinfo[i].image->texnum);
+
+		// set dynamic lights
+		if (surf->dlightframe == r_lightframe)
+			R_EnableLights(surf->dlightbits);
+		else
+			R_EnableLights(0);
 
 		for (; surf; surf = surf->texturechain)
 		{
@@ -454,16 +466,11 @@ void R_ModifySurfaceLightmap (msurface_t *surf)
 	if (surf->texinfo->flags & SURF_WARP) return;
 
 	for (map = 0; map < MAXLIGHTMAPS && surf->styles[map] != 255; map++)
-		if (r_newrefdef.lightstyles[surf->styles[map]].white != surf->cached_light[map])
-			goto dynamic;
-
-	// dynamic this frame or dynamic previously
-	if ((surf->dlightframe == r_framecount) || surf->cached_dlight)
 	{
-dynamic:;
-		if (gl_dynamic->value)
+		if (r_newrefdef.lightstyles[surf->styles[map]].white != surf->cached_light[map])
 		{
-			is_dynamic = true;
+			if (gl_dynamic->value)
+				is_dynamic = true;
 		}
 	}
 
@@ -524,26 +531,9 @@ void R_DrawInlineBModel (entity_t *e)
 	cplane_t	*pplane;
 	float		dot;
 	msurface_t	*surf;
-	glmatrix	localMatrix;
-
-	// compute everything on the local matrix so that we can use it for lighting transforms
-	GL_LoadIdentity (&localMatrix);
-	GL_TranslateMatrix (&localMatrix, e->currorigin[0], e->currorigin[1], e->currorigin[2]);
-
-	GL_RotateMatrix (&localMatrix, e->angles[1], 0, 0, 1);
-	GL_RotateMatrix (&localMatrix, e->angles[0], 0, 1, 0);
-	GL_RotateMatrix (&localMatrix, e->angles[2], 1, 0, 0);
-
-	// now multiply out for the final model transform and take it's inverse for lighting
-	GL_MultMatrix (&e->matrix, &localMatrix, &r_mvpmatrix);
-	GL_InvertMatrix (&localMatrix, NULL, &localMatrix);
-
-	// and now calculate dynamic lighting for bmodel
-	R_PushDlights (e->model->nodes + e->model->firstnode, &localMatrix);
-
-	surf = &e->model->surfaces[e->model->firstmodelsurface];
 
 	// draw texture
+	surf = &e->model->surfaces[e->model->firstmodelsurface];
 	for (i = 0; i < e->model->nummodelsurfaces; i++, surf++)
 	{
 		// find which side of the node we are on
@@ -730,7 +720,6 @@ R_DrawWorld
 void R_DrawWorld (void)
 {
 	entity_t ent;
-	glmatrix localMatrix;
 
 	if (!r_drawworld->value)
 		return;
@@ -746,10 +735,13 @@ void R_DrawWorld (void)
 	ent.model = r_worldmodel;
 	memcpy (&ent.matrix, &r_mvpmatrix, sizeof (glmatrix));
 
-	R_PushDlights (r_worldmodel->nodes, GL_LoadIdentity (&localMatrix));
+	// mark dynamic lights
+	R_MarkLights ();
 
+	// recurse world
 	R_RecursiveWorldNode (r_worldmodel->nodes);
 
+	// draw world
 	R_DrawTextureChains (&ent);
 }
 
@@ -1127,7 +1119,7 @@ void GL_BeginBuildingLightmaps (model_t *m)
 
 	memset (gl_lms.allocated, 0, sizeof (gl_lms.allocated));
 
-	r_framecount = 1;		// no dlightcache
+	r_framecount = 1;
 
 	// setup the base lightstyles so the lightmaps won't have to be regenerated
 	// the first time they're seen

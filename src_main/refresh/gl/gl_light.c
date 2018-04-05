@@ -21,9 +21,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
 #include "gl_local.h"
 
-#define	DLIGHT_CUTOFF	64
-
-
 /*
 =============================================================================
 
@@ -32,73 +29,178 @@ DYNAMIC LIGHTS
 =============================================================================
 */
 
+#define LIGHT_RADIUS_FACTOR 100.0
+
 /*
 =============
-R_MarkLights
+R_MarkLights_r
 =============
 */
-static void R_MarkLights (dlight_t *light, int bit, mnode_t *node)
+static void R_MarkLights_r (dlight_t *light, vec3_t trans, int bit, mnode_t *node)
 {
-	cplane_t	*splitplane;
-	float		dist;
 	msurface_t	*surf;
+	vec3_t		origin;
+	float		dist;
 	int			i;
 
+	// leaf
 	if (node->contents != -1)
 		return;
 
-	splitplane = node->plane;
-	dist = DotProduct (light->transformed, splitplane->normal) - splitplane->dist;
+	VectorSubtract(light->origin, trans, origin);
+	dist = DotProduct(origin, node->plane->normal) - node->plane->dist;
 
-	if (dist > light->intensity - DLIGHT_CUTOFF)
+	if (dist > light->radius * LIGHT_RADIUS_FACTOR)
 	{
-		R_MarkLights (light, bit, node->children[0]);
+		// front 
+		R_MarkLights_r (light, trans, bit, node->children[0]);
 		return;
 	}
 
-	if (dist < -light->intensity + DLIGHT_CUTOFF)
+	if (dist < light->radius * -LIGHT_RADIUS_FACTOR)
 	{
-		R_MarkLights (light, bit, node->children[1]);
+		// back
+		R_MarkLights_r (light, trans, bit, node->children[1]);
 		return;
 	}
 
-	// mark the polygons
+	// mark all surfaces in this node
 	surf = r_worldmodel->surfaces + node->firstsurface;
-
 	for (i = 0; i < node->numsurfaces; i++, surf++)
 	{
-		if (surf->dlightframe != r_framecount)
+		// reset it
+		if (surf->dlightframe != r_lightframe)
 		{
 			surf->dlightbits = 0;
-			surf->dlightframe = r_framecount;
+			surf->dlightframe = r_lightframe;
 		}
 
-		surf->dlightbits |= bit;
+		surf->dlightbits |= bit; // add this light
 	}
 
-	R_MarkLights (light, bit, node->children[0]);
-	R_MarkLights (light, bit, node->children[1]);
+	// now go down both sides
+	R_MarkLights_r (light, trans, bit, node->children[0]);
+	R_MarkLights_r (light, trans, bit, node->children[1]);
 }
 
 
 /*
 =============
-R_PushDlights
+R_MarkLights
+
+Recurses the world, populating the light source bit masks of surfaces that receive dynamic light
 =============
 */
-void R_PushDlights (mnode_t *headnode, glmatrix *transform)
+void R_MarkLights (void)
 {
-	int		i;
-	dlight_t	*l;
+	int	i, j;
 
-	l = r_newrefdef.dlights;
+	r_lightframe++;
 
-	for (i = 0; i < r_newrefdef.num_dlights; i++, l++)
+	if (r_lightframe > 0xffff)  // avoid any overflows
+		r_lightframe = 0;
+
+	// flag all surfaces for each light source
+	for (i = 0; i < r_newrefdef.num_dlights; i++)
 	{
-		// transform the light by the matrix to get it's new position for surface marking and mark the surfaces
-		GL_TransformPoint (transform, l->origin, l->transformed);
-		R_MarkLights (l, 1 << i, headnode);
+		dlight_t *l = &r_newrefdef.dlights[i];
+
+		// world surfaces
+		R_MarkLights_r (l, vec3_origin, 1 << i, r_worldmodel->nodes);
+
+#if 0
+		// and bsp entity surfaces
+		for (j = 0; j < r_newrefdef.num_entities; j++)
+		{
+			entity_t *e = &r_newrefdef.entities;
+			if (e->model)
+			{
+				e->model->dlightbits = 0;
+				R_MarkLights_r (l, e->currorigin, 1 << i, e->model->nodes);
+			}
+		}
+#endif
 	}
+}
+
+/*
+=============
+R_EnableLights
+=============
+*/
+void R_EnableLights (int mask)
+{
+	static int last_mask;
+	static int last_count;
+	dlight_t *l;
+	vec4_t position;
+	vec4_t diffuse;
+	int i, count;
+
+	// no change?
+	if (mask == last_mask)
+		return;
+
+	last_mask = mask;
+
+	position[3] = diffuse[3] = 1.0;
+	count = 0;
+
+	if (mask)
+	{
+		// enable up to 8 light sources
+		for (i = 0, l = r_newrefdef.dlights; i < r_newrefdef.num_dlights; i++, l++)
+		{
+			if (count == MAX_ACTIVE_LIGHTS)
+				break;
+
+			if (mask & (1 << i))
+			{
+				VectorCopy(l->origin, position);
+				// TODO: set light org
+
+				VectorCopy(l->color, diffuse);
+				// TODO: set light diffuse color
+
+				// l->radius * LIGHT_RADIUS_FACTOR
+				// TODO: set light attenuation
+
+				count++;
+			}
+		}
+	}
+
+	if (count != last_count)
+	{
+		// disable the next light as a stop
+		//if (count < MAX_ACTIVE_LIGHTS) 
+		// TODO: set light attenuation to zero
+	}
+
+	last_count = count;
+}
+
+/*
+=============
+R_EnableLightsByRadius
+=============
+*/
+void R_EnableLightsByRadius(vec3_t p)
+{
+	dlight_t *l;
+	vec3_t delta;
+	int i, mask;
+
+	mask = 0;
+
+	for (i = 0, l = r_newrefdef.dlights; i < r_newrefdef.num_dlights; i++, l++)
+	{
+		VectorSubtract(l->origin, p, delta);
+		if (VectorLength(delta) < l->radius * LIGHT_RADIUS_FACTOR)
+			mask |= (1 << i);
+	}
+
+	R_EnableLights(mask);
 }
 
 
@@ -221,7 +323,6 @@ void R_LightPoint (vec3_t p, vec3_t color, float *lightspot)
 	float		r;
 	int			lnum;
 	dlight_t	*dl;
-	float		light;
 	vec3_t		dist;
 	float		add;
 	vec3_t		pointcolor;
@@ -242,105 +343,28 @@ void R_LightPoint (vec3_t p, vec3_t color, float *lightspot)
 	else
 		VectorCopy (pointcolor, color);
 
-	// add dynamic lights
-	light = 0;
+#if 0
+	// add dynamic light color
 	dl = r_newrefdef.dlights;
-
 	for (lnum = 0; lnum < r_newrefdef.num_dlights; lnum++, dl++)
 	{
 		VectorSubtract (p, dl->origin, dist);
 		add = dl->intensity - VectorLength (dist);
 		add *= (1.0f / 256.0f);
 
-		if (add > 0) VectorMA (color, add, dl->color, color);
+		if (add > 0)
+			VectorMA (color, add, dl->color, color);
 	}
+#endif
 }
 
 
 //===================================================================
 
-
 /*
 ===============
-R_AddDynamicLights
-===============
-*/
-void R_AddDynamicLights (msurface_t *surf, float *s_blocklights)
-{
-	int			lnum;
-	int			sd, td;
-	float		fdist, frad, fminlight;
-	vec3_t		impact, local;
-	int			s, t;
-	int			i;
-	int			smax, tmax;
-	mtexinfo_t	*tex;
-	dlight_t	*dl;
-	float		*pfBL;
-	float		fsacc, ftacc;
-
-	smax = (surf->extents[0] >> 4) + 1;
-	tmax = (surf->extents[1] >> 4) + 1;
-	tex = surf->texinfo;
-
-	for (lnum = 0; lnum < r_newrefdef.num_dlights; lnum++)
-	{
-		if (!(surf->dlightbits & (1 << lnum)))
-			continue;		// not lit by this light
-
-		dl = &r_newrefdef.dlights[lnum];
-		frad = dl->intensity;
-		fdist = DotProduct (dl->transformed, surf->plane->normal) - surf->plane->dist;
-		frad -= fabs (fdist);
-
-		// rad is now the highest intensity on the plane
-		fminlight = DLIGHT_CUTOFF;	// FIXME: make configurable?
-
-		if (frad < fminlight)
-			continue;
-
-		fminlight = frad - fminlight;
-
-		for (i = 0; i < 3; i++)
-			impact[i] = dl->transformed[i] - surf->plane->normal[i] * fdist;
-
-		local[0] = DotProduct (impact, tex->vecs[0]) + tex->vecs[0][3] - surf->texturemins[0];
-		local[1] = DotProduct (impact, tex->vecs[1]) + tex->vecs[1][3] - surf->texturemins[1];
-
-		pfBL = s_blocklights;
-
-		for (t = 0, ftacc = 0; t < tmax; t++, ftacc += 16)
-		{
-			td = local[1] - ftacc;
-
-			if (td < 0)
-				td = -td;
-
-			for (s = 0, fsacc = 0; s < smax; s++, fsacc += 16, pfBL += 3)
-			{
-				sd = Q_ftol (local[0] - fsacc);
-
-				if (sd < 0)
-					sd = -sd;
-
-				if (sd > td)
-					fdist = sd + (td >> 1);
-				else fdist = td + (sd >> 1);
-
-				if (fdist < fminlight)
-				{
-					pfBL[0] += (fminlight - fdist) * dl->color[0];
-					pfBL[1] += (fminlight - fdist) * dl->color[1];
-					pfBL[2] += (fminlight - fdist) * dl->color[2];
-				}
-			}
-		}
-	}
-}
-
-
-/*
 R_SetCacheState
+===============
 */
 void R_SetCacheState (msurface_t *surf)
 {
@@ -348,8 +372,6 @@ void R_SetCacheState (msurface_t *surf)
 
 	for (maps = 0; maps < MAXLIGHTMAPS && surf->styles[maps] != 255; maps++)
 		surf->cached_light[maps] = r_newrefdef.lightstyles[surf->styles[maps]].white;
-
-	surf->cached_dlight = (surf->dlightframe == r_framecount);
 }
 
 /*
@@ -427,10 +449,6 @@ void R_BuildLightMap (msurface_t *surf, unsigned *dest, int stride)
 			lightmap += size * 3;		// skip to next lightmap
 		}
 	}
-
-	// add all the dynamic lights
-	if (surf->dlightframe == r_framecount)
-		R_AddDynamicLights (surf, s_blocklights);
 
 	// put into texture format
 	bl = s_blocklights;

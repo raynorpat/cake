@@ -226,6 +226,7 @@ extern int			numFBOs;
 extern	image_t		*r_notexture;
 extern	int			r_visframecount;
 extern	int			r_framecount;
+extern  int			r_lightframe;
 extern	cplane_t	frustum[4];
 extern	int			c_brush_polys, c_alias_polys;
 
@@ -300,7 +301,9 @@ void RImage_CreateSamplers (void);
 void GL_BindTexture (GLenum tmu, GLenum target, GLuint sampler, GLuint texnum);
 
 void R_LightPoint (vec3_t p, vec3_t color, float *lightspot);
-void R_PushDlights (mnode_t *headnode, glmatrix *transform);
+
+void R_MarkLights (void);
+void R_EnableLights (int mask);
 
 //====================================================================
 

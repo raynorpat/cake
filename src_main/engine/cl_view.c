@@ -106,10 +106,6 @@ void V_AddParticle(vec3_t org, int color, float alpha)
 	p->color = d_8to24table_rgba[color & 255];
 	((byte *)&p->color)[3] = (alpha > 1) ? 255 : ((alpha < 0) ? 0 : alpha * 255);
 #endif
-
-	// these are leftover for software refresh
-	p->soft_color = color;
-	p->alpha = alpha;
 }
 
 
@@ -123,12 +119,13 @@ void V_AddLight (vec3_t org, float intensity, float r, float g, float b)
 	dlight_t	*dl;
 	float scaler = 1.0f;
 
-	if (r_numdlights >= MAX_DLIGHTS)
+	if (cl.refdef.num_dlights >= MAX_DLIGHTS)
 		return;
 
-	dl = &r_dlights[r_numdlights++];
+	dl = &cl.refdef.dlights[cl.refdef.num_dlights++];
+
 	VectorCopy (org, dl->origin);
-	dl->intensity = intensity * Cvar_VariableValue("gl_dynamic");
+	dl->radius = intensity;
 
 	dl->color[0] = r * scaler;
 	dl->color[1] = g * scaler;
@@ -176,8 +173,12 @@ void V_TestParticles (void)
 		for (j = 0; j<3; j++)
 			p->origin[j] = cl.refdef.vieworg[j] + cl.v_forward[j] * d + cl.v_right[j] * r + cl.v_up[j] * u;
 
-		p->color = 8;
-		p->alpha = cl_testparticles->value;
+#ifndef WIN_UWP
+		// transform 8bit colors into RGBA
+		extern unsigned d_8to24table_rgba[];
+		p->color = d_8to24table_rgba[8 & 255];
+		((byte *)&p->color)[3] = (cl_testparticles->value > 1) ? 255 : ((cl_testparticles->value < 0) ? 0 : cl_testparticles->value * 255);
+#endif
 	}
 }
 
@@ -244,7 +245,7 @@ void V_TestLights (void)
 		dl->color[0] = ((i % 6) + 1) & 1;
 		dl->color[1] = (((i % 6) + 1) & 2) >> 1;
 		dl->color[2] = (((i % 6) + 1) & 4) >> 2;
-		dl->intensity = 200;
+		dl->radius = 200;
 	}
 }
 
@@ -587,7 +588,7 @@ void V_RenderView (float stereo_separation)
 		cl.refdef.num_particles = r_numparticles;
 		cl.refdef.particles = r_particles;
 		cl.refdef.num_dlights = r_numdlights;
-		cl.refdef.dlights = r_dlights;
+		//cl.refdef.dlights = r_dlights;
 		cl.refdef.lightstyles = r_lightstyles;
 
 		cl.refdef.rdflags = cl.frame.playerstate.rdflags;

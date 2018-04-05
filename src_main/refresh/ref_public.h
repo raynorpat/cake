@@ -108,15 +108,17 @@ typedef struct entity_s
 	int		entnum;
 } entity_t;
 
-#define ENTITY_FLAGS 68
+#define ENTITY_FLAGS		68
 
 typedef struct
 {
 	vec3_t	origin;
-	vec3_t	transformed;
+	float	radius;
 	vec3_t	color;
-	float	intensity;
 } dlight_t;
+
+#define MAX_LIGHTS			32
+#define MAX_ACTIVE_LIGHTS	8
 
 typedef struct
 {
@@ -127,10 +129,6 @@ typedef struct
 		unsigned int color;
 		byte rgba[4];
 	};
-
-	// leftover values for the software refresh
-	int		soft_color;
-	float	alpha;
 } particle_t;
 
 typedef struct
@@ -157,7 +155,7 @@ typedef struct
 	entity_t	*entities;
 
 	int			num_dlights;
-	dlight_t	*dlights;
+	dlight_t	dlights[MAX_LIGHTS];
 
 	int			num_particles;
 	particle_t	*particles;
