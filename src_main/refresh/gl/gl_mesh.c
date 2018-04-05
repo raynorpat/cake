@@ -501,6 +501,200 @@ void R_DrawAliasModel (entity_t *e)
 		glDepthRange (gldepthmin, gldepthmax);
 }
 
+#define SHADOW_SKEW_X -0.7 // skew along x axis. -0.7 to mimic glquake shadows
+#define SHADOW_SKEW_Y 0 // skew along y axis. 0 to mimic glquake shadows
+#define SHADOW_VSCALE 0 // 0=completely flat
+#define SHADOW_HEIGHT 0.1 // how far above the floor to render the shadow
+
+/*
+=================
+R_DrawAliasModelShadow
+=================
+*/
+void R_DrawAliasModelShadow(entity_t *e)
+{
+	int			i;
+	dmdl_t		*hdr;
+	float		an;
+	vec3_t		bbox[8];
+	image_t		*skin;
+	float		lightspot[3];
+	glmatrix	shadowmatrix;
+	float		lheight;
+
+	if (gl_shadows->value && (e->flags & (RF_TRANSLUCENT | RF_WEAPONMODEL | RF_NOSHADOW)))
+		return;
+
+	if (!(e->flags & RF_WEAPONMODEL))
+	{
+		if (R_CullAliasModel(bbox, e))
+			return;
+	}
+
+	if (e->flags & RF_WEAPONMODEL)
+	{
+		if (r_lefthand->value == 2)
+			return;
+	}
+
+	hdr = (dmdl_t *)e->model->extradata;
+
+	if (e->flags & (RF_SHELL_GREEN | RF_SHELL_RED | RF_SHELL_BLUE))
+	{
+		VectorClear(gl_meshuboupdate.shadelight);
+
+		if (e->flags & RF_SHELL_RED) gl_meshuboupdate.shadelight[0] = 1.0;
+		if (e->flags & RF_SHELL_GREEN) gl_meshuboupdate.shadelight[1] = 1.0;
+		if (e->flags & RF_SHELL_BLUE) gl_meshuboupdate.shadelight[2] = 1.0;
+	}
+	else if (e->flags & RF_FULLBRIGHT)
+	{
+		gl_meshuboupdate.shadelight[0] = 1.0;
+		gl_meshuboupdate.shadelight[1] = 1.0;
+		gl_meshuboupdate.shadelight[2] = 1.0;
+	}
+	else
+	{
+		R_LightPoint(e->currorigin, gl_meshuboupdate.shadelight, lightspot);
+
+		// player lighting hack for communication back to server
+		// big hack!
+		if (e->flags & RF_WEAPONMODEL)
+		{
+			// pick the greatest component, which should be the same
+			// as the mono value returned by software
+			if (gl_meshuboupdate.shadelight[0] > gl_meshuboupdate.shadelight[1])
+			{
+				if (gl_meshuboupdate.shadelight[0] > gl_meshuboupdate.shadelight[2])
+					r_lightlevel->value = 150 * gl_meshuboupdate.shadelight[0];
+				else r_lightlevel->value = 150 * gl_meshuboupdate.shadelight[2];
+			}
+			else
+			{
+				if (gl_meshuboupdate.shadelight[1] > gl_meshuboupdate.shadelight[2])
+					r_lightlevel->value = 150 * gl_meshuboupdate.shadelight[1];
+				else r_lightlevel->value = 150 * gl_meshuboupdate.shadelight[2];
+			}
+		}
+	}
+
+	if (e->flags & RF_MINLIGHT)
+	{
+		for (i = 0; i < 3; i++)
+			if (gl_meshuboupdate.shadelight[i] > 0.1)
+				break;
+
+		if (i == 3)
+		{
+			gl_meshuboupdate.shadelight[0] = 0.1;
+			gl_meshuboupdate.shadelight[1] = 0.1;
+			gl_meshuboupdate.shadelight[2] = 0.1;
+		}
+	}
+
+	if (e->flags & RF_GLOW)
+	{
+		// bonus items will pulse with time
+		float	scale;
+		float	min;
+
+		scale = 0.1 * sin(r_newrefdef.time * 7);
+
+		for (i = 0; i < 3; i++)
+		{
+			min = gl_meshuboupdate.shadelight[i] * 0.8;
+			gl_meshuboupdate.shadelight[i] += scale;
+
+			if (gl_meshuboupdate.shadelight[i] < min)
+				gl_meshuboupdate.shadelight[i] = min;
+		}
+	}
+
+	an = e->angles[1] / 180 * M_PI;
+	Q_sincos(-an, &gl_meshuboupdate.shadevector[1], &gl_meshuboupdate.shadevector[0]);
+	gl_meshuboupdate.shadevector[2] = 1;
+	VectorNormalize(gl_meshuboupdate.shadevector);
+
+	// locate the proper data
+	c_alias_polys += hdr->num_tris;
+
+	// draw all the triangles
+	GL_LoadMatrix(&gl_meshuboupdate.localMatrix, &r_mvpmatrix);
+
+	GL_TranslateMatrix(&gl_meshuboupdate.localMatrix, e->currorigin[0], e->currorigin[1], e->currorigin[2]);
+	GL_RotateMatrix(&gl_meshuboupdate.localMatrix, e->angles[1], 0, 0, 1);
+	GL_RotateMatrix(&gl_meshuboupdate.localMatrix, e->angles[0], 0, 1, 0);
+	GL_RotateMatrix(&gl_meshuboupdate.localMatrix, -e->angles[2], 1, 0, 0);
+
+	// select skin
+	if (e->skin)
+		skin = e->skin;	// custom player skin
+	else
+	{
+		if (e->skinnum >= MAX_MD2SKINS)
+			skin = e->model->skins[0];
+		else
+		{
+			skin = e->model->skins[e->skinnum];
+
+			if (!skin)
+				skin = e->model->skins[0];
+		}
+	}
+
+	if (!skin)
+		skin = r_notexture;	// fallback...
+
+	GL_BindTexture(GL_TEXTURE0, GL_TEXTURE_2D, r_modelsampler, skin->texnum);
+
+	if ((e->currframe >= hdr->num_frames) || (e->currframe < 0))
+	{
+		VID_Printf(PRINT_ALL, "R_DrawAliasModel %s: no such frame %d\n", e->model->name, e->currframe);
+		e->currframe = 0;
+		e->lastframe = 0;
+	}
+
+	if ((e->lastframe >= hdr->num_frames) || (e->lastframe < 0))
+	{
+		VID_Printf(PRINT_ALL, "R_DrawAliasModel %s: no such oldframe %d\n", e->model->name, e->lastframe);
+		e->currframe = 0;
+		e->lastframe = 0;
+	}
+
+	if (!r_lerpmodels->value)
+		e->backlerp = 0;
+
+	lheight = e->currorigin[2] - lightspot[2];
+	GL_TranslateMatrix(&gl_meshuboupdate.localMatrix, 0.0f, 0.0f, -lheight);
+
+	shadowmatrix.m[0][0] = 1;
+	shadowmatrix.m[0][1] = 0;
+	shadowmatrix.m[0][2] = 0;
+	shadowmatrix.m[0][3] = 0;
+
+	shadowmatrix.m[1][0] = 0;
+	shadowmatrix.m[1][1] = 1;
+	shadowmatrix.m[1][2] = 0;
+	shadowmatrix.m[1][3] = 0;
+
+	shadowmatrix.m[2][0] = SHADOW_SKEW_X;
+	shadowmatrix.m[2][1] = SHADOW_SKEW_Y;
+	shadowmatrix.m[2][2] = SHADOW_VSCALE;
+	shadowmatrix.m[2][3] = 0;
+
+	shadowmatrix.m[3][0] = 0;
+	shadowmatrix.m[3][1] = 0;
+	shadowmatrix.m[3][2] = SHADOW_HEIGHT;
+	shadowmatrix.m[3][3] = 1;
+
+	GL_MultMatrix(&gl_meshuboupdate.localMatrix, &gl_meshuboupdate.localMatrix, &shadowmatrix);
+
+	GL_TranslateMatrix(&gl_meshuboupdate.localMatrix, 0.0f, 0.0f, lheight);
+
+	// draw shadow
+	GL_DrawAliasFrameLerp(e, hdr, e->backlerp);
+}
+
 
 /*
 ==============================================================================
