@@ -382,7 +382,7 @@ typedef struct
 } cdlight_t;
 
 extern	centity_t	cl_entities[MAX_EDICTS];
-extern	cdlight_t	cl_dlights[MAX_DLIGHTS];
+extern	cdlight_t	cl_dlights[MAX_LIGHTS];
 
 // the cl_parse_entities must be large enough to hold UPDATE_BACKUP frames of
 // entities, so that when a delta compressed message arives from the server

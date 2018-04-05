@@ -1120,6 +1120,7 @@ void GL_BeginBuildingLightmaps (model_t *m)
 	memset (gl_lms.allocated, 0, sizeof (gl_lms.allocated));
 
 	r_framecount = 1;
+	r_lightframe = 1;
 
 	// setup the base lightstyles so the lightmaps won't have to be regenerated
 	// the first time they're seen

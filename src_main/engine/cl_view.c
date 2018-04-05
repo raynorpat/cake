@@ -41,7 +41,7 @@ cvar_t		*cl_stats;
 
 
 int			r_numdlights;
-dlight_t	r_dlights[MAX_DLIGHTS];
+dlight_t	r_dlights[MAX_LIGHTS];
 
 int			r_numentities;
 entity_t	r_entities[MAX_ENTITIES];
@@ -117,19 +117,17 @@ V_AddLight
 void V_AddLight (vec3_t org, float intensity, float r, float g, float b)
 {
 	dlight_t	*dl;
-	float scaler = 1.0f;
 
-	if (cl.refdef.num_dlights >= MAX_DLIGHTS)
+	if (r_numdlights == MAX_LIGHTS)
 		return;
 
-	dl = &cl.refdef.dlights[cl.refdef.num_dlights++];
+	dl = &r_dlights[r_numdlights++];
 
 	VectorCopy (org, dl->origin);
 	dl->radius = intensity;
-
-	dl->color[0] = r * scaler;
-	dl->color[1] = g * scaler;
-	dl->color[2] = b * scaler;
+	dl->color[0] = r;
+	dl->color[1] = g;
+	dl->color[2] = b;
 }
 
 /*
@@ -588,7 +586,7 @@ void V_RenderView (float stereo_separation)
 		cl.refdef.num_particles = r_numparticles;
 		cl.refdef.particles = r_particles;
 		cl.refdef.num_dlights = r_numdlights;
-		//cl.refdef.dlights = r_dlights;
+		memcpy(cl.refdef.dlights, r_dlights, sizeof(cl.refdef.dlights));
 		cl.refdef.lightstyles = r_lightstyles;
 
 		cl.refdef.rdflags = cl.frame.playerstate.rdflags;
