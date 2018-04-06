@@ -41,7 +41,7 @@ cvar_t		*cl_stats;
 
 
 int			r_numdlights;
-dlight_t	r_dlights[MAX_DLIGHTS];
+dlight_t	r_dlights[MAX_LIGHTS];
 
 int			r_numentities;
 entity_t	r_entities[MAX_ENTITIES];
@@ -117,18 +117,17 @@ V_AddLight
 void V_AddLight (vec3_t org, float intensity, float r, float g, float b)
 {
 	dlight_t	*dl;
-	float scaler = 1.0f;
 
-	if (r_numdlights >= MAX_DLIGHTS)
+	if (r_numdlights == MAX_LIGHTS)
 		return;
 
 	dl = &r_dlights[r_numdlights++];
-	VectorCopy (org, dl->origin);
-	dl->intensity = intensity * Cvar_VariableValue("gl_dynamic");
 
-	dl->color[0] = r * scaler;
-	dl->color[1] = g * scaler;
-	dl->color[2] = b * scaler;
+	VectorCopy (org, dl->origin);
+	dl->radius = intensity;
+	dl->color[0] = r;
+	dl->color[1] = g;
+	dl->color[2] = b;
 }
 
 /*
@@ -244,7 +243,7 @@ void V_TestLights (void)
 		dl->color[0] = ((i % 6) + 1) & 1;
 		dl->color[1] = (((i % 6) + 1) & 2) >> 1;
 		dl->color[2] = (((i % 6) + 1) & 4) >> 2;
-		dl->intensity = 200;
+		dl->radius = 200;
 	}
 }
 

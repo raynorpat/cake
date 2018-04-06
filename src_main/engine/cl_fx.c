@@ -132,7 +132,7 @@ DLIGHT MANAGEMENT
 ==============================================================
 */
 
-cdlight_t		cl_dlights[MAX_DLIGHTS];
+cdlight_t		cl_dlights[MAX_LIGHTS];
 
 /*
 ================
@@ -159,7 +159,7 @@ cdlight_t *CL_AllocDlight (int key)
 	{
 		dl = cl_dlights;
 
-		for (i = 0; i < MAX_DLIGHTS; i++, dl++)
+		for (i = 0; i < MAX_LIGHTS; i++, dl++)
 		{
 			if (dl->key == key)
 			{
@@ -173,7 +173,7 @@ cdlight_t *CL_AllocDlight (int key)
 	// then look for anything else
 	dl = cl_dlights;
 
-	for (i = 0; i < MAX_DLIGHTS; i++, dl++)
+	for (i = 0; i < MAX_LIGHTS; i++, dl++)
 	{
 		if (dl->die < cl.time)
 		{
@@ -218,7 +218,7 @@ void CL_RunDLights (void)
 
 	dl = cl_dlights;
 
-	for (i = 0; i < MAX_DLIGHTS; i++, dl++)
+	for (i = 0; i < MAX_LIGHTS; i++, dl++)
 	{
 		if (!dl->radius)
 			continue;
@@ -678,7 +678,7 @@ void CL_AddDLights (void)
 
 	dl = cl_dlights;
 
-	for (i = 0; i < MAX_DLIGHTS; i++, dl++)
+	for (i = 0; i < MAX_LIGHTS; i++, dl++)
 	{
 		if (!dl->radius)
 			continue;

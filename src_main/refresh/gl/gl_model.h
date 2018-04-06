@@ -110,7 +110,6 @@ typedef struct msurface_s
 	// lighting info
 	int			dlightframe;
 	int			dlightbits;
-	qboolean	cached_dlight;
 
 	RECT		lightrect;
 	int			lightmaptexturenum;

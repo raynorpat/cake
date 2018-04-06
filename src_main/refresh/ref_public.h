@@ -64,9 +64,12 @@ glmatrix *GL_PerspectiveMatrix (glmatrix *m, float fovy, float aspect, float zNe
 void GL_TransformPoint (glmatrix *m, float *in, float *out);
 
 
-#define	MAX_DLIGHTS			32
+#define MAX_LIGHTS			32
+
 #define	MAX_ENTITIES		1024	// same as max_edicts
+
 #define	MAX_PARTICLES		16000
+
 #define	MAX_LIGHTSTYLES		256
 
 #define POWERSUIT_SCALE		4.0f
@@ -108,14 +111,14 @@ typedef struct entity_s
 	int		entnum;
 } entity_t;
 
-#define ENTITY_FLAGS 68
+#define ENTITY_FLAGS		68
 
 typedef struct
 {
 	vec3_t	origin;
 	vec3_t	transformed;
+	float	radius;
 	vec3_t	color;
-	float	intensity;
 } dlight_t;
 
 typedef struct
@@ -147,7 +150,7 @@ typedef struct
 
 	byte		*areabits;			// if not NULL, only areas with set bits will be drawn
 
-	lightstyle_t *lightstyles;	// [MAX_LIGHTSTYLES]
+	lightstyle_t *lightstyles;		// [MAX_LIGHTSTYLES]
 
 	int			num_entities;
 	entity_t	*entities;

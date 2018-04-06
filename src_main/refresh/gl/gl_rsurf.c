@@ -68,7 +68,12 @@ GLuint u_brushlocalMatrix;
 GLuint u_brushcolormatrix;
 GLuint u_brushsurfalpha;
 GLuint u_brushscroll;
-
+GLuint u_brushMaxLights;
+GLuint u_brushlightBit;
+GLuint u_brushlightMatrix;
+GLuint u_brushLightPos[MAX_LIGHTS];
+GLuint u_brushLightColor[MAX_LIGHTS];
+GLuint u_brushLightAtten[MAX_LIGHTS];
 
 void RSurf_CreatePrograms (void)
 {
@@ -91,6 +96,15 @@ void RSurf_CreatePrograms (void)
 	u_brushcolormatrix = glGetUniformLocation (gl_lightmappedsurfprog, "colormatrix");
 	u_brushsurfalpha = glGetUniformLocation (gl_lightmappedsurfprog, "surfalpha");
 	u_brushscroll = glGetUniformLocation (gl_lightmappedsurfprog, "scroll");
+	u_brushMaxLights = glGetUniformLocation (gl_lightmappedsurfprog, "maxLights");
+	u_brushlightBit = glGetUniformLocation (gl_lightmappedsurfprog, "lightBit");
+	u_brushlightMatrix = glGetUniformLocation (gl_lightmappedsurfprog, "lightMatrix");
+	for (int i = 0; i < MAX_LIGHTS; ++i)
+	{
+		u_brushLightPos[i] = glGetUniformLocation (gl_lightmappedsurfprog, va("Lights.origin[%i]", i));
+		u_brushLightColor[i] = glGetUniformLocation (gl_lightmappedsurfprog, va("Lights.color[%i]", i));
+		u_brushLightAtten[i] = glGetUniformLocation (gl_lightmappedsurfprog, va("Lights.radius[%i]", i));
+	}
 
 	glGenBuffers (1, &r_surfaceubo);
 	glNamedBufferDataEXT (r_surfaceubo, SURF_UBO_MAX_BLOCKS * r_surfuboblocksize, NULL, GL_STREAM_DRAW);
@@ -111,20 +125,13 @@ static vec3_t	modelorg;		// relative to viewpoint
 static msurface_t *r_alpha_surfaces;
 static msurface_t *r_sky_surfaces;
 
-
-// the great thing about standards is that there are so many of them.
-// the bad thing is that even individual parts of the same standard may not always intersect cleanly.
-// especially if developed in isolation by different people at different times and without much care for intersecting cleanly.
-// the third texture coord in lightmap is for eventual use as a texture array slice index which will be used when i migrate to
-// an API that fully supports them throughout all stages of the pipeline with the stuff i use.  until then it just pads the
-// vert to 32 bytes.
 typedef struct brushpolyvert_s
 {
 	float position[3];
 	float texcoord[3];
 	float lightmap[3];
+	float normal[3];
 } brushpolyvert_t;
-
 
 static gllightmapstate_t gl_lms;
 
@@ -298,7 +305,8 @@ void R_DrawAlphaSurfaces (void)
 
 			if (s->flags & SURF_DRAWTURB)
 				R_BeginWaterPolys (&r_mvpmatrix, alpha);
-			else RSurf_SelectProgramAndStates (&r_mvpmatrix, alpha);
+			else
+				RSurf_SelectProgramAndStates (&r_mvpmatrix, alpha);
 
 			lastsurfflags = s->flags;
 			lasttexture = s->texinfo->image;
@@ -448,44 +456,39 @@ void R_DrawTextureChains (entity_t *e)
 void R_ModifySurfaceLightmap (msurface_t *surf)
 {
 	int map;
-	qboolean is_dynamic = false;
 
 	if (surf->texinfo->flags & SURF_SKY) return;
 	if (surf->texinfo->flags & SURF_WARP) return;
 
+	// set dynamic lights
+	R_EnableLights (surf->dlightframe, surf->dlightbits);
+
+	// set lightmap styles
 	for (map = 0; map < MAXLIGHTMAPS && surf->styles[map] != 255; map++)
+	{
 		if (r_newrefdef.lightstyles[surf->styles[map]].white != surf->cached_light[map])
-			goto dynamic;
-
-	// dynamic this frame or dynamic previously
-	if ((surf->dlightframe == r_framecount) || surf->cached_dlight)
-	{
-dynamic:;
-		if (gl_dynamic->value)
 		{
-			is_dynamic = true;
+			if (gl_dynamic->value)
+			{
+				int	smax, tmax;
+				unsigned *base = gl_lms.lightmap_data[surf->lightmaptexturenum];
+				RECT *rect = &gl_lms.lightrect[surf->lightmaptexturenum];
+
+				smax = (surf->extents[0] >> 4) + 1;
+				tmax = (surf->extents[1] >> 4) + 1;
+				base += (surf->light_t * LIGHTMAP_SIZE) + surf->light_s;
+
+				R_BuildLightMap(surf, base, LIGHTMAP_SIZE);
+				R_SetCacheState(surf);
+
+				gl_lms.modified[surf->lightmaptexturenum] = true;
+
+				if (surf->lightrect.left < rect->left) rect->left = surf->lightrect.left;
+				if (surf->lightrect.right > rect->right) rect->right = surf->lightrect.right;
+				if (surf->lightrect.top < rect->top) rect->top = surf->lightrect.top;
+				if (surf->lightrect.bottom > rect->bottom) rect->bottom = surf->lightrect.bottom;
+			}
 		}
-	}
-
-	if (is_dynamic)
-	{
-		int	smax, tmax;
-		unsigned *base = gl_lms.lightmap_data[surf->lightmaptexturenum];
-		RECT *rect = &gl_lms.lightrect[surf->lightmaptexturenum];
-
-		smax = (surf->extents[0] >> 4) + 1;
-		tmax = (surf->extents[1] >> 4) + 1;
-		base += (surf->light_t * LIGHTMAP_SIZE) + surf->light_s;
-
-		R_BuildLightMap (surf, base, LIGHTMAP_SIZE);
-		R_SetCacheState (surf);
-
-		gl_lms.modified[surf->lightmaptexturenum] = true;
-
-		if (surf->lightrect.left < rect->left) rect->left = surf->lightrect.left;
-		if (surf->lightrect.right > rect->right) rect->right = surf->lightrect.right;
-		if (surf->lightrect.top < rect->top) rect->top = surf->lightrect.top;
-		if (surf->lightrect.bottom > rect->bottom) rect->bottom = surf->lightrect.bottom;
 	}
 }
 
@@ -525,25 +528,24 @@ void R_DrawInlineBModel (entity_t *e)
 	float		dot;
 	msurface_t	*surf;
 	glmatrix	localMatrix;
-
+	
 	// compute everything on the local matrix so that we can use it for lighting transforms
 	GL_LoadIdentity (&localMatrix);
 	GL_TranslateMatrix (&localMatrix, e->currorigin[0], e->currorigin[1], e->currorigin[2]);
-
+	
 	GL_RotateMatrix (&localMatrix, e->angles[1], 0, 0, 1);
 	GL_RotateMatrix (&localMatrix, e->angles[0], 0, 1, 0);
 	GL_RotateMatrix (&localMatrix, e->angles[2], 1, 0, 0);
-
+	
 	// now multiply out for the final model transform and take it's inverse for lighting
 	GL_MultMatrix (&e->matrix, &localMatrix, &r_mvpmatrix);
 	GL_InvertMatrix (&localMatrix, NULL, &localMatrix);
-
+	
 	// and now calculate dynamic lighting for bmodel
-	R_PushDlights (e->model->nodes + e->model->firstnode, &localMatrix);
-
-	surf = &e->model->surfaces[e->model->firstmodelsurface];
+	R_MarkLights (e->model->nodes + e->model->firstnode, &localMatrix);
 
 	// draw texture
+	surf = &e->model->surfaces[e->model->firstmodelsurface];
 	for (i = 0; i < e->model->nummodelsurfaces; i++, surf++)
 	{
 		// find which side of the node we are on
@@ -746,10 +748,13 @@ void R_DrawWorld (void)
 	ent.model = r_worldmodel;
 	memcpy (&ent.matrix, &r_mvpmatrix, sizeof (glmatrix));
 
-	R_PushDlights (r_worldmodel->nodes, GL_LoadIdentity (&localMatrix));
+	// mark dynamic lights for world
+	R_MarkLights (r_worldmodel->nodes, GL_LoadIdentity(&localMatrix));
 
+	// recurse world
 	R_RecursiveWorldNode (r_worldmodel->nodes);
 
+	// draw world
 	R_DrawTextureChains (&ent);
 }
 
@@ -877,6 +882,9 @@ void GL_EndBuildingVBO (void)
 	glEnableVertexArrayAttribEXT (r_surfacevao, 2);
 	glVertexArrayVertexAttribOffsetEXT (r_surfacevao, r_surfacevbo, 2, 3, GL_FLOAT, GL_FALSE, sizeof (brushpolyvert_t), 24);
 
+	glEnableVertexArrayAttribEXT (r_surfacevao, 3);
+	glVertexArrayVertexAttribOffsetEXT (r_surfacevao, r_surfacevbo, 3, 3, GL_FLOAT, GL_FALSE, sizeof (brushpolyvert_t), 36);
+
 	GL_BindVertexArray (r_surfacevao);
 	glBindBuffer (GL_ELEMENT_ARRAY_BUFFER, r_surfaceibo);
 }
@@ -891,7 +899,18 @@ void GL_BuildPolygonFromSurface (model_t *mod, msurface_t *surf)
 {
 	int	i;
 	float s, t;
+	vec3_t normal;
 	static brushpolyvert_t vertbuf[64];
+
+	// copy out surface normal
+	VectorCopy(surf->plane->normal, normal);
+	if (surf->flags & SURF_PLANEBACK || surf->texinfo->flags & SURF_PLANEBACK)
+	{
+		// if for some reason the normal sticks to the back of the plane, invert it
+		// so it's usable for the shader
+		for (i = 0; i < 3; i++)
+			normal[i] = -normal[i];
+	}
 
 	// reconstruct the polygon
 	for (i = 0; i < surf->numvertexes; i++)
@@ -903,10 +922,12 @@ void GL_BuildPolygonFromSurface (model_t *mod, msurface_t *surf)
 			vec = mod->vertexes[mod->edges[lindex].v[0]].position;
 		else vec = mod->vertexes[mod->edges[-lindex].v[1]].position;
 
+		// polygon vertexes
 		vertbuf[i].position[0] = vec[0];
 		vertbuf[i].position[1] = vec[1];
 		vertbuf[i].position[2] = vec[2];
 
+		// polygon texture coords
 		s = DotProduct (vec, surf->texinfo->vecs[0]) + surf->texinfo->vecs[0][3];
 		t = DotProduct (vec, surf->texinfo->vecs[1]) + surf->texinfo->vecs[1][3];
 
@@ -943,6 +964,9 @@ void GL_BuildPolygonFromSurface (model_t *mod, msurface_t *surf)
 		if (surf->texinfo->flags & SURF_FLOWING)
 			vertbuf[i].texcoord[2] = 1;
 		else vertbuf[i].texcoord[2] = 0;
+
+		// polygon normal
+		VectorCopy (normal, vertbuf[i].normal);
 	}
 
 	// this is done so that we don't leave a bound vbo dangling if we sys_error during building (e.g. running out of lightmaps)
@@ -961,7 +985,6 @@ void GL_BuildPolygonFromSurface (model_t *mod, msurface_t *surf)
 
 =============================================================================
 */
-
 
 static void LM_GL_BeginBlock (void)
 {
@@ -1087,7 +1110,6 @@ void GL_CreateSurfaceLightmap (msurface_t *surf)
 /*
 ==================
 GL_BeginBuildingLightmaps
-
 ==================
 */
 void GL_BeginBuildingLightmaps (model_t *m)
@@ -1127,7 +1149,7 @@ void GL_BeginBuildingLightmaps (model_t *m)
 
 	memset (gl_lms.allocated, 0, sizeof (gl_lms.allocated));
 
-	r_framecount = 1;		// no dlightcache
+	r_framecount = 1;
 
 	// setup the base lightstyles so the lightmaps won't have to be regenerated
 	// the first time they're seen
