@@ -140,48 +140,30 @@ void R_MarkLights (mnode_t *headnode, glmatrix *transform)
 R_EnableLights
 =============
 */
-void R_EnableLights (int mask)
+void R_EnableLights (void)
 {
-	static int last_mask;
 	static int last_count;
 	dlight_t *l;
-	int i, count;
+	int i, count = 0;
 
-	// no change?
-	if (mask == last_mask)
-		return;
-
-	last_mask = mask;
-
-	count = 0;
-
-	if (mask)
+	// enable light sources
+	for (i = 0, l = r_newrefdef.dlights; i < r_newrefdef.num_dlights; i++, l++)
 	{
-		// enable light sources
-		for (i = 0, l = r_newrefdef.dlights; i < r_newrefdef.num_dlights; i++, l++)
-		{
-			if (count == MAX_ACTIVE_LIGHTS)
-				break;
+		// send light source information to shader
+		glProgramUniform3fv (gl_lightmappedsurfprog, u_brushLightPos[i], 1, l->transformed);
+		glProgramUniform3fv (gl_lightmappedsurfprog, u_brushLightColor[i], 1, l->color);
+		glProgramUniform1f (gl_lightmappedsurfprog, u_brushLightAtten[i], l->radius);
 
-			if (mask & (1 << i))
-			{
-				// send light source information to shader
-				glProgramUniform3fv (gl_lightmappedsurfprog, u_brushLightPos[i], 1, l->transformed);
-				glProgramUniform3fv (gl_lightmappedsurfprog, u_brushLightColor[i], 1, l->color);
-				glProgramUniform1f (gl_lightmappedsurfprog, u_brushLightAtten[i], l->radius);
-
-				count++;
-			}
-		}
+		count++;
 	}
 
 	if (count != last_count)
 	{
 		// disable the next light as a stop
-		if (count < MAX_ACTIVE_LIGHTS)
+		if (count < MAX_LIGHTS)
 		{
 			// set light attenuation to zero
-			glProgramUniform1f (gl_lightmappedsurfprog, u_brushLightAtten[count], 0.0f);
+			glProgramUniform1f(gl_lightmappedsurfprog, u_brushLightAtten[count], 0.0f);
 		}
 	}
 
@@ -461,4 +443,3 @@ void R_BuildLightMap (msurface_t *surf, unsigned *dest, int stride)
 		}
 	}
 }
-

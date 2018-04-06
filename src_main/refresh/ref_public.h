@@ -65,7 +65,6 @@ void GL_TransformPoint (glmatrix *m, float *in, float *out);
 
 
 #define MAX_LIGHTS			32
-#define MAX_ACTIVE_LIGHTS	8
 
 #define	MAX_ENTITIES		1024	// same as max_edicts
 

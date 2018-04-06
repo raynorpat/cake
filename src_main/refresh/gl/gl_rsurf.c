@@ -404,9 +404,7 @@ void R_DrawTextureChains (entity_t *e)
 
 		// set dynamic lights
 		if (surf->dlightframe == r_lightframe)
-			R_EnableLights(surf->dlightbits);
-		else
-			R_EnableLights(0);
+			R_EnableLights ();
 
 		// reverse the chain to get f2b ordering
 		for (; surf; surf = surf->texturechain)
@@ -439,9 +437,7 @@ void R_DrawTextureChains (entity_t *e)
 
 		// set dynamic lights
 		if (surf->dlightframe == r_lightframe)
-			R_EnableLights(surf->dlightbits);
-		else
-			R_EnableLights(0);
+			R_EnableLights ();
 
 		for (; surf; surf = surf->texturechain)
 		{
