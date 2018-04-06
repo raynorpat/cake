@@ -117,6 +117,7 @@ typedef struct entity_s
 typedef struct
 {
 	vec3_t	origin;
+	vec3_t	transformed;
 	float	radius;
 	vec3_t	color;
 } dlight_t;

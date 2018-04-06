@@ -4,6 +4,7 @@ uniform float scroll;
 
 INOUTTYPE vec4 texcoords[2];
 INOUTTYPE vec4 point;
+INOUTTYPE vec4 normal;
 
 #ifdef VERTEXSHADER
 uniform mat4 localMatrix;
@@ -12,7 +13,7 @@ uniform mat4 modelViewMatrix;
 layout(location = 0) in vec4 position;
 layout(location = 1) in vec4 diffuse;
 layout(location = 2) in vec4 lightmap;
-
+layout(location = 3) in vec4 normals;
 
 void LightmappedVS ()
 {
@@ -45,6 +46,7 @@ void LightmappedFS ()
 	vec4 lmap = texture2DArray(lightmap, texcoords[1].xyz);
 	vec4 albedo = texture(diffuse, texcoords[0].st);
 	
+	// calculate dynamic light sources
 	vec4 light = vec4(0.0);
 	for (int i = 0; i < 8; i++)
 	{

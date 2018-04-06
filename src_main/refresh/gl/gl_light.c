@@ -192,29 +192,6 @@ void R_EnableLights (int mask)
 	last_count = count;
 }
 
-/*
-=============
-R_EnableLightsByRadius
-=============
-*/
-void R_EnableLightsByRadius(vec3_t p)
-{
-	dlight_t *l;
-	vec3_t delta;
-	int i, mask;
-
-	mask = 0;
-
-	for (i = 0, l = r_newrefdef.dlights; i < r_newrefdef.num_dlights; i++, l++)
-	{
-		VectorSubtract (l->origin, p, delta);
-		if (VectorLength (delta) < l->radius * LIGHT_RADIUS_FACTOR)
-			mask |= (1 << i);
-	}
-
-	R_EnableLights (mask);
-}
-
 
 /*
 =============================================================================
@@ -355,19 +332,16 @@ void R_LightPoint (vec3_t p, vec3_t color, float *lightspot)
 	else
 		VectorCopy (pointcolor, color);
 
-#if 0
 	// add dynamic light color
 	dl = r_newrefdef.dlights;
 	for (lnum = 0; lnum < r_newrefdef.num_dlights; lnum++, dl++)
 	{
 		VectorSubtract (p, dl->origin, dist);
-		add = dl->intensity - VectorLength (dist);
+		add = dl->radius - VectorLength (dist);
 		add *= (1.0f / 256.0f);
-
 		if (add > 0)
 			VectorMA (color, add, dl->color, color);
 	}
-#endif
 }
 
 

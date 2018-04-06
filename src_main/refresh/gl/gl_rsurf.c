@@ -304,7 +304,8 @@ void R_DrawAlphaSurfaces (void)
 
 			if (s->flags & SURF_DRAWTURB)
 				R_BeginWaterPolys (&r_mvpmatrix, alpha);
-			else RSurf_SelectProgramAndStates (&r_mvpmatrix, alpha);
+			else
+				RSurf_SelectProgramAndStates (&r_mvpmatrix, alpha);
 
 			lastsurfflags = s->flags;
 			lasttexture = s->texinfo->image;
@@ -888,7 +889,18 @@ void GL_BuildPolygonFromSurface (model_t *mod, msurface_t *surf)
 {
 	int	i;
 	float s, t;
-	static brushpolyvert_t vertbuf[128];
+	vec3_t normal;
+	static brushpolyvert_t vertbuf[64];
+
+	// copy out surface normal
+	VectorCopy(surf->plane->normal, normal);
+	if (surf->flags & SURF_PLANEBACK || surf->texinfo->flags & SURF_PLANEBACK)
+	{
+		// if for some reason the normal sticks to the back of the plane, invert it
+		// so it's usable for the shader
+		for (i = 0; i < 3; i++)
+			normal[i] = -normal[i];
+	}
 
 	// reconstruct the polygon
 	for (i = 0; i < surf->numvertexes; i++)
@@ -900,10 +912,12 @@ void GL_BuildPolygonFromSurface (model_t *mod, msurface_t *surf)
 			vec = mod->vertexes[mod->edges[lindex].v[0]].position;
 		else vec = mod->vertexes[mod->edges[-lindex].v[1]].position;
 
+		// polygon vertexes
 		vertbuf[i].position[0] = vec[0];
 		vertbuf[i].position[1] = vec[1];
 		vertbuf[i].position[2] = vec[2];
 
+		// polygon texture coords
 		s = DotProduct (vec, surf->texinfo->vecs[0]) + surf->texinfo->vecs[0][3];
 		t = DotProduct (vec, surf->texinfo->vecs[1]) + surf->texinfo->vecs[1][3];
 
@@ -940,6 +954,9 @@ void GL_BuildPolygonFromSurface (model_t *mod, msurface_t *surf)
 		if (surf->texinfo->flags & SURF_FLOWING)
 			vertbuf[i].texcoord[2] = 1;
 		else vertbuf[i].texcoord[2] = 0;
+
+		// polygon normal
+		VectorCopy (normal, vertbuf[i].normal);
 	}
 
 	// this is done so that we don't leave a bound vbo dangling if we sys_error during building (e.g. running out of lightmaps)
