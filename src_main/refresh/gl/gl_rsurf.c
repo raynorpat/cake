@@ -65,10 +65,14 @@ int gl_maxindexes = 0;
 GLuint gl_lightmappedsurfprog = 0;
 
 GLuint u_brushlocalMatrix;
+GLuint u_brushmodelViewMatrix;
 GLuint u_brushcolormatrix;
 GLuint u_brushsurfalpha;
 GLuint u_brushscroll;
-
+GLuint u_brushMaxLights;
+GLuint u_brushLightPos[MAX_LIGHTS];
+GLuint u_brushLightColor[MAX_LIGHTS];
+GLuint u_brushLightAtten[MAX_LIGHTS];
 
 void RSurf_CreatePrograms (void)
 {
@@ -88,9 +92,17 @@ void RSurf_CreatePrograms (void)
 	glProgramUniform1i (gl_lightmappedsurfprog, glGetUniformLocation (gl_lightmappedsurfprog, "lightmap"), 2);
 
 	u_brushlocalMatrix = glGetUniformLocation (gl_lightmappedsurfprog, "localMatrix");
+	u_brushmodelViewMatrix = glGetUniformLocation (gl_lightmappedsurfprog, "modelViewMatrix");
 	u_brushcolormatrix = glGetUniformLocation (gl_lightmappedsurfprog, "colormatrix");
 	u_brushsurfalpha = glGetUniformLocation (gl_lightmappedsurfprog, "surfalpha");
 	u_brushscroll = glGetUniformLocation (gl_lightmappedsurfprog, "scroll");
+	u_brushMaxLights = glGetUniformLocation (gl_lightmappedsurfprog, "maxLights");
+	for (int i = 0; i < MAX_LIGHTS; ++i)
+	{
+		u_brushLightPos[i] = glGetUniformLocation (gl_lightmappedsurfprog, va("Lights.origin[%i]", i));
+		u_brushLightColor[i] = glGetUniformLocation (gl_lightmappedsurfprog, va("Lights.color[%i]", i));
+		u_brushLightAtten[i] = glGetUniformLocation (gl_lightmappedsurfprog, va("Lights.radius[%i]", i));
+	}
 
 	glGenBuffers (1, &r_surfaceubo);
 	glNamedBufferDataEXT (r_surfaceubo, SURF_UBO_MAX_BLOCKS * r_surfuboblocksize, NULL, GL_STREAM_DRAW);
@@ -111,20 +123,13 @@ static vec3_t	modelorg;		// relative to viewpoint
 static msurface_t *r_alpha_surfaces;
 static msurface_t *r_sky_surfaces;
 
-
-// the great thing about standards is that there are so many of them.
-// the bad thing is that even individual parts of the same standard may not always intersect cleanly.
-// especially if developed in isolation by different people at different times and without much care for intersecting cleanly.
-// the third texture coord in lightmap is for eventual use as a texture array slice index which will be used when i migrate to
-// an API that fully supports them throughout all stages of the pipeline with the stuff i use.  until then it just pads the
-// vert to 32 bytes.
 typedef struct brushpolyvert_s
 {
 	float position[3];
 	float texcoord[3];
 	float lightmap[3];
+	float normal[3];
 } brushpolyvert_t;
-
 
 static gllightmapstate_t gl_lms;
 
@@ -215,6 +220,7 @@ void RSurf_SelectProgramAndStates (glmatrix *matrix, float alpha)
 	qboolean stateset = false;
 
 	glProgramUniformMatrix4fv (gl_lightmappedsurfprog, u_brushlocalMatrix, 1, GL_FALSE, matrix->m[0]);
+	glProgramUniformMatrix4fv (gl_lightmappedsurfprog, u_brushmodelViewMatrix, 1, GL_FALSE, r_worldmatrix.m[0]);
 	glProgramUniform1f (gl_lightmappedsurfprog, u_brushsurfalpha, alpha);
 
 	GL_UseProgram (gl_lightmappedsurfprog);
@@ -460,7 +466,6 @@ void R_DrawTextureChains (entity_t *e)
 void R_ModifySurfaceLightmap (msurface_t *surf)
 {
 	int map;
-	qboolean is_dynamic = false;
 
 	if (surf->texinfo->flags & SURF_SKY) return;
 	if (surf->texinfo->flags & SURF_WARP) return;
@@ -470,29 +475,26 @@ void R_ModifySurfaceLightmap (msurface_t *surf)
 		if (r_newrefdef.lightstyles[surf->styles[map]].white != surf->cached_light[map])
 		{
 			if (gl_dynamic->value)
-				is_dynamic = true;
+			{
+				int	smax, tmax;
+				unsigned *base = gl_lms.lightmap_data[surf->lightmaptexturenum];
+				RECT *rect = &gl_lms.lightrect[surf->lightmaptexturenum];
+
+				smax = (surf->extents[0] >> 4) + 1;
+				tmax = (surf->extents[1] >> 4) + 1;
+				base += (surf->light_t * LIGHTMAP_SIZE) + surf->light_s;
+
+				R_BuildLightMap(surf, base, LIGHTMAP_SIZE);
+				R_SetCacheState(surf);
+
+				gl_lms.modified[surf->lightmaptexturenum] = true;
+
+				if (surf->lightrect.left < rect->left) rect->left = surf->lightrect.left;
+				if (surf->lightrect.right > rect->right) rect->right = surf->lightrect.right;
+				if (surf->lightrect.top < rect->top) rect->top = surf->lightrect.top;
+				if (surf->lightrect.bottom > rect->bottom) rect->bottom = surf->lightrect.bottom;
+			}
 		}
-	}
-
-	if (is_dynamic)
-	{
-		int	smax, tmax;
-		unsigned *base = gl_lms.lightmap_data[surf->lightmaptexturenum];
-		RECT *rect = &gl_lms.lightrect[surf->lightmaptexturenum];
-
-		smax = (surf->extents[0] >> 4) + 1;
-		tmax = (surf->extents[1] >> 4) + 1;
-		base += (surf->light_t * LIGHTMAP_SIZE) + surf->light_s;
-
-		R_BuildLightMap (surf, base, LIGHTMAP_SIZE);
-		R_SetCacheState (surf);
-
-		gl_lms.modified[surf->lightmaptexturenum] = true;
-
-		if (surf->lightrect.left < rect->left) rect->left = surf->lightrect.left;
-		if (surf->lightrect.right > rect->right) rect->right = surf->lightrect.right;
-		if (surf->lightrect.top < rect->top) rect->top = surf->lightrect.top;
-		if (surf->lightrect.bottom > rect->bottom) rect->bottom = surf->lightrect.bottom;
 	}
 }
 
@@ -869,6 +871,9 @@ void GL_EndBuildingVBO (void)
 	glEnableVertexArrayAttribEXT (r_surfacevao, 2);
 	glVertexArrayVertexAttribOffsetEXT (r_surfacevao, r_surfacevbo, 2, 3, GL_FLOAT, GL_FALSE, sizeof (brushpolyvert_t), 24);
 
+	glEnableVertexArrayAttribEXT (r_surfacevao, 3);
+	glVertexArrayVertexAttribOffsetEXT (r_surfacevao, r_surfacevbo, 3, 3, GL_FLOAT, GL_FALSE, sizeof (brushpolyvert_t), 36);
+
 	GL_BindVertexArray (r_surfacevao);
 	glBindBuffer (GL_ELEMENT_ARRAY_BUFFER, r_surfaceibo);
 }
@@ -883,7 +888,7 @@ void GL_BuildPolygonFromSurface (model_t *mod, msurface_t *surf)
 {
 	int	i;
 	float s, t;
-	static brushpolyvert_t vertbuf[64];
+	static brushpolyvert_t vertbuf[128];
 
 	// reconstruct the polygon
 	for (i = 0; i < surf->numvertexes; i++)
@@ -953,7 +958,6 @@ void GL_BuildPolygonFromSurface (model_t *mod, msurface_t *surf)
 
 =============================================================================
 */
-
 
 static void LM_GL_BeginBlock (void)
 {
@@ -1079,7 +1083,6 @@ void GL_CreateSurfaceLightmap (msurface_t *surf)
 /*
 ==================
 GL_BeginBuildingLightmaps
-
 ==================
 */
 void GL_BeginBuildingLightmaps (model_t *m)

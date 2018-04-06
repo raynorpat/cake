@@ -128,13 +128,20 @@ void R_MarkLights (void)
 R_EnableLights
 =============
 */
+extern GLuint gl_lightmappedsurfprog;
+extern GLuint u_brushMaxLights;
+extern GLuint u_brushLightPos[MAX_LIGHTS];
+extern GLuint u_brushLightColor[MAX_LIGHTS];
+extern GLuint u_brushLightAtten[MAX_LIGHTS];
+
 void R_EnableLights (int mask)
 {
 	static int last_mask;
 	static int last_count;
 	dlight_t *l;
-	vec4_t position;
-	vec4_t diffuse;
+	vec3_t position[MAX_LIGHTS];
+	vec3_t diffuse[MAX_LIGHTS];
+	float lightAtten[MAX_LIGHTS];
 	int i, count;
 
 	// no change?
@@ -143,11 +150,12 @@ void R_EnableLights (int mask)
 
 	last_mask = mask;
 
-	position[3] = diffuse[3] = 1.0;
 	count = 0;
 
 	if (mask)
 	{
+		glProgramUniform1f(gl_lightmappedsurfprog, u_brushMaxLights, r_newrefdef.num_dlights);
+
 		// enable up to 8 light sources
 		for (i = 0, l = r_newrefdef.dlights; i < r_newrefdef.num_dlights; i++, l++)
 		{
@@ -156,14 +164,14 @@ void R_EnableLights (int mask)
 
 			if (mask & (1 << i))
 			{
-				VectorCopy(l->origin, position);
-				// TODO: set light org
+				VectorCopy(l->origin, position[i]);
+				glProgramUniform4fv (gl_lightmappedsurfprog, u_brushLightPos[i], 1, &position[i]);
 
-				VectorCopy(l->color, diffuse);
-				// TODO: set light diffuse color
+				VectorCopy(l->color, diffuse[i]);
+				glProgramUniform4fv (gl_lightmappedsurfprog, u_brushLightColor[i], 1, diffuse[i]);
 
-				// l->radius * LIGHT_RADIUS_FACTOR
-				// TODO: set light attenuation
+				lightAtten[i] = l->radius * LIGHT_RADIUS_FACTOR;
+				glProgramUniform1fv (gl_lightmappedsurfprog, u_brushLightAtten[i], 1, &lightAtten[i]);
 
 				count++;
 			}
@@ -173,8 +181,12 @@ void R_EnableLights (int mask)
 	if (count != last_count)
 	{
 		// disable the next light as a stop
-		//if (count < MAX_ACTIVE_LIGHTS) 
-		// TODO: set light attenuation to zero
+		if (count < MAX_ACTIVE_LIGHTS)
+		{
+			// set light attenuation to zero
+			lightAtten[count] = 0.0f;
+			glProgramUniform1f (gl_lightmappedsurfprog, u_brushLightAtten[count], lightAtten[count]);
+		}
 	}
 
 	last_count = count;
@@ -195,12 +207,12 @@ void R_EnableLightsByRadius(vec3_t p)
 
 	for (i = 0, l = r_newrefdef.dlights; i < r_newrefdef.num_dlights; i++, l++)
 	{
-		VectorSubtract(l->origin, p, delta);
-		if (VectorLength(delta) < l->radius * LIGHT_RADIUS_FACTOR)
+		VectorSubtract (l->origin, p, delta);
+		if (VectorLength (delta) < l->radius * LIGHT_RADIUS_FACTOR)
 			mask |= (1 << i);
 	}
 
-	R_EnableLights(mask);
+	R_EnableLights (mask);
 }
 
 
