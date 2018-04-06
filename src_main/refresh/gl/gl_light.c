@@ -103,7 +103,6 @@ static void R_MarkLights_r (dlight_t *light, int bit, mnode_t *node)
 	R_MarkLights_r (light, bit, node->children[1]);
 }
 
-
 /*
 =============
 R_MarkLights
