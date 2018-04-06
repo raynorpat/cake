@@ -464,6 +464,8 @@ void R_ModifySurfaceLightmap (msurface_t *surf)
 	if (surf->texinfo->flags & SURF_SKY) return;
 	if (surf->texinfo->flags & SURF_WARP) return;
 
+	if (!gl_dynamic->integer) return;
+
 	// set dynamic lights
 	R_EnableLights (surf->dlightframe, surf->dlightbits);
 
@@ -472,26 +474,23 @@ void R_ModifySurfaceLightmap (msurface_t *surf)
 	{
 		if (r_newrefdef.lightstyles[surf->styles[map]].white != surf->cached_light[map])
 		{
-			if (gl_dynamic->value)
-			{
-				int	smax, tmax;
-				unsigned *base = gl_lms.lightmap_data[surf->lightmaptexturenum];
-				RECT *rect = &gl_lms.lightrect[surf->lightmaptexturenum];
+			int	smax, tmax;
+			unsigned *base = gl_lms.lightmap_data[surf->lightmaptexturenum];
+			RECT *rect = &gl_lms.lightrect[surf->lightmaptexturenum];
 
-				smax = (surf->extents[0] >> 4) + 1;
-				tmax = (surf->extents[1] >> 4) + 1;
-				base += (surf->light_t * LIGHTMAP_SIZE) + surf->light_s;
+			smax = (surf->extents[0] >> 4) + 1;
+			tmax = (surf->extents[1] >> 4) + 1;
+			base += (surf->light_t * LIGHTMAP_SIZE) + surf->light_s;
 
-				R_BuildLightMap(surf, base, LIGHTMAP_SIZE);
-				R_SetCacheState(surf);
+			R_BuildLightMap(surf, base, LIGHTMAP_SIZE);
+			R_SetCacheState(surf);
 
-				gl_lms.modified[surf->lightmaptexturenum] = true;
+			gl_lms.modified[surf->lightmaptexturenum] = true;
 
-				if (surf->lightrect.left < rect->left) rect->left = surf->lightrect.left;
-				if (surf->lightrect.right > rect->right) rect->right = surf->lightrect.right;
-				if (surf->lightrect.top < rect->top) rect->top = surf->lightrect.top;
-				if (surf->lightrect.bottom > rect->bottom) rect->bottom = surf->lightrect.bottom;
-			}
+			if (surf->lightrect.left < rect->left) rect->left = surf->lightrect.left;
+			if (surf->lightrect.right > rect->right) rect->right = surf->lightrect.right;
+			if (surf->lightrect.top < rect->top) rect->top = surf->lightrect.top;
+			if (surf->lightrect.bottom > rect->bottom) rect->bottom = surf->lightrect.bottom;
 		}
 	}
 }
