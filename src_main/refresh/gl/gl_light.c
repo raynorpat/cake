@@ -29,38 +29,45 @@ DYNAMIC LIGHTS
 =============================================================================
 */
 
-#define LIGHT_RADIUS_FACTOR 100.0
+extern GLuint gl_lightmappedsurfprog;
+extern GLuint u_brushMaxLights;
+extern GLuint u_brushlightMatrix;
+extern GLuint u_brushLightPos[MAX_LIGHTS];
+extern GLuint u_brushLightColor[MAX_LIGHTS];
+extern GLuint u_brushLightAtten[MAX_LIGHTS];
+
+#define DLIGHT_CUTOFF 48.0
 
 /*
 =============
 R_MarkLights_r
 =============
 */
-static void R_MarkLights_r (dlight_t *light, vec3_t trans, int bit, mnode_t *node)
+static void R_MarkLights_r (dlight_t *light, int bit, mnode_t *node)
 {
+	cplane_t	*splitplane;
 	msurface_t	*surf;
-	vec3_t		origin;
 	float		dist;
-	int			i;
+	int			i, sidebit;
 
 	// leaf
 	if (node->contents != -1)
 		return;
 
-	VectorSubtract(light->origin, trans, origin);
-	dist = DotProduct(origin, node->plane->normal) - node->plane->dist;
+	splitplane = node->plane;
+	dist = DotProduct(light->transformed, splitplane->normal) - splitplane->dist;
 
-	if (dist > light->radius * LIGHT_RADIUS_FACTOR)
+	if (dist > light->radius - DLIGHT_CUTOFF)
 	{
 		// front 
-		R_MarkLights_r (light, trans, bit, node->children[0]);
+		R_MarkLights_r (light, bit, node->children[0]);
 		return;
 	}
 
-	if (dist < light->radius * -LIGHT_RADIUS_FACTOR)
+	if (dist < -light->radius + DLIGHT_CUTOFF)
 	{
 		// back
-		R_MarkLights_r (light, trans, bit, node->children[1]);
+		R_MarkLights_r (light, bit, node->children[1]);
 		return;
 	}
 
@@ -68,6 +75,17 @@ static void R_MarkLights_r (dlight_t *light, vec3_t trans, int bit, mnode_t *nod
 	surf = r_worldmodel->surfaces + node->firstsurface;
 	for (i = 0; i < node->numsurfaces; i++, surf++)
 	{
+		// do a check and see if we are on the backside
+		dist = DotProduct(light->transformed, surf->plane->normal) - surf->plane->dist;
+		if (dist >= 0)
+			sidebit = 0;
+		else
+			sidebit = SURF_PLANEBACK;
+
+		// early out if we are on the backside of the plane
+		if ((surf->flags & SURF_PLANEBACK) != sidebit)
+			continue;
+
 		// reset it
 		if (surf->dlightframe != r_lightframe)
 		{
@@ -79,8 +97,8 @@ static void R_MarkLights_r (dlight_t *light, vec3_t trans, int bit, mnode_t *nod
 	}
 
 	// now go down both sides
-	R_MarkLights_r (light, trans, bit, node->children[0]);
-	R_MarkLights_r (light, trans, bit, node->children[1]);
+	R_MarkLights_r (light, bit, node->children[0]);
+	R_MarkLights_r (light, bit, node->children[1]);
 }
 
 
@@ -91,35 +109,29 @@ R_MarkLights
 Recurses the world, populating the light source bit masks of surfaces that receive dynamic light
 =============
 */
-void R_MarkLights (void)
+void R_MarkLights (mnode_t *headnode, glmatrix *transform)
 {
-	int	i, j;
+	int	i;
 
 	r_lightframe++;
 
 	if (r_lightframe > 0xffff)  // avoid any overflows
 		r_lightframe = 0;
 
+	// send the number of current dynamic lights to shader
+	glProgramUniform1f (gl_lightmappedsurfprog, u_brushMaxLights, r_newrefdef.num_dlights);
+
+	// send light transform matrix to shader
+	glProgramUniformMatrix4fv (gl_lightmappedsurfprog, u_brushlightMatrix, 1, GL_FALSE, transform->m[0]);
+
 	// flag all surfaces for each light source
 	for (i = 0; i < r_newrefdef.num_dlights; i++)
 	{
 		dlight_t *l = &r_newrefdef.dlights[i];
 
-		// world surfaces
-		R_MarkLights_r (l, vec3_origin, 1 << i, r_worldmodel->nodes);
-
-#if 0
-		// and bsp entity surfaces
-		for (j = 0; j < r_newrefdef.num_entities; j++)
-		{
-			entity_t *e = &r_newrefdef.entities;
-			if (e->model)
-			{
-				e->model->dlightbits = 0;
-				R_MarkLights_r (l, e->currorigin, 1 << i, e->model->nodes);
-			}
-		}
-#endif
+		// transform the light by the matrix to get it's new position for surface marking and mark the surfaces
+		GL_TransformPoint(transform, l->origin, l->transformed);		
+		R_MarkLights_r (l, 1 << i, headnode);
 	}
 }
 
@@ -128,20 +140,11 @@ void R_MarkLights (void)
 R_EnableLights
 =============
 */
-extern GLuint gl_lightmappedsurfprog;
-extern GLuint u_brushMaxLights;
-extern GLuint u_brushLightPos[MAX_LIGHTS];
-extern GLuint u_brushLightColor[MAX_LIGHTS];
-extern GLuint u_brushLightAtten[MAX_LIGHTS];
-
 void R_EnableLights (int mask)
 {
 	static int last_mask;
 	static int last_count;
 	dlight_t *l;
-	vec3_t position[MAX_LIGHTS];
-	vec3_t diffuse[MAX_LIGHTS];
-	float lightAtten[MAX_LIGHTS];
 	int i, count;
 
 	// no change?
@@ -154,9 +157,7 @@ void R_EnableLights (int mask)
 
 	if (mask)
 	{
-		glProgramUniform1f(gl_lightmappedsurfprog, u_brushMaxLights, r_newrefdef.num_dlights);
-
-		// enable up to 8 light sources
+		// enable light sources
 		for (i = 0, l = r_newrefdef.dlights; i < r_newrefdef.num_dlights; i++, l++)
 		{
 			if (count == MAX_ACTIVE_LIGHTS)
@@ -164,14 +165,10 @@ void R_EnableLights (int mask)
 
 			if (mask & (1 << i))
 			{
-				VectorCopy(l->origin, position[i]);
-				glProgramUniform4fv (gl_lightmappedsurfprog, u_brushLightPos[i], 1, &position[i]);
-
-				VectorCopy(l->color, diffuse[i]);
-				glProgramUniform4fv (gl_lightmappedsurfprog, u_brushLightColor[i], 1, diffuse[i]);
-
-				lightAtten[i] = l->radius * LIGHT_RADIUS_FACTOR;
-				glProgramUniform1fv (gl_lightmappedsurfprog, u_brushLightAtten[i], 1, &lightAtten[i]);
+				// send light source information to shader
+				glProgramUniform3fv (gl_lightmappedsurfprog, u_brushLightPos[i], 1, l->transformed);
+				glProgramUniform3fv (gl_lightmappedsurfprog, u_brushLightColor[i], 1, l->color);
+				glProgramUniform1f (gl_lightmappedsurfprog, u_brushLightAtten[i], l->radius);
 
 				count++;
 			}
@@ -184,8 +181,7 @@ void R_EnableLights (int mask)
 		if (count < MAX_ACTIVE_LIGHTS)
 		{
 			// set light attenuation to zero
-			lightAtten[count] = 0.0f;
-			glProgramUniform1f (gl_lightmappedsurfprog, u_brushLightAtten[count], lightAtten[count]);
+			glProgramUniform1f (gl_lightmappedsurfprog, u_brushLightAtten[count], 0.0f);
 		}
 	}
 

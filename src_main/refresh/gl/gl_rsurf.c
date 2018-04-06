@@ -65,11 +65,11 @@ int gl_maxindexes = 0;
 GLuint gl_lightmappedsurfprog = 0;
 
 GLuint u_brushlocalMatrix;
-GLuint u_brushmodelViewMatrix;
 GLuint u_brushcolormatrix;
 GLuint u_brushsurfalpha;
 GLuint u_brushscroll;
 GLuint u_brushMaxLights;
+GLuint u_brushlightMatrix;
 GLuint u_brushLightPos[MAX_LIGHTS];
 GLuint u_brushLightColor[MAX_LIGHTS];
 GLuint u_brushLightAtten[MAX_LIGHTS];
@@ -92,11 +92,11 @@ void RSurf_CreatePrograms (void)
 	glProgramUniform1i (gl_lightmappedsurfprog, glGetUniformLocation (gl_lightmappedsurfprog, "lightmap"), 2);
 
 	u_brushlocalMatrix = glGetUniformLocation (gl_lightmappedsurfprog, "localMatrix");
-	u_brushmodelViewMatrix = glGetUniformLocation (gl_lightmappedsurfprog, "modelViewMatrix");
 	u_brushcolormatrix = glGetUniformLocation (gl_lightmappedsurfprog, "colormatrix");
 	u_brushsurfalpha = glGetUniformLocation (gl_lightmappedsurfprog, "surfalpha");
 	u_brushscroll = glGetUniformLocation (gl_lightmappedsurfprog, "scroll");
 	u_brushMaxLights = glGetUniformLocation (gl_lightmappedsurfprog, "maxLights");
+	u_brushlightMatrix = glGetUniformLocation(gl_lightmappedsurfprog, "lightMatrix");
 	for (int i = 0; i < MAX_LIGHTS; ++i)
 	{
 		u_brushLightPos[i] = glGetUniformLocation (gl_lightmappedsurfprog, va("Lights.origin[%i]", i));
@@ -220,7 +220,6 @@ void RSurf_SelectProgramAndStates (glmatrix *matrix, float alpha)
 	qboolean stateset = false;
 
 	glProgramUniformMatrix4fv (gl_lightmappedsurfprog, u_brushlocalMatrix, 1, GL_FALSE, matrix->m[0]);
-	glProgramUniformMatrix4fv (gl_lightmappedsurfprog, u_brushmodelViewMatrix, 1, GL_FALSE, r_worldmatrix.m[0]);
 	glProgramUniform1f (gl_lightmappedsurfprog, u_brushsurfalpha, alpha);
 
 	GL_UseProgram (gl_lightmappedsurfprog);
@@ -534,6 +533,22 @@ void R_DrawInlineBModel (entity_t *e)
 	cplane_t	*pplane;
 	float		dot;
 	msurface_t	*surf;
+	glmatrix	localMatrix;
+	
+	// compute everything on the local matrix so that we can use it for lighting transforms
+	GL_LoadIdentity (&localMatrix);
+	GL_TranslateMatrix (&localMatrix, e->currorigin[0], e->currorigin[1], e->currorigin[2]);
+	
+	GL_RotateMatrix (&localMatrix, e->angles[1], 0, 0, 1);
+	GL_RotateMatrix (&localMatrix, e->angles[0], 0, 1, 0);
+	GL_RotateMatrix (&localMatrix, e->angles[2], 1, 0, 0);
+	
+	// now multiply out for the final model transform and take it's inverse for lighting
+	GL_MultMatrix (&e->matrix, &localMatrix, &r_mvpmatrix);
+	GL_InvertMatrix (&localMatrix, NULL, &localMatrix);
+	
+	// and now calculate dynamic lighting for bmodel
+	R_MarkLights (e->model->nodes + e->model->firstnode, &localMatrix);
 
 	// draw texture
 	surf = &e->model->surfaces[e->model->firstmodelsurface];
@@ -723,6 +738,7 @@ R_DrawWorld
 void R_DrawWorld (void)
 {
 	entity_t ent;
+	glmatrix localMatrix;
 
 	if (!r_drawworld->value)
 		return;
@@ -738,8 +754,8 @@ void R_DrawWorld (void)
 	ent.model = r_worldmodel;
 	memcpy (&ent.matrix, &r_mvpmatrix, sizeof (glmatrix));
 
-	// mark dynamic lights
-	R_MarkLights ();
+	// mark dynamic lights for world
+	R_MarkLights (r_worldmodel->nodes, GL_LoadIdentity(&localMatrix));
 
 	// recurse world
 	R_RecursiveWorldNode (r_worldmodel->nodes);
