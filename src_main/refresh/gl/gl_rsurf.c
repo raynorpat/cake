@@ -67,6 +67,7 @@ GLuint gl_lightmappedsurfprog = 0;
 GLuint u_brushlocalMatrix;
 GLuint u_brushcolormatrix;
 GLuint u_brushsurfalpha;
+GLuint u_brushdebugParams;
 GLuint u_brushscroll;
 GLuint u_brushMaxLights;
 GLuint u_brushlightBit;
@@ -95,6 +96,7 @@ void RSurf_CreatePrograms (void)
 	u_brushlocalMatrix = glGetUniformLocation (gl_lightmappedsurfprog, "localMatrix");
 	u_brushcolormatrix = glGetUniformLocation (gl_lightmappedsurfprog, "colormatrix");
 	u_brushsurfalpha = glGetUniformLocation (gl_lightmappedsurfprog, "surfalpha");
+	u_brushdebugParams = glGetUniformLocation (gl_lightmappedsurfprog, "debugParams");
 	u_brushscroll = glGetUniformLocation (gl_lightmappedsurfprog, "scroll");
 	u_brushMaxLights = glGetUniformLocation (gl_lightmappedsurfprog, "maxLights");
 	u_brushlightBit = glGetUniformLocation (gl_lightmappedsurfprog, "lightBit");
@@ -184,6 +186,8 @@ void RSurf_BeginFrame (void)
 		scroll -= 64.0;
 
 	glProgramUniform1f (gl_lightmappedsurfprog, u_brushscroll, scroll);
+
+	glProgramUniform4f (gl_lightmappedsurfprog, u_brushdebugParams, gl_showlightmap->value, gl_shownormals->value, 0, 0);
 
 	if (!gl_monolightmap->modified && !r_lightscale->modified)
 		return;

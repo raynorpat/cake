@@ -44,6 +44,7 @@ struct LightParameters {
 uniform LightParameters Lights;
 uniform int maxLights;
 uniform int lightBit;
+uniform vec4 debugParams; // x = gl_showlightmaps, y = gl_shownormals, z = , w =
 
 out vec4 fragColor;
 
@@ -85,10 +86,25 @@ void LightmappedFS ()
 			}
 		}
 	}
-
-	// calculate final color = albedo * (gl_monolightmap values * ((lightmap rgb + dyn light) / lightmap whitepoint))
-	vec4 final = albedo * (colormatrix * ((lmap + light) / lmap.a));
 	
+	// output final color
+	vec4 final = vec4(0.0);
+	vec4 finalLightMap = colormatrix * ((lmap / lmap.a) + light);
+	if (debugParams.x == 1)
+	{
+		// lightmaps only
+		final = finalLightMap;
+	}
+	else if (debugParams.y == 1)
+	{
+		// normals only
+		final = normal;
+	}
+	else
+	{		
+		// multiply diffuse albedo with lightmap
+		final = albedo * finalLightMap;
+	}
 	fragColor = vec4(final.rgb, surfalpha);
 }
 #endif
