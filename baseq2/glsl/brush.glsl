@@ -74,7 +74,7 @@ void LightmappedFS ()
 				float lambert = dot(normal.xyz, normalize(lightToPos));
 				if (lambert > 0.0)
 				{
-					// windowed inverse square falloff
+					// clamped inverse square falloff
 					float dist = distLightToPos / Lights.radius[i];
 					float falloff = clamp(1.0 - dist * dist * dist * dist, 0.0, 1.0);
 					falloff *= falloff;
