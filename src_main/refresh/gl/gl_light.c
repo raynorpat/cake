@@ -31,6 +31,7 @@ DYNAMIC LIGHTS
 
 extern GLuint gl_lightmappedsurfprog;
 extern GLuint u_brushMaxLights;
+extern GLuint u_brushlightBit;
 extern GLuint u_brushlightMatrix;
 extern GLuint u_brushLightPos[MAX_LIGHTS];
 extern GLuint u_brushLightColor[MAX_LIGHTS];
@@ -75,6 +76,13 @@ static void R_MarkLights_r (dlight_t *light, int bit, mnode_t *node)
 	surf = r_worldmodel->surfaces + node->firstsurface;
 	for (i = 0; i < node->numsurfaces; i++, surf++)
 	{
+		// reset light bitmask
+		if (surf->dlightframe != r_lightframe)
+		{
+			surf->dlightbits = 0;
+			surf->dlightframe = r_lightframe;
+		}
+
 		// do a check and see if we are on the backside
 		dist = DotProduct(light->transformed, surf->plane->normal) - surf->plane->dist;
 		if (dist >= 0)
@@ -86,14 +94,8 @@ static void R_MarkLights_r (dlight_t *light, int bit, mnode_t *node)
 		if ((surf->flags & SURF_PLANEBACK) != sidebit)
 			continue;
 
-		// reset it
-		if (surf->dlightframe != r_lightframe)
-		{
-			surf->dlightbits = 0;
-			surf->dlightframe = r_lightframe;
-		}
-
-		surf->dlightbits |= bit; // add this light
+		// add this light
+		surf->dlightbits |= bit;
 	}
 
 	// now go down both sides
@@ -130,7 +132,7 @@ void R_MarkLights (mnode_t *headnode, glmatrix *transform)
 		dlight_t *l = &r_newrefdef.dlights[i];
 
 		// transform the light by the matrix to get it's new position for surface marking and mark the surfaces
-		GL_TransformPoint(transform, l->origin, l->transformed);		
+		GL_TransformPoint (transform, l->origin, l->transformed);		
 		R_MarkLights_r (l, 1 << i, headnode);
 	}
 }
@@ -140,11 +142,14 @@ void R_MarkLights (mnode_t *headnode, glmatrix *transform)
 R_EnableLights
 =============
 */
-void R_EnableLights (void)
+void R_EnableLights (int bitmask)
 {
 	static int last_count;
 	dlight_t *l;
 	int i, count = 0;
+
+	// send bitmask
+	glProgramUniform1i (gl_lightmappedsurfprog, u_brushlightBit, bitmask);
 
 	// enable light sources
 	for (i = 0, l = r_newrefdef.dlights; i < r_newrefdef.num_dlights; i++, l++)
@@ -153,7 +158,6 @@ void R_EnableLights (void)
 		glProgramUniform3fv (gl_lightmappedsurfprog, u_brushLightPos[i], 1, l->transformed);
 		glProgramUniform3fv (gl_lightmappedsurfprog, u_brushLightColor[i], 1, l->color);
 		glProgramUniform1f (gl_lightmappedsurfprog, u_brushLightAtten[i], l->radius);
-
 		count++;
 	}
 

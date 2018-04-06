@@ -69,6 +69,7 @@ GLuint u_brushcolormatrix;
 GLuint u_brushsurfalpha;
 GLuint u_brushscroll;
 GLuint u_brushMaxLights;
+GLuint u_brushlightBit;
 GLuint u_brushlightMatrix;
 GLuint u_brushLightPos[MAX_LIGHTS];
 GLuint u_brushLightColor[MAX_LIGHTS];
@@ -96,7 +97,8 @@ void RSurf_CreatePrograms (void)
 	u_brushsurfalpha = glGetUniformLocation (gl_lightmappedsurfprog, "surfalpha");
 	u_brushscroll = glGetUniformLocation (gl_lightmappedsurfprog, "scroll");
 	u_brushMaxLights = glGetUniformLocation (gl_lightmappedsurfprog, "maxLights");
-	u_brushlightMatrix = glGetUniformLocation(gl_lightmappedsurfprog, "lightMatrix");
+	u_brushlightBit = glGetUniformLocation (gl_lightmappedsurfprog, "lightBit");
+	u_brushlightMatrix = glGetUniformLocation (gl_lightmappedsurfprog, "lightMatrix");
 	for (int i = 0; i < MAX_LIGHTS; ++i)
 	{
 		u_brushLightPos[i] = glGetUniformLocation (gl_lightmappedsurfprog, va("Lights.origin[%i]", i));
@@ -404,7 +406,7 @@ void R_DrawTextureChains (entity_t *e)
 
 		// set dynamic lights
 		if (surf->dlightframe == r_lightframe)
-			R_EnableLights ();
+			R_EnableLights (surf->dlightbits);
 
 		// reverse the chain to get f2b ordering
 		for (; surf; surf = surf->texturechain)
@@ -437,7 +439,7 @@ void R_DrawTextureChains (entity_t *e)
 
 		// set dynamic lights
 		if (surf->dlightframe == r_lightframe)
-			R_EnableLights ();
+			R_EnableLights (surf->dlightbits);
 
 		for (; surf; surf = surf->texturechain)
 		{

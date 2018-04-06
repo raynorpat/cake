@@ -43,6 +43,7 @@ struct LightParameters {
 };
 uniform LightParameters Lights;
 uniform float maxLights;
+uniform int lightBit;
 
 out vec4 fragColor;
 
@@ -53,25 +54,33 @@ void LightmappedFS ()
 	
 	// calculate dynamic light sources
 	vec4 light = vec4(0.0);
-	for (int i = 0; i < maxLights; i++)
+	//if(lightBit != 0)
 	{
-		if (Lights.radius[i] == 0.0)
-			break;
-			
-		vec3 lightToPos = Lights.origin[i] - world.xyz;
-		float distLightToPos = length(lightToPos);
-		if (distLightToPos < Lights.radius[i])
+		for (int i = 0; i < maxLights; i++)
 		{
-			float lambert = dot(normal.xyz, normalize(lightToPos));
-			if (lambert > 0.0)
-			{
-				// windowed inverse square falloff
-				float dist = distLightToPos / Lights.radius[i];
-				float falloff = clamp(1.0 - dist * dist * dist * dist, 0.0, 1.0);
-				falloff = falloff * falloff;
-				falloff = falloff / (dist * dist + 1.0);
+			// light does not affect this plane, just skip it
+			//if((lightBit & (1 << i)) == 0)
+			//	continue;
+
+			// light has no radius, just skip it
+			if (Lights.radius[i] == 0.0)
+				break;
 				
-				light += vec4(Lights.color[i] * falloff * lambert, 1.0);
+			vec3 lightToPos = Lights.origin[i] - world.xyz;
+			float distLightToPos = length(lightToPos);
+			if (distLightToPos < Lights.radius[i])
+			{
+				float lambert = dot(normal.xyz, normalize(lightToPos));
+				if (lambert > 0.0)
+				{
+					// windowed inverse square falloff
+					float dist = distLightToPos / Lights.radius[i];
+					float falloff = clamp(1.0 - dist * dist * dist * dist, 0.0, 1.0);
+					falloff = falloff * falloff;
+					falloff = falloff / (dist * dist + 1.0);
+					
+					light += vec4(Lights.color[i] * falloff * lambert, 1.0);
+				}
 			}
 		}
 	}
