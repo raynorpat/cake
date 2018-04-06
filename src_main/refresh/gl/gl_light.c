@@ -112,7 +112,6 @@ void R_MarkLights (mnode_t *headnode, glmatrix *transform)
 
 	// send the number of current dynamic lights to shader
 	glProgramUniform1i (gl_lightmappedsurfprog, u_brushMaxLights, r_newrefdef.num_dlights);
-	//Com_Printf("NUM_DLIGHTS: %i\n", r_newrefdef.num_dlights);
 
 	// send light transform matrix to shader
 	glProgramUniformMatrix4fv (gl_lightmappedsurfprog, u_brushlightMatrix, 1, GL_FALSE, transform->m[0]);
