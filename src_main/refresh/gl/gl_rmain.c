@@ -44,7 +44,6 @@ cplane_t	frustum[4];
 
 int			r_visframecount;	// bumped when going to a new PVS
 int			r_framecount;		// used for dlight push checking
-int			r_lightframe;		// dynamic lighting frame
 
 int			c_brush_polys, c_alias_polys;
 

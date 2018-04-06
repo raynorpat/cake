@@ -226,7 +226,6 @@ extern int			numFBOs;
 extern	image_t		*r_notexture;
 extern	int			r_visframecount;
 extern	int			r_framecount;
-extern  int			r_lightframe;
 extern	cplane_t	frustum[4];
 extern	int			c_brush_polys, c_alias_polys;
 

@@ -404,10 +404,6 @@ void R_DrawTextureChains (entity_t *e)
 
 		GL_BindTexture (GL_TEXTURE0, GL_TEXTURE_2D, r_surfacesampler, image->texnum);
 
-		// set dynamic lights
-		if (surf->dlightframe == r_lightframe)
-			R_EnableLights (surf->dlightbits);
-
 		// reverse the chain to get f2b ordering
 		for (; surf; surf = surf->texturechain)
 		{
@@ -437,10 +433,6 @@ void R_DrawTextureChains (entity_t *e)
 
 		GL_BindTexture (GL_TEXTURE0, GL_TEXTURE_2D, r_surfacesampler, mod->texinfo[i].image->texnum);
 
-		// set dynamic lights
-		if (surf->dlightframe == r_lightframe)
-			R_EnableLights (surf->dlightbits);
-
 		for (; surf; surf = surf->texturechain)
 		{
 			surf->reversechain = reversechain;
@@ -467,6 +459,10 @@ void R_ModifySurfaceLightmap (msurface_t *surf)
 
 	if (surf->texinfo->flags & SURF_SKY) return;
 	if (surf->texinfo->flags & SURF_WARP) return;
+
+	// set dynamic lights
+	if (surf->dlightframe == r_framecount)
+		R_EnableLights (surf->dlightbits);
 
 	for (map = 0; map < MAXLIGHTMAPS && surf->styles[map] != 255; map++)
 	{
@@ -1154,7 +1150,6 @@ void GL_BeginBuildingLightmaps (model_t *m)
 	memset (gl_lms.allocated, 0, sizeof (gl_lms.allocated));
 
 	r_framecount = 1;
-	r_lightframe = 1;
 
 	// setup the base lightstyles so the lightmaps won't have to be regenerated
 	// the first time they're seen

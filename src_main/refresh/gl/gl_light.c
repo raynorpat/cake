@@ -77,10 +77,10 @@ static void R_MarkLights_r (dlight_t *light, int bit, mnode_t *node)
 	for (i = 0; i < node->numsurfaces; i++, surf++)
 	{
 		// reset light bitmask
-		if (surf->dlightframe != r_lightframe)
+		if (surf->dlightframe != r_framecount)
 		{
 			surf->dlightbits = 0;
-			surf->dlightframe = r_lightframe;
+			surf->dlightframe = r_framecount;
 		}
 
 		// do a check and see if we are on the backside
@@ -114,13 +114,8 @@ void R_MarkLights (mnode_t *headnode, glmatrix *transform)
 {
 	int	i;
 
-	r_lightframe++;
-
-	if (r_lightframe > 0xffff)  // avoid any overflows
-		r_lightframe = 0;
-
 	// send the number of current dynamic lights to shader
-	glProgramUniform1f (gl_lightmappedsurfprog, u_brushMaxLights, r_newrefdef.num_dlights);
+	glProgramUniform1i (gl_lightmappedsurfprog, u_brushMaxLights, r_newrefdef.num_dlights);
 
 	// send light transform matrix to shader
 	glProgramUniformMatrix4fv (gl_lightmappedsurfprog, u_brushlightMatrix, 1, GL_FALSE, transform->m[0]);
@@ -143,34 +138,19 @@ R_EnableLights
 */
 void R_EnableLights (int bitmask)
 {
-	static int last_count;
 	dlight_t *l;
-	int i, count = 0;
+	int i;
 
-	// send bitmask
+	// send bitmask to shader
 	glProgramUniform1i (gl_lightmappedsurfprog, u_brushlightBit, bitmask);
 
-	// enable light sources
+	// send light source information to shader
 	for (i = 0, l = r_newrefdef.dlights; i < r_newrefdef.num_dlights; i++, l++)
-	{
-		// send light source information to shader
+	{		
 		glProgramUniform3fv (gl_lightmappedsurfprog, u_brushLightPos[i], 1, l->transformed);
 		glProgramUniform3fv (gl_lightmappedsurfprog, u_brushLightColor[i], 1, l->color);
 		glProgramUniform1f (gl_lightmappedsurfprog, u_brushLightAtten[i], l->radius);
-		count++;
 	}
-
-	if (count != last_count)
-	{
-		// disable the next light as a stop
-		if (count < MAX_LIGHTS)
-		{
-			// set light attenuation to zero
-			glProgramUniform1f(gl_lightmappedsurfprog, u_brushLightAtten[count], 0.0f);
-		}
-	}
-
-	last_count = count;
 }
 
 
