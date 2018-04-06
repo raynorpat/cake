@@ -37,7 +37,9 @@ extern GLuint u_brushLightPos[MAX_LIGHTS];
 extern GLuint u_brushLightColor[MAX_LIGHTS];
 extern GLuint u_brushLightAtten[MAX_LIGHTS];
 
-#define DLIGHT_CUTOFF 48.0
+#define DLIGHT_CUTOFF 64.0
+
+int r_dlightframecount;
 
 /*
 =============
@@ -49,7 +51,7 @@ static void R_MarkLights_r (dlight_t *light, int bit, mnode_t *node)
 	cplane_t	*splitplane;
 	msurface_t	*surf;
 	float		dist;
-	int			i, sidebit;
+	int			i;
 
 	// leaf
 	if (node->contents != -1)
@@ -77,22 +79,11 @@ static void R_MarkLights_r (dlight_t *light, int bit, mnode_t *node)
 	for (i = 0; i < node->numsurfaces; i++, surf++)
 	{
 		// reset light bitmask
-		if (surf->dlightframe != r_framecount)
+		if (surf->dlightframe != r_dlightframecount)
 		{
 			surf->dlightbits = 0;
-			surf->dlightframe = r_framecount;
+			surf->dlightframe = r_dlightframecount;
 		}
-
-		// do a check and see if we are on the backside
-		dist = DotProduct(light->transformed, surf->plane->normal) - surf->plane->dist;
-		if (dist >= 0)
-			sidebit = 0;
-		else
-			sidebit = SURF_PLANEBACK;
-
-		// early out if we are on the backside of the plane
-		if ((surf->flags & SURF_PLANEBACK) != sidebit)
-			continue;
 
 		// add this light
 		surf->dlightbits |= bit;
@@ -113,18 +104,22 @@ Recurses the world, populating the light source bit masks of surfaces that recei
 void R_MarkLights (mnode_t *headnode, glmatrix *transform)
 {
 	int	i;
+	dlight_t *l;
+
+	// because the count hasn't advanced yet for this frame
+	r_dlightframecount = r_framecount + 1;
+	l = r_newrefdef.dlights;
 
 	// send the number of current dynamic lights to shader
 	glProgramUniform1i (gl_lightmappedsurfprog, u_brushMaxLights, r_newrefdef.num_dlights);
+	//Com_Printf("NUM_DLIGHTS: %i\n", r_newrefdef.num_dlights);
 
 	// send light transform matrix to shader
 	glProgramUniformMatrix4fv (gl_lightmappedsurfprog, u_brushlightMatrix, 1, GL_FALSE, transform->m[0]);
 
 	// flag all surfaces for each light source
-	for (i = 0; i < r_newrefdef.num_dlights; i++)
+	for (i = 0; i < r_newrefdef.num_dlights; i++, l++)
 	{
-		dlight_t *l = &r_newrefdef.dlights[i];
-
 		// transform the light by the matrix to get it's new position for surface marking and mark the surfaces
 		GL_TransformPoint (transform, l->origin, l->transformed);		
 		R_MarkLights_r (l, 1 << i, headnode);
@@ -136,10 +131,13 @@ void R_MarkLights (mnode_t *headnode, glmatrix *transform)
 R_EnableLights
 =============
 */
-void R_EnableLights (int bitmask)
+void R_EnableLights (int framecount, int bitmask)
 {
 	dlight_t *l;
 	int i;
+
+	if (framecount != r_dlightframecount)
+		return;
 
 	// send bitmask to shader
 	glProgramUniform1i (gl_lightmappedsurfprog, u_brushlightBit, bitmask);

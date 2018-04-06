@@ -461,9 +461,9 @@ void R_ModifySurfaceLightmap (msurface_t *surf)
 	if (surf->texinfo->flags & SURF_WARP) return;
 
 	// set dynamic lights
-	if (surf->dlightframe == r_framecount)
-		R_EnableLights (surf->dlightbits);
+	R_EnableLights (surf->dlightframe, surf->dlightbits);
 
+	// set lightmap styles
 	for (map = 0; map < MAXLIGHTMAPS && surf->styles[map] != 255; map++)
 	{
 		if (r_newrefdef.lightstyles[surf->styles[map]].white != surf->cached_light[map])

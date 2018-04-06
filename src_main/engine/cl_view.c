@@ -586,7 +586,7 @@ void V_RenderView (float stereo_separation)
 		cl.refdef.num_particles = r_numparticles;
 		cl.refdef.particles = r_particles;
 		cl.refdef.num_dlights = r_numdlights;
-		memcpy(cl.refdef.dlights, r_dlights, sizeof(cl.refdef.dlights));
+		cl.refdef.dlights = r_dlights;
 		cl.refdef.lightstyles = r_lightstyles;
 
 		cl.refdef.rdflags = cl.frame.playerstate.rdflags;

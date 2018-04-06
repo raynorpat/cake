@@ -150,13 +150,13 @@ typedef struct
 
 	byte		*areabits;			// if not NULL, only areas with set bits will be drawn
 
-	lightstyle_t *lightstyles;	// [MAX_LIGHTSTYLES]
+	lightstyle_t *lightstyles;		// [MAX_LIGHTSTYLES]
 
 	int			num_entities;
 	entity_t	*entities;
 
 	int			num_dlights;
-	dlight_t	dlights[MAX_LIGHTS];
+	dlight_t	*dlights;
 
 	int			num_particles;
 	particle_t	*particles;

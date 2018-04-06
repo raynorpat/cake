@@ -59,9 +59,14 @@ void LightmappedFS ()
 		for (int i = 0; i < maxLights; ++i)
 		{
 			// light does not affect this plane, just skip it
-			if((lightBit & (1 << i)) == 0)
+			// FIXME: this kills a ton of otherwise correct lights
+			//if((lightBit & (1 << i)) == 0)
+			//	continue;
+			
+			// light has no radius, just skip it
+			if(Lights.radius[i] == 0.0)
 				continue;
-				
+			
 			vec3 lightToPos = Lights.origin[i] - world.xyz;
 			float distLightToPos = length(lightToPos);
 			if (distLightToPos < Lights.radius[i])
@@ -81,6 +86,7 @@ void LightmappedFS ()
 		}
 	}
 
+	// calculate final color = albedo * (gl_monolightmap values * ((lightmap rgb + dyn light) / lightmap whitepoint))
 	vec4 final = albedo * (colormatrix * ((lmap + light) / lmap.a));
 	
 	fragColor = vec4(final.rgb, surfalpha);

@@ -302,7 +302,7 @@ void GL_BindTexture (GLenum tmu, GLenum target, GLuint sampler, GLuint texnum);
 void R_LightPoint (vec3_t p, vec3_t color, float *lightspot);
 
 void R_MarkLights (mnode_t *headnode, glmatrix *transform);
-void R_EnableLights (int bitmask);
+void R_EnableLights (int framecount, int bitmask);
 
 //====================================================================
 
