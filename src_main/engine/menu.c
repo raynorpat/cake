@@ -591,10 +591,10 @@ void M_Draw (void)
 		return;
 
 	// dim everything behind it down
-	if (SCR_GetCinematicTime() > 0)
+	if (SCR_GetCinematicTime() > 0 || (cls.state == ca_disconnected || cls.state == ca_connecting)) // if cinematic or in full screen console, all black please
 		RE_Draw_Fill (0, 0, viddef.width, viddef.height, 0);
 	else
-		RE_Draw_FadeScreen ();
+		RE_Draw_FadeScreen (); // draw fade screen post effect in-game or in attract loop
 
 	// see if the mouse is hitting anything
 	if(!bselected)
