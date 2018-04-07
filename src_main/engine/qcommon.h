@@ -97,9 +97,12 @@ extern	float	LittleFloat (float l);
 
 //============================================================================
 
+#define	MAXPRINTMSG		4096
+
+#define MAX_NUM_ARGVS	50
 
 int	COM_Argc (void);
-char *COM_Argv (int arg);	// range and null checked
+char *COM_Argv (int arg); // range and null checked
 void COM_ClearArgv (int arg);
 int COM_CheckParm (char *parm);
 void COM_AddParm (char *parm);

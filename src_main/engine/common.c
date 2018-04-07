@@ -24,10 +24,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #include <windows.h>
 #endif
 
-#define	MAXPRINTMSG	4096
-
-#define MAX_NUM_ARGVS	50
-
 void *Scratch_Alloc (void)
 {
 	// this buffer should never be accessed directly but always via a call to here
