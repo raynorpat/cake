@@ -139,7 +139,7 @@ Save the console contents out to a file
 void Con_Dump_f (void)
 {
 	int		l, x;
-	char	*line;
+	short	*line;
 	FILE	*f;
 	char	buffer[1024];
 	char	name[MAX_OSPATH];
@@ -152,7 +152,7 @@ void Con_Dump_f (void)
 
 	if (con.linewidth >= 1024)
 	{
-		Com_Printf("con.linewidth too large!\n");
+		Com_Printf(S_COLOR_RED "con.linewidth too large!\n");
 		return;
 	}
 
@@ -164,7 +164,7 @@ void Con_Dump_f (void)
 
 	if (!f)
 	{
-		Com_Printf ("ERROR: couldn't open.\n");
+		Com_Printf (S_COLOR_RED "ERROR: couldn't open.\n");
 		return;
 	}
 
@@ -252,8 +252,8 @@ If the line width has changed, reformat the buffer.
 */
 void Con_CheckResize (void)
 {
-	int		i, j, width, oldwidth, oldtotallines, numlines, numchars;
-	static char	tbuf[CON_TEXTSIZE];
+	int	i, j, width, oldwidth, oldtotallines, numlines, numchars;
+	static short tbuf[CON_TEXTSIZE];
 	float scale = SCR_GetConsoleScale();
 
 	width = ((int)(viddef.width / scale) >> 3) - 2;
@@ -266,7 +266,8 @@ void Con_CheckResize (void)
 		width = 78;
 		con.linewidth = width;
 		con.totallines = CON_TEXTSIZE / con.linewidth;
-		memset (con.text, ' ', CON_TEXTSIZE);
+		for (i = 0; i<CON_TEXTSIZE; i++)
+			con.text[i] = (ColorIndex(COLOR_WHITE) << 8) | ' ';
 	}
 	else
 	{
@@ -285,16 +286,13 @@ void Con_CheckResize (void)
 			numchars = con.linewidth;
 
 		memcpy (tbuf, con.text, CON_TEXTSIZE);
-		memset (con.text, ' ', CON_TEXTSIZE);
+		for (i = 0; i<CON_TEXTSIZE; i++)
+			con.text[i] = (ColorIndex(COLOR_WHITE) << 8) | ' ';
 
 		for (i = 0; i < numlines; i++)
 		{
 			for (j = 0; j < numchars; j++)
-			{
-				con.text[(con.totallines - 1 - i) * con.linewidth + j] =
-					tbuf[((con.current - i + oldtotallines) %
-							oldtotallines) * oldwidth + j];
-			}
+				con.text[(con.totallines - 1 - i) * con.linewidth + j] = tbuf[((con.current - i + oldtotallines) % oldtotallines) * oldwidth + j];
 		}
 
 		Con_ClearNotify ();
@@ -313,6 +311,7 @@ Con_Init
 void Con_Init (void)
 {
 	con.linewidth = -1;
+	con.color[0] = con.color[1] = con.color[2] = con.color[3] = 1.0f;
 
 	Con_CheckResize ();
 
@@ -360,29 +359,32 @@ If no console is visible, the text will appear at the top of the game window
 */
 void Con_Print (char *txt)
 {
-	int		y;
-	int		c, l;
+	int y, l;
+	unsigned char c;
+	unsigned short color;
 	static int	cr;
-	int		mask;
 
 	if (!con.initialized)
 		return;
 
-	if ((txt[0] == 1) || (txt[0] == 2))
-	{
-		mask = 128;		// go to colored text
-		txt++;
-	}
-	else
-		mask = 0;
+	color = ColorIndex(COLOR_WHITE);
 
-
-	while ((c = *txt))
+	while ((c = *((unsigned char *)txt)) != 0)
 	{
+		// see if we have a colored string
+		if (Q_IsColorString(txt))
+		{
+			color = ColorIndex(*(txt + 1));
+			txt += 2;
+			continue;
+		}
+
 		// count word length
 		for (l = 0; l < con.linewidth; l++)
+		{
 			if (txt[l] <= ' ')
 				break;
+		}
 
 		// word wrap
 		if ((l != con.linewidth) && (con.x + l > con.linewidth))
@@ -416,14 +418,12 @@ void Con_Print (char *txt)
 			cr = 1;
 			break;
 
-		default:	// display character and advance
+		default: // display character and advance
 			y = con.current % con.totallines;
-			con.text[y *con.linewidth+con.x] = c | mask | con.ormask;
+			con.text[y * con.linewidth + con.x] = (color << 8) | c;
 			con.x++;
-
 			if (con.x >= con.linewidth)
 				con.x = 0;
-
 			break;
 		}
 
@@ -455,7 +455,6 @@ void Con_DrawInput (void)
 
 	if (cls.key_dest == key_menu)
 		return;
-
 	if (cls.key_dest != key_console && cls.state == ca_active)
 		return;		// don't draw anything (always draw if not active)
 
@@ -474,6 +473,7 @@ void Con_DrawInput (void)
 		text += 1 + key_linepos - con.linewidth;
 
 	// draw it
+	RE_Draw_SetColor (con.color);
 	for (i = 0; i < con.linewidth; i++)
 		RE_Draw_CharScaled (((i + 1) << 3) * scale, con.vislines - 22 * scale, text[i], scale);
 
@@ -492,15 +492,19 @@ Draws the last few lines of output transparently over the game top
 void Con_DrawNotify (void)
 {
 	int		x, v;
-	char	*text;
+	short	*text;
 	int		i;
 	int		time;
 	char	*s;
 	int		skip;
 	float	scale;
+	int		currentColor;
 
 	v = 0;
 	scale = SCR_GetConsoleScale();
+
+	currentColor = 7;
+	RE_Draw_SetColor (g_color_table[currentColor]);
 
 	for (i = con.current - NUM_CON_TIMES + 1; i <= con.current; i++)
 	{
@@ -520,11 +524,25 @@ void Con_DrawNotify (void)
 		text = con.text + (i % con.totallines) * con.linewidth;
 
 		for (x = 0; x < con.linewidth; x++)
-			RE_Draw_CharScaled (((x + 1) << 3) * scale, v * scale, text[x], scale);
+		{
+			if ((text[x] & 0xff) == ' ')
+				continue;
+
+			if (ColorIndexForNumber(text[x] >> 8) != currentColor)
+			{
+				currentColor = ColorIndexForNumber(text[x] >> 8);
+				RE_Draw_SetColor (g_color_table[currentColor]);
+			}
+
+			RE_Draw_CharScaled (((x + 1) << 3) * scale, v * scale, text[x] & 0xff, scale);
+		}
 
 		v += 8;
 	}
 
+	RE_Draw_SetColor (NULL);
+
+	// draw the chat line
 	if (cls.key_dest == key_message)
 	{
 		if (chat_team)
@@ -568,12 +586,13 @@ void Con_DrawConsole (float frac)
 {
 	int				i, j, x, y, n;
 	int				rows;
-	char			*text;
+	short			*text;
 	int				row;
 	int				lines;
 	float			scale;
 	char			version[64];
 	char			dlbar[1024];
+	int				currentColor;
 
 	scale = SCR_GetConsoleScale();
 	lines = viddef.height * frac;
@@ -587,12 +606,11 @@ void Con_DrawConsole (float frac)
 	// draw the background
 	RE_Draw_StretchPic (0, -viddef.height + lines, viddef.width, viddef.height, "conback");
 
+	// draw the version
 	Com_sprintf (version, sizeof (version), "v%4.2f", VERSION);
-
 	RE_Draw_SetColor (colorRed);
 	for (x = 0; x < 5; x++)
 		RE_Draw_CharScaled (viddef.width - (44 * scale) + x * 8 * scale, lines - 12 * scale, version[x], scale);
-	RE_Draw_SetColor (NULL);
 
 	// draw the text
 	con.vislines = lines;
@@ -606,12 +624,14 @@ void Con_DrawConsole (float frac)
 		// draw arrows to show the buffer is backscrolled
 		for (x = 0; x < con.linewidth; x += 4)
 			RE_Draw_CharScaled (((x + 1) << 3) * scale, y * scale, '^', scale);
-
 		y -= 8;
 		rows--;
 	}
 
 	row = con.display;
+
+	currentColor = 7;
+	RE_Draw_SetColor (g_color_table[currentColor]);
 
 	for (i = 0; i < rows; i++, y -= 8, row--)
 	{
@@ -624,23 +644,36 @@ void Con_DrawConsole (float frac)
 		text = con.text + (row % con.totallines) * con.linewidth;
 
 		for (x = 0; x < con.linewidth; x++)
-			RE_Draw_CharScaled (((x + 1) << 3) * scale, y * scale, text[x], scale);
+		{
+			if ((text[x] & 0xff) == ' ')
+				continue;
+
+			if (ColorIndexForNumber(text[x] >> 8) != currentColor)
+			{
+				currentColor = ColorIndexForNumber(text[x] >> 8);
+				RE_Draw_SetColor (g_color_table[currentColor]);
+			}
+
+			RE_Draw_CharScaled (((x + 1) << 3) * scale, y * scale, text[x] & 0xff, scale);
+		}
 	}
+
+	RE_Draw_SetColor (NULL);
 
 	// draw the download bar
 	if (cls.downloadname[0] && (cls.download || cls.downloadposition))
 	{
-		if ((text = strrchr (cls.downloadname, '/')) != NULL)
+		if ((text = (short *)strrchr (cls.downloadname, '/')) != NULL)
 			text++;
 		else
-			text = cls.downloadname;
+			text = (short *)cls.downloadname;
 
 		// figure out width
 		x = con.linewidth - ((con.linewidth * 7) / 40);
-		y = x - strlen (text) - 8;
+		y = x - strlen ((char *)text) - 8;
 		i = con.linewidth / 3;
 
-		if (strlen (text) > i)
+		if (strlen ((char *)text) > i)
 		{
 			y = x - i - 11;
 			memcpy (dlbar, text, i);
@@ -648,7 +681,7 @@ void Con_DrawConsole (float frac)
 			strcat (dlbar, "...");
 		}
 		else
-			strcpy (dlbar, text);
+			strcpy (dlbar, (char *)text);
 
 		strcat (dlbar, ": ");
 		i = strlen (dlbar);
@@ -677,8 +710,10 @@ void Con_DrawConsole (float frac)
 		// draw it
 		y = con.vislines - 12;
 
+		RE_Draw_SetColor (colorGreen);
 		for (i = 0; i < strlen (dlbar); i++)
 			RE_Draw_CharScaled (((i + 1) << 3) * scale, y * scale, dlbar[i], scale);
+		RE_Draw_SetColor (NULL);
 	}
 
 	// draw the input prompt, user text, and cursor if desired

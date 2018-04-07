@@ -27,9 +27,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #define		CON_TEXTSIZE	4194304
 typedef struct
 {
-	qboolean	initialized;
+	qboolean initialized;
 
-	char	text[CON_TEXTSIZE];
+	short	text[CON_TEXTSIZE];
 	int		current;		// line where next message will be printed
 	int		x;				// offset in current line for next print
 	int		display;		// bottom of console displays this line
@@ -44,6 +44,8 @@ typedef struct
 	int		vislines;
 
 	float	times[NUM_CON_TIMES];	// cls.realtime time the line was generated for transparent notify lines
+
+	vec4_t	color;
 } console_t;
 
 extern	console_t	con;

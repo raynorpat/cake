@@ -96,6 +96,7 @@ qboolean SV_SetPlayer (void)
 	int			i;
 	int			idnum;
 	char		*s;
+	char		cleanName[64];
 
 	if (Cmd_Argc() < 2)
 		return false;
@@ -131,7 +132,16 @@ qboolean SV_SetPlayer (void)
 		if (!cl->state)
 			continue;
 
-		if (!strcmp (cl->name, s))
+		if (!Q_stricmp (cl->name, s))
+		{
+			sv_client = cl;
+			sv_player = sv_client->edict;
+			return true;
+		}
+
+		Q_strlcpy (cleanName, cl->name, sizeof(cleanName));
+		Q_CleanStr (cleanName);
+		if (!Q_stricmp (cleanName, s))
 		{
 			sv_client = cl;
 			sv_player = sv_client->edict;
@@ -170,13 +180,11 @@ void SV_WipeSavegame (char *savename)
 	remove (name);
 	Com_sprintf (name, sizeof (name), "%s/save/%s/game.ssv", FS_Gamedir (), savename);
 	remove (name);
-
 	Com_sprintf (name, sizeof (name), "%s/save/%s/mapshot.tga", FS_Gamedir (), savename);
 	remove (name);
-
 	Com_sprintf (name, sizeof (name), "%s/save/%s/*.sav", FS_Gamedir (), savename);
-	s = Sys_FindFirst (name);
 
+	s = Sys_FindFirst (name);
 	while (s)
 	{
 		remove (s);
@@ -186,7 +194,6 @@ void SV_WipeSavegame (char *savename)
 	Sys_FindClose ();
 	Com_sprintf (name, sizeof (name), "%s/save/%s/*.sv2", FS_Gamedir (), savename);
 	s = Sys_FindFirst (name);
-
 	while (s)
 	{
 		remove (s);
@@ -311,7 +318,7 @@ void SV_WriteLevelFile (void)
 
 	if (!f)
 	{
-		Com_Printf ("Failed to open %s\n", name);
+		Com_Printf (S_COLOR_RED "Failed to open %s\n", name);
 		return;
 	}
 
@@ -341,7 +348,7 @@ void SV_ReadLevelFile (void)
 	FS_FOpenFile (name, &f, FS_READ, true);
 	if (!f)
 	{
-		Com_Printf ("Failed to open %s\n", name);
+		Com_Printf (S_COLOR_RED "Failed to open %s\n", name);
 		return;
 	}
 
@@ -373,7 +380,7 @@ void SV_WriteServerFile (qboolean autosave)
 	f = fopen (name, "wb");
 	if (!f)
 	{
-		Com_Printf ("Couldn't write %s\n", name);
+		Com_Printf (S_COLOR_RED "Couldn't write %s\n", name);
 		return;
 	}
 
@@ -408,7 +415,7 @@ void SV_WriteServerFile (qboolean autosave)
 		if (strlen (var->name) >= sizeof (name) - 1
 				|| strlen (var->string) >= sizeof (string) - 1)
 		{
-			Com_Printf ("Cvar too long: %s = %s\n", var->name, var->string);
+			Com_Printf (S_COLOR_RED "Cvar too long: %s = %s\n", var->name, var->string);
 			continue;
 		}
 
@@ -445,7 +452,7 @@ void SV_ReadServerFile (void)
 	FS_FOpenFile(name, &f, FS_READ, true);
 	if (!f)
 	{
-		Com_Printf ("Couldn't read %s\n", name);
+		Com_Printf (S_COLOR_RED "Couldn't read %s\n", name);
 		return;
 	}
 
@@ -607,7 +614,7 @@ void SV_Map_f (void)
 
 			if (FS_LoadFile (expanded, NULL) == -1)
 			{
-				Com_Printf ("Can't find %s\n", expanded);
+				Com_Printf (S_COLOR_RED "Can't find %s\n", expanded);
 				return;
 			}
 		}
@@ -645,22 +652,21 @@ void SV_Loadgame_f (void)
 		return;
 	}
 
-	Com_Printf ("Loading game...\n");
-
 	dir = Cmd_Argv (1);
-
 	if (strstr (dir, "..") || strstr (dir, "/") || strstr (dir, "\\"))
 	{
-		Com_Printf ("Bad savedir.\n");
+		Com_Printf (S_COLOR_RED "Bad savedir.\n");
+		return;
 	}
+
+	Com_Printf ("Loading game...\n");
 
 	// make sure the server.ssv file exists
 	Com_sprintf (name, sizeof (name), "%s/save/%s/server.ssv", FS_Gamedir(), Cmd_Argv (1));
 	f = fopen (name, "rb");
-
 	if (!f)
 	{
-		Com_Printf ("No such savegame: %s\n", name);
+		Com_Printf (S_COLOR_RED "No such savegame: %s\n", name);
 		return;
 	}
 
@@ -693,7 +699,7 @@ void SV_Savegame_f (void)
 
 	if (sv.state != ss_game)
 	{
-		Com_Printf ("You must be in a game to save.\n");
+		Com_Printf (S_COLOR_RED "You must be in a game to save.\n");
 		return;
 	}
 
@@ -705,27 +711,27 @@ void SV_Savegame_f (void)
 
 	if (Cvar_VariableValue ("deathmatch"))
 	{
-		Com_Printf ("Can't savegame in a deathmatch\n");
+		Com_Printf (S_COLOR_RED "Can't savegame in a deathmatch\n");
 		return;
 	}
 
 	if (!strcmp (Cmd_Argv (1), "current"))
 	{
-		Com_Printf ("Can't save to 'current'\n");
+		Com_Printf (S_COLOR_RED "Can't save to 'current'\n");
 		return;
 	}
 
 	if (maxclients->value == 1 && svs.clients[0].edict->client->ps.stats[STAT_HEALTH] <= 0)
 	{
-		Com_Printf ("\nCan't savegame while dead!\n");
+		Com_Printf (S_COLOR_RED "\nCan't savegame while dead!\n");
 		return;
 	}
 
 	dir = Cmd_Argv (1);
-
 	if (strstr (dir, "..") || strstr (dir, "/") || strstr (dir, "\\"))
 	{
-		Com_Printf ("Bad savedir.\n");
+		Com_Printf (S_COLOR_RED "Bad savedir.\n");
+		return;
 	}
 
 	Com_Printf ("Saving game...\n");
@@ -764,7 +770,7 @@ void SV_Kick_f (void)
 {
 	if (!svs.initialized)
 	{
-		Com_Printf ("No server running.\n");
+		Com_Printf (S_COLOR_RED "No server running.\n");
 		return;
 	}
 
@@ -800,7 +806,7 @@ void SV_Status_f (void)
 
 	if (!svs.clients)
 	{
-		Com_Printf ("No server running.\n");
+		Com_Printf (S_COLOR_RED "No server running.\n");
 		return;
 	}
 
@@ -954,19 +960,19 @@ void SV_ServerRecord_f (void)
 
 	if (Cmd_Argc() != 2)
 	{
-		Com_Printf ("serverrecord <demoname>\n");
+		Com_Printf (S_COLOR_RED "serverrecord <demoname>\n");
 		return;
 	}
 
 	if (svs.demofile)
 	{
-		Com_Printf ("Already recording.\n");
+		Com_Printf (S_COLOR_RED "Already recording.\n");
 		return;
 	}
 
 	if (sv.state != ss_game)
 	{
-		Com_Printf ("You must be in a level to record.\n");
+		Com_Printf (S_COLOR_RED "You must be in a level to record.\n");
 		return;
 	}
 
@@ -981,7 +987,7 @@ void SV_ServerRecord_f (void)
 
 	if (!svs.demofile)
 	{
-		Com_Printf ("ERROR: couldn't open.\n");
+		Com_Printf (S_COLOR_RED "ERROR: couldn't open.\n");
 		return;
 	}
 
@@ -1037,7 +1043,7 @@ void SV_ServerStop_f (void)
 {
 	if (!svs.demofile)
 	{
-		Com_Printf ("Not doing a serverrecord.\n");
+		Com_Printf (S_COLOR_RED "Not doing a serverrecord.\n");
 		return;
 	}
 
@@ -1075,7 +1081,7 @@ void SV_ServerCommand_f (void)
 {
 	if (!ge)
 	{
-		Com_Printf ("No game loaded.\n");
+		Com_Printf (S_COLOR_RED "No game loaded.\n");
 		return;
 	}
 

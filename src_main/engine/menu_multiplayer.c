@@ -1928,6 +1928,7 @@ qboolean PlayerConfig_MenuInit (void)
 	s_player_name_field.generic.y		= 0;
 	s_player_name_field.length	= 20;
 	s_player_name_field.visible_length = 20;
+	Q_CleanStr (name->string);
 	strcpy (s_player_name_field.buffer, name->string);
 	s_player_name_field.cursor = strlen (name->string);
 

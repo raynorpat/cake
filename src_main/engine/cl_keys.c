@@ -655,7 +655,7 @@ void Key_Unbind_f (void)
 
 	if (b == -1)
 	{
-		Com_Printf ("\"%s\" isn't a valid key\n", Cmd_Argv (1));
+		Com_Printf (S_COLOR_RED "\"%s\" isn't a valid key\n", Cmd_Argv (1));
 		return;
 	}
 
@@ -696,17 +696,17 @@ void Key_Bind_f (void)
 
 	if (b == -1)
 	{
-		Com_Printf ("\"%s\" isn't a valid key\n", Cmd_Argv (1));
+		Com_Printf (S_COLOR_RED "\"%s\" isn't a valid key\n", Cmd_Argv (1));
 		return;
 	}
 
 	// don't allow binding escape or the special console keys
-	if (b == K_ESCAPE || b == '^' || b == '`' || b == '~')
+	if (b == K_ESCAPE || b == '`' || b == '~')
 	{
 		if (doneWithDefaultCfg)
 		{
 			// don't warn about this when it's from default.cfg, we can't change that anyway
-			Com_Printf("You can't bind the special key \"%s\"!\n", Cmd_Argv(1));
+			Com_Printf(S_COLOR_RED "You can't bind the special key \"%s\"!\n", Cmd_Argv(1));
 		}
 		return;
 	}
@@ -852,7 +852,7 @@ Anything else is handled by Key_Event().
 void Char_Event(int key)
 {
 	// console key is hardcoded, so the user can never unbind it
-	if ((key == '^') || (key == '~') || (key == '`'))
+	if ((key == '~') || (key == '`'))
 	{
 		Con_ToggleConsole_f();
 		return;
