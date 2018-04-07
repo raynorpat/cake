@@ -117,9 +117,9 @@ static void KeyCursorDrawFunc (menuframework_s *menu)
 	float scale = SCR_GetMenuScale();
 
 	if (bind_grab)
-		RE_Draw_CharScaled (menu->x, (menu->y + menu->cursor * 9) * scale, '=', scale);
+		RE_Draw_Char (menu->x, (menu->y + menu->cursor * 9) * scale, '=', scale);
 	else
-		RE_Draw_CharScaled (menu->x, (menu->y + menu->cursor * 9) * scale, 12 + ((int)(Sys_Milliseconds() / 250) & 1), scale);
+		RE_Draw_Char (menu->x, (menu->y + menu->cursor * 9) * scale, 12 + ((int)(Sys_Milliseconds() / 250) & 1), scale);
 }
 
 static void DrawKeyBindingFunc (void *self)

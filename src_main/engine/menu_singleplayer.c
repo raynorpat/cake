@@ -632,9 +632,9 @@ void M_Credits_MenuDraw (menuframework_s *self)
 			x = (viddef.width / scale - strlen (credits[i]) * 8 - stringoffset * 8) / 2 + (j + stringoffset) * 8;
 
 			if (bold)
-				RE_Draw_CharScaled (x * scale, y * scale, credits[i][j + stringoffset] + 128, scale);
+				RE_Draw_Char (x * scale, y * scale, credits[i][j + stringoffset] + 128, scale);
 			else
-				RE_Draw_CharScaled (x * scale, y * scale, credits[i][j + stringoffset], scale);
+				RE_Draw_Char (x * scale, y * scale, credits[i][j + stringoffset], scale);
 		}
 	}
 

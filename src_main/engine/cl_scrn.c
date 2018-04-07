@@ -281,7 +281,7 @@ void SCR_DrawCenterString (void)
 
 		for (j = 0; j < l; j++, x += char_unscaled_width)
 		{
-			RE_Draw_CharScaled (x * scale, y * scale, start[j], scale);
+			RE_Draw_Char (x * scale, y * scale, start[j], scale);
 
 			if (!remaining--)
 				return;
@@ -726,7 +726,7 @@ void DrawHUDStringScaled (char *string, int x, int y, int centerwidth, int xor, 
 
 		for (i = 0; i < width; i++)
 		{
-			RE_Draw_CharScaled (x, y, line[i] ^ xor, factor);
+			RE_Draw_Char (x, y, line[i] ^ xor, factor);
 			x += 8 * factor;
 		}
 
@@ -932,7 +932,7 @@ void SCR_ExecuteLayoutString (char *s)
 					{
 						if (!cl.configstrings[CS_ITEMS + cl.frame.playerstate.stats[STAT_SELECTED_ITEM]][i]) break;
 
-						RE_Draw_CharScaled (xx * scale, y + 8 * scale, cl.configstrings[CS_ITEMS + cl.frame.playerstate.stats[STAT_SELECTED_ITEM]][i], scale);
+						RE_Draw_Char (xx * scale, y + 8 * scale, cl.configstrings[CS_ITEMS + cl.frame.playerstate.stats[STAT_SELECTED_ITEM]][i], scale);
 					}
 				}
 			}

@@ -32,7 +32,7 @@ void DrawStringScaled (int x, int y, char *s, float factor)
 {
 	while (*s)
 	{
-		RE_Draw_CharScaled(x, y, *s, factor);
+		RE_Draw_Char (x, y, *s, factor);
 		x += 8 * factor;
 		s++;
 	}
@@ -44,7 +44,7 @@ void DrawAltStringScaled (int x, int y, char *s, float factor)
 
 	while (*s)
 	{
-		RE_Draw_CharScaled(x, y, *s, factor);
+		RE_Draw_Char (x, y, *s, factor);
 		x += 8 * factor;
 		s++;
 	}
@@ -479,7 +479,7 @@ void Con_DrawInput (void)
 	// draw it
 	RE_Draw_SetColor (con.color);
 	for (i = 0; i < con.linewidth; i++)
-		RE_Draw_CharScaled (((i + 1) << 3) * scale, con.vislines - 22 * scale, text[i], scale);
+		RE_Draw_Char (((i + 1) << 3) * scale, con.vislines - 22 * scale, text[i], scale);
 
 	// remove cursor
 	key_lines[edit_line][key_linepos] = 0;
@@ -538,7 +538,7 @@ void Con_DrawNotify (void)
 				RE_Draw_SetColor (g_color_table[currentColor]);
 			}
 
-			RE_Draw_CharScaled (((x + 1) << 3) * scale, v * scale, text[x] & 0xff, scale);
+			RE_Draw_Char (((x + 1) << 3) * scale, v * scale, text[x] & 0xff, scale);
 		}
 
 		v += 8;
@@ -569,11 +569,11 @@ void Con_DrawNotify (void)
 
 		while (s[x])
 		{
-			RE_Draw_CharScaled (((x + skip) << 3) * scale, v * scale, s[x], scale);
+			RE_Draw_Char (((x + skip) << 3) * scale, v * scale, s[x], scale);
 			x++;
 		}
 
-		RE_Draw_CharScaled (((x + skip) << 3) * scale, v + scale, 10 + ((cls.realtime >> 8) & 1), scale);
+		RE_Draw_Char (((x + skip) << 3) * scale, v + scale, 10 + ((cls.realtime >> 8) & 1), scale);
 		v += 8;
 	}
 }
@@ -614,7 +614,7 @@ void Con_DrawConsole (float frac)
 	Com_sprintf (version, sizeof (version), "v%4.2f", VERSION);
 	RE_Draw_SetColor (colorRed);
 	for (x = 0; x < 5; x++)
-		RE_Draw_CharScaled (viddef.width - (44 * scale) + x * 8 * scale, lines - 12 * scale, version[x], scale);
+		RE_Draw_Char (viddef.width - (44 * scale) + x * 8 * scale, lines - 12 * scale, version[x], scale);
 
 	// draw the text
 	con.vislines = lines;
@@ -627,7 +627,7 @@ void Con_DrawConsole (float frac)
 	{
 		// draw arrows to show the buffer is backscrolled
 		for (x = 0; x < con.linewidth; x += 4)
-			RE_Draw_CharScaled (((x + 1) << 3) * scale, y * scale, '^', scale);
+			RE_Draw_Char (((x + 1) << 3) * scale, y * scale, '^', scale);
 		y -= 8;
 		rows--;
 	}
@@ -658,7 +658,7 @@ void Con_DrawConsole (float frac)
 				RE_Draw_SetColor (g_color_table[currentColor]);
 			}
 
-			RE_Draw_CharScaled (((x + 1) << 3) * scale, y * scale, text[x] & 0xff, scale);
+			RE_Draw_Char (((x + 1) << 3) * scale, y * scale, text[x] & 0xff, scale);
 		}
 	}
 
@@ -716,7 +716,7 @@ void Con_DrawConsole (float frac)
 
 		RE_Draw_SetColor (colorGreen);
 		for (i = 0; i < strlen (dlbar); i++)
-			RE_Draw_CharScaled (((i + 1) << 3) * scale, y * scale, dlbar[i], scale);
+			RE_Draw_Char (((i + 1) << 3) * scale, y * scale, dlbar[i], scale);
 		RE_Draw_SetColor (NULL);
 	}
 

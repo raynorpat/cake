@@ -1087,7 +1087,6 @@ void GL_GFX_CoreInit(void)
 	RE_Draw_Fill = RE_GL_Draw_Fill;
 	RE_Draw_TileClear = RE_GL_Draw_TileClear;
 	RE_Draw_SetColor = RE_GL_Draw_SetColor;
-	RE_Draw_CharScaled = RE_GL_Draw_CharScaled;
 	RE_Draw_Char = RE_GL_Draw_Char;
 	RE_Draw_StretchPic = RE_GL_Draw_StretchPic;
 	RE_Draw_PicScaled = RE_GL_Draw_PicScaled;

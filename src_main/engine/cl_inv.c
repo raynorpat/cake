@@ -44,7 +44,7 @@ void Inv_DrawStringScaled (int x, int y, char *string, float factor)
 {
 	while (*string)
 	{
-		RE_Draw_CharScaled (x, y, *string, factor);
+		RE_Draw_Char (x, y, *string, factor);
 		x += 8 * factor;
 		string++;
 	}
@@ -138,7 +138,7 @@ void CL_DrawInventory (void)
 		else	// draw a blinky cursor by the selected item
 		{
 			if ((int) (cls.realtime * 10) & 1)
-				RE_Draw_CharScaled (x - scale * 8, y, 15, scale);
+				RE_Draw_Char (x - scale * 8, y, 15, scale);
 		}
 
 		Inv_DrawStringScaled (x, y, string, scale);

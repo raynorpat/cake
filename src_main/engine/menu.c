@@ -329,7 +329,7 @@ higher res screens.
 void M_DrawCharacter (int cx, int cy, int num)
 {
 	float scale = SCR_GetMenuScale();
-	RE_Draw_CharScaled(cx + ((int)(viddef.width - 320 * scale) >> 1), cy + ((int)(viddef.height - 240 * scale) >> 1), num, scale);
+	RE_Draw_Char (cx + ((int)(viddef.width - 320 * scale) >> 1), cy + ((int)(viddef.height - 240 * scale) >> 1), num, scale);
 }
 
 /*

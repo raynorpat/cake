@@ -340,7 +340,7 @@ It can be clipped to the top of the screen to allow the console to be
 smoothly scrolled off.
 ================
 */
-void RE_GL_Draw_CharScaled (int x, int y, int num, float scale)
+void RE_GL_Draw_Char (int x, int y, int num, float scale)
 {
 	float frow, fcol, size, scaledSize;
 
@@ -359,11 +359,6 @@ void RE_GL_Draw_CharScaled (int x, int y, int num, float scale)
 	scaledSize = 8 * scale;
 
 	Draw_TexturedRect (draw_chars->texnum, r_drawnearestclampsampler, x, y, scaledSize, scaledSize, fcol, frow, fcol + size, frow + size);
-}
-
-void RE_GL_Draw_Char (int x, int y, int num)
-{
-	RE_GL_Draw_CharScaled (x, y, num, 1.0f);
 }
 
 /*
