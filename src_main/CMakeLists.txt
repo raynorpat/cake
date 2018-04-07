@@ -49,6 +49,7 @@ option(UTILS "Build utilities and tools" ON)
 
 option(USE_CODEC_OGG "Build with ogg vorbis sound codec and libogg/libvorbis" ON)
 option(USE_OPENAL "Build with OpenAL sound backend" ON)
+option(USE_FREETYPE "Build with freetype font backend" ON)
 
 set(CPU_OPTIMIZATION "-mmmx -msse -msse2" CACHE STRING "Which CPU specific optimitations should be used beside the compiler's default?")
 

@@ -71,6 +71,16 @@ else (GLEW_FOUND)
 	message(STATUS "Using builtin glew")
 endif (GLEW_FOUND)
 
+# freetype
+if (USE_FREETYPE)
+	find_package(FREETYPE)
+	if (FREETYPE_FOUND)
+		set(FREETYPE_LIBRARY ${FREETYPE_LIBRARIES})
+	else (FREETYPE_FOUND)
+		set(FREETYPE_LIBRARY "" )
+	endif (FREETYPE_FOUND)
+endif()
+
 # libcurl
 find_package(CURL)
 if (CURL_FOUND)
@@ -444,6 +454,7 @@ if (NOT WIN_UWP)
 		wsock32.lib
 		${CURL_LIBRARY}
         ${GLEW_LIBRARY}
+		${FREETYPE_LIBRARY}
 		${ZLIB_LIBRARY}
 		${OGG_LIBRARY}
 		${VORBIS_LIBRARY}
@@ -454,6 +465,7 @@ if (NOT WIN_UWP)
 else()
 	target_link_libraries(cake PRIVATE
 		${SDL2_LIBRARY}
+		${FREETYPE_LIBRARY}
 		${ZLIB_LIBRARY}
 		${CURL_LIBRARY}
 		${OGG_LIBRARY}
@@ -491,6 +503,7 @@ else()
 			${RT_LIBRARY}
 			${SDL2_LIBRARY}
             ${GLEW_LIBRARY}
+			${FREETYPE_LIBRARY}
 			${CURL_LIBRARY}
 			${OGG_LIBRARY}
 			${VORBIS_LIBRARY}
