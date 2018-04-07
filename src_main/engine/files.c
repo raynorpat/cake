@@ -1236,11 +1236,10 @@ void FS_AddHomeAsGameDirectory(char *dir)
 
 	len = snprintf(gdir, sizeof(gdir), "%s%s/", home, dir);
 	FS_CreatePath(gdir);
-
-	Com_Printf("Using home dir %s to fetch paks\n", gdir);
-
 	if ((len > 0) && (len < sizeof(gdir)) && (gdir[len - 1] == '/'))
 		gdir[len - 1] = 0;
+
+	Com_Printf("Using home dir %s to fetch paks\n", gdir);
 
 	Q_strlcpy(fs_gamedir, gdir, sizeof(fs_gamedir));
 
@@ -1265,11 +1264,10 @@ void FS_AddBinaryDirAsGameDirectory(char* dir)
 		return;
 
 	len = snprintf(gdir, sizeof(gdir), "%s%s/", datadir, dir);
-	
-	Com_Printf("Using binary dir %s to fetch paks\n", gdir);
-	
 	if ((len > 0) && (len < sizeof(gdir)) && (gdir[len - 1] == '/'))
 		gdir[len - 1] = 0;
+
+	Com_Printf("Using binary dir %s to fetch paks\n", gdir);
 	
 	FS_AddGameDirectory(gdir);
 }
