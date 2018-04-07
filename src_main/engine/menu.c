@@ -413,7 +413,7 @@ void M_DrawTextBox (int x, int y, int width, int lines)
 		for (n = 0; n < lines; n++)
 		{
 			cy += 8;
-			M_DrawCharacter (cx * scale, cy * scale, 5);
+			M_DrawCharacter (cx * scale, cy * scale, 10);
 		}
 
         M_DrawCharacter(cx * scale, cy *scale + 8 * scale, 8);
