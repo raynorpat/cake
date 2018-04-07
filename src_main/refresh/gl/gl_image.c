@@ -217,7 +217,7 @@ void GL_TextureMode (char *string, int anisotropy)
 
 	if (i == NUM_GL_MODES)
 	{
-		VID_Printf (PRINT_ALL, "bad filter name\n");
+		VID_Printf (PRINT_ALL, S_COLOR_RED "bad filter name\n");
 		return;
 	}
 
@@ -309,19 +309,19 @@ void GL_CheckError (char *str)
 
 	switch (err)
 	{
-	case GL_INVALID_ENUM: VID_Printf (PRINT_ALL, "GL_INVALID_ENUM"); break;
-	case GL_INVALID_VALUE: VID_Printf (PRINT_ALL, "GL_INVALID_VALUE"); break;
-	case GL_INVALID_OPERATION: VID_Printf (PRINT_ALL, "GL_INVALID_OPERATION"); break;
-	case GL_STACK_OVERFLOW: VID_Printf (PRINT_ALL, "GL_STACK_OVERFLOW"); break;
-	case GL_STACK_UNDERFLOW: VID_Printf (PRINT_ALL, "GL_STACK_UNDERFLOW"); break;
-	case GL_OUT_OF_MEMORY: VID_Printf (PRINT_ALL, "GL_OUT_OF_MEMORY"); break;
-	case GL_TABLE_TOO_LARGE: VID_Printf (PRINT_ALL, "GL_TABLE_TOO_LARGE"); break;
+	case GL_INVALID_ENUM: VID_Printf (PRINT_ALL, S_COLOR_RED "GL_INVALID_ENUM"); break;
+	case GL_INVALID_VALUE: VID_Printf (PRINT_ALL, S_COLOR_RED "GL_INVALID_VALUE"); break;
+	case GL_INVALID_OPERATION: VID_Printf (PRINT_ALL, S_COLOR_RED "GL_INVALID_OPERATION"); break;
+	case GL_STACK_OVERFLOW: VID_Printf (PRINT_ALL, S_COLOR_RED "GL_STACK_OVERFLOW"); break;
+	case GL_STACK_UNDERFLOW: VID_Printf (PRINT_ALL, S_COLOR_RED "GL_STACK_UNDERFLOW"); break;
+	case GL_OUT_OF_MEMORY: VID_Printf (PRINT_ALL, S_COLOR_RED  "GL_OUT_OF_MEMORY"); break;
+	case GL_TABLE_TOO_LARGE: VID_Printf (PRINT_ALL, S_COLOR_RED "GL_TABLE_TOO_LARGE"); break;
 	default: return;
 	}
 
 	if (str)
-		VID_Printf (PRINT_ALL, " with %s\n", str);
-	else VID_Printf (PRINT_ALL, "\n");
+		VID_Printf (PRINT_ALL, S_COLOR_RED " with %s\n", str);
+	else VID_Printf (PRINT_ALL, S_COLOR_RED "\n");
 }
 
 
@@ -415,7 +415,7 @@ static void LoadPCX (char *filename, byte **pic, byte **palette, int *width, int
 
 	if (!raw)
 	{
-		VID_Printf (PRINT_DEVELOPER, "Bad pcx file %s\n", filename);
+		VID_Printf (PRINT_DEVELOPER, S_COLOR_RED "Bad pcx file %s\n", filename);
 		return;
 	}
 
@@ -441,7 +441,7 @@ static void LoadPCX (char *filename, byte **pic, byte **palette, int *width, int
 		pcx->xmax >= 640 ||
 		pcx->ymax >= 480)
 	{
-		VID_Printf (PRINT_ALL, "Bad pcx file %s\n", filename);
+		VID_Printf (PRINT_ALL, S_COLOR_RED "Bad pcx file %s\n", filename);
 		return;
 	}
 
@@ -478,7 +478,7 @@ static void LoadPCX (char *filename, byte **pic, byte **palette, int *width, int
 
 	if (raw - (byte *) pcx > len)
 	{
-		VID_Printf (PRINT_DEVELOPER, "PCX file %s was malformed", filename);
+		VID_Printf (PRINT_DEVELOPER, S_COLOR_RED "PCX file %s was malformed", filename);
 		*pic = NULL;
 	}
 
@@ -532,7 +532,7 @@ static image_t *GL_LoadWal(char *name)
 	FS_LoadFile(name, (void **)&mt);
 	if (!mt)
 	{
-		VID_Printf(PRINT_ALL, "GL_FindImage: can't load %s\n", name);
+		VID_Printf(PRINT_ALL, S_COLOR_RED "GL_FindImage: can't load %s\n", name);
 		return r_notexture;
 	}
 
@@ -608,7 +608,7 @@ qboolean LoadImageThruSTB (char *origname, char* type, byte **pic, int *width, i
 	data = stbi_load_from_memory (rawdata, rawsize, &w, &h, &bytesPerPixel, STBI_rgb_alpha);
 	if (data == NULL)
 	{
-		VID_Printf (PRINT_ALL, "stb_image couldn't load data from %s: %s!\n", filename, stbi_failure_reason());
+		VID_Printf (PRINT_ALL, S_COLOR_RED "stb_image couldn't load data from %s: %s!\n", filename, stbi_failure_reason());
 		FS_FreeFile (rawdata);
 		return false;
 	}

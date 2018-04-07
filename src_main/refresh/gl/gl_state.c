@@ -90,7 +90,7 @@ void GL_GetShaderInfoLog(GLuint s, char *src, qboolean isprog)
 
 	if (outlen && infolog[0])
 	{
-		VID_Printf(PRINT_ALL, "%s", infolog);
+		VID_Printf(PRINT_ALL, S_COLOR_RED "%s", infolog);
 	}
 }
 

@@ -241,7 +241,7 @@ static void CL_StartHTTPDownload (dlqueue_t *entry, dlhandle_t *dl)
 		dl->file = fopen (dl->filePath, "wb");
 		if (!dl->file)
 		{
-			Com_Printf ("CL_StartHTTPDownload: Couldn't open %s for writing.\n", dl->filePath);
+			Com_Printf (S_COLOR_RED "CL_StartHTTPDownload: Couldn't open %s for writing.\n", dl->filePath);
 			entry->state = DLQ_STATE_DONE;
 			return;
 		}
@@ -562,7 +562,7 @@ static void CL_CheckAndQueueDownload (char *path)
 		strcmp (ext, "bsp") && strcmp (ext, "ent") && strcmp (ext, "txt") && strcmp (ext, "dm2") &&
 		strcmp (ext, "loc"))
 	{
-		Com_Printf ("WARNING: Illegal file type '%s' in filelist.\n", path);
+		Com_Printf (S_COLOR_YELLOW "WARNING: Illegal file type '%s' in filelist.\n", path);
 		return;
 	}
 
@@ -570,7 +570,7 @@ static void CL_CheckAndQueueDownload (char *path)
 	{
 		if (pak)
 		{
-			Com_Printf ("WARNING: @ prefix used on a pak file (%s) in filelist.\n", path);
+			Com_Printf (S_COLOR_YELLOW "WARNING: @ prefix used on a pak file (%s) in filelist.\n", path);
 			return;
 		}
 		gameLocal = true;
@@ -583,7 +583,7 @@ static void CL_CheckAndQueueDownload (char *path)
 	if (strstr (path, "..") || strstr(path, "//") || strchr (path, '\\') ||
 		(!pak && !strchr (path, '/')) || (pak && strchr(path, '/')))
 	{
-		Com_Printf ("WARNING: Illegal path '%s' in filelist.\n", path);
+		Com_Printf (S_COLOR_YELLOW "WARNING: Illegal path '%s' in filelist.\n", path);
 		return;
 	}
 
@@ -889,7 +889,7 @@ static void CL_FinishHTTPDownload (void)
 			case CURLE_COULDNT_RESOLVE_PROXY:
 				if (isFile)
 					remove (dl->filePath);
-				Com_Printf ("Fatal HTTP error: %s\n", curl_easy_strerror (result));
+				Com_Printf (S_COLOR_RED "Fatal HTTP error: %s\n", curl_easy_strerror (result));
 				curl_multi_remove_handle (multi, dl->curl);
 				if (abortDownloads)
 					continue;
@@ -901,7 +901,7 @@ static void CL_FinishHTTPDownload (void)
 					downloading_pak = false;
 				if (isFile)
 					remove (dl->filePath);
-				Com_Printf ("HTTP download failed: %s\n", curl_easy_strerror (result));
+				Com_Printf (S_COLOR_RED "HTTP download failed: %s\n", curl_easy_strerror (result));
 				curl_multi_remove_handle (multi, dl->curl);
 				continue;
 		}
@@ -912,7 +912,7 @@ static void CL_FinishHTTPDownload (void)
 			Com_sprintf (tempName, sizeof(tempName), "%s/%s", FS_Gamedir(), dl->queueEntry->quakePath);
 
 			if (rename (dl->filePath, tempName))
-				Com_Printf ("Failed to rename %s for some odd reason...", dl->filePath);
+				Com_Printf (S_COLOR_RED "Failed to rename %s for some odd reason...", dl->filePath);
 
 			// a pak file is very special...
 			i = strlen (tempName);
@@ -1046,7 +1046,7 @@ void CL_RunHTTPDownloads (void)
 
 	if (ret != CURLM_OK)
 	{
-		Com_Printf ("curl_multi_perform error. Aborting HTTP downloads.\n");
+		Com_Printf (S_COLOR_RED "curl_multi_perform error. Aborting HTTP downloads.\n");
 		CL_CancelHTTPDownloads (true);
 	}
 

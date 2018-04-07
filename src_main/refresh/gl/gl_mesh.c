@@ -218,13 +218,13 @@ static qboolean R_CullAliasModel (vec3_t bbox[8], entity_t *e)
 
 	if ((e->currframe >= hdr->num_frames) || (e->currframe < 0))
 	{
-		VID_Printf (PRINT_ALL, "R_CullAliasModel %s: no such frame %d\n", e->model->name, e->currframe);
+		VID_Printf (PRINT_ALL, S_COLOR_RED "R_CullAliasModel %s: no such frame %d\n", e->model->name, e->currframe);
 		e->currframe = 0;
 	}
 
 	if ((e->lastframe >= hdr->num_frames) || (e->lastframe < 0))
 	{
-		VID_Printf (PRINT_ALL, "R_CullAliasModel %s: no such oldframe %d\n", e->model->name, e->lastframe);
+		VID_Printf (PRINT_ALL, S_COLOR_RED "R_CullAliasModel %s: no such oldframe %d\n", e->model->name, e->lastframe);
 		e->lastframe = 0;
 	}
 
@@ -475,14 +475,14 @@ void R_DrawAliasModel (entity_t *e)
 
 	if ((e->currframe >= hdr->num_frames) || (e->currframe < 0))
 	{
-		VID_Printf (PRINT_ALL, "R_DrawAliasModel %s: no such frame %d\n", e->model->name, e->currframe);
+		VID_Printf (PRINT_ALL, S_COLOR_RED "R_DrawAliasModel %s: no such frame %d\n", e->model->name, e->currframe);
 		e->currframe = 0;
 		e->lastframe = 0;
 	}
 
 	if ((e->lastframe >= hdr->num_frames) || (e->lastframe < 0))
 	{
-		VID_Printf (PRINT_ALL, "R_DrawAliasModel %s: no such oldframe %d\n", e->model->name, e->lastframe);
+		VID_Printf (PRINT_ALL, S_COLOR_RED "R_DrawAliasModel %s: no such oldframe %d\n", e->model->name, e->lastframe);
 		e->currframe = 0;
 		e->lastframe = 0;
 	}
@@ -649,14 +649,14 @@ void R_DrawAliasModelShadow(entity_t *e)
 
 	if ((e->currframe >= hdr->num_frames) || (e->currframe < 0))
 	{
-		VID_Printf(PRINT_ALL, "R_DrawAliasModel %s: no such frame %d\n", e->model->name, e->currframe);
+		VID_Printf(PRINT_ALL, S_COLOR_RED "R_DrawAliasModel %s: no such frame %d\n", e->model->name, e->currframe);
 		e->currframe = 0;
 		e->lastframe = 0;
 	}
 
 	if ((e->lastframe >= hdr->num_frames) || (e->lastframe < 0))
 	{
-		VID_Printf(PRINT_ALL, "R_DrawAliasModel %s: no such oldframe %d\n", e->model->name, e->lastframe);
+		VID_Printf(PRINT_ALL, S_COLOR_RED "R_DrawAliasModel %s: no such oldframe %d\n", e->model->name, e->lastframe);
 		e->currframe = 0;
 		e->lastframe = 0;
 	}

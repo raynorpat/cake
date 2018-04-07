@@ -104,7 +104,7 @@ wavinfo_t GetWavinfo (char *name, byte *wav, int wavlength)
 
 	if (!(data_p && !strncmp((const char *)data_p + 8, "WAVE", 4)))
 	{
-		Com_Printf("Missing RIFF/WAVE chunks\n");
+		Com_Printf(S_COLOR_RED "Missing RIFF/WAVE chunks\n");
 		return info;
 	}
 
@@ -115,7 +115,7 @@ wavinfo_t GetWavinfo (char *name, byte *wav, int wavlength)
 
 	if (!data_p)
 	{
-		Com_Printf("Missing fmt chunk\n");
+		Com_Printf(S_COLOR_RED "Missing fmt chunk\n");
 		return info;
 	}
 
@@ -124,7 +124,7 @@ wavinfo_t GetWavinfo (char *name, byte *wav, int wavlength)
 
 	if (format != 1)
 	{
-		Com_Printf("Microsoft PCM format only\n");
+		Com_Printf(S_COLOR_RED "Microsoft PCM format only\n");
 		return info;
 	}
 
@@ -168,7 +168,7 @@ wavinfo_t GetWavinfo (char *name, byte *wav, int wavlength)
 
 	if (!data_p)
 	{
-		Com_Printf("Missing data chunk\n");
+		Com_Printf(S_COLOR_RED "Missing data chunk\n");
 		return info;
 	}
 
@@ -178,7 +178,7 @@ wavinfo_t GetWavinfo (char *name, byte *wav, int wavlength)
 	if (info.samples)
 	{
 		if (samples < info.samples)
-			Com_Error(ERR_DROP, "Sound %s has a bad loop length", name);
+			Com_Error(ERR_DROP, S_COLOR_RED "Sound %s has a bad loop length", name);
 	}
 	else
 	{

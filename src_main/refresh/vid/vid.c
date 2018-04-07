@@ -381,7 +381,7 @@ void VID_WriteScreenshot(int width, int height, int comp, const void* data)
 	
 	if (i == 10000)
 	{
-		Com_Printf("VID_WriteScreenshot: Couldn't create a file\n");
+		Com_Printf(S_COLOR_RED "VID_WriteScreenshot: Couldn't create a file\n");
 		return;
 	}
 	
@@ -405,7 +405,7 @@ void VID_WriteScreenshot(int width, int height, int comp, const void* data)
 	}
 	else
 	{
-		Com_Printf("VID_WriteScreenshot: Couldn't write %s\n", picname);
+		Com_Printf(S_COLOR_RED "VID_WriteScreenshot: Couldn't write %s\n", picname);
 	}
 }
 

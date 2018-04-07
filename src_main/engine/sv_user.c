@@ -65,7 +65,7 @@ void SV_New_f (void)
 
 	if (sv_client->state != cs_connected)
 	{
-		Com_Printf ("New not valid -- already spawned\n");
+		Com_Printf (S_COLOR_RED "New not valid -- already spawned\n");
 		return;
 	}
 
@@ -130,14 +130,14 @@ void SV_Configstrings_f (void)
 
 	if (sv_client->state != cs_connected)
 	{
-		Com_Printf ("configstrings not valid -- already spawned\n");
+		Com_Printf (S_COLOR_RED "configstrings not valid -- already spawned\n");
 		return;
 	}
 
 	// handle the case of a level changing while a client was connecting
 	if (atoi (Cmd_Argv (1)) != svs.spawncount)
 	{
-		Com_Printf ("SV_Configstrings_f from different level\n");
+		Com_Printf (S_COLOR_RED "SV_Configstrings_f from different level\n");
 		SV_New_f ();
 		return;
 	}
@@ -188,14 +188,14 @@ void SV_Baselines_f (void)
 
 	if (sv_client->state != cs_connected)
 	{
-		Com_Printf ("baselines not valid -- already spawned\n");
+		Com_Printf (S_COLOR_RED "baselines not valid -- already spawned\n");
 		return;
 	}
 
 	// handle the case of a level changing while a client was connecting
 	if (atoi (Cmd_Argv (1)) != svs.spawncount)
 	{
-		Com_Printf ("SV_Baselines_f from different level\n");
+		Com_Printf (S_COLOR_RED "SV_Baselines_f from different level\n");
 		SV_New_f ();
 		return;
 	}
@@ -246,7 +246,7 @@ void SV_Begin_f (void)
 	// handle the case of a level changing while a client was connecting
 	if (atoi (Cmd_Argv (1)) != svs.spawncount)
 	{
-		Com_Printf ("SV_Begin_f from different level\n");
+		Com_Printf (S_COLOR_RED "SV_Begin_f from different level\n");
 		SV_New_f ();
 		return;
 	}
@@ -568,7 +568,7 @@ void SV_ExecuteClientMessage (client_t *cl)
 	{
 		if (net_message.readcount > net_message.cursize)
 		{
-			Com_Printf ("SV_ReadClientMessage: badread\n");
+			Com_Printf (S_COLOR_RED "SV_ReadClientMessage: badread\n");
 			SV_DropClient (cl);
 			return;
 		}
@@ -581,7 +581,7 @@ void SV_ExecuteClientMessage (client_t *cl)
 		switch (c)
 		{
 		default:
-			Com_Printf ("SV_ReadClientMessage: unknown command char\n");
+			Com_Printf (S_COLOR_RED "SV_ReadClientMessage: unknown command char\n");
 			SV_DropClient (cl);
 			return;
 

@@ -1442,7 +1442,7 @@ void Com_sprintf (char *dest, int size, char *fmt, ...)
 	va_end (argptr);
 
 	if (len >= size)
-		Com_Printf ("Com_sprintf: overflow of %i in %i\n", len, size);
+		Com_Printf (S_COLOR_RED "Com_sprintf: overflow of %i in %i\n", len, size);
 
 	strncpy (dest, bigbuffer, size - 1);
 }
@@ -1451,17 +1451,17 @@ void Com_strcpy(char *dest, int destSize, const char *src)
 {
 	if (!dest)
 	{
-		Com_Printf("Com_strcpy: NULL dst\n");
+		Com_Printf(S_COLOR_RED "Com_strcpy: NULL dst\n");
 		return;
 	}
 	if (!src)
 	{
-		Com_Printf("Com_strcpy: NULL src\n");
+		Com_Printf(S_COLOR_RED "Com_strcpy: NULL src\n");
 		return;
 	}
 	if (destSize < 1)
 	{
-		Com_Printf("Com_strcpy: dstSize < 1\n");
+		Com_Printf(S_COLOR_RED "Com_strcpy: dstSize < 1\n");
 		return;
 	}
 
@@ -1473,17 +1473,17 @@ void Com_strcat(char *dest, int destSize, const char *src)
 {
 	if (!dest)
 	{
-		Com_Printf("Com_strcat: NULL dst\n");
+		Com_Printf(S_COLOR_RED "Com_strcat: NULL dst\n");
 		return;
 	}
 	if (!src)
 	{
-		Com_Printf("Com_strcat: NULL src\n");
+		Com_Printf(S_COLOR_RED "Com_strcat: NULL src\n");
 		return;
 	}
 	if (destSize < 1)
 	{
-		Com_Printf("Com_strcat: dstSize < 1\n");
+		Com_Printf(S_COLOR_RED "Com_strcat: dstSize < 1\n");
 		return;
 	}
 
@@ -1743,25 +1743,25 @@ void Info_SetValueForKey (char *s, char *key, char *value)
 
 	if (strstr (key, "\\") || strstr (value, "\\"))
 	{
-		Com_Printf ("Can't use keys or values with a \\\n");
+		Com_Printf (S_COLOR_RED "Can't use keys or values with a \\\n");
 		return;
 	}
 
 	if (strstr (key, ";"))
 	{
-		Com_Printf ("Can't use keys or values with a semicolon\n");
+		Com_Printf (S_COLOR_RED "Can't use keys or values with a semicolon\n");
 		return;
 	}
 
 	if (strstr (key, "\"") || strstr (value, "\""))
 	{
-		Com_Printf ("Can't use keys or values with a \"\n");
+		Com_Printf (S_COLOR_RED "Can't use keys or values with a \"\n");
 		return;
 	}
 
 	if (strlen (key) > MAX_INFO_KEY - 1 || strlen (value) > MAX_INFO_KEY - 1)
 	{
-		Com_Printf ("Keys and values must be < 64 characters.\n");
+		Com_Printf (S_COLOR_RED "Keys and values must be < 64 characters.\n");
 		return;
 	}
 
@@ -1774,7 +1774,7 @@ void Info_SetValueForKey (char *s, char *key, char *value)
 
 	if (strlen (newi) + strlen (s) > maxsize)
 	{
-		Com_Printf ("Info string length exceeded\n");
+		Com_Printf (S_COLOR_RED "Info string length exceeded\n");
 		return;
 	}
 

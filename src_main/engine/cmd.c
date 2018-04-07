@@ -86,7 +86,7 @@ void Cbuf_AddText (char *text)
 
 	if (cmd_text.cursize + l >= cmd_text.maxsize)
 	{
-		Com_Printf ("Cbuf_AddText: overflow\n");
+		Com_Printf (S_COLOR_RED "Cbuf_AddText: overflow\n");
 		return;
 	}
 
@@ -393,7 +393,7 @@ void Cmd_Exec_f (void)
 	len = FS_LoadFile (Cmd_Argv (1), (void **) &f);
 	if (!f || !len)
 	{
-		Com_Printf ("couldn't exec %s\n", Cmd_Argv (1));
+		Com_Printf (S_COLOR_RED "couldn't exec %s\n", Cmd_Argv (1));
 		return;
 	}
 
@@ -620,7 +620,7 @@ char *Cmd_MacroExpandString (char *text)
 	len = strlen (scan);
 	if (len >= MAX_STRING_CHARS)
 	{
-		Com_Printf ("Line exceeded %i chars, discarded.\n", MAX_STRING_CHARS);
+		Com_Printf (S_COLOR_RED "Line exceeded %i chars, discarded.\n", MAX_STRING_CHARS);
 		return NULL;
 	}
 
@@ -770,7 +770,7 @@ void Cmd_AddCommand (char *cmd_name, xcommand_t function)
 	// fail if the command is a variable name
 	if (Cvar_VariableString (cmd_name) [0])
 	{
-		Com_Printf ("Cmd_AddCommand: %s already defined as a var\n", cmd_name);
+		Com_Printf (S_COLOR_RED "Cmd_AddCommand: %s already defined as a var\n", cmd_name);
 		return;
 	}
 
@@ -779,7 +779,7 @@ void Cmd_AddCommand (char *cmd_name, xcommand_t function)
 	{
 		if (!strcmp (cmd_name, cmd->name))
 		{
-			Com_Printf ("Cmd_AddCommand: %s already defined\n", cmd_name);
+			Com_Printf (S_COLOR_RED "Cmd_AddCommand: %s already defined\n", cmd_name);
 			return;
 		}
 	}
@@ -915,7 +915,7 @@ void Cmd_ExecuteString (char *text)
 		{
 			if (++alias_count == ALIAS_LOOP_COUNT)
 			{
-				Com_Printf ("ALIAS_LOOP_COUNT\n");
+				Com_Printf (S_COLOR_RED "ALIAS_LOOP_COUNT\n");
 				return;
 			}
 

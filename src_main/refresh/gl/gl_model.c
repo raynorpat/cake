@@ -504,10 +504,9 @@ static void Mod_LoadTexinfo (lump_t *l)
 		Com_sprintf (name, sizeof (name), "textures/%s.wal", in->texture);
 
 		out->image = GL_FindImage (name, it_wall);
-
 		if (!out->image)
 		{
-			VID_Printf (PRINT_ALL, "Couldn't load %s\n", name);
+			VID_Printf (PRINT_ALL, S_COLOR_RED "Couldn't load %s\n", name);
 			out->image = r_notexture;
 		}
 	}

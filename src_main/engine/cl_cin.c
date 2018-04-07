@@ -725,7 +725,7 @@ void SCR_RunCinematic (void)
 
 	if (frame > cin->frame + 1)
 	{
-		Com_Printf("Dropped frame: %i > %i\n", frame, cin->frame + 1);
+		Com_Printf(S_COLOR_YELLOW "Dropped frame: %i > %i\n", frame, cin->frame + 1);
 		cin->time = Sys_Milliseconds() - cin->frame * 1000 / RoQ_FRAMERATE;
 	}
 

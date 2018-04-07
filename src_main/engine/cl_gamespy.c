@@ -40,8 +40,8 @@ static void CL_Gamespy_Check_Error(GServerList lst, int error)
 {
 	if (error != GE_NOERROR) /* FS: Grab the error code */
 	{
-		Com_Printf("\x02GameSpy Error: ");
-		Com_Printf("%s.\n", gspye->ServerListErrorDesc(lst, error));
+		Com_Printf(S_COLOR_RED "\nGameSpy Error: ");
+		Com_Printf(S_COLOR_RED "%s.\n", gspye->ServerListErrorDesc(lst, error));
 		if (cls.state == ca_disconnected)
 			NET_Config(false);
 	}
@@ -84,7 +84,7 @@ static void CL_Gspystop_f(void)
 {
 	if (serverlist != NULL && cls.gamespyupdate) /* FS: Immediately abort gspy scans */
 	{
-		Com_Printf("\x02Server scan aborted!\n");
+		Com_Printf(S_COLOR_RED "\nServer scan aborted!\n");
 		S_StartLocalSound("gamespy/abort.wav");
 		gspye->ServerListHalt(serverlist);
 	}
@@ -250,13 +250,13 @@ void CL_GameSpy_PingServers_f (void)
 
 	if (!gspye)
 	{
-		Com_Printf("Error: GameSpy DLL not loaded!\n");
+		Com_Printf(S_COLOR_RED "Error: GameSpy DLL not loaded!\n");
 		return;
 	}
 
 	if (cls.gamespyupdate)
 	{
-		Com_Printf("Error: Already querying the GameSpy Master!\n");
+		Com_Printf(S_COLOR_RED "Error: Already querying the GameSpy Master!\n");
 		return;
 	}
 
@@ -321,13 +321,13 @@ static void CL_LoadGameSpy(void)
 	gspye = (gspyexport_t *)GetGameSpyAPI(&import);
 	if (!gspye)
 	{
-		Com_Printf("failed to load GameSpy DLL\n");
+		Com_Printf(S_COLOR_RED "failed to load GameSpy DLL\n");
 		return;
 	}
 
 	if (gspye->api_version != GAMESPY_API_VERSION)
 	{
-		Com_Printf("Error: Unsupported GameSpy module version %i (need %i)\n", gspye->api_version, GAMESPY_API_VERSION);
+		Com_Printf(S_COLOR_RED "Error: Unsupported GameSpy module version %i (need %i)\n", gspye->api_version, GAMESPY_API_VERSION);
 		gspye = NULL;
 		return;
 	}

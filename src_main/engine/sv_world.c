@@ -378,7 +378,7 @@ void SV_AreaEdicts_r (areanode_t *node)
 
 		if (area_count == area_maxcount)
 		{
-			Com_Printf ("SV_AreaEdicts: MAXCOUNT\n");
+			Com_Printf (S_COLOR_RED "SV_AreaEdicts: MAXCOUNT\n");
 			return;
 		}
 

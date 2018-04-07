@@ -309,7 +309,7 @@ qboolean CL_OpenAVIForWriting( const char *fileName )
 	// Don't start if a framerate has not been chosen
 	if( cl_aviFrameRate->integer <= 0 )
 	{
-		Com_Printf( "cl_aviFrameRate must be >= 1\n" );
+		Com_Printf( S_COLOR_RED "cl_aviFrameRate must be >= 1\n" );
 		return false;
 	}
 
@@ -350,7 +350,7 @@ qboolean CL_OpenAVIForWriting( const char *fileName )
 		while( ( afd.a.rate % suggestRate ) && suggestRate >= 1 )
 			suggestRate--;
 
-		Com_Printf( "WARNING: cl_aviFrameRate is not a divisor of the audio rate, suggest %d\n", suggestRate );
+		Com_Printf( S_COLOR_YELLOW "WARNING: cl_aviFrameRate is not a divisor of the audio rate, suggest %d\n", suggestRate );
 	}
 
 	// check sound system backend
@@ -363,7 +363,7 @@ qboolean CL_OpenAVIForWriting( const char *fileName )
 		// make sure we are 16bit, 2 channel
 		if( afd.a.bits != 16 || afd.a.channels != 2 )
 		{
-			Com_Printf( "WARNING: Audio format of %d bit/%d channels not supported", afd.a.bits, afd.a.channels );
+			Com_Printf( S_COLOR_YELLOW "WARNING: Audio format of %d bit/%d channels not supported", afd.a.bits, afd.a.channels );
 			afd.audio = false;
 		}
 		else
@@ -374,16 +374,16 @@ qboolean CL_OpenAVIForWriting( const char *fileName )
 	else
 	{
 		afd.audio = false;
-		Com_Printf( "WARNING: Audio capture is not supported with OpenAL. Set s_enable to 1 for audio capture\n" );
+		Com_Printf( S_COLOR_YELLOW "WARNING: Audio capture is not supported with OpenAL. Set s_enable to 1 for audio capture\n" );
 	}
 
 	// check sound system mix ahead
 	if( Cvar_VariableValue( "s_mixahead" ) < 1.0f / afd.frameRate )
-		Com_Printf( "WARNING: you may want to increase s_mixahead to %g!\n", 1.0f / afd.frameRate );
+		Com_Printf( S_COLOR_YELLOW "WARNING: you may want to increase s_mixahead to %g!\n", 1.0f / afd.frameRate );
 
 	// check client max framerate
 	if( Cvar_VariableValue( "cl_maxfps" ) < afd.frameRate )
-		Com_Printf( "WARNING: you may need to increase cl_maxfps!\n" );
+		Com_Printf( S_COLOR_YELLOW "WARNING: you may need to increase cl_maxfps!\n" );
 
 	// This doesn't write a real header, but allocates the correct amount of space at the beginning of the file
 	CL_WriteAVIHeader( );

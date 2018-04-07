@@ -424,7 +424,7 @@ retry_send:;
 	// it is necessary for this to be after the WriteEntities
 	// so that entity references will be current
 	if (client->datagram.overflowed)
-		Com_Printf ("WARNING: datagram overflowed for %s\n", client->name);
+		Com_Printf (S_COLOR_YELLOW "WARNING: datagram overflowed for %s\n", client->name);
 	else SZ_Write (&msg, client->datagram.data, client->datagram.cursize);
 
 	SZ_Clear (&client->datagram);
@@ -439,7 +439,7 @@ retry_send:;
 		else
 		{
 			// must have room left for the packet header
-			Com_Printf ("WARNING: msg overflowed for %s\n", client->name);
+			Com_Printf (S_COLOR_YELLOW "WARNING: msg overflowed for %s\n", client->name);
 			SZ_Clear (&msg);
 		}
 	}

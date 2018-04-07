@@ -322,7 +322,7 @@ void SV_InitGame (void)
 
 	if (Cvar_VariableValue ("coop") && Cvar_VariableValue ("deathmatch"))
 	{
-		Com_Printf ("Deathmatch and Coop both set, disabling Coop\n");
+		Com_Printf (S_COLOR_YELLOW "Deathmatch and Coop both set, disabling Coop\n");
 		Cvar_FullSet ("coop", "0", CVAR_SERVERINFO | CVAR_LATCH);
 	}
 

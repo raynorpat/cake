@@ -181,6 +181,7 @@ void Com_Printf (char *fmt, ...)
 		return;
 	}
 
+	// print to ingame console
 	Con_Print (msg);
 
 	// also echo to console
@@ -264,7 +265,7 @@ void Com_Error (int code, char *fmt, ...)
 	}
 	else if (code == ERR_DROP)
 	{
-		Com_Printf ("********************\nERROR: %s\n********************\n", msg);
+		Com_Printf (S_COLOR_RED "********************\nERROR: %s\n********************\n", msg);
 		SV_Shutdown (va ("Server crashed: %s\n", msg), false);
 		CL_Drop ();
 		recursive = false;
@@ -1021,7 +1022,7 @@ void *SZ_GetSpace (sizebuf_t *buf, int length)
 		if (length > buf->maxsize)
 			Com_Error (ERR_FATAL, "SZ_GetSpace: %i is > full buffer size", length);
 
-		Com_Printf ("SZ_GetSpace: overflow\n");
+		Com_Printf (S_COLOR_RED "SZ_GetSpace: overflow\n");
 		SZ_Clear (buf);
 		buf->overflowed = true;
 	}
@@ -1180,7 +1181,7 @@ void Info_Print (char *s)
 
 		if (!*s)
 		{
-			Com_Printf ("MISSING VALUE\n");
+			Com_Printf (S_COLOR_RED "MISSING VALUE\n");
 			return;
 		}
 

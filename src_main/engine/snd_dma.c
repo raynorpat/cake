@@ -108,7 +108,7 @@ void S_Init (void)
 	s_enable = Cvar_Get ("s_enable", "2", CVAR_ARCHIVE);
 	if (s_enable->integer <= SS_NOT)
 	{
-		Com_Printf("Sound initialization disabled.\n");
+		Com_Printf(S_COLOR_RED "Sound initialization disabled.\n");
 		return;
 	}
 
@@ -137,7 +137,7 @@ void S_Init (void)
 
 	if (sound_started == SS_NOT)
 	{
-		Com_Printf("Sound failed to initialize.\n");
+		Com_Printf(S_COLOR_RED "Sound failed to initialize.\n");
 		return;
 	}
 
@@ -609,7 +609,7 @@ void S_IssuePlaysound (playsound_t *ps)
 	sc = S_LoadSound(ps->sfx);
 	if (!sc)
 	{
-		Com_Printf ("S_IssuePlaysound: couldn't load %s\n", ps->sfx->name);
+		Com_Printf (S_COLOR_RED "S_IssuePlaysound: couldn't load %s\n", ps->sfx->name);
 		S_FreePlaysound (ps);
 		return;
 	}
@@ -832,7 +832,7 @@ void S_StartLocalSound (char *sound)
 	sfx = S_RegisterSound (sound);
 	if (!sfx)
 	{
-		Com_Printf ("S_StartLocalSound: can't cache %s\n", sound);
+		Com_Printf (S_COLOR_RED "S_StartLocalSound: can't cache %s\n", sound);
 		return;
 	}
 

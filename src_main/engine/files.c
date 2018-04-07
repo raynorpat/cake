@@ -179,7 +179,7 @@ void FS_CreatePath (char *path)
 
 	if (strstr(path, "..") != NULL)
 	{
-		Com_Printf("WARNING: refusing to create relative path '%s'.\n", path);
+		Com_Printf(S_COLOR_YELLOW "WARNING: refusing to create relative path '%s'.\n", path);
 		return;
 	}
 
@@ -303,7 +303,7 @@ int FS_FOpenFileAppend(fsHandle_t * handle)
 		return FS_FileLength(handle->file);
 	}
 	if (fs_debug->value)
-		Com_Printf("FS_FOpenFileAppend: couldn't open '%s'.\n", path);
+		Com_Printf(S_COLOR_RED "FS_FOpenFileAppend: couldn't open '%s'.\n", path);
 
 	return -1;
 }
@@ -333,7 +333,7 @@ int FS_FOpenFileWrite(fsHandle_t * handle)
 		return 1;
 	}
 	if (fs_debug->value)
-		Com_Printf("FS_FOpenFileWrite: couldn't open '%s'.\n", path);
+		Com_Printf(S_COLOR_RED "FS_FOpenFileWrite: couldn't open '%s'.\n", path);
 
 	return -1;
 }
@@ -447,7 +447,7 @@ int FS_FOpenFileRead(fsHandle_t * handle, qboolean gamedirOnly)
 	fs_fileInPack = false;
 
 	if (fs_debug->value)
-		Com_Printf("FS_FOpenFileRead: couldn't find '%s'.\n", handle->name);
+		Com_Printf(S_COLOR_RED "FS_FOpenFileRead: couldn't find '%s'.\n", handle->name);
 
 	return -1;
 }

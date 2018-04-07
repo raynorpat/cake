@@ -86,7 +86,7 @@ static void R_CreateFBOColorBuffer(FBO_t * fbo, int format, int index)
 {
 	if (index < 0 || index >= 16)
 	{
-		VID_Printf(PRINT_ALL, "R_CreateFBOColorBuffer: invalid attachment index %i\n", index);
+		VID_Printf(PRINT_ALL, S_COLOR_RED "R_CreateFBOColorBuffer: invalid attachment index %i\n", index);
 		return;
 	}
 	
@@ -152,7 +152,7 @@ static void R_AttachFBOTexture2D(int target, int texId, int index)
 {
 	if (index < 0 || index >= 16)
 	{
-		VID_Printf(PRINT_ALL, "R_AttachFBOTexture2D: invalid attachment index %i\n", index);
+		VID_Printf(PRINT_ALL, S_COLOR_RED "R_AttachFBOTexture2D: invalid attachment index %i\n", index);
 		return;
 	}
 
@@ -374,28 +374,28 @@ qboolean R_CheckFBO(const FBO_t * fbo)
 	switch (code)
 	{
 	case GL_FRAMEBUFFER_UNSUPPORTED:
-		VID_Printf(PRINT_ALL, "R_CheckFBO: (%s) Unsupported framebuffer format\n", fbo->name);
+		VID_Printf(PRINT_ALL, S_COLOR_RED "R_CheckFBO: (%s) Unsupported framebuffer format\n", fbo->name);
 		break;
 	case GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT:
-		VID_Printf(PRINT_ALL, "R_CheckFBO: (%s) Framebuffer incomplete, incomplete attachment\n", fbo->name);
+		VID_Printf(PRINT_ALL, S_COLOR_RED "R_CheckFBO: (%s) Framebuffer incomplete, incomplete attachment\n", fbo->name);
 		break;
 	case GL_FRAMEBUFFER_INCOMPLETE_MULTISAMPLE:
-		VID_Printf(PRINT_ALL, "R_CheckFBO: (%s) Framebuffer incomplete, missing multisample\n", fbo->name);
+		VID_Printf(PRINT_ALL, S_COLOR_RED "R_CheckFBO: (%s) Framebuffer incomplete, missing multisample\n", fbo->name);
 		break;
 	case GL_FRAMEBUFFER_INCOMPLETE_LAYER_TARGETS:
-		VID_Printf(PRINT_ALL, "R_CheckFBO: (%s) Framebuffer incomplete, missing layer targets\n", fbo->name);
+		VID_Printf(PRINT_ALL, S_COLOR_RED "R_CheckFBO: (%s) Framebuffer incomplete, missing layer targets\n", fbo->name);
 		break;
 	case GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT:
-		VID_Printf(PRINT_ALL, "R_CheckFBO: (%s) Framebuffer incomplete, missing attachment\n", fbo->name);
+		VID_Printf(PRINT_ALL, S_COLOR_RED "R_CheckFBO: (%s) Framebuffer incomplete, missing attachment\n", fbo->name);
 		break;
 	case GL_FRAMEBUFFER_INCOMPLETE_DRAW_BUFFER:
-		VID_Printf(PRINT_ALL, "R_CheckFBO: (%s) Framebuffer incomplete, missing draw buffer\n", fbo->name);
+		VID_Printf(PRINT_ALL, S_COLOR_RED "R_CheckFBO: (%s) Framebuffer incomplete, missing draw buffer\n", fbo->name);
 		break;
 	case GL_FRAMEBUFFER_INCOMPLETE_READ_BUFFER:
-		VID_Printf(PRINT_ALL, "R_CheckFBO: (%s) Framebuffer incomplete, missing read buffer\n", fbo->name);
+		VID_Printf(PRINT_ALL, S_COLOR_RED "R_CheckFBO: (%s) Framebuffer incomplete, missing read buffer\n", fbo->name);
 		break;
 	default:
-		VID_Printf(PRINT_ALL, "R_CheckFBO: (%s) Unknown error 0x%X\n", fbo->name, code);
+		VID_Printf(PRINT_ALL, S_COLOR_RED "R_CheckFBO: (%s) Unknown error 0x%X\n", fbo->name, code);
 		assert(0);
 	}
 

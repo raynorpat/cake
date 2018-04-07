@@ -418,7 +418,7 @@ void RE_GL_Draw_StretchPic (int x, int y, int w, int h, char *pic)
 
 	if (!gl)
 	{
-		VID_Printf (PRINT_ALL, "Can't find pic: %s\n", pic);
+		VID_Printf (PRINT_ALL, S_COLOR_RED "Can't find pic: %s\n", pic);
 		return;
 	}
 
@@ -439,7 +439,7 @@ void RE_GL_Draw_PicScaled (int x, int y, char *pic, float scale)
 
 	if (!gl)
 	{
-		VID_Printf(PRINT_ALL, "Can't find pic: %s\n", pic);
+		VID_Printf(PRINT_ALL, S_COLOR_RED "Can't find pic: %s\n", pic);
 		return;
 	}
 
@@ -470,7 +470,7 @@ void RE_GL_Draw_TileClear (int x, int y, int w, int h, char *pic)
 
 	if (!image)
 	{
-		VID_Printf (PRINT_ALL, "Can't find pic: %s\n", pic);
+		VID_Printf (PRINT_ALL, S_COLOR_RED "Can't find pic: %s\n", pic);
 		return;
 	}
 

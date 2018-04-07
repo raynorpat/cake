@@ -134,7 +134,7 @@ void GL_ScreenShot_f (void)
 
 	if (!buffer)
 	{
-		VID_Printf(PRINT_ALL, "GL_ScreenShot_f: Couldn't malloc %d bytes\n", w * h * 3);
+		VID_Printf(PRINT_ALL, S_COLOR_RED "GL_ScreenShot_f: Couldn't malloc %d bytes\n", w * h * 3);
 		return;
 	}
 

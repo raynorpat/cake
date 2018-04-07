@@ -81,7 +81,7 @@ qboolean AL_Init (void)
 
     if (!QAL_Init())
 	{
-        Com_Printf("OpenAL failed to initialize.\n");
+        Com_Printf(S_COLOR_RED "OpenAL failed to initialize.\n");
         return false;
     }
 
@@ -93,7 +93,7 @@ qboolean AL_Init (void)
     // check for linear distance extension
     if (!qalIsExtensionPresent("AL_EXT_LINEAR_DISTANCE"))
 	{
-        Com_Printf( "Required AL_EXT_LINEAR_DISTANCE extension is missing.\n" );
+        Com_Printf(S_COLOR_RED "Required AL_EXT_LINEAR_DISTANCE extension is missing.\n");
         goto fail;
     }
 
@@ -102,7 +102,7 @@ qboolean AL_Init (void)
 	qalGenSources (1, &streamSource);
 	if (qalGetError() != AL_NO_ERROR)
 	{
-		Com_Printf("ERROR: Couldn't get a single Source.\n");
+		Com_Printf(S_COLOR_RED "ERROR: Couldn't get a single Source.\n");
 		goto fail;
 	}
 	else
@@ -117,7 +117,7 @@ qboolean AL_Init (void)
 		
 		if (i < MIN_CHANNELS - 1)
 		{
-			Com_Printf ("ERROR: Required at least %d sources, but got %d.\n", MIN_CHANNELS, i + 1);
+			Com_Printf (S_COLOR_RED "ERROR: Required at least %d sources, but got %d.\n", MIN_CHANNELS, i + 1);
 			goto fail;
 		}
 	}
@@ -136,7 +136,7 @@ qboolean AL_Init (void)
 	s_alStreamBuffers->modified = false;
 	S_AL_AllocStreamBuffers(i);
 
-    Com_Printf ("OpenAL initialized.\n");
+    Com_Printf (S_COLOR_GREEN "OpenAL initialized.\n");
     return true;
 
 fail:

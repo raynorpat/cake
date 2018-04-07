@@ -126,7 +126,7 @@ void OGG_Init(void)
 
 	ogg_started = true;
 
-	Com_Printf("%d Ogg Vorbis files found.\n", ogg_numfiles);
+	Com_Printf(S_COLOR_GREEN "%d Ogg Vorbis files found.\n", ogg_numfiles);
 
 	// Autoplay support
 	if (ogg_autoplay->string[0] != '\0')
@@ -254,7 +254,7 @@ qboolean OGG_Open(ogg_seek_t type, int offset)
 			// absolute index
 			if ((offset < 0) || (offset >= ogg_numfiles))
 			{
-				Com_Printf("OGG_Open: %d out of range.\n", offset + 1);
+				Com_Printf(S_COLOR_RED "OGG_Open: %d out of range.\n", offset + 1);
 				return false;
 			}
 			else
@@ -293,14 +293,14 @@ qboolean OGG_Open(ogg_seek_t type, int offset)
 	// find file
 	if ((size = FS_LoadFile(ogg_filelist[pos], (void **)&ogg_buffer)) == -1)
 	{
-		Com_Printf("OGG_Open: could not open %d (%s): %s.\n", pos, ogg_filelist[pos], strerror(errno));
+		Com_Printf(S_COLOR_RED "OGG_Open: could not open %d (%s): %s.\n", pos, ogg_filelist[pos], strerror(errno));
 		return false;
 	}
 
 	// open ogg vorbis file
 	if ((res = ov_open(NULL, &ovFile, (char *)ogg_buffer, size)) < 0)
 	{
-		Com_Printf("OGG_Open: '%s' is not a valid Ogg Vorbis file (error %i).\n", ogg_filelist[pos], res);
+		Com_Printf(S_COLOR_RED "OGG_Open: '%s' is not a valid Ogg Vorbis file (error %i).\n", ogg_filelist[pos], res);
 		FS_FreeFile(ogg_buffer);
 		ogg_buffer = NULL;
 		return false;
@@ -310,7 +310,7 @@ qboolean OGG_Open(ogg_seek_t type, int offset)
 	ogg_info = ov_info(&ovFile, 0);
 	if (!ogg_info)
 	{
-		Com_Printf("OGG_Open: Unable to get stream information for %s.\n", ogg_filelist[pos]);
+		Com_Printf(S_COLOR_RED "OGG_Open: Unable to get stream information for %s.\n", ogg_filelist[pos]);
 		ov_clear(&ovFile);
 		FS_FreeFile(ogg_buffer);
 		ogg_buffer = NULL;
@@ -400,7 +400,7 @@ void OGG_Sequence(void)
 		OGG_Open(REL, 0);
 	else if (strcmp(ogg_sequence->string, "none") != 0)
 	{
-		Com_Printf("Invalid value of ogg_sequence: %s\n", ogg_sequence->string);
+		Com_Printf(S_COLOR_RED "Invalid value of ogg_sequence: %s\n", ogg_sequence->string);
 		Cvar_Set("ogg_sequence", "none");
 	}
 }

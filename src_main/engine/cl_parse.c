@@ -87,7 +87,7 @@ qboolean CL_CheckOrDownloadFile (char *filename)
 	// make sure path is valid
 	if (strstr(filename, "..") || strstr(filename, ":") || (*filename == '.') || (*filename == '/'))
 	{
-		Com_Printf("Refusing to download a path with ..: %s\n", filename);
+		Com_Printf(S_COLOR_RED "Refusing to download a path with ..: %s\n", filename);
 		return true;
 	}
 
@@ -283,7 +283,7 @@ void CL_ParseDownload (void)
 		if (!cls.download)
 		{
 			net_message.readcount += size;
-			Com_Printf ("Failed to open %s\n", cls.downloadtempname);
+			Com_Printf (S_COLOR_RED "Failed to open %s\n", cls.downloadtempname);
 			cls.failed_download = true;
 			CL_RequestNextDownload ();
 			return;
@@ -315,7 +315,7 @@ void CL_ParseDownload (void)
 		r = rename (oldn, newn);
 
 		if (r)
-			Com_Printf ("failed to rename.\n");
+			Com_Printf (S_COLOR_RED "failed to rename.\n");
 
 		cls.failed_download = false;
 		cls.download = NULL;

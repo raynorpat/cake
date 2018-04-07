@@ -410,7 +410,7 @@ void NET_SendPacket (netsrc_t sock, int length, void *data, netadr_t to)
 					break;
 				// intentional fallthrough
 			default:
-				Com_Printf("NET_SendPacket ERROR: %s (%d) to %s\n",	NET_ErrorString(), err, NET_AdrToString(to));
+				Com_Printf(S_COLOR_RED "NET_SendPacket ERROR: %s (%d) to %s\n",	NET_ErrorString(), err, NET_AdrToString(to));
 				break;
 		}
 #else
@@ -426,7 +426,7 @@ void NET_SendPacket (netsrc_t sock, int length, void *data, netadr_t to)
 			case ENETDOWN:
 				break;
 			default:
-				Com_Printf("NET_SendPacket ERROR: %s (%d) to %s\n", NET_ErrorString(), err, NET_AdrToString(to));
+				Com_Printf(S_COLOR_RED "NET_SendPacket ERROR: %s (%d) to %s\n", NET_ErrorString(), err, NET_AdrToString(to));
 				break;
 		}
 #endif
@@ -454,7 +454,7 @@ int NET_IPSocket (char *net_interface, int port)
 #ifdef _WIN32
 		if (WSAGetLastError() != WSAEAFNOSUPPORT)
 #endif
-			Com_Printf ("WARNING: UDP_OpenSocket: socket: %s", NET_ErrorString());
+			Com_Printf (S_COLOR_YELLOW "WARNING: UDP_OpenSocket: socket: %s", NET_ErrorString());
 
 		return 0;
 	}
@@ -462,14 +462,14 @@ int NET_IPSocket (char *net_interface, int port)
 	// make it non-blocking
 	if (ioctlsocket (newsocket, FIONBIO, (u_long *) &_true) == -1)
 	{
-		Com_Printf ("WARNING: UDP_OpenSocket: ioctl FIONBIO: %s\n", NET_ErrorString());
+		Com_Printf (S_COLOR_YELLOW "WARNING: UDP_OpenSocket: ioctl FIONBIO: %s\n", NET_ErrorString());
 		return 0;
 	}
 
 	// make it broadcast capable
 	if (setsockopt (newsocket, SOL_SOCKET, SO_BROADCAST, (char *) &i, sizeof (i)) == -1)
 	{
-		Com_Printf ("WARNING: UDP_OpenSocket: setsockopt SO_BROADCAST: %s\n", NET_ErrorString());
+		Com_Printf (S_COLOR_YELLOW "WARNING: UDP_OpenSocket: setsockopt SO_BROADCAST: %s\n", NET_ErrorString());
 		return 0;
 	}
 
@@ -487,7 +487,7 @@ int NET_IPSocket (char *net_interface, int port)
 
 	if (bind (newsocket, (void *) &address, sizeof (address)) == -1)
 	{
-		Com_Printf ("WARNING: UDP_OpenSocket: bind: %s\n", NET_ErrorString());
+		Com_Printf (S_COLOR_YELLOW "WARNING: UDP_OpenSocket: bind: %s\n", NET_ErrorString());
 		closesocket (newsocket);
 		return 0;
 	}
@@ -646,7 +646,7 @@ void NET_Init (void)
 			Com_Error(ERR_FATAL, "%s", errmsg);
 		}
 
-		Com_Printf("%s\n", errmsg);
+		Com_Printf(S_COLOR_RED "%s\n", errmsg);
 		return;
 	}
 	Com_Printf("Winsock Initialized\n");

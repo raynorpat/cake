@@ -209,13 +209,13 @@ void CL_Record_f (void)
 
 	if (cls.demorecording)
 	{
-		Com_Printf ("Already recording.\n");
+		Com_Printf (S_COLOR_RED "Already recording.\n");
 		return;
 	}
 
 	if (cls.state != ca_active)
 	{
-		Com_Printf ("You must be in a level to record.\n");
+		Com_Printf (S_COLOR_RED "You must be in a level to record.\n");
 		return;
 	}
 
@@ -237,7 +237,7 @@ void CL_Record_f (void)
 	cls.demofile = fopen (name, "wb");
 	if (!cls.demofile)
 	{
-		Com_Printf ("ERROR: couldn't open.\n");
+		Com_Printf (S_COLOR_RED "ERROR: couldn't open.\n");
 		return;
 	}
 
@@ -1532,7 +1532,7 @@ void CL_Video_f(void)
 
 		if (i > 9999)
 		{
-			Com_Printf("ERROR: no free file names to create video\n");
+			Com_Printf(S_COLOR_RED "ERROR: no free file names to create video\n");
 			return;
 		}
 	}
@@ -1715,7 +1715,7 @@ void CL_WriteConfiguration (void)
 
 	if (!f)
 	{
-		Com_Printf ("Couldn't write config.cfg.\n");
+		Com_Printf (S_COLOR_RED "Couldn't write config.cfg.\n");
 		return;
 	}
 

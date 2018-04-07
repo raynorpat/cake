@@ -89,21 +89,21 @@ static void VID_DetectAvailableModes(void)
 	int display = SDL_GetWindowDisplayIndex(window);
 	if (display < 0)
 	{
-		VID_Printf(PRINT_DEVELOPER, "Couldn't get window display index, no resolutions detected: %s\n", SDL_GetError());
+		VID_Printf(PRINT_DEVELOPER, S_COLOR_RED "Couldn't get window display index, no resolutions detected: %s\n", SDL_GetError());
 		return;
 	}
 	numSDLModes = SDL_GetNumDisplayModes(display);
 
 	if (SDL_GetWindowDisplayMode(window, &windowMode) < 0 || numSDLModes <= 0)
 	{
-		VID_Printf(PRINT_DEVELOPER, "Couldn't get window display mode, no resolutions detected: %s\n", SDL_GetError());
+		VID_Printf(PRINT_DEVELOPER, S_COLOR_RED "Couldn't get window display mode, no resolutions detected: %s\n", SDL_GetError());
 		return;
 	}
 
 	modes = SDL_calloc((size_t)numSDLModes, sizeof(SDL_Rect));
 	if (!modes)
 	{
-		VID_Error(ERR_FATAL, "Out of memory");
+		VID_Error(ERR_FATAL, S_COLOR_RED "Out of memory");
 	}
 
 	for (i = 0; i < numSDLModes; i++)
@@ -115,7 +115,7 @@ static void VID_DetectAvailableModes(void)
 
 		if (!mode.w || !mode.h)
 		{
-			VID_Printf(PRINT_ALL, "Display supports any resolution\n");
+			VID_Printf(PRINT_ALL, S_COLOR_GREEN "Display supports any resolution\n");
 			SDL_free(modes);
 			return;
 		}
@@ -230,7 +230,7 @@ vidrserr_t VID_InitWindow(int mode, int fullscreen)
 		display = SDL_GetWindowDisplayIndex(window);
 		if (display < 0)
 		{
-			VID_Printf(PRINT_DEVELOPER, "SDL_GetWindowDisplayIndex() failed: %s\n", SDL_GetError());
+			VID_Printf(PRINT_DEVELOPER, S_COLOR_RED "SDL_GetWindowDisplayIndex() failed: %s\n", SDL_GetError());
 		}
 	}
 
@@ -243,7 +243,7 @@ vidrserr_t VID_InitWindow(int mode, int fullscreen)
 	{
 		memset(&desktopMode, 0, sizeof(SDL_DisplayMode));
 		viddef.displayAspect = 1.333f;
-		VID_Printf(PRINT_ALL, "Cannot determine display aspect, assuming 1.333\n");
+		VID_Printf(PRINT_ALL, S_COLOR_RED "Cannot determine display aspect, assuming 1.333\n");
 	}
 
 	VID_Printf(PRINT_ALL, "...setting mode %d:", mode);
@@ -260,7 +260,7 @@ vidrserr_t VID_InitWindow(int mode, int fullscreen)
 		{
 			viddef.width = 1024;
 			viddef.height = 768;
-			VID_Printf(PRINT_ALL, "Cannot determine display resolution, assuming 1024x768\n");
+			VID_Printf(PRINT_ALL, S_COLOR_RED "Cannot determine display resolution, assuming 1024x768\n");
 		}
 
 		viddef.displayAspect = (float)viddef.width / (float)viddef.height;
@@ -421,7 +421,7 @@ vidrserr_t VID_InitWindow(int mode, int fullscreen)
 
 			if (SDL_SetWindowDisplayMode(window, &mode) < 0)
 			{
-				VID_Printf(PRINT_DEVELOPER, "SDL_SetWindowDisplayMode failed: %s\n", SDL_GetError());
+				VID_Printf(PRINT_DEVELOPER, S_COLOR_RED "SDL_SetWindowDisplayMode failed: %s\n", SDL_GetError());
 				continue;
 			}
 		}
@@ -446,8 +446,8 @@ vidrserr_t VID_InitWindow(int mode, int fullscreen)
 
 			if ((context = SDL_GL_CreateContext(window)) == NULL)
 			{
-				VID_Printf(PRINT_ALL, "SDL_GL_CreateContext failed: %s\n", SDL_GetError());
-				VID_Printf(PRINT_ALL, "Reverting to default context\n");
+				VID_Printf(PRINT_ALL, S_COLOR_RED "SDL_GL_CreateContext failed: %s\n", SDL_GetError());
+				VID_Printf(PRINT_ALL, S_COLOR_RED "Reverting to default context\n");
 				SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, profileMask);
 				SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, majorVersion);
 				SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, minorVersion);
@@ -462,14 +462,14 @@ vidrserr_t VID_InitWindow(int mode, int fullscreen)
 				if (GLEW_OK == err) {
 					renderer = (const char *)glGetString(GL_RENDERER);
 				} else {
-					VID_Printf(PRINT_ALL, "glewInit() core context failed: %s\n", glewGetErrorString(err));
+					VID_Printf(PRINT_ALL, S_COLOR_RED "glewInit() core context failed: %s\n", glewGetErrorString(err));
 					renderer = NULL;
 				}
 								
 				if (!renderer || (strstr(renderer, "Software Renderer") || strstr(renderer, "Software Rasterizer")))
 				{
 					if (renderer)
-						VID_Printf(PRINT_ALL, "GL_RENDERER is %s, rejecting context\n", renderer);
+						VID_Printf(PRINT_ALL, S_COLOR_RED "GL_RENDERER is %s, rejecting context\n", renderer);
 
 					SDL_GL_DeleteContext(context);
 					context = NULL;
@@ -489,14 +489,14 @@ vidrserr_t VID_InitWindow(int mode, int fullscreen)
 		{
 			if ((context = SDL_GL_CreateContext(window)) == NULL)
 			{
-				VID_Printf(PRINT_DEVELOPER, "SDL_GL_CreateContext failed: %s\n", SDL_GetError());
+				VID_Printf(PRINT_DEVELOPER, S_COLOR_RED "SDL_GL_CreateContext failed: %s\n", SDL_GetError());
 				continue;
 			}
 
 			err = glewInit();
 			if (GLEW_OK != err)
 			{
-				VID_Printf(PRINT_ALL, "glewInit() failed: %s\n", glewGetErrorString(err));
+				VID_Printf(PRINT_ALL, S_COLOR_RED "glewInit() failed: %s\n", glewGetErrorString(err));
 
 				SDL_GL_DeleteContext(context);
 				context = NULL;
@@ -514,7 +514,7 @@ vidrserr_t VID_InitWindow(int mode, int fullscreen)
 
 		if (SDL_GL_SetSwapInterval(gl_swapinterval->integer) == -1)
 		{
-			VID_Printf(PRINT_DEVELOPER, "SDL_GL_SetSwapInterval failed: %s\n", SDL_GetError());
+			VID_Printf(PRINT_DEVELOPER, S_COLOR_RED "SDL_GL_SetSwapInterval failed: %s\n", SDL_GetError());
 			viddef.vsyncActive = false;
 		}
 		else
@@ -528,7 +528,7 @@ vidrserr_t VID_InitWindow(int mode, int fullscreen)
 
 	if (!window)
 	{
-		VID_Printf(PRINT_ALL, "Couldn't get a visual\n");
+		VID_Printf(PRINT_ALL, S_COLOR_RED "Couldn't get a visual\n");
 		return RSERR_INVALID_MODE;
 	}
 
@@ -555,8 +555,8 @@ void VID_GrabInput(qboolean grab)
 	}
 
 	if (SDL_SetRelativeMouseMode(grab ? SDL_TRUE : SDL_FALSE) < 0) {
-		Com_Printf("WARNING: Setting Relative Mousemode failed, reason: %s\n", SDL_GetError());
-		Com_Printf("         You should probably update to SDL 2.0.3 or newer!\n");
+		Com_Printf(S_COLOR_YELLOW "WARNING: Setting Relative Mousemode failed, reason: %s\n", SDL_GetError());
+		Com_Printf(S_COLOR_YELLOW "         You should probably update to SDL 2.0.3 or newer!\n");
 	}
 }
 

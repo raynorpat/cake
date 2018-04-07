@@ -82,9 +82,9 @@ void QAL_Info(void)
 		if (devs == NULL)
 		{
 			// no devices, might be an old OpenAL 1.0 or prior system...
-			Com_Printf("- No devices found. Depending on your\n");
-			Com_Printf("  platform this may be expected and\n");
-			Com_Printf("  doesn't indicate a problem!\n");
+			Com_Printf(S_COLOR_RED "- No devices found. Depending on your\n");
+			Com_Printf(S_COLOR_RED "  platform this may be expected and\n");
+			Com_Printf(S_COLOR_RED "  doesn't indicate a problem!\n");
 		}
 		else
 		{
@@ -100,17 +100,11 @@ void QAL_Info(void)
 	if (qalcIsExtensionPresent(NULL, "ALC_ENUMERATE_ALL_EXT"))
 	{
 		const char *devs = qalcGetString(device, ALC_DEVICE_SPECIFIER);
-
 		Com_Printf("\nCurrent OpenAL device:\n");
-
 		if (devs == NULL)
-		{
 			Com_Printf("- No OpenAL device in use\n");
-		}
 		else
-		{
 			Com_Printf("- %s\n", devs);
-		}
 	}
 
 	// grab frequency for device
@@ -135,12 +129,12 @@ void QAL_Info(void)
 		alcGetIntegerv(device, ALC_HRTF_SOFT, 1, &hrtf_state);
 		if (!hrtf_state)
 		{
-			Com_Printf("HRTF not enabled!\n");
+			Com_Printf(S_COLOR_RED "HRTF not enabled!\n");
 		}
 		else
 		{
 			const ALchar *name = alcGetString(device, ALC_HRTF_SPECIFIER_SOFT);
-			Com_Printf("HRTF enabled, using %s\n", name);
+			Com_Printf(S_COLOR_GREEN "HRTF enabled, using %s\n", name);
 		}
 	}
 }
@@ -201,7 +195,7 @@ qboolean QAL_Init (void)
 
 	if (!handle)
 	{
-		Com_Printf("Loading %s failed! Disabling OpenAL.\n", al_driver->string);
+		Com_Printf(S_COLOR_RED "Loading %s failed! Disabling OpenAL.\n", al_driver->string);
 		return false;
 	}
 
@@ -218,7 +212,7 @@ QAL_IMP
 		char* devices = (char*)qalcGetString(NULL, ALC_DEVICE_SPECIFIER);
 		while (!device && devices && *devices != 0)
 		{
-			Com_DPrintf("...found OpenAL device: %s\n",devices);
+			Com_DPrintf(S_COLOR_GREEN "...found OpenAL device: %s\n",devices);
 			devices += strlen(devices) + 1; // on to the next device
 		}
 	}
@@ -233,26 +227,26 @@ QAL_IMP
 	// ugh, no device still, so open the default
 	if (!device)
 	{
-		Com_DPrintf("failed!\n...attempting to open default OpenAL device: ");
+		Com_DPrintf(S_COLOR_RED "failed!\n...attempting to open default OpenAL device: ");
 		device = qalcOpenDevice(qalcGetString(NULL, ALC_DEFAULT_DEVICE_SPECIFIER));
 	}
 
     if (!device)
         goto fail;
-    Com_DPrintf ("ok\n");
+    Com_DPrintf (S_COLOR_GREEN "ok\n");
 
 	// create OpenAL context
     Com_DPrintf ("...creating OpenAL context: ");
     context = qalcCreateContext (device, NULL);
     if (!context)
         goto fail;
-    Com_DPrintf ("ok\n");
+    Com_DPrintf (S_COLOR_GREEN "ok\n");
 
 	// make OpenAL context current
     Com_DPrintf ("...making context current: ");
     if (!qalcMakeContextCurrent(context))
         goto fail;
-    Com_DPrintf ("ok\n");
+    Com_DPrintf (S_COLOR_GREEN "ok\n");
 
 	// enumerate available HRTFs, and reset the device using one
 	if (qalcIsExtensionPresent(device, "ALC_SOFT_HRTF"))
@@ -262,7 +256,7 @@ QAL_IMP
 		qalcGetIntegerv(device, ALC_NUM_HRTF_SPECIFIERS_SOFT, 1, &num_hrtf);
 		if (!num_hrtf)
 		{
-			Com_DPrintf("...no HRTFs found\n");
+			Com_DPrintf(S_COLOR_RED "...no HRTFs found\n");
 		}
 		else
 		{
@@ -286,12 +280,12 @@ QAL_IMP
 			if (index == -1)
 			{
 				if (hrtfname)
-					Com_DPrintf("HRTF \"%s\" not found\n", hrtfname);
-				Com_DPrintf("Using default HRTF...\n");
+					Com_DPrintf(S_COLOR_RED "HRTF \"%s\" not found\n", hrtfname);
+				Com_DPrintf(S_COLOR_GREEN "Using default HRTF...\n");
 			}
 			else
 			{
-				Com_DPrintf("Selecting HRTF %d...\n", index);
+				Com_DPrintf(S_COLOR_GREEN "Selecting HRTF %d...\n", index);
 				attr[i++] = ALC_HRTF_ID_SOFT;
 				attr[i++] = index;
 			}
@@ -304,7 +298,7 @@ QAL_IMP
     return true;
 
 fail:
-    Com_DPrintf ("failed\n");
+    Com_DPrintf (S_COLOR_RED "failed\n");
     QAL_Shutdown ();
     return false;
 }

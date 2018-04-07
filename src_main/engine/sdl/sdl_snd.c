@@ -153,7 +153,7 @@ qboolean SNDDMA_Init(void)
 	{
 		if (SDL_Init(SDL_INIT_AUDIO) == -1)
 		{
-			Com_Printf("Couldn't init SDL audio: %s.\n", SDL_GetError());
+			Com_Printf(S_COLOR_RED "Couldn't init SDL audio: %s.\n", SDL_GetError());
 			return 0;
 		}
 	}
@@ -217,7 +217,7 @@ qboolean SNDDMA_Init(void)
 	// Okay, let's try our luck
 	if (SDL_OpenAudio(&desired, &obtained) == -1)
 	{
-		Com_Printf("SDL_OpenAudio() failed: %s\n", SDL_GetError());
+		Com_Printf(S_COLOR_RED "SDL_OpenAudio() failed: %s\n", SDL_GetError());
 		SDL_QuitSubSystem(SDL_INIT_AUDIO);
 		return 0;
 	}

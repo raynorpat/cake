@@ -346,7 +346,7 @@ int CL_ParseBeam2 (struct model_s *model)
 		}
 	}
 
-	Com_Printf ("beam list overflow!\n");
+	Com_Printf (S_COLOR_RED "beam list overflow!\n");
 	return ent;
 }
 
@@ -400,7 +400,7 @@ int CL_ParseLightning (struct model_s *model)
 		}
 	}
 
-	Com_Printf ("beam list overflow!\n");
+	Com_Printf (S_COLOR_RED "beam list overflow!\n");
 	return srcEnt;
 }
 

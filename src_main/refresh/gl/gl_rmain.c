@@ -65,7 +65,7 @@ glmatrix	r_mvpmatrix;
 //
 // screen size info
 //
-refdef_t	r_newrefdef;
+refdef_t r_newrefdef;
 
 int		r_viewcluster, r_viewcluster2, r_oldviewcluster, r_oldviewcluster2;
 
@@ -161,7 +161,7 @@ void R_DrawSingleEntity (entity_t *ent)
 			R_DrawSpriteModel (ent);
 			break;
 		default:
-			VID_Error (ERR_DROP, "Bad modeltype");
+			VID_Error (ERR_DROP, S_COLOR_RED "Bad modeltype");
 			break;
 		}
 	}
@@ -412,7 +412,7 @@ void R_RenderView (refdef_t *fd)
 	r_newrefdef = *fd;
 
 	if (!r_worldmodel && !(r_newrefdef.rdflags & RDF_NOWORLDMODEL))
-		VID_Error (ERR_DROP, "R_RenderView: NULL worldmodel");
+		VID_Error (ERR_DROP, S_COLOR_RED "R_RenderView: NULL worldmodel");
 
 	if (r_speeds->value)
 	{
@@ -733,7 +733,7 @@ static void RMain_CheckExtension (char *ext)
 			return;
 		}
 	
-		VID_Error (ERR_FATAL, "RMain_CheckExtension : could not find %s", ext);
+		VID_Error (ERR_FATAL, S_COLOR_RED "RMain_CheckExtension : could not find %s", ext);
 		return;
 	}
 }
@@ -751,14 +751,14 @@ static qboolean RMain_CheckFor_DirectStateAccess(void)
 		if (!strcmp("GL_EXT_direct_state_access ", gl_config.extension_string))
 		{
 			// found it in our list
-			VID_Printf(PRINT_ALL, " ...found GL_EXT_direct_state_access\n");
+			VID_Printf(PRINT_ALL, S_COLOR_GREEN " ...found GL_EXT_direct_state_access\n");
 			return true;
 		}
 	}
 	else
 	{
 		// found it in glew's list
-		VID_Printf(PRINT_ALL, " ...found GL_EXT_direct_state_access\n");
+		VID_Printf(PRINT_ALL, S_COLOR_GREEN " ...found GL_EXT_direct_state_access\n");
 		return true;
 	}
 
@@ -770,7 +770,7 @@ static qboolean RMain_CheckFor_DirectStateAccess(void)
 		return false;
 	}
 
-	VID_Printf(PRINT_ALL, " ...emulating GL_EXT_direct_state_access\n");
+	VID_Printf(PRINT_ALL, S_COLOR_YELLOW " ...emulating GL_EXT_direct_state_access\n");
 	return true;
 }
 
@@ -786,7 +786,7 @@ static void RMain_CheckFor_GPUShader5(void)
 		if (!strcmp("GL_ARB_gpu_shader5 ", gl_config.extension_string))
 		{
 			// found it in our list
-			VID_Printf(PRINT_ALL, " ...found GL_ARB_gpu_shader5\n");
+			VID_Printf(PRINT_ALL, S_COLOR_GREEN " ...found GL_ARB_gpu_shader5\n");
 			gl_config.gl_ext_GPUShader5_support = true;
 			return;
 		}
@@ -794,12 +794,12 @@ static void RMain_CheckFor_GPUShader5(void)
 	else
 	{
 		// found it in glew's list
-		VID_Printf(PRINT_ALL, " ...found GL_ARB_gpu_shader5\n");
+		VID_Printf(PRINT_ALL, S_COLOR_GREEN " ...found GL_ARB_gpu_shader5\n");
 		gl_config.gl_ext_GPUShader5_support = true;
 		return;
 	}
 
-	VID_Printf(PRINT_ALL, " ...missing GL_ARB_gpu_shader5\n");
+	VID_Printf(PRINT_ALL, S_COLOR_RED " ...missing GL_ARB_gpu_shader5\n");
 	gl_config.gl_ext_GPUShader5_support = false;
 }
 
@@ -815,7 +815,7 @@ static void RMain_CheckFor_ComputeShader(void)
 		if (!strcmp("GL_ARB_compute_shader ", gl_config.extension_string))
 		{
 			// found it in our list
-			VID_Printf(PRINT_ALL, " ...found GL_ARB_compute_shader\n");
+			VID_Printf(PRINT_ALL, S_COLOR_GREEN " ...found GL_ARB_compute_shader\n");
 			gl_config.gl_ext_computeShader_support = true;
 			return;
 		}
@@ -823,12 +823,12 @@ static void RMain_CheckFor_ComputeShader(void)
 	else
 	{
 		// found it in glew's list
-		VID_Printf(PRINT_ALL, " ...found GL_ARB_compute_shader\n");
+		VID_Printf(PRINT_ALL, S_COLOR_GREEN " ...found GL_ARB_compute_shader\n");
 		gl_config.gl_ext_computeShader_support = true;
 		return;
 	}
 
-	VID_Printf(PRINT_ALL, " ...missing GL_ARB_compute_shader\n");
+	VID_Printf(PRINT_ALL, S_COLOR_RED " ...missing GL_ARB_compute_shader\n");
 	gl_config.gl_ext_computeShader_support = false;
 }
 
@@ -842,10 +842,10 @@ static int SetMode_impl(int mode, int fullscreen)
 	switch (err)
 	{
 		case RSERR_INVALID_FULLSCREEN:
-			VID_Printf(PRINT_ALL, "...WARNING: fullscreen unavailable in this mode\n");
+			VID_Printf(PRINT_ALL, S_COLOR_YELLOW "...WARNING: fullscreen unavailable in this mode\n");
 			return false;
 		case RSERR_INVALID_MODE:
-			VID_Printf(PRINT_ALL, "...WARNING: could not set the given mode (%d)\n", mode);
+			VID_Printf(PRINT_ALL, S_COLOR_YELLOW "...WARNING: could not set the given mode (%d)\n", mode);
 			return false;
 		default:
 			break;
@@ -869,13 +869,13 @@ static qboolean R_SetMode(void)
 	// try again, with the default screen resolution
 	if (gl_mode->integer != R_MODE_FALLBACK)
 	{
-		VID_Printf(PRINT_ALL, "Setting gl_mode %d failed, falling back on gl_mode %d\n", gl_mode->integer, R_MODE_FALLBACK);
+		VID_Printf(PRINT_ALL, S_COLOR_RED "Setting gl_mode %d failed, falling back on gl_mode %d\n", gl_mode->integer, R_MODE_FALLBACK);
 		if (SetMode_impl(R_MODE_FALLBACK, false))
 			goto success;
 	}
 
 	// yea this failed... fallback to software or something else
-	VID_Printf(PRINT_ALL, "GLimp_Init() - could not load OpenGL subsystem");
+	VID_Printf(PRINT_ALL, S_COLOR_RED "GLimp_Init() - could not load OpenGL subsystem");
 	return false;
 
 success:
@@ -924,7 +924,7 @@ success:
 	if (!RMain_CheckFor_DirectStateAccess())
 	{
 		// we are buggggggged, get out of here and fallback to like software or something
-		VID_Printf(PRINT_ALL, "RMain_CheckExtension : unable to emulate GL_EXT_direct_state_access\n");
+		VID_Printf(PRINT_ALL, S_COLOR_RED "RMain_CheckExtension : unable to emulate GL_EXT_direct_state_access\n");
 		return false;
 	}
 
@@ -955,7 +955,7 @@ int RE_GL_Init (void)
 	// create the window and set up the context
 	if (!R_SetMode())
 	{
-		VID_Printf (PRINT_ALL, "ref_gl::RE_GL_Init() - could not R_SetMode()\n");
+		VID_Printf (PRINT_ALL, S_COLOR_RED "ref_gl::RE_GL_Init() - could not R_SetMode()\n");
 		return -1;
 	}
 

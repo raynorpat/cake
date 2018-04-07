@@ -529,8 +529,7 @@ static int IN_Haptic_Effect_Init(int dir, int period, int magnitude, int length,
 	effect_id = SDL_HapticNewEffect(currentControllerHaptic, &haptic_effect);
 	if (effect_id < 0)
 	{
-		Com_Printf("SDL_HapticNewEffect failed: %s\n", SDL_GetError());
-		Com_Printf("Please try to rerun game. Effects will be disabled for now.\n");
+		Com_Printf(S_COLOR_RED "SDL_HapticNewEffect failed: %s\n", SDL_GetError());
 		IN_Haptic_Shutdown();
 	}
 
@@ -715,12 +714,12 @@ void IN_ControllerInit(void)
 
 	if (SDL_WasInit(SDL_INIT_EVERYTHING) == 0) {
 		if (SDL_Init(SDL_INIT_JOYSTICK | SDL_INIT_GAMECONTROLLER) < 0) {
-			Com_Printf("Couldn't init SDL gamepad: %s\n", SDL_GetError());
+			Com_Printf(S_COLOR_RED "Couldn't init SDL gamepad: %s\n", SDL_GetError());
 			return;
 		}
 	} else if (SDL_WasInit(SDL_INIT_JOYSTICK | SDL_INIT_GAMECONTROLLER) == 0) {
 		if (SDL_InitSubSystem(SDL_INIT_JOYSTICK | SDL_INIT_GAMECONTROLLER) < 0) {
-			Com_Printf("Couldn't init SDL gamepad: %s\n", SDL_GetError());
+			Com_Printf(S_COLOR_RED "Couldn't init SDL gamepad: %s\n", SDL_GetError());
 			return;
 		}
 	}
@@ -748,11 +747,11 @@ void IN_ControllerInit(void)
 			results = SDL_GameControllerAddMappingsFromRW(rw, 1);
 			if (results >= 0)
 			{
-				Com_Printf("...loaded %d additional mappings\n", results);
+				Com_Printf(S_COLOR_GREEN "...loaded %d additional mappings\n", results);
 			}
 			else
 			{
-				Com_Printf("...error: %s\n", SDL_GetError());
+				Com_Printf(S_COLOR_RED "...error: %s\n", SDL_GetError());
 			}
 			free(buffer);
 		}
@@ -768,24 +767,20 @@ void IN_ControllerInit(void)
 
 	joy_haptic_magnitude = Cvar_Get("joy_haptic_magnitude", "0.2", CVAR_ARCHIVE);
 
-	Com_Printf("%i joysticks were found.\n", SDL_NumJoysticks());
 	if (SDL_NumJoysticks() > 0)
 	{
 		for (i = 0; i < SDL_NumJoysticks(); i++)
 		{
 			if (SDL_IsGameController(i))
 			{
-				Com_Printf("Found game controller %i named '%s'!\n", i, SDL_GameControllerNameForIndex(i));
+				Com_Printf(S_COLOR_GREEN "Found game controller %i named '%s'!\n", i, SDL_GameControllerNameForIndex(i));
 				currentController = SDL_GameControllerOpen(i);
 				if (currentController)
 				{
 					SDL_Joystick *joystickHandle = SDL_GameControllerGetJoystick(currentController);
 					currentControllerHaptic = SDL_HapticOpenFromJoystick(joystickHandle);
 					if (!currentControllerHaptic)
-					{
-						Com_Printf("SDL_HapticOpen failed: %s\n", SDL_GetError());
-						Com_Printf("Haptic effects will be disabled for now.\n");
-					}
+						Com_Printf(S_COLOR_RED "SDL_HapticOpen failed: %s\n", SDL_GetError());
 				}
 			}
 		}
@@ -933,11 +928,7 @@ void IN_ControllerCommands(void)
 					SDL_Joystick *joystickHandle = SDL_GameControllerGetJoystick(currentController);
 					currentControllerHaptic = SDL_HapticOpenFromJoystick(joystickHandle);
 					if (!currentControllerHaptic)
-					{
-						Com_Printf("SDL_HapticOpen failed: %s\n", SDL_GetError());
-						Com_Printf("Haptic effects will be disabled for now.\n");
-					}
-
+						Com_Printf(S_COLOR_RED "SDL_HapticOpen failed: %s\n", SDL_GetError());
 					break;
 				}
 			}

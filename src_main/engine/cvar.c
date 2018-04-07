@@ -199,7 +199,7 @@ cvar_t *Cvar_Set2 (char *var_name, char *value, qboolean force)
 	{
 		if (!Cvar_InfoValidate (value))
 		{
-			Com_Printf ("invalid info cvar value\n");
+			Com_Printf (S_COLOR_RED "invalid info cvar value\n");
 			return var;
 		}
 	}
@@ -208,7 +208,7 @@ cvar_t *Cvar_Set2 (char *var_name, char *value, qboolean force)
 	{
 		if (var->flags & CVAR_NOSET)
 		{
-			Com_Printf ("%s is write protected.\n", var_name);
+			Com_Printf (S_COLOR_RED "%s is write protected.\n", var_name);
 			return var;
 		}
 
