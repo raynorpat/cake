@@ -40,12 +40,16 @@ void DrawStringScaled (int x, int y, char *s, float factor)
 
 void DrawAltStringScaled (int x, int y, char *s, float factor)
 {
+	RE_Draw_SetColor (colorGreen);
+
 	while (*s)
 	{
-		RE_Draw_CharScaled(x, y, *s ^ 0x80, factor);
+		RE_Draw_CharScaled(x, y, *s, factor);
 		x += 8 * factor;
 		s++;
 	}
+
+	RE_Draw_SetColor (NULL);
 }
 
 
