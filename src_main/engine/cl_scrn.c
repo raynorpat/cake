@@ -412,9 +412,10 @@ void SCR_DrawPause (void)
 	int	w, h;
 	float scale = SCR_GetMenuScale();
 
+	if (cl.attractloop)				// turn off for attract loop
+		return;
 	if (!scr_showpause->value)		// turn off for screenshots
 		return;
-
 	if (!cl_paused->value)
 		return;
 
