@@ -32,6 +32,7 @@ GLuint gl_drawprog = 0;
 GLuint u_drawBrightnessAmount = 0;
 GLuint u_drawContrastAmount = 0;
 GLuint u_drawtexturecolormix = 0;
+GLuint u_drawcolorAdd = 0;
 
 #define MAX_DRAW_QUADS	2048
 
@@ -53,6 +54,7 @@ typedef struct drawstate_s
 	qboolean drawing;
 	GLuint currenttexture;
 	GLuint currentsampler;
+	vec4_t colorAdd;
 	float texturecolormix;
 	float brightness;
 	float contrast;
@@ -60,7 +62,7 @@ typedef struct drawstate_s
 	int numquads;
 } drawstate_t;
 
-drawstate_t gl_drawstate = {false, 0xffffffff, 0, 0, 0, 0};
+drawstate_t gl_drawstate = {false, 0xffffffff, 0, 0, 0, 0, 0, 0};
 drawvert_t gl_drawquads[MAX_DRAW_QUADS * 4];
 
 GLuint gl_drawvbo = 0;
@@ -97,6 +99,7 @@ void RDraw_CreatePrograms (void)
 	gl_drawstate.numquads = 0;
 	gl_drawstate.currenttexture = 0xffffffff;
 	gl_drawstate.currentsampler = 0xffffffff;
+	VectorCopy (colorWhite, gl_drawstate.colorAdd);
 
 	glDeleteTextures (1, &r_rawtexture);
 	glGenTextures (1, &r_rawtexture);
@@ -112,6 +115,7 @@ void RDraw_CreatePrograms (void)
 	u_drawtexturecolormix = glGetUniformLocation (gl_drawprog, "texturecolormix");
 	u_drawBrightnessAmount = glGetUniformLocation (gl_drawprog, "brightnessAmount");
 	u_drawContrastAmount = glGetUniformLocation (gl_drawprog, "contrastAmount");
+	u_drawcolorAdd = glGetUniformLocation (gl_drawprog, "colorAdd");
 
 	glGenVertexArrays (1, &gl_drawvao);
 
@@ -151,6 +155,7 @@ void Draw_Begin2D (void)
 		gl_drawstate.texturecolormix = -1.0f;
 		gl_drawstate.brightness = -1.0f;
 		gl_drawstate.contrast = -1.0f;
+		VectorCopy (colorWhite, gl_drawstate.colorAdd);
 
 		// program is always active
 		GL_UseProgram (gl_drawprog);
@@ -249,6 +254,13 @@ void Draw_GenericRect (GLuint texture, GLuint sampler, float texturecolormix, fl
 		gl_drawstate.firstquad = 0;
 	}
 
+	if (colorWhite != gl_drawstate.colorAdd)
+	{
+		Draw_Flush();
+
+		glProgramUniform4f (gl_drawprog, u_drawcolorAdd, gl_drawstate.colorAdd[0], gl_drawstate.colorAdd[1], gl_drawstate.colorAdd[2], gl_drawstate.colorAdd[3]);
+	}
+
 	dv = &gl_drawquads[(gl_drawstate.firstquad + gl_drawstate.numquads) * 4];
 
 	Vector2Set (dv[0].position, x, y);
@@ -299,6 +311,23 @@ void Draw_InitLocal (void)
 	}
 }
 
+/*
+=============
+RE_Draw_SetColor
+
+Passing NULL will set the color to white
+=============
+*/
+void RE_GL_Draw_SetColor (float *rgba)
+{
+	if (!rgba)
+		rgba = colorWhite;
+
+	gl_drawstate.colorAdd[0] = rgba[0];
+	gl_drawstate.colorAdd[1] = rgba[1];
+	gl_drawstate.colorAdd[2] = rgba[2];
+	gl_drawstate.colorAdd[3] = rgba[3];
+}
 
 /*
 ================
@@ -327,12 +356,12 @@ void RE_GL_Draw_CharScaled (int x, int y, int num, float scale)
 
 	scaledSize = 8 * scale;
 
-	Draw_TexturedRect(draw_chars->texnum, r_drawnearestclampsampler, x, y, scaledSize, scaledSize, fcol, frow, fcol + size, frow + size);
+	Draw_TexturedRect (draw_chars->texnum, r_drawnearestclampsampler, x, y, scaledSize, scaledSize, fcol, frow, fcol + size, frow + size);
 }
 
 void RE_GL_Draw_Char (int x, int y, int num)
 {
-	RE_GL_Draw_CharScaled(x, y, num, 1.0f);
+	RE_GL_Draw_CharScaled (x, y, num, 1.0f);
 }
 
 /*

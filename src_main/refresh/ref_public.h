@@ -190,6 +190,7 @@ extern void(*RE_Draw_StretchRaw)(int x, int y, int w, int h, int cols, int rows,
 extern void(*RE_Draw_FadeScreen)(void);
 extern void(*RE_Draw_Fill)(int x, int y, int w, int h, int c);
 extern void(*RE_Draw_TileClear)(int x, int y, int w, int h, char *pic);
+extern void(*RE_Draw_SetColor)(float *rgba);
 extern void(*RE_Draw_CharScaled)(int x, int y, int num, float scale);
 extern void(*RE_Draw_Char)(int x, int y, int num);
 extern void(*RE_Draw_StretchPic)(int x, int y, int w, int h, char *pic);
