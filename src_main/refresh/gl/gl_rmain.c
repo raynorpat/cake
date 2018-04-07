@@ -84,6 +84,7 @@ cvar_t	*r_lightlevel;	// FIXME: This is a HACK to get the client's light level
 
 cvar_t	*gl_showlightmap;
 cvar_t	*gl_shownormals;
+cvar_t	*gl_showtris;
 cvar_t	*gl_shadows;
 cvar_t	*gl_mode;
 cvar_t  *gl_customwidth;
@@ -91,7 +92,6 @@ cvar_t  *gl_customheight;
 cvar_t	*gl_customPixelAspect;
 cvar_t	*gl_dynamic;
 cvar_t  *gl_monolightmap;
-cvar_t	*gl_showtris;
 cvar_t	*gl_finish;
 cvar_t	*gl_clear;
 cvar_t	*gl_cull;
@@ -526,9 +526,9 @@ static void R_Register (void)
 	gl_customPixelAspect = Cvar_Get("gl_customPixelAspect", "1", CVAR_ARCHIVE);
 	gl_showlightmap = Cvar_Get ("gl_showlightmap", "0", 0);
 	gl_shownormals = Cvar_Get ("gl_shownormals", "0", 0);
+	gl_showtris = Cvar_Get ("gl_showtris", "0", 0);
 	gl_shadows = Cvar_Get ("gl_shadows", "0", CVAR_ARCHIVE);
 	gl_dynamic = Cvar_Get ("gl_dynamic", "1", 0);
-	gl_showtris = Cvar_Get ("gl_showtris", "0", 0);
 	gl_finish = Cvar_Get ("gl_finish", "0", CVAR_ARCHIVE);
 	gl_clear = Cvar_Get ("gl_clear", "0", 0);
 	gl_cull = Cvar_Get ("gl_cull", "1", 0);

@@ -262,10 +262,10 @@ extern	cvar_t	*r_lightlevel;	// FIXME: This is a HACK to get the client's light 
 extern	cvar_t	*gl_mode;
 extern	cvar_t	*gl_showlightmap;
 extern	cvar_t	*gl_shownormals;
+extern	cvar_t	*gl_showtris;
 extern	cvar_t	*gl_shadows;
 extern	cvar_t	*gl_dynamic;
 extern  cvar_t  *gl_monolightmap;
-extern	cvar_t	*gl_showtris;
 extern	cvar_t	*gl_finish;
 extern	cvar_t	*gl_clear;
 extern	cvar_t	*gl_cull;
