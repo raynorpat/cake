@@ -428,7 +428,7 @@ void RE_GL_Draw_StretchPic (int x, int y, int w, int h, char *pic)
 RE_Draw_Pic
 =============
 */
-void RE_GL_Draw_PicScaled (int x, int y, char *pic, float scale)
+void RE_GL_Draw_Pic (int x, int y, char *pic, float scale)
 {
 	image_t *gl;
 
@@ -446,10 +446,6 @@ void RE_GL_Draw_PicScaled (int x, int y, char *pic, float scale)
 	Draw_TexturedRect(gl->texnum, r_drawclampsampler, x, y, w, h, gl->sl, gl->tl, gl->sh, gl->th);
 }
 
-void RE_GL_Draw_Pic (int x, int y, char *pic)
-{
-	RE_GL_Draw_PicScaled(x, y, pic, 1.0f);
-}
 
 /*
 =============

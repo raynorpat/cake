@@ -373,7 +373,7 @@ void M_DrawPic (int x, int y, char *pic)
 {
 	float scale = SCR_GetMenuScale();
 
-	RE_Draw_PicScaled((x + ((viddef.width - 320) >> 1)) * scale, (y + ((viddef.height - 240) >> 1)) * scale, pic, scale);
+	RE_Draw_Pic ((x + ((viddef.width - 320) >> 1)) * scale, (y + ((viddef.height - 240) >> 1)) * scale, pic, scale);
 }
 
 /*
@@ -508,7 +508,7 @@ void M_Banner(char *name)
 	float scale = SCR_GetMenuScale();
 
 	RE_Draw_GetPicSize(&w, &h, name);
-	RE_Draw_PicScaled(viddef.width / 2 - (w * scale) / 2, viddef.height / 2 - (110 * scale), name, scale);
+	RE_Draw_Pic (viddef.width / 2 - (w * scale) / 2, viddef.height / 2 - (110 * scale), name, scale);
 }
 
 //=============================================================================
@@ -615,7 +615,7 @@ void M_Draw (void)
 		Menu_Draw(m_active);
 
 	// draw the mouse cursor
-	RE_Draw_PicScaled(m_mouse[0], m_mouse[1], "ch1", SCR_GetMenuScale());
+	RE_Draw_Pic (m_mouse[0], m_mouse[1], "ch1", SCR_GetMenuScale());
 
 	// delay playing the enter sound until after the
 	// menu has been drawn, to avoid delay while

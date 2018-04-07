@@ -76,9 +76,9 @@ static void Bitmap_Draw (menubitmap_s *b)
 	float scale = SCR_GetMenuScale();
 
 	if (Menu_ItemAtCursor(b->generic.parent) == b)
-		RE_Draw_PicScaled(b->generic.parent->x + b->generic.x, b->generic.parent->y + b->generic.y, va("%s_sel", (char *)b->generic.name), scale);
+		RE_Draw_Pic (b->generic.parent->x + b->generic.x, b->generic.parent->y + b->generic.y, va("%s_sel", (char *)b->generic.name), scale);
 	else
-		RE_Draw_PicScaled(b->generic.parent->x + b->generic.x, b->generic.parent->y + b->generic.y, (char *)b->generic.name, scale);
+		RE_Draw_Pic (b->generic.parent->x + b->generic.x, b->generic.parent->y + b->generic.y, (char *)b->generic.name, scale);
 }
 
 static qboolean Bitmap_DoEnter (menubitmap_s *b)

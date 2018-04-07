@@ -1811,7 +1811,7 @@ void PlayerConfig_MenuDraw (menuframework_s *self)
 		Com_sprintf (scratch, sizeof (scratch), "/players/%s/%s_i.pcx",
 					 s_pmi[s_player_model_box.curvalue].directory,
 					 s_pmi[s_player_model_box.curvalue].skindisplaynames[s_player_skin_box.curvalue]);
-		RE_Draw_PicScaled (s_player_config_menu.x - 40 * scale, refdef.y, scratch, scale);
+		RE_Draw_Pic (s_player_config_menu.x - 40 * scale, refdef.y, scratch, scale);
 	}
 }
 

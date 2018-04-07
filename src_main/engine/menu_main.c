@@ -89,7 +89,7 @@ static void M_DrawCursor(int x, int y, int f)
 	}
 
 	Com_sprintf(cursorname, sizeof(cursorname), "m_cursor%d", f);
-	RE_Draw_PicScaled(x, y, cursorname, scale);
+	RE_Draw_Pic (x, y, cursorname, scale);
 }
 
 static void MainMenu_CursorDraw(void *self)
@@ -121,9 +121,9 @@ void M_Main_Draw (menuframework_s *self)
 	xoffset = (viddef.width / scale - widest + 70) / 2;
 
 	RE_Draw_GetPicSize (&w, &h, "m_main_plaque");
-	RE_Draw_PicScaled ((xoffset - 30 - w) * scale, ystart * scale, "m_main_plaque", scale);
+	RE_Draw_Pic ((xoffset - 30 - w) * scale, ystart * scale, "m_main_plaque", scale);
 
-	RE_Draw_PicScaled ((xoffset - 30 - w) * scale, (ystart + h + 5) * scale, "m_main_logo", scale);
+	RE_Draw_Pic ((xoffset - 30 - w) * scale, (ystart + h + 5) * scale, "m_main_logo", scale);
 
 	Menu_Draw (self);
 }

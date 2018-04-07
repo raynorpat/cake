@@ -37,8 +37,7 @@ void            (* RE_Draw_TileClear)( int x, int y, int w, int h, char *pic ) =
 void			(* RE_Draw_SetColor)( float *rgba ) = NULL;
 void            (* RE_Draw_Char)( int x, int y, int num, float scale) = NULL;
 void		    (* RE_Draw_StretchPic)( int x, int y, int w, int h, char *pic ) = NULL;
-void            (* RE_Draw_PicScaled)( int x, int y, char *pic, float scale ) = NULL;
-void	        (* RE_Draw_Pic)( int x, int y, char *pic ) = NULL;
+void            (* RE_Draw_Pic)( int x, int y, char *pic, float scale ) = NULL;
 void            (* RE_Draw_GetPicSize)( int *w, int *h, char *pic ) = NULL;
 
 void            (* RE_BeginRegistration)( char *model ) = NULL;

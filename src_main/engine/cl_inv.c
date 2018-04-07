@@ -108,7 +108,7 @@ void CL_DrawInventory (void)
 	x = (viddef.width - scale * 256) / 2;
 	y = (viddef.height - scale * 240) / 2;
 
-	RE_Draw_PicScaled (x, y + scale * 8, "inventory", scale);
+	RE_Draw_Pic (x, y + scale * 8, "inventory", scale);
 
 	y += scale * 24;
 	x += scale * 24;

@@ -399,7 +399,7 @@ void SCR_DrawNet (void)
 	if (cls.netchan.outgoing_sequence - cls.netchan.incoming_acknowledged < CMD_BACKUP - 1)
 		return;
 
-	RE_Draw_PicScaled (64 * scale, 0, "net", scale);
+	RE_Draw_Pic (64 * scale, 0, "net", scale);
 }
 
 /*
@@ -420,7 +420,7 @@ void SCR_DrawPause (void)
 		return;
 
 	RE_Draw_GetPicSize (&w, &h, "pause");
-	RE_Draw_PicScaled ((viddef.width - w * scale) / 2, viddef.height / 2 + 8 * scale, "pause", scale);
+	RE_Draw_Pic ((viddef.width - w * scale) / 2, viddef.height / 2 + 8 * scale, "pause", scale);
 }
 
 /*
@@ -438,7 +438,7 @@ void SCR_DrawLoading (void)
 
 	scr_draw_loading = false;
 	RE_Draw_GetPicSize (&w, &h, "loading");
-	RE_Draw_PicScaled ((viddef.width - w * scale) / 2, (viddef.height - h * scale) / 2, "loading", scale);
+	RE_Draw_Pic ((viddef.width - w * scale) / 2, (viddef.height - h * scale) / 2, "loading", scale);
 }
 
 /*
@@ -780,7 +780,7 @@ void SCR_DrawFieldScaled (int x, int y, int color, int width, int value, float f
 		else
 			frame = *ptr - '0';
 
-		RE_Draw_PicScaled (x, y, sb_nums[color][frame], factor);
+		RE_Draw_Pic (x, y, sb_nums[color][frame], factor);
 		x += CHAR_WIDTH * factor;
 		ptr++;
 		l--;
@@ -913,7 +913,7 @@ void SCR_ExecuteLayoutString (char *s)
 
 			statpic = cl.configstrings[CS_IMAGES + value];
 			if (statpic)
-				RE_Draw_PicScaled (x, y, statpic, scale);
+				RE_Draw_Pic (x, y, statpic, scale);
 
 			if (statnum == STAT_SELECTED_ICON)
 			{
@@ -976,7 +976,7 @@ void SCR_ExecuteLayoutString (char *s)
 			if (!ci->icon)
 				ci = &cl.baseclientinfo;
 
-			RE_Draw_PicScaled (x, y, ci->iconname, scale);
+			RE_Draw_Pic (x, y, ci->iconname, scale);
 			continue;
 		}
 
@@ -1022,7 +1022,7 @@ void SCR_ExecuteLayoutString (char *s)
 		{
 			// draw a pic from a name
 			token = COM_Parse (&s);
-			RE_Draw_PicScaled (x, y, token, scale);
+			RE_Draw_Pic (x, y, token, scale);
 			continue;
 		}
 
@@ -1053,7 +1053,7 @@ void SCR_ExecuteLayoutString (char *s)
 				color = 1;
 
 			if (cl.frame.playerstate.stats[STAT_FLASHES] & 1)
-				RE_Draw_PicScaled (x, y, "field_3", scale);
+				RE_Draw_Pic (x, y, "field_3", scale);
 
 			SCR_DrawFieldScaled (x, y, color, width, value, scale);
 			continue;
@@ -1075,7 +1075,7 @@ void SCR_ExecuteLayoutString (char *s)
 				continue;	// negative number = don't show
 
 			if (cl.frame.playerstate.stats[STAT_FLASHES] & 4)
-				RE_Draw_PicScaled (x, y, "field_3", scale);
+				RE_Draw_Pic (x, y, "field_3", scale);
 
 			SCR_DrawFieldScaled (x, y, color, width, value, scale);
 			continue;
@@ -1095,7 +1095,7 @@ void SCR_ExecuteLayoutString (char *s)
 			color = 0;	// green
 
 			if (cl.frame.playerstate.stats[STAT_FLASHES] & 2)
-				RE_Draw_PicScaled (x, y, "field_3", scale);
+				RE_Draw_Pic (x, y, "field_3", scale);
 
 			SCR_DrawFieldScaled (x, y, color, width, value, scale);
 			continue;
@@ -1261,7 +1261,7 @@ void SCR_UpdateScreen (void)
 			scr_draw_loading = false;
 
 			RE_Draw_GetPicSize (&w, &h, "loading");
-			RE_Draw_PicScaled((viddef.width - w * scale) / 2, (viddef.height - h * scale) / 2, "loading", scale);
+			RE_Draw_Pic ((viddef.width - w * scale) / 2, (viddef.height - h * scale) / 2, "loading", scale);
 		}
 		// if a cinematic is supposed to be running, handle menus
 		// and console specially

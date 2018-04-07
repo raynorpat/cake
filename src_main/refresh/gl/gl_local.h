@@ -335,8 +335,7 @@ void R_DrawSkyChain (msurface_t *surf);
 void R_DrawSurfaceChain (msurface_t *chain, int numindexes);
 
 void RE_GL_Draw_GetPicSize (int *w, int *h, char *name);
-void RE_GL_Draw_Pic (int x, int y, char *name);
-void RE_GL_Draw_PicScaled (int x, int y, char *name, float scale);
+void RE_GL_Draw_Pic (int x, int y, char *name, float scale);
 void RE_GL_Draw_StretchPic (int x, int y, int w, int h, char *name);
 void RE_GL_Draw_SetColor (float *rgba);
 void RE_GL_Draw_Char (int x, int y, int num, float scale);
