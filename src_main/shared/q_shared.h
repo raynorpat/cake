@@ -141,6 +141,42 @@ typedef	int	fixed4_t;
 typedef	int	fixed8_t;
 typedef	int	fixed16_t;
 
+extern	vec4_t colorBlack;
+extern	vec4_t colorRed;
+extern	vec4_t colorGreen;
+extern	vec4_t colorBlue;
+extern	vec4_t colorYellow;
+extern	vec4_t colorMagenta;
+extern	vec4_t colorCyan;
+extern	vec4_t colorWhite;
+extern	vec4_t colorLtGrey;
+extern	vec4_t colorMdGrey;
+extern	vec4_t colorDkGrey;
+
+#define Q_COLOR_ESCAPE	'^'
+#define Q_IsColorString(p)	(p && *(p) == Q_COLOR_ESCAPE && *((p)+1) && *((p)+1) != Q_COLOR_ESCAPE)
+
+#define COLOR_BLACK		'0'
+#define COLOR_RED		'1'
+#define COLOR_GREEN		'2'
+#define COLOR_YELLOW	'3'
+#define COLOR_BLUE		'4'
+#define COLOR_CYAN		'5'
+#define COLOR_MAGENTA	'6'
+#define COLOR_WHITE		'7'
+#define ColorIndex(c)	(((c) - '0') & 7)
+
+#define S_COLOR_BLACK	"^0"
+#define S_COLOR_RED		"^1"
+#define S_COLOR_GREEN	"^2"
+#define S_COLOR_YELLOW	"^3"
+#define S_COLOR_BLUE	"^4"
+#define S_COLOR_CYAN	"^5"
+#define S_COLOR_MAGENTA	"^6"
+#define S_COLOR_WHITE	"^7"
+
+extern vec4_t g_color_table[8];
+
 #ifndef bound
 #define bound(a,b,c) ((a) >= (c) ? (a) : (b) < (a) ? (a) : (b) > (c) ? (c) : (b))
 #endif
@@ -265,6 +301,12 @@ int Q_strncasecmp (char *s1, char *s2, int n);
 char *Q_strlwr (char *s);
 int Q_strlcpy (char *dst, const char *src, int size);
 int Q_strlcat (char *dst, const char *src, int size);
+
+// strlen that discounts Quake color sequences
+int Q_PrintStrlen (const char *string);
+
+// removes color sequences from string
+char *Q_CleanStr (char *string);
 
 int glob_match (char *pattern, char *text);
 

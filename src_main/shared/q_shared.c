@@ -19,7 +19,31 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 */
 #include "q_shared.h"
 
-vec3_t vec3_origin = {0, 0, 0};
+vec3_t vec3_origin = { 0, 0, 0 };
+
+vec4_t colorBlack = { 0, 0, 0, 1 };
+vec4_t colorRed = { 1, 0, 0, 1 };
+vec4_t colorGreen = { 0, 1, 0, 1 };
+vec4_t colorBlue = { 0, 0, 1, 1 };
+vec4_t colorYellow = { 1, 1, 0, 1 };
+vec4_t colorMagenta = { 1, 0, 1, 1 };
+vec4_t colorCyan = { 0, 1, 1, 1 };
+vec4_t colorWhite = { 1, 1, 1, 1 };
+vec4_t colorLtGrey = { 0.75, 0.75, 0.75, 1 };
+vec4_t colorMdGrey = { 0.5, 0.5, 0.5, 1 };
+vec4_t colorDkGrey = { 0.25, 0.25, 0.25, 1 };
+
+vec4_t g_color_table[8] =
+{
+	{ 0.0, 0.0, 0.0, 1.0 },
+	{ 1.0, 0.0, 0.0, 1.0 },
+	{ 0.0, 1.0, 0.0, 1.0 },
+	{ 1.0, 1.0, 0.0, 1.0 },
+	{ 0.0, 0.0, 1.0, 1.0 },
+	{ 0.0, 1.0, 1.0, 1.0 },
+	{ 1.0, 0.0, 1.0, 1.0 },
+	{ 1.0, 1.0, 1.0, 1.0 },
+};
 
 //============================================================================
 
@@ -1521,6 +1545,51 @@ int Q_strlcat(char *dst, const char *src, int size)
 	}
 
 	return (d - dst) + Q_strlcpy(d, src, size);
+}
+
+int Q_PrintStrlen (const char *string)
+{
+	int	len;
+	const char *p;
+
+	if (!string)
+		return 0;
+
+	len = 0;
+	p = string;
+	while (*p)
+	{
+		if (Q_IsColorString(p))
+		{
+			p += 2;
+			continue;
+		}
+		p++;
+		len++;
+	}
+
+	return len;
+}
+
+char *Q_CleanStr (char *string)
+{
+	char *d;
+	char *s;
+	int	c;
+
+	s = string;
+	d = string;
+	while ((c = *s) != 0)
+	{
+		if (Q_IsColorString(s))
+			s++;
+		else if (c >= 0x20 && c <= 0x7E)
+			*d++ = c;
+		s++;
+	}
+	*d = '\0';
+
+	return string;
 }
 
 /*
