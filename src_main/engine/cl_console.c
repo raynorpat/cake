@@ -589,8 +589,10 @@ void Con_DrawConsole (float frac)
 
 	Com_sprintf (version, sizeof (version), "v%4.2f", VERSION);
 
+	RE_Draw_SetColor (colorRed);
 	for (x = 0; x < 5; x++)
-		RE_Draw_CharScaled (viddef.width - (44 * scale) + x * 8 * scale, lines - 12 * scale, 128 + version[x], scale);
+		RE_Draw_CharScaled (viddef.width - (44 * scale) + x * 8 * scale, lines - 12 * scale, version[x], scale);
+	RE_Draw_SetColor (NULL);
 
 	// draw the text
 	con.vislines = lines;
