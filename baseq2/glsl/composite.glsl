@@ -27,6 +27,45 @@ uniform vec4 brightParam;
 
 out vec4 fragColor;
 
+float s;
+void srand(vec2 p){
+	s=sin(dot(p,vec2(423.62431,321.54323)));
+}
+float rand(){
+	s=fract(s*32322.65432+0.12333);
+	return abs(fract(s));
+}
+float grad(float t){
+	return 6.0*pow(t,5.0)-15.0*pow(t,4.0)+10.0*pow(t,3.0);
+}
+mat2 rot2d(float a){
+	float c=cos(a);
+	float s=sin(a);
+	return mat2(
+		c,-s,
+		s, c);
+}
+#define RES 100.0
+vec4 voronoi2d(vec2 p){
+	float v=8.0;
+	vec4 c;
+	vec2 f=floor(p);
+	for(float i=-3.0;i<3.0;i++)
+	for(float j=-3.0;j<3.0;j++){
+		srand(f+vec2(i,j));
+		vec2 o;
+		o.x=rand();
+		o.y=rand();
+		o*=rot2d((rand()-0.1));
+		float d=distance(p,f+vec2(i,j)+o);
+		if(d<v){
+			v=d;
+			c=texture(diffuse,(f+vec2(i,j)+o)/RES);
+		}
+	}
+	return c;
+}
+
 void CompositeFS ()
 {
 	vec4 color = vec4(0.0);
@@ -100,22 +139,27 @@ void CompositeFS ()
 		// grab scene
 		color = texture (diffuse, st);
 		
-		// convert to greyscale using NTSC weightings
-		float grey = dot(color.rgb, vec3(0.299, 0.587, 0.114));
-		
 		// multiply rgb weightings with grayscale value to give sepia look
-		vec3 sepia = vec3(1.2, 1.0, 0.8);
-		sepia *= grey;
-		vec4 colorSepia = vec4(mix(color.rgb, sepia, 0.88), 1.0);
+		vec4 colorSepia = color;
+		float avg = (colorSepia.r + colorSepia.g + colorSepia.b) / 3.0; // grayscale
+		colorSepia.r *= abs(cos(avg));
+		colorSepia.g *= abs(sin(avg));
+		colorSepia.b *= abs(atan(avg) * sin(avg));
 		
 		// small vignette
 		float OuterVignetting = 1.4 - 0.75;
 		float InnerVignetting = 1.0 - 0.75;
 		float d = distance(vec2(0.5, 0.5), st) * 1.0;
 		float vignetting = clamp((OuterVignetting - d) / (OuterVignetting - InnerVignetting), 0.0, 1.0);
-		
+
 		// mix everything together
-		color = mix(color, colorSepia, vignetting) / 2;
+		color = mix(color, colorSepia, vignetting);
+		
+		// glass look from https://www.shadertoy.com/view/MsfXzB
+		vec4 glass = voronoi2d(st * RES);
+		color *= glass * 2; // bump up the output by 2, since this is quite dark
+
+		// output
 		fragColor = color;
 		return;
 	}
