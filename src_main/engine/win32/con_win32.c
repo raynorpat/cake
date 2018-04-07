@@ -26,6 +26,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #define QCONSOLE_HISTORY 32
 
 static WORD qconsole_attrib;
+static WORD qconsole_backgroundAttrib;
 
 // saved console status
 static DWORD qconsole_orig_mode;
@@ -42,6 +43,39 @@ static int qconsole_linelen = 0;
 
 static HANDLE qconsole_hout;
 static HANDLE qconsole_hin;
+
+/*
+==================
+CON_ColorCharToAttrib
+
+Convert Quake color character to Windows text attrib
+==================
+*/
+static WORD CON_ColorCharToAttrib (char color)
+{
+	WORD attrib;
+
+	if (color == COLOR_WHITE)
+	{
+		// use console's foreground and background colors
+		attrib = qconsole_attrib;
+	}
+	else
+	{
+		float *rgba = g_color_table[ColorIndex(color)];
+
+		// set foreground color
+		attrib = (rgba[0] >= 0.5 ? FOREGROUND_RED : 0) |
+			(rgba[1] >= 0.5 ? FOREGROUND_GREEN : 0) |
+			(rgba[2] >= 0.5 ? FOREGROUND_BLUE : 0) |
+			(rgba[3] >= 0.5 ? FOREGROUND_INTENSITY : 0);
+
+		// use console's background color
+		attrib |= qconsole_backgroundAttrib;
+	}
+
+	return attrib;
+}
 
 /*
 ==================
@@ -129,6 +163,15 @@ CON_Hide
 */
 void CON_Hide (void)
 {
+	int realLen;
+	
+	realLen = qconsole_linelen;
+	
+	// remove input line from console output buffer
+	qconsole_linelen = 0;
+	CON_Show();
+	
+	qconsole_linelen = realLen;
 }
 
 /*
@@ -144,6 +187,7 @@ void CON_Show (void)
 	SMALL_RECT writeArea = { 0, 0, 0, 0 };
 	int i;
 	CHAR_INFO line[MAXCMDLINE];
+	WORD attrib;
 
 	GetConsoleScreenBufferInfo(qconsole_hout, &binfo);
 
@@ -156,15 +200,25 @@ void CON_Show (void)
 	writeArea.Bottom = binfo.dwCursorPosition.Y;
 	writeArea.Right = MAXCMDLINE;
 
+	// set color to white
+	attrib = CON_ColorCharToAttrib(COLOR_WHITE);
+
 	// build a space-padded CHAR_INFO array
 	for (i = 0; i < MAXCMDLINE; i++)
 	{
 		if (i < qconsole_linelen)
-			line[i].Char.AsciiChar = qconsole_line[i];
-		else
-			line[i].Char.AsciiChar = ' ';
+		{
+			if (Q_IsColorString(qconsole_line + i))
+				attrib = CON_ColorCharToAttrib(*(qconsole_line + i + 1));
 
-		line[i].Attributes = qconsole_attrib;
+			line[i].Char.AsciiChar = qconsole_line[i];
+		}
+		else
+		{
+			line[i].Char.AsciiChar = ' ';
+		}
+
+		line[i].Attributes = attrib;
 	}
 
 	if (qconsole_linelen > binfo.srWindow.Right)
@@ -184,8 +238,10 @@ CON_Shutdown
 */
 void CON_Shutdown (void)
 {
+	CON_Hide();
 	SetConsoleMode(qconsole_hin, qconsole_orig_mode);
 	SetConsoleCursorInfo(qconsole_hout, &qconsole_orig_cursorinfo);
+	SetConsoleTextAttribute(qconsole_hout, qconsole_attrib);
 	CloseHandle(qconsole_hout);
 	CloseHandle(qconsole_hin);
 }
@@ -215,13 +271,13 @@ void CON_Init (void)
 	GetConsoleMode(qconsole_hin, &qconsole_orig_mode);
 
 	// allow mouse wheel scrolling
-	SetConsoleMode(qconsole_hin,
-		qconsole_orig_mode & ~ENABLE_MOUSE_INPUT);
+	SetConsoleMode(qconsole_hin, qconsole_orig_mode & ~ENABLE_MOUSE_INPUT);
 
 	FlushConsoleInputBuffer(qconsole_hin);
 
 	GetConsoleScreenBufferInfo(qconsole_hout, &info);
 	qconsole_attrib = info.wAttributes;
+	qconsole_backgroundAttrib = qconsole_attrib & (BACKGROUND_BLUE | BACKGROUND_GREEN | BACKGROUND_RED | BACKGROUND_INTENSITY);
 
 	SetConsoleTitle("Dedicated Server Console");
 
@@ -234,6 +290,9 @@ void CON_Init (void)
 	// initialize history
 	for (i = 0; i < QCONSOLE_HISTORY; i++)
 		qconsole_history[i][0] = '\0';
+
+	// set text color to white
+	SetConsoleTextAttribute(qconsole_hout, CON_ColorCharToAttrib(COLOR_WHITE));
 }
 
 /*
@@ -338,13 +397,70 @@ char *CON_ConsoleInput (void)
 		return NULL;
 	}
 
-	CON_HistAdd();
-	Com_Printf("%s\n", qconsole_line);
-
 	qconsole_linelen = 0;
 	CON_Show();
 
+	CON_HistAdd();
+	Com_Printf("%s\n", qconsole_line);
+
 	return qconsole_line;
+}
+
+/*
+=================
+CON_WindowsColorPrint
+
+Set text colors based on Q3 color codes
+=================
+*/
+void CON_WindowsColorPrint(char *msg)
+{
+	static char buffer[MAXPRINTMSG];
+	int         length = 0;
+
+	while (*msg)
+	{
+		if (Q_IsColorString(msg) || *msg == '\n')
+		{
+			// First empty the buffer
+			if (length > 0)
+			{
+				buffer[length] = '\0';
+				fputs(buffer, stderr);
+				length = 0;
+			}
+
+			if (*msg == '\n')
+			{
+				// Reset color and then add the newline
+				SetConsoleTextAttribute(qconsole_hout, CON_ColorCharToAttrib(COLOR_WHITE));
+				fputs("\n", stderr);
+				msg++;
+			}
+			else
+			{
+				// Set the color
+				SetConsoleTextAttribute(qconsole_hout, CON_ColorCharToAttrib(*(msg + 1)));
+				msg += 2;
+			}
+		}
+		else
+		{
+			if (length >= MAXPRINTMSG - 1)
+				break;
+
+			buffer[length] = *msg;
+			length++;
+			msg++;
+		}
+	}
+
+	// Empty anything still left in the buffer
+	if (length > 0)
+	{
+		buffer[length] = '\0';
+		fputs(buffer, stderr);
+	}
 }
 
 /*
@@ -356,7 +472,7 @@ void CON_Print(char *string)
 {
 	CON_Hide();
 
-	fputs(string, stderr);
+	CON_WindowsColorPrint(string);
 
 	CON_Show();
 }
