@@ -667,11 +667,7 @@ Print text to the dedicated console
 void Sys_Print (char *string)
 {
 #ifdef DEDICATED_ONLY
-	CON_Hide();
-
 	CON_Print(string);
-
-	CON_Show();
 #endif
 }
 
