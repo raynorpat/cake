@@ -215,27 +215,6 @@ char *FS_Gamedir(void)
 
 /*
 =================
-FS_FileForHandle
-
-Returns a FILE * for a fileHandle_t.
-=================
-*/
-FILE *FS_FileForHandle(fileHandle_t f)
-{
-	fsHandle_t     *handle;
-
-	handle = FS_GetFileByHandle(f);
-
-	if (handle->zip != NULL)
-		Com_Error(ERR_DROP, "FS_FileForHandle: can't get FILE on zip file");
-	if (handle->file == NULL)
-		Com_Error(ERR_DROP, "FS_FileForHandle: NULL");
-
-	return handle->file;
-}
-
-/*
-=================
 FS_HandleForFile
 
 Finds a free fileHandle_t.

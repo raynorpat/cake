@@ -664,7 +664,6 @@ typedef enum
 } fsSearchType_t;
 
 void		FS_Shutdown(void);
-FILE		*FS_FileForHandle(fileHandle_t f);
 int			FS_FOpenFile(const char *name, fileHandle_t * f, fsMode_t mode, qboolean gamedirOnly);
 void		FS_FCloseFile(fileHandle_t f);
 int			FS_Read(void *buffer, int size, fileHandle_t f);
