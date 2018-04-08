@@ -423,6 +423,24 @@ void RE_GL_Draw_StretchPic (int x, int y, int w, int h, char *pic)
 	Draw_TexturedRect (gl->texnum, r_drawclampsampler, x, y, w, h, gl->sl, gl->tl, gl->sh, gl->th);
 }
 
+/*
+=============
+RE_Draw_StretchPicExt
+=============
+*/
+void RE_GL_Draw_StretchPicExt (float x, float y, float w, float h, float sl, float tl, float sh, float th, char *pic)
+{
+	image_t *gl;
+
+	gl = RE_GL_Draw_RegisterPic(pic);
+	if (!gl)
+	{
+		VID_Printf(PRINT_ALL, S_COLOR_RED "Can't find pic: %s\n", pic);
+		return;
+	}
+
+	Draw_TexturedRect (gl->texnum, r_drawclampsampler, x, y, w, h, sl, tl, sh, th);
+}
 
 /*
 =============
@@ -434,7 +452,6 @@ void RE_GL_Draw_Pic (int x, int y, char *pic, float scale)
 	image_t *gl;
 
 	gl = RE_GL_Draw_RegisterPic (pic);
-
 	if (!gl)
 	{
 		VID_Printf(PRINT_ALL, S_COLOR_RED "Can't find pic: %s\n", pic);
@@ -461,7 +478,6 @@ void RE_GL_Draw_TileClear (int x, int y, int w, int h, char *pic)
 	image_t	*image;
 
 	image = RE_GL_Draw_RegisterPic (pic);
-
 	if (!image)
 	{
 		VID_Printf (PRINT_ALL, S_COLOR_RED "Can't find pic: %s\n", pic);
