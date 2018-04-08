@@ -213,7 +213,18 @@ void Q_sincos (float angradians, float *angsin, float *angcos);
 #define VectorNegate(src,dst)	(dst[0]=-src[0],dst[1]=-src[1],dst[2]=-src[2])
 
 #define Vector2Set(v, x, y)		(v[0]=(x), v[1]=(y))
+
 #define Vector3Set(v, x, y, z)	(v[0]=(x), v[1]=(y), v[2]=(z))
+
+#define DotProduct4(x,y)		((x)[0]*(y)[0]+(x)[1]*(y)[1]+(x)[2]*(y)[2]+(x)[3]*(y)[3])
+#define Vector4Subtract(a,b,c)	((c)[0]=(a)[0]-(b)[0],(c)[1]=(a)[1]-(b)[1],(c)[2]=(a)[2]-(b)[2],(c)[3]=(a)[3]-(b)[3])
+#define Vector4Add(a,b,c)		((c)[0]=(a)[0]+(b)[0],(c)[1]=(a)[1]+(b)[1],(c)[2]=(a)[2]+(b)[2],(c)[3]=(a)[3]+(b)[3])
+#define Vector4Copy(a,b)		((b)[0]=(a)[0],(b)[1]=(a)[1],(b)[2]=(a)[2],(b)[3]=(a)[3])
+#define Vector4Scale(v, s, o)	((o)[0]=(v)[0]*(s),(o)[1]=(v)[1]*(s),(o)[2]=(v)[2]*(s),(o)[3]=(v)[3]*(s))
+#define Vector4MA(v, s, b, o)	((o)[0]=(v)[0]+(b)[0]*(s),(o)[1]=(v)[1]+(b)[1]*(s),(o)[2]=(v)[2]+(b)[2]*(s),(o)[3]=(v)[3]+(b)[3]*(s))
+#define Vector4Clear(a)			((a)[0]=(a)[1]=(a)[2]=(a)[3]=0)
+#define Vector4Negate(a,b)		((b)[0]=-(a)[0],(b)[1]=-(a)[1],(b)[2]=-(a)[2],(b)[3]=-(a)[3])
+#define Vector4Set(v,x,y,z,w)	((v)[0]=(x),(v)[1]=(y),(v)[2]=(z),(v)[3]=(w))
 
 void VectorMA (vec3_t addvec, float scale, vec3_t mulvec, vec3_t out);
 
