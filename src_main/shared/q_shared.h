@@ -1077,4 +1077,43 @@ typedef struct
 	short		stats[MAX_STATS];		// fast status bar updates
 } player_state_t;
 
+
+// font support
+#define UI_LEFT			0x00000000	// default
+#define UI_CENTER		0x00000001
+#define UI_RIGHT		0x00000002
+
+#define UI_SMALLFONT	0x00000010
+#define UI_BIGFONT		0x00000020	// default
+#define UI_GIANTFONT	0x00000040
+#define UI_DROPSHADOW	0x00000800
+
+#define GLYPH_START 0
+#define GLYPH_END 255
+#define GLYPH_CHARSTART 32
+#define GLYPH_CHAREND 127
+#define GLYPHS_PER_FONT GLYPH_END - GLYPH_START + 1
+typedef struct
+{
+	int             height;		// number of scan lines
+	int             top;		// top of glyph in buffer
+	int             bottom;		// bottom of glyph in buffer
+	int             pitch;		// width for copying
+	int             xSkip;		// x adjustment
+	int             imageWidth;	// width of actual image
+	int             imageHeight; // height of actual image
+	float           s;			// x offset in image where glyph starts
+	float           t;			// y offset in image where glyph starts
+	float           s2;
+	float           t2;
+	char            imageName[MAX_OSPATH];
+} glyphInfo_t;
+
+typedef struct
+{
+	glyphInfo_t     glyphs[GLYPHS_PER_FONT];
+	float           glyphScale;
+	char            name[MAX_QPATH];
+} fontInfo_t;
+
 #endif

@@ -54,7 +54,7 @@ typedef struct drawstate_s
 	qboolean drawing;
 	GLuint currenttexture;
 	GLuint currentsampler;
-	vec4_t colorAdd;
+	float colorAdd[4];
 	float texturecolormix;
 	float brightness;
 	float contrast;
@@ -155,7 +155,6 @@ void Draw_Begin2D (void)
 		gl_drawstate.texturecolormix = -1.0f;
 		gl_drawstate.brightness = -1.0f;
 		gl_drawstate.contrast = -1.0f;
-		VectorCopy (colorWhite, gl_drawstate.colorAdd);
 
 		// program is always active
 		GL_UseProgram (gl_drawprog);
@@ -347,8 +346,7 @@ void RE_GL_Draw_Char (int x, int y, int num, float scale)
 	num &= 255;
 
 	if ((num & 127) == 32)
-		return;		// space
-
+		return;			// space
 	if (y <= -8)
 		return;			// totally off screen
 
@@ -375,6 +373,11 @@ image_t	*RE_GL_Draw_RegisterPic(char *name)
 	{
 		Com_sprintf (fullname, sizeof (fullname), "pics/%s.pcx", name);
 		gl = GL_FindImage (fullname, it_pic);
+		if (!gl)
+		{
+			Com_sprintf(fullname, sizeof(fullname), "%s", name);
+			gl = GL_FindImage(fullname, it_pic);
+		}
 	}
 	else gl = GL_FindImage (name + 1, it_pic);
 
@@ -391,7 +394,6 @@ void RE_GL_Draw_GetPicSize (int *w, int *h, char *pic)
 	image_t *gl;
 
 	gl = RE_GL_Draw_RegisterPic (pic);
-
 	if (!gl)
 	{
 		*w = *h = -1;
@@ -412,7 +414,6 @@ void RE_GL_Draw_StretchPic (int x, int y, int w, int h, char *pic)
 	image_t *gl;
 
 	gl = RE_GL_Draw_RegisterPic (pic);
-
 	if (!gl)
 	{
 		VID_Printf (PRINT_ALL, S_COLOR_RED "Can't find pic: %s\n", pic);

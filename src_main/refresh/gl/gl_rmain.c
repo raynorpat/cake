@@ -948,6 +948,8 @@ int RE_GL_Init (void)
 
 	R_Register ();
 
+	R_InitFreeType ();
+
 	// initialize OS-specific parts of OpenGL
 	if (!VID_Init_GL())
 		return -1;
@@ -1024,6 +1026,8 @@ void RE_GL_Shutdown (void)
 	GL_ShutdownImages ();
 
 	R_ShutdownFBOs ();
+
+	R_DoneFreeType ();
 
 	// shut down OS specific OpenGL stuff like contexts, etc.
 	VID_Shutdown_GL(true);
