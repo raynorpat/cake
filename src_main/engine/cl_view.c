@@ -31,7 +31,10 @@ struct model_s	*gun_model;
 //=============
 
 cvar_t		*crosshair;
-cvar_t		*crosshair_scale;
+cvar_t		*crosshairX;
+cvar_t		*crosshairY;
+cvar_t		*crosshairSize;
+
 cvar_t		*cl_testparticles;
 cvar_t		*cl_testentities;
 cvar_t		*cl_testlights;
@@ -451,7 +454,7 @@ SCR_DrawCrosshair
 */
 void SCR_DrawCrosshair (void)
 {
-	float scale;
+	float x, y, w, h;
 
 	if (!crosshair->value)
 		return;
@@ -465,16 +468,14 @@ void SCR_DrawCrosshair (void)
 	if (!crosshair_pic[0])
 		return;
 
-	if (crosshair_scale->value < 0)
-	{
-		scale = SCR_GetHUDScale ();
-	}
-	else
-	{
-		scale = crosshair_scale->value;
-	}
+	w = h = crosshairSize->value;
 
-	RE_Draw_Pic ((viddef.width - crosshair_width * scale) / 2, (viddef.height - crosshair_height * scale) / 2, crosshair_pic, scale);
+	x = crosshairX->integer;
+	y = crosshairY->integer;
+
+	SCR_AdjustFrom640 (&x, &y, &w, &h);
+
+	RE_Draw_StretchPicExt (x + cl.refdef.x + 0.5 * (cl.refdef.width - w), y + cl.refdef.y + 0.5 * (cl.refdef.height - h), w, h, 0, 0, 1, 1, crosshair_pic);
 }
 
 /*
@@ -631,7 +632,9 @@ void V_Init (void)
 	Cmd_AddCommand ("viewpos", V_Viewpos_f);
 
 	crosshair = Cvar_Get ("crosshair", "0", CVAR_ARCHIVE);
-	crosshair_scale = Cvar_Get("crosshair_scale", "-1", CVAR_ARCHIVE);
+	crosshairX = Cvar_Get ("crosshairX", "0", CVAR_ARCHIVE);
+	crosshairY = Cvar_Get ("crosshairY", "0", CVAR_ARCHIVE);
+	crosshairSize = Cvar_Get ("crosshairSize", "12", CVAR_ARCHIVE);
 
 	cl_testblend = Cvar_Get ("cl_testblend", "0", 0);
 	cl_testparticles = Cvar_Get ("cl_testparticles", "0", 0);
