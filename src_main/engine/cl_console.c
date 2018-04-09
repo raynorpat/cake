@@ -66,20 +66,12 @@ Con_ToggleConsole_f
 */
 void Con_ToggleConsole_f (void)
 {
-	SCR_EndLoadingPlaque ();	// get rid of loading plaque
-
-	if (cl.attractloop)
-	{
-		Cbuf_AddText ("killserver\n");
+	// can't toggle the console when it's the only thing available
+	if (cls.state == ca_disconnected && cls.key_dest == key_console)
 		return;
-	}
 
-	if (cls.state == ca_disconnected)
-	{
-		// start the demo loop again
-		Cbuf_AddText ("d1\n");
-		return;
-	}
+	// get rid of loading plaque
+	SCR_EndLoadingPlaque ();
 
 	Key_ClearTyping ();
 	Con_ClearNotify ();
@@ -93,8 +85,7 @@ void Con_ToggleConsole_f (void)
 	{
 		M_ForceMenuOff ();
 		cls.key_dest = key_console;
-
-		if (Cvar_VariableValue ("maxclients") == 1 && Com_ServerState ())
+		if (Cvar_VariableValue ("maxclients") == 1 && Com_ServerState () && !cl.attractloop)
 			Cvar_Set ("paused", "1");
 	}
 }

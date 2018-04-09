@@ -955,10 +955,6 @@ void Key_Event (int key, qboolean down, qboolean special)
 		return;
 	}
 	
-	// any key during the attract mode will bring up the menu
-	if (cl.attractloop && (cls.key_dest != key_menu) && !((key >= K_F1) && (key <= K_F12)))
-		key = K_ESCAPE;
-
 	// menu key is hardcoded, so the user can never unbind it
 	if (!cls.disable_screen)
 	{
@@ -996,9 +992,7 @@ void Key_Event (int key, qboolean down, qboolean special)
 
 	// key is unbound
 	if ((key >= 200) && !keybindings[key] && (cls.key_dest != key_console))
-	{
 		Com_Printf("%s is unbound, hit F4 to set.\n", Key_KeynumToString(key));
-	}
 
 	// track if any key is down for BUTTON_ANY
 	if (down)
@@ -1009,7 +1003,6 @@ void Key_Event (int key, qboolean down, qboolean special)
 	else
 	{
 		anykeydown--;
-
 		if (anykeydown < 0)
 			anykeydown = 0;
 	}
@@ -1030,7 +1023,6 @@ void Key_Event (int key, qboolean down, qboolean special)
 			Com_sprintf(cmd, sizeof(cmd), "-%s %i %i\n", kb + 1, key, time);
 			Cbuf_AddText(cmd);
 		}
-
 		return;
 	}
 	else if (((cls.key_dest == key_menu) && menubound[key]) ||
