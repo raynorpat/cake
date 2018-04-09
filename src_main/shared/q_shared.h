@@ -1088,8 +1088,21 @@ typedef struct
 	short		stats[MAX_STATS];		// fast status bar updates
 } player_state_t;
 
+// all drawing is done to a 640*480 virtual screen size
+// and will be automatically scaled to the real resolution
+#define SCREEN_WIDTH		640
+#define SCREEN_HEIGHT		480
 
 // font support
+#define SMALLCHAR_WIDTH		8
+#define SMALLCHAR_HEIGHT	16
+
+#define BIGCHAR_WIDTH		16
+#define BIGCHAR_HEIGHT		16
+
+#define GIANTCHAR_WIDTH		32
+#define GIANTCHAR_HEIGHT	48
+
 #define UI_LEFT			0x00000000	// default
 #define UI_CENTER		0x00000001
 #define UI_RIGHT		0x00000002
