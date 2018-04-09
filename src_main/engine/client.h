@@ -398,7 +398,6 @@ extern	netadr_t	net_from;
 extern	sizebuf_t	net_message;
 
 void DrawStringScaled (int x, int y, char *s, float factor);
-void DrawAltStringScaled (int x, int y, char *s, float factor); // toggle high bit
 
 qboolean CL_CheckOrDownloadFile (char *filename);
 

@@ -125,7 +125,7 @@ SCR_DrawPic
 Coordinates are 640*480 virtual values
 =================
 */
-void SCR_DrawPic(float x, float y, float width, float height, char *pic)
+void SCR_DrawPic (float x, float y, float width, float height, char *pic)
 {
 	SCR_AdjustFrom640 (&x, &y, &width, &height);
 	RE_Draw_StretchPicExt (x, y, width, height, 0, 0, 1, 1, pic);
@@ -370,30 +370,6 @@ void SCR_Text_PaintAligned(int x, int y, char *s, float scale, int style, vec4_t
 	}
 }
 
-void DrawStringScaled(int x, int y, char *s, float factor)
-{
-	while (*s)
-	{
-		RE_Draw_Char (x, y, *s, factor);
-		x += 8 * factor;
-		s++;
-	}
-}
-
-void DrawAltStringScaled(int x, int y, char *s, float factor)
-{
-	RE_Draw_SetColor (colorGreen);
-
-	while (*s)
-	{
-		RE_Draw_Char (x, y, *s, factor);
-		x += 8 * factor;
-		s++;
-	}
-
-	RE_Draw_SetColor (NULL);
-}
-
 /*
 ===============================================================================
 
@@ -415,14 +391,12 @@ void CL_AddNetgraph (void)
 	int		in;
 	int		ping;
 
-	// if using the debuggraph for something else, don't
-	// add the net lines
+	// if using the debuggraph for something else, don't add the net lines
 	if (scr_debuggraph->value || scr_timegraph->value)
 		return;
 
 	for (i = 0; i < cls.netchan.dropped; i++)
 		SCR_DebugGraph (30, 0x40);
-
 	for (i = 0; i < cl.surpressCount; i++)
 		SCR_DebugGraph (30, 0xdf);
 
@@ -430,13 +404,11 @@ void CL_AddNetgraph (void)
 	in = cls.netchan.incoming_acknowledged & (CMD_BACKUP - 1);
 	ping = cls.realtime - cl.cmd_time[in];
 	ping /= 30;
-
 	if (ping > 30)
 		ping = 30;
 
 	SCR_DebugGraph (ping, 0xd0);
 }
-
 
 typedef struct
 {
@@ -663,12 +635,14 @@ SCR_DrawNet
 */
 void SCR_DrawNet (void)
 {
+	int	w, h;
 	float scale = SCR_GetMenuScale();
 
 	if (cls.netchan.outgoing_sequence - cls.netchan.incoming_acknowledged < CMD_BACKUP - 1)
 		return;
 
-	RE_Draw_Pic (64 * scale, 0, "net", scale);
+	RE_Draw_GetPicSize(&w, &h, "net");
+	SCR_DrawPic (64, 0, w, h, "net");
 }
 
 /*
@@ -679,7 +653,6 @@ SCR_DrawPause
 void SCR_DrawPause (void)
 {
 	int	w, h;
-	float scale = SCR_GetMenuScale();
 
 	if (cls.key_dest == key_menu)	// turn off in menu
 		return;
@@ -689,7 +662,7 @@ void SCR_DrawPause (void)
 		return;
 
 	RE_Draw_GetPicSize (&w, &h, "pause");
-	RE_Draw_Pic ((viddef.width - w * scale) / 2, viddef.height / 2 + 8 * scale, "pause", scale);
+	SCR_DrawPic((SCREEN_WIDTH - w) / 2, (SCREEN_HEIGHT - h) / 2, w, h, "pause");
 }
 
 /*
@@ -700,14 +673,13 @@ SCR_DrawLoading
 void SCR_DrawLoading (void)
 {
 	int w, h;
-	float scale = SCR_GetMenuScale();
 
 	if (!scr_draw_loading)
 		return;
 
 	scr_draw_loading = false;
 	RE_Draw_GetPicSize (&w, &h, "loading");
-	RE_Draw_Pic ((viddef.width - w * scale) / 2, (viddef.height - h * scale) / 2, "loading", scale);
+	SCR_DrawPic((SCREEN_WIDTH - w) / 2, (SCREEN_HEIGHT - h) / 2, w, h, "loading");
 }
 
 /*
@@ -730,8 +702,6 @@ void SCR_DrawFPS (void)
 	frame++;
 	if (frame > 59)
 		frame = 0;
-
-	float scale = SCR_GetHUDScale();
 
 	if (cl_showfps->value == 1)
 	{
@@ -851,6 +821,30 @@ void SCR_Loading_f (void)
 
 //===============================================================
 
+void DrawStringScaled (int x, int y, char *s, float factor)
+{
+	while (*s)
+	{
+		RE_Draw_Char (x, y, *s, factor);
+		x += 8 * factor;
+		s++;
+	}
+}
+
+static void DrawAltStringScaled (int x, int y, char *s, float factor)
+{
+	RE_Draw_SetColor (colorGreen);
+
+	while (*s)
+	{
+		RE_Draw_Char (x, y, *s, factor);
+		x += 8 * factor;
+		s++;
+	}
+
+	RE_Draw_SetColor (NULL);
+}
+
 #define STAT_MINUS		10	// num frame for '-' stats digit
 char		*sb_nums[2][11] =
 {
@@ -868,8 +862,6 @@ char		*sb_nums[2][11] =
 #define	ICON_HEIGHT	24
 #define	CHAR_WIDTH	16
 #define	ICON_SPACE	8
-
-
 
 /*
 ================
@@ -1001,7 +993,6 @@ void SCR_DrawField(int x, int y, int color, int width, int value)
 	SCR_DrawFieldScaled (x, y, color, width, value, 1.0f);
 }
 
-
 /*
 ===============
 SCR_TouchPics
@@ -1033,7 +1024,6 @@ void SCR_TouchPics (void)
 /*
 ================
 SCR_ExecuteLayoutString
-
 ================
 */
 void SCR_ExecuteLayoutString (char *s)
@@ -1394,7 +1384,6 @@ void SCR_DrawStats (void)
 /*
 ================
 SCR_DrawLayout
-
 ================
 */
 #define	STAT_LAYOUTS		13
@@ -1422,7 +1411,6 @@ void SCR_UpdateScreen (void)
 	int numframes;
 	int i;
 	float separation[2] = { 0, 0 };
-	float scale = SCR_GetMenuScale();
 
 	// if the screen is disabled (loading plaque is up, or vid mode changing)
 	// do nothing at all
@@ -1480,8 +1468,8 @@ void SCR_UpdateScreen (void)
 
 			scr_draw_loading = false;
 
-			RE_Draw_GetPicSize (&w, &h, "loading");
-			RE_Draw_Pic ((viddef.width - w * scale) / 2, (viddef.height - h * scale) / 2, "loading", scale);
+			RE_Draw_GetPicSize(&w, &h, "loading");
+			SCR_DrawPic((SCREEN_WIDTH - w) / 2, (SCREEN_HEIGHT - h) / 2, w, h, "loading");
 		}
 		// if a cinematic is supposed to be running, handle menus and console specially
 		else if (SCR_GetCinematicTime() > 0)
