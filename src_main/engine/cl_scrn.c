@@ -58,6 +58,8 @@ int			crosshair_width, crosshair_height;
 
 void SCR_Loading_f (void);
 
+#define FADE_TIME 200
+
 /*
 ================
 SCR_AdjustFrom640
@@ -127,6 +129,34 @@ void SCR_DrawPic(float x, float y, float width, float height, char *pic)
 {
 	SCR_AdjustFrom640 (&x, &y, &width, &height);
 	RE_Draw_StretchPicExt (x, y, width, height, 0, 0, 1, 1, pic);
+}
+
+/*
+================
+SCR_FadeColor
+================
+*/
+float *SCR_FadeColor (int startMsec, int totalMsec)
+{
+	static vec4_t	color;
+	int				t;
+
+	if (startMsec == 0)
+		return NULL;
+
+	t = cl.time - startMsec;
+
+	if (t >= totalMsec)
+		return NULL;
+
+	// fade out
+	if (totalMsec - t < FADE_TIME)
+		color[3] = (totalMsec - t) * 1.0 / FADE_TIME;
+	else
+		color[3] = 1.0;
+	color[0] = color[1] = color[2] = 1;
+
+	return color;
 }
 
 

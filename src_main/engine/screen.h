@@ -41,6 +41,7 @@ void	SCR_TouchPics (void);
 void	SCR_AdjustFrom640 (float *x, float *y, float *w, float *h);
 
 void	SCR_FillRect (float x, float y, float width, float height, float *color);
+float	*SCR_FadeColor (int startMsec, int totalMsec);
 
 void	SCR_DrawPic (float x, float y, float width, float height, char *pic);
 
