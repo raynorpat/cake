@@ -656,7 +656,6 @@ void SCR_Init (void)
 	scr_initialized = true;
 }
 
-
 /*
 ==============
 SCR_DrawNet
@@ -713,34 +712,37 @@ void SCR_DrawLoading (void)
 
 /*
 ==============
-SCR_Framecounter
+SCR_DrawFPS
 ==============
 */
-void SCR_Framecounter (void)
+void SCR_DrawFPS (void)
 {
 	long long newtime;
 	static int frame;
 	static int frametimes[60] = { 0 };
 	static long long oldtime;
+	int w;
 
 	newtime = Sys_Microseconds();
 	frametimes[frame] = (int)(newtime - oldtime);
 
 	oldtime = newtime;
 	frame++;
-	if (frame > 59) {
+	if (frame > 59)
 		frame = 0;
-	}
 
 	float scale = SCR_GetHUDScale();
 
-	if (cl_showfps->value == 1) {
+	if (cl_showfps->value == 1)
+	{
 		// calculate average of frames.
 		int avg = 0;
 		int num = 0;
 
-		for (int i = 0; i < 60; i++) {
-			if (frametimes[i] != 0) {
+		for (int i = 0; i < 60; i++)
+		{
+			if (frametimes[i] != 0)
+			{
 				avg += frametimes[i];
 				num++;
 			}
@@ -748,14 +750,20 @@ void SCR_Framecounter (void)
 
 		char str[10];
 		snprintf(str, sizeof(str), "%3.2ffps", (1000.0 * 1000.0) / (avg / num));
-		DrawStringScaled(viddef.width - scale*(strlen(str) * 8 + 2), 0, str, scale);
-	} else if (cl_showfps->value >= 2) {
+
+		w = SCR_Text_Width(str, 0.2f, 0, &cls.consoleFont);
+		SCR_Text_PaintAligned(635 - w, 10, str, 0.2f, UI_LEFT, colorWhite, &cls.consoleFont);		
+	}
+	else if (cl_showfps->value >= 2)
+	{
 		// calculate average of frames.
 		int avg = 0;
 		int num = 0;
 
-		for (int i = 0; i < 60; i++) {
-			if (frametimes[i] != 0) {
+		for (int i = 0; i < 60; i++)
+		{
+			if (frametimes[i] != 0)
+			{
 				avg += frametimes[i];
 				num++;
 			}
@@ -765,23 +773,24 @@ void SCR_Framecounter (void)
 		int min = frametimes[0];
 		int max = frametimes[1];
 
-		for (int i = 1; i < 60; i++) {
-			if ((frametimes[i] > 0) && (min < frametimes[i])) {
+		for (int i = 1; i < 60; i++)
+		{
+			if ((frametimes[i] > 0) && (min < frametimes[i]))
 				min = frametimes[i];
-			}
-
-			if ((frametimes[i] > 0) && (max > frametimes[i])) {
+			if ((frametimes[i] > 0) && (max > frametimes[i]))
 				max = frametimes[i];
-			}
 		}
 
 		char str[64];
 		snprintf(str, sizeof(str), "Min: %7.2ffps, Max: %7.2ffps, Avg: %7.2ffps", (1000.0 * 1000.0) / min, (1000.0 * 1000.0) / max, (1000.0 * 1000.0) / (avg / num));
-		DrawStringScaled(viddef.width - scale*(strlen(str) * 8 + 2), 0, str, scale);
+		w = SCR_Text_Width(str, 0.2f, 0, &cls.consoleFont);
+		SCR_Text_PaintAligned(635 - w, 10, str, 0.2f, UI_LEFT, colorWhite, &cls.consoleFont);
 
-		if (cl_showfps->value > 2) {
+		if (cl_showfps->value > 2)
+		{
 			snprintf(str, sizeof(str), "Max: %5.2fms, Min: %5.2fms, Avg: %5.2fms", 0.001f*min, 0.001f*max, 0.001f*(avg / num));
-			DrawStringScaled(viddef.width - scale*(strlen(str) * 8 + 2), scale * 10, str, scale);
+			w = SCR_Text_Width(str, 0.2f, 0, &cls.consoleFont);
+			SCR_Text_PaintAligned(635 - w, 20, str, 0.2f, UI_LEFT, colorWhite, &cls.consoleFont);
 		}
 	}
 }
@@ -1521,7 +1530,8 @@ void SCR_UpdateScreen (void)
 		}
 	}
 
-	SCR_Framecounter ();
+	SCR_DrawFPS ();
+
 	RE_EndFrame ();
 }
 
