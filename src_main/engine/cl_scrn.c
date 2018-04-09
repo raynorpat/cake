@@ -502,10 +502,9 @@ CENTER PRINTING
 */
 
 char		scr_centerstring[1024];
-float		scr_centertime_start;	// for slow victory printing
-float		scr_centertime_off;
+float		scr_centertime_time;
+float		scr_center_y;
 int			scr_center_lines;
-int			scr_erase_center;
 
 /*
 ==============
@@ -517,128 +516,71 @@ for a few moments
 */
 void SCR_CenterPrint (char *str)
 {
-	char	*s;
-	char	line[64];
-	int		i, j, l;
+	char *s;
 
-	strncpy (scr_centerstring, str, sizeof (scr_centerstring) - 1);
-	scr_centertime_off = scr_centertime->value;
-	scr_centertime_start = cl.time;
+	Q_strlcpy (scr_centerstring, str, sizeof(scr_centerstring));
+	scr_centertime_time = cl.time;
+	scr_center_y = SCREEN_HEIGHT * 0.30;
 
 	// count the number of lines for centering
 	scr_center_lines = 1;
-	s = str;
-
+	s = scr_centerstring;
 	while (*s)
 	{
 		if (*s == '\n')
 			scr_center_lines++;
-
 		s++;
 	}
-
-	// echo it to the console
-	Com_Printf ("\n\n\35\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\37\n\n");
-
-	s = str;
-
-	do
-	{
-		// scan the width of the line
-		for (l = 0; l < 40; l++)
-			if (s[l] == '\n' || !s[l])
-				break;
-
-		for (i = 0; i < (40 - l) / 2; i++)
-			line[i] = ' ';
-
-		for (j = 0; j < l; j++)
-		{
-			line[i++] = s[j];
-		}
-
-		line[i] = '\n';
-		line[i+1] = 0;
-
-		Com_Printf ("%s", line);
-
-		while (*s && *s != '\n')
-			s++;
-
-		if (!*s)
-			break;
-
-		s++;		// skip the \n
-	}
-	while (1);
-
-	Com_Printf ("\n\n\35\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\37\n\n");
-	Con_ClearNotify ();
 }
-
 
 void SCR_DrawCenterString (void)
 {
 	char	*start;
 	int		l;
-	int		j;
-	int		x, y;
-	int		remaining;
-	float	scale;
-	const int char_unscaled_width = 8;
-	const int char_unscaled_height = 8;
+	int		x, y, w, h;
+	float	*color;
 
-	// the finale prints the characters one at a time
-	remaining = 9999;
-
-	scr_erase_center = 0;
-	start = scr_centerstring;
-	scale = SCR_GetHUDScale();
-
-	if (scr_center_lines <= 4)
-		y = (viddef.height * 0.35) / scale;
-	else
-		y = 48 / scale;
-
-	do
-	{
-		// scan the width of the line
-		for (l = 0; l < 40; l++)
-			if (start[l] == '\n' || !start[l])
-				break;
-
-		x = ((viddef.width / scale) - (l * char_unscaled_width)) / 2;
-
-		for (j = 0; j < l; j++, x += char_unscaled_width)
-		{
-			RE_Draw_Char (x * scale, y * scale, start[j], scale);
-
-			if (!remaining--)
-				return;
-		}
-
-		y += char_unscaled_height;
-
-		while (*start && *start != '\n')
-			start++;
-
-		if (!*start)
-			break;
-
-		start++;		// skip the \n
-	}
-	while (1);
-}
-
-void SCR_CheckDrawCenterString (void)
-{
-	scr_centertime_off -= cls.rframetime;
-
-	if (scr_centertime_off <= 0)
+	if (!scr_centertime_time)
 		return;
 
-	SCR_DrawCenterString ();
+	color = SCR_FadeColor (scr_centertime_time, 1000 * scr_centertime->value);
+	if (!color)
+		return;
+
+	RE_Draw_SetColor (color);
+
+	start = scr_centerstring;
+	y = scr_center_y - scr_center_lines * BIGCHAR_HEIGHT / 2;
+
+	while (1)
+	{
+		char linebuffer[1024];
+
+		// scan the width of the line
+		for (l = 0; l < 50; l++)
+		{
+			if (!start[l] || start[l] == '\n')
+				break;
+			linebuffer[l] = start[l];
+		}
+		linebuffer[l] = 0;
+
+		w = SCR_Text_Width (linebuffer, 0.5, 0, &cls.consoleBoldFont);
+		h = SCR_Text_Height (linebuffer, 0.5, 0, &cls.consoleBoldFont);
+		x = (SCREEN_WIDTH - w) / 2;
+		SCR_Text_Paint (x, y + h, 0.5, color, linebuffer, 0, 0, UI_DROPSHADOW, &cls.consoleBoldFont);
+		y += h + 6;
+
+		while (*start && (*start != '\n'))
+			start++;
+		if (!*start)
+			break;
+		start++; // skip the \n
+	}
+
+	RE_Draw_SetColor (NULL);
 }
+
 
 //=============================================================================
 
@@ -1561,7 +1503,7 @@ void SCR_UpdateScreen (void)
 				CL_DrawInventory ();
 
 			SCR_DrawNet ();
-			SCR_CheckDrawCenterString ();
+			SCR_DrawCenterString ();
 
 			if (scr_timegraph->value)
 				SCR_DebugGraph (cls.rframetime * 300, 0);
