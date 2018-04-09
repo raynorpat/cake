@@ -245,7 +245,7 @@ void Com_Error (int code, char *fmt, ...)
 	static	qboolean	recursive;
 
 	if (recursive)
-		Sys_Error ("recursive error after: %s", msg);
+		Sys_Error (S_COLOR_RED "recursive error after: %s" S_COLOR_WHITE, msg);
 
 	recursive = true;
 
@@ -261,15 +261,15 @@ void Com_Error (int code, char *fmt, ...)
 	}
 	else if (code == ERR_DROP)
 	{
-		Com_Printf (S_COLOR_RED "********************\nERROR: %s\n********************\n", msg);
-		SV_Shutdown (va ("Server crashed: %s\n", msg), false);
+		Com_Printf (S_COLOR_RED "********************\n" S_COLOR_RED "ERROR: %s\n" S_COLOR_RED "********************\n", msg);
+		SV_Shutdown (va (S_COLOR_RED "Server crashed: %s\n" S_COLOR_WHITE, msg), false);
 		CL_Drop ();
 		recursive = false;
 		longjmp (abortframe, -1);
 	}
 	else
 	{
-		SV_Shutdown (va ("Server fatal crashed: %s\n", msg), false);
+		SV_Shutdown (va (S_COLOR_RED "Server fatal crashed: %s\n" S_COLOR_WHITE, msg), false);
 		CL_Shutdown ();
 	}
 

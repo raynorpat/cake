@@ -156,6 +156,8 @@ void Draw_Begin2D (void)
 		gl_drawstate.brightness = -1.0f;
 		gl_drawstate.contrast = -1.0f;
 
+		glProgramUniform4f (gl_drawprog, u_drawcolorAdd, gl_drawstate.colorAdd[0], gl_drawstate.colorAdd[1], gl_drawstate.colorAdd[2], gl_drawstate.colorAdd[3]);
+
 		// program is always active
 		GL_UseProgram (gl_drawprog);
 	}
@@ -251,13 +253,6 @@ void Draw_GenericRect (GLuint texture, GLuint sampler, float texturecolormix, fl
 		glNamedBufferDataEXT (gl_drawvbo, MAX_DRAW_QUADS * 4 * sizeof (drawvert_t), NULL, GL_STREAM_DRAW);
 
 		gl_drawstate.firstquad = 0;
-	}
-
-	if (colorWhite != gl_drawstate.colorAdd)
-	{
-		Draw_Flush();
-
-		glProgramUniform4f (gl_drawprog, u_drawcolorAdd, gl_drawstate.colorAdd[0], gl_drawstate.colorAdd[1], gl_drawstate.colorAdd[2], gl_drawstate.colorAdd[3]);
 	}
 
 	dv = &gl_drawquads[(gl_drawstate.firstquad + gl_drawstate.numquads) * 4];

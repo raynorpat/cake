@@ -453,7 +453,6 @@ void Con_Print (char *txt)
 			}
 			break;
 		}
-
 	}
 }
 
@@ -472,7 +471,7 @@ void Con_RunConsole(void)
 	else
 		con.finalFrac = 0;				// none visible
 
-										// scroll towards the destination height
+	// scroll towards the destination height
 	if (con.finalFrac < con.displayFrac)
 	{
 		con.displayFrac -= con_conspeed->value * cls.rframetime;
@@ -523,7 +522,7 @@ void Con_DrawInput (vec4_t color)
 	for (i = key_linepos + 1; i < con.linewidth; i++)
 		text[i] = ' ';
 
-	//	prestep if horizontally scrolling
+	// prestep if horizontally scrolling
 	if (key_linepos >= con.linewidth)
 		text += 1 + key_linepos - con.linewidth;
 
@@ -747,6 +746,8 @@ void Con_DrawConsole (float frac)
 	SCR_FillRect (630, 10, 1, 230, color);	// right
 
 	// draw the version number
+	RE_Draw_SetColor (g_color_table[ColorIndex(COLOR_RED)]);
+
 	Vector4Set (fontColor, 1.0f, 1.0f, 1.0f, alpha);
 	Vector4Set (fontColorHighlight, 1.0f, 1.0f, 1.0f, alpha * 1.5f);
 
