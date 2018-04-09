@@ -168,6 +168,11 @@ FONT PRINTING
 ===============================================================================
 */
 
+/*
+==============
+SCR_Text_PaintChar
+==============
+*/
 void SCR_Text_PaintChar(float x, float y, float width, float height, float scale, float s, float t, float s2, float t2, char *name)
 {
 	float w, h;
@@ -179,6 +184,11 @@ void SCR_Text_PaintChar(float x, float y, float width, float height, float scale
 	RE_Draw_StretchPicExt (x, y, w, h, s, t, s2, t2, name);
 }
 
+/*
+==============
+SCR_Text_Width
+==============
+*/
 int SCR_Text_Width (char *text, float scale, int limit, fontInfo_t * font)
 {
 	int             count, len;
@@ -216,6 +226,11 @@ int SCR_Text_Width (char *text, float scale, int limit, fontInfo_t * font)
 	return out * useScale;
 }
 
+/*
+==============
+SCR_Text_Height
+==============
+*/
 int SCR_Text_Height (char *text, float scale, int limit, fontInfo_t * font)
 {
 	int             len, count;
@@ -254,6 +269,11 @@ int SCR_Text_Height (char *text, float scale, int limit, fontInfo_t * font)
 	return max * useScale;
 }
 
+/*
+==============
+SCR_Text_PaintSingleChar
+==============
+*/
 void SCR_Text_PaintSingleChar (float x, float y, float scale, vec4_t color, int ch, float adjust, int limit, int style, fontInfo_t * font)
 {
 	glyphInfo_t		*glyph;
@@ -284,9 +304,13 @@ void SCR_Text_PaintSingleChar (float x, float y, float scale, vec4_t color, int 
 	SCR_Text_PaintChar (x, y - yadj, glyph->imageWidth, glyph->imageHeight, useScale, glyph->s, glyph->t, glyph->s2, glyph->t2, glyph->imageName);
 
 	RE_Draw_SetColor (NULL);
-
 }
 
+/*
+==============
+SCR_Text_Paint
+==============
+*/
 void SCR_Text_Paint(float x, float y, float scale, vec4_t color, char *text, float adjust, int limit, int style, fontInfo_t *font)
 {
 	int             len, count;
@@ -348,6 +372,11 @@ void SCR_Text_Paint(float x, float y, float scale, vec4_t color, char *text, flo
 	}
 }
 
+/*
+==============
+SCR_Text_PaintAligned
+==============
+*/
 void SCR_Text_PaintAligned(int x, int y, char *s, float scale, int style, vec4_t color, fontInfo_t * font)
 {
 	int w, h;
@@ -1005,8 +1034,10 @@ void SCR_TouchPics (void)
 	int		i, j;
 
 	for (i = 0; i < 2; i++)
+	{
 		for (j = 0; j < 11; j++)
 			RE_Draw_RegisterPic (sb_nums[i][j]);
+	}
 
 	if (crosshair->value)
 	{
