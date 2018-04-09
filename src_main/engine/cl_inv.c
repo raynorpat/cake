@@ -34,39 +34,12 @@ void CL_ParseInventory (void)
 		cl.inventory[i] = MSG_ReadShort (&net_message);
 }
 
-
-/*
-================
-Inv_DrawString
-================
-*/
-void Inv_DrawStringScaled (int x, int y, char *string, float factor)
-{
-	while (*string)
-	{
-		RE_Draw_Char (x, y, *string, factor);
-		x += 8 * factor;
-		string++;
-	}
-}
-
-void Inv_DrawString (int x, int y, char *string)
-{
-	Inv_DrawStringScaled (x, y, string, 1.0f);
-}
-
-void SetStringHighBit (char *s)
-{
-	while (*s)
-		*s++ |= 128;
-}
-
 /*
 ================
 CL_DrawInventory
 ================
 */
-#define	DISPLAY_ITEMS	17
+#define	DISPLAY_ITEMS 17
 
 void CL_DrawInventory (void)
 {
@@ -74,13 +47,12 @@ void CL_DrawInventory (void)
 	int		num = 0, selected_num = 0, item;
 	int		index[MAX_ITEMS];
 	char	string[1024];
-	int		x, y;
+	int		x, y, w, h;
 	char	binding[1024];
 	char	*bind;
 	int		selected;
 	int		top;
-
-	float	scale = SCR_GetHUDScale();
+	vec4_t	fontColor;
 
 	selected = cl.frame.playerstate.stats[STAT_SELECTED_ITEM];
 
@@ -98,52 +70,69 @@ void CL_DrawInventory (void)
 
 	// determine scroll point
 	top = selected_num - DISPLAY_ITEMS / 2;
-
 	if (num - top < DISPLAY_ITEMS)
 		top = num - DISPLAY_ITEMS;
-
 	if (top < 0)
 		top = 0;
 
-	x = (viddef.width - scale * 256) / 2;
-	y = (viddef.height - scale * 240) / 2;
+	// draw inventory background
+	x = (SCREEN_WIDTH - 256) / 2;
+	y = (SCREEN_HEIGHT - 240) / 2;
 
-	RE_Draw_Pic (x, y + scale * 8, "inventory", scale);
+	RE_Draw_GetPicSize (&w, &h, "inventory");
+	SCR_DrawPic (x, y + 8, w, h, "inventory");
 
-	y += scale * 24;
-	x += scale * 24;
-	Inv_DrawStringScaled (x, y, "hotkey ### item", scale);
-	Inv_DrawStringScaled (x, y + scale * 8, "------ --- ----", scale);
-	y += scale * 16;
-
+	// draw header
+	Com_sprintf(string, sizeof(string), "hotkey ### item");
+	y += 24;
+	x += 24;
+	h = SCR_Text_Height (string, 0.2f, 0, &cls.consoleBoldFont);
+	SCR_Text_Paint (x, y + h, 0.2f, colorWhite, string, 0, 0, 0, &cls.consoleBoldFont);
+	
+	Com_sprintf(string, sizeof(string), "------ --- ----");
+	y += 16;
+	h = SCR_Text_Height (string, 0.2f, 0, &cls.consoleBoldFont);
+	SCR_Text_Paint (x, y + h, 0.2f, colorWhite, string, 0, 0, 0, &cls.consoleBoldFont);
+	
+	// draw items
+	y += SMALLCHAR_WIDTH;
 	for (i = top; i < num && i < top + DISPLAY_ITEMS; i++)
 	{
 		item = index[i];
+
 		// search for a binding
 		Com_sprintf (binding, sizeof (binding), "use %s", cl.configstrings[CS_ITEMS+item]);
 		bind = "";
-
 		for (j = 0; j < 256; j++)
-			if (keybindings[j] && !Q_stricmp (keybindings[j], binding))
+		{
+			if (keybindings[j] && !Q_stricmp(keybindings[j], binding))
 			{
 				bind = Key_KeynumToString (j);
 				break;
 			}
-
-		Com_sprintf (string, sizeof (string), "%6s %3i %s", bind, cl.inventory[item],
-					 cl.configstrings[CS_ITEMS+item]);
-
-		if (item != selected)
-			SetStringHighBit (string);
-		else	// draw a blinky cursor by the selected item
-		{
-			if ((int) (cls.realtime * 10) & 1)
-				RE_Draw_Char (x - scale * 8, y, 15, scale);
 		}
 
-		Inv_DrawStringScaled (x, y, string, scale);
-		y += 8 * scale;
+		// build item string
+		Com_sprintf (string, sizeof (string), "%6s %3i %s", bind, cl.inventory[item], cl.configstrings[CS_ITEMS+item]);
+
+		if (item != selected)
+		{
+			// set color to green for highlight
+			Vector4Set(fontColor, 0.0f, 1.0f, 0.0f, 1.0f);
+		}
+		else
+		{
+			// set font color to white
+			Vector4Set(fontColor, 1.0f, 1.0f, 1.0f, 1.0f);
+
+			// draw a green blinky cursor by the selected item
+			if ((int)(cls.realtime * 10) & 1)
+				SCR_Text_PaintSingleChar (x - SMALLCHAR_WIDTH, y, 0.2f, colorGreen, 15, 0, 0, 0, &cls.consoleFont);
+		}
+
+		// draw item string
+		h = SCR_Text_Height (string, 0.2f, 0, &cls.consoleFont);
+		SCR_Text_Paint (x, y + h, 0.2f, fontColor, string, 0, 0, 0, &cls.consoleFont);
+		y += SMALLCHAR_WIDTH;
 	}
 }
-
-
