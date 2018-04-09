@@ -507,12 +507,10 @@ void Con_DrawNotify (void)
 			continue;
 
 		time = con.times[i % NUM_CON_TIMES];
-
 		if (time == 0)
 			continue;
 
 		time = cls.realtime - time;
-
 		if (time > con_notifytime->value * 1000)
 			continue;
 
@@ -676,7 +674,9 @@ void Con_DrawConsole (float frac)
 			strcat (dlbar, "...");
 		}
 		else
+		{
 			strcpy (dlbar, (char *)text);
+		}
 
 		strcat (dlbar, ": ");
 		i = strlen (dlbar);
@@ -689,10 +689,12 @@ void Con_DrawConsole (float frac)
 			n = y * cls.downloadpercent / 100;
 
 		for (j = 0; j < y; j++)
+		{
 			if (j == n)
 				dlbar[i++] = '\x83';
 			else
 				dlbar[i++] = '\x81';
+		}
 
 		dlbar[i++] = '\x82';
 		dlbar[i] = 0;

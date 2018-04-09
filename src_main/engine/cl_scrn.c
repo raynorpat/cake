@@ -63,6 +63,288 @@ int			crosshair_width, crosshair_height;
 
 void SCR_Loading_f (void);
 
+/*
+================
+SCR_AdjustFrom640
+
+Adjusted for resolution and screen aspect ratio
+================
+*/
+void SCR_AdjustFrom640 (float *x, float *y, float *w, float *h)
+{
+	float           xscale;
+	float           yscale;
+	float           xbias = 0.0f;
+	float           ybias = 0.0f;
+
+	// adjust for wide screens
+	xscale = viddef.width / 640.0f;
+	yscale = viddef.height / 480.0f;
+#if 0
+	if (viddef.width * 480 > viddef.height * 640)
+	{
+		xbias = 0.5f * (viddef.width - (viddef.height * 640.0f / 480.0f));
+		xscale = yscale;
+	}
+	else if (viddef.width * 480 < viddef.height * 640)
+	{
+		ybias = 0.5f * (viddef.height - (viddef.width * 480.0f / 640.0f));
+		yscale = xscale;
+	}
+#endif
+
+	// scale for screen sizes
+	if (x)
+		*x = xbias + *x * xscale;
+	if (y)
+		*y = ybias + *y * yscale;
+	if (w)
+		*w *= xscale;
+	if (h)
+		*h *= yscale;
+}
+
+/*
+================
+SCR_FillRect
+
+Coordinates are 640*480 virtual values
+=================
+*/
+void SCR_FillRect (float x, float y, float width, float height, float *color)
+{
+	RE_Draw_SetColor (color);
+
+	SCR_AdjustFrom640 (&x, &y, &width, &height);
+	RE_Draw_StretchPicExt (x, y, width, height, 0, 0, 0, 0, "pics/white.png");
+
+	RE_Draw_SetColor (NULL);
+}
+
+/*
+================
+SCR_DrawPic
+
+Coordinates are 640*480 virtual values
+=================
+*/
+void SCR_DrawPic(float x, float y, float width, float height, char *pic)
+{
+	SCR_AdjustFrom640 (&x, &y, &width, &height);
+	RE_Draw_StretchPicExt (x, y, width, height, 0, 0, 1, 1, pic);
+}
+
+
+/*
+===============================================================================
+
+FONT PRINTING
+
+===============================================================================
+*/
+
+void SCR_Text_PaintChar(float x, float y, float width, float height, float scale, float s, float t, float s2, float t2, char *name)
+{
+	float w, h;
+
+	w = width * scale;
+	h = height * scale;
+	SCR_AdjustFrom640 (&x, &y, &w, &h);
+
+	RE_Draw_StretchPicExt (x, y, w, h, s, t, s2, t2, name);
+}
+
+int SCR_Text_Width (char *text, float scale, int limit, fontInfo_t * font)
+{
+	int             count, len;
+	float           out;
+	glyphInfo_t		*glyph;
+	float           useScale;
+	char			*s = text;
+
+	useScale = scale * font->glyphScale;
+	out = 0;
+	if (text)
+	{
+		len = strlen(text);
+		if (limit > 0 && len > limit)
+			len = limit;
+		count = 0;
+
+		while (s && *s && count < len)
+		{
+			if (Q_IsColorString(s))
+			{
+				s += 2;
+				continue;
+			}
+			else
+			{
+				glyph = &font->glyphs[(int)*s];
+				out += glyph->xSkip;
+				s++;
+				count++;
+			}
+		}
+	}
+
+	return out * useScale;
+}
+
+int SCR_Text_Height (char *text, float scale, int limit, fontInfo_t * font)
+{
+	int             len, count;
+	float           max;
+	glyphInfo_t		*glyph;
+	float           useScale;
+	char			*s = text;
+
+	useScale = scale * font->glyphScale;
+	max = 0;
+	if (text)
+	{
+		len = strlen(text);
+		if (limit > 0 && len > limit)
+			len = limit;
+		count = 0;
+
+		while (s && *s && count < len)
+		{
+			if (Q_IsColorString(s))
+			{
+				s += 2;
+				continue;
+			}
+			else
+			{
+				glyph = &font->glyphs[(int)*s];
+				if (max < glyph->height)
+					max = glyph->height;
+				s++;
+				count++;
+			}
+		}
+	}
+
+	return max * useScale;
+}
+
+void SCR_Text_PaintSingleChar (float x, float y, float scale, vec4_t color, int ch, float adjust, int limit, int style, fontInfo_t * font)
+{
+	glyphInfo_t		*glyph;
+	float           useScale;
+	float           yadj;
+
+	ch &= 255;
+	if (ch == ' ')
+		return;
+
+	useScale = scale * font->glyphScale;
+
+	glyph = &font->glyphs[ch];
+	yadj = useScale * glyph->top;
+
+	if (style & UI_DROPSHADOW)
+	{
+		int ofs = 1;
+
+		colorBlack[3] = color[3];
+		RE_Draw_SetColor (colorBlack);
+		SCR_Text_PaintChar (x + ofs, y - yadj + ofs, glyph->imageWidth, glyph->imageHeight, useScale, glyph->s, glyph->t, glyph->s2, glyph->t2, glyph->imageName);
+		colorBlack[3] = 1.0;
+	}
+
+	RE_Draw_SetColor (color);
+
+	SCR_Text_PaintChar (x, y - yadj, glyph->imageWidth, glyph->imageHeight, useScale, glyph->s, glyph->t, glyph->s2, glyph->t2, glyph->imageName);
+
+	RE_Draw_SetColor (NULL);
+
+}
+
+void SCR_Text_Paint(float x, float y, float scale, vec4_t color, char *text, float adjust, int limit, int style, fontInfo_t *font)
+{
+	int             len, count;
+	vec4_t          newColor;
+	glyphInfo_t		*glyph;
+	float           useScale;
+
+	useScale = scale * font->glyphScale;
+	if (text)
+	{
+		char *s = text;
+
+		RE_Draw_SetColor (color);
+
+		memcpy(&newColor[0], &color[0], sizeof(vec4_t));
+		len = strlen(text);
+		if (limit > 0 && len > limit)
+			len = limit;
+		count = 0;
+		while (s && *s && count < len)
+		{
+			glyph = &font->glyphs[(int)*s];
+
+			if (Q_IsColorString(s))
+			{
+				memcpy(newColor, (float *)g_color_table[ColorIndex(*(s + 1))], sizeof(newColor));
+				newColor[3] = color[3];
+				RE_Draw_SetColor (newColor);
+				s += 2;
+				continue;
+			}
+			else
+			{
+				float yadj = useScale * glyph->top;
+
+				if (style & UI_DROPSHADOW)
+				{
+					int ofs = 1;
+
+					colorBlack[3] = newColor[3];
+					RE_Draw_SetColor (colorBlack);
+					SCR_Text_PaintChar (x + ofs, y - yadj + ofs,
+						glyph->imageWidth,
+						glyph->imageHeight, useScale, glyph->s, glyph->t, glyph->s2, glyph->t2, glyph->imageName);
+					colorBlack[3] = 1.0;
+					RE_Draw_SetColor (newColor);
+				}
+
+				SCR_Text_PaintChar (x, y - yadj,
+					glyph->imageWidth,
+					glyph->imageHeight, useScale, glyph->s, glyph->t, glyph->s2, glyph->t2, glyph->imageName);
+
+				x += (glyph->xSkip * useScale) + adjust;
+				s++;
+				count++;
+			}
+		}
+		RE_Draw_SetColor (NULL);
+	}
+}
+
+void SCR_Text_PaintAligned(int x, int y, char *s, float scale, int style, vec4_t color, fontInfo_t * font)
+{
+	int w, h;
+
+	w = SCR_Text_Width(s, scale, 0, font);
+	h = SCR_Text_Height(s, scale, 0, font);
+
+	if (style & UI_CENTER)
+	{
+		SCR_Text_Paint(x - w / 2, y + h / 2, scale, color, s, 0, 0, style, font);
+	}
+	else if (style & UI_RIGHT)
+	{
+		SCR_Text_Paint(x - w, y + h / 2, scale, color, s, 0, 0, style, font);
+	}
+	else
+	{
+		// UI_LEFT
+		SCR_Text_Paint(x, y + h / 2, scale, color, s, 0, 0, style, font);
+	}
+}
+
 
 /*
 ===============================================================================
@@ -412,7 +694,7 @@ void SCR_DrawPause (void)
 	int	w, h;
 	float scale = SCR_GetMenuScale();
 
-	if (cl.attractloop)				// turn off for attract loop
+	if (cls.key_dest == key_menu)	// turn off in menu
 		return;
 	if (!scr_showpause->value)		// turn off for screenshots
 		return;
@@ -558,6 +840,7 @@ SCR_DrawConsole
 */
 void SCR_DrawConsole (void)
 {
+	// check for console width changes from a vid mode change
 	Con_CheckResize ();
 
 	if (cls.state == ca_disconnected || cls.state == ca_connecting)
@@ -610,7 +893,7 @@ void SCR_BeginLoadingPlaque (void)
 	M_ForceMenuOff ();
 
 	if (SCR_GetCinematicTime() > 0)
-		scr_draw_loading = 2;	// clear to balack first
+		scr_draw_loading = 2;	// clear to black first
 	else
 		scr_draw_loading = 1;
 
@@ -1253,6 +1536,17 @@ void SCR_UpdateScreen (void)
 	{
 		RE_BeginFrame (separation[i]);
 
+		// non 4:3 screens need the borders cleared unless they are displaying game renderings or cinematics
+		if (cls.state != ca_active && !(SCR_GetCinematicTime() > 0))
+		{
+			if (viddef.width * 480 != viddef.height * 640)
+			{
+				RE_Draw_SetColor (g_color_table[0]);
+				RE_Draw_StretchPicExt (0, 0, viddef.width, viddef.height, 0, 0, 0, 0, "pics/white.png");
+				RE_Draw_SetColor (NULL);
+			}
+		}
+
 		if (scr_draw_loading == 2)
 		{
 			// loading plaque over black screen
@@ -1263,8 +1557,7 @@ void SCR_UpdateScreen (void)
 			RE_Draw_GetPicSize (&w, &h, "loading");
 			RE_Draw_Pic ((viddef.width - w * scale) / 2, (viddef.height - h * scale) / 2, "loading", scale);
 		}
-		// if a cinematic is supposed to be running, handle menus
-		// and console specially
+		// if a cinematic is supposed to be running, handle menus and console specially
 		else if (SCR_GetCinematicTime() > 0)
 		{
 			if (cls.key_dest == key_menu)
@@ -1303,9 +1596,9 @@ void SCR_UpdateScreen (void)
 
 			SCR_DrawPause ();
 
-			SCR_DrawConsole ();
-
 			M_Draw ();
+
+			SCR_DrawConsole ();
 
 			SCR_DrawLoading ();
 		}
