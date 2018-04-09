@@ -537,10 +537,10 @@ void SCR_DrawCenterString (void)
 		}
 		linebuffer[l] = 0;
 
-		w = SCR_Text_Width (linebuffer, 0.5, 0, &cls.consoleBoldFont);
-		h = SCR_Text_Height (linebuffer, 0.5, 0, &cls.consoleBoldFont);
+		w = SCR_Text_Width (linebuffer, 0.5f, 0, &cls.consoleBoldFont);
+		h = SCR_Text_Height (linebuffer, 0.5f, 0, &cls.consoleBoldFont);
 		x = (SCREEN_WIDTH - w) / 2;
-		SCR_Text_Paint (x, y + h, 0.5, color, linebuffer, 0, 0, UI_DROPSHADOW, &cls.consoleBoldFont);
+		SCR_Text_Paint (x, y + h, 0.5f, color, linebuffer, 0, 0, UI_DROPSHADOW, &cls.consoleBoldFont);
 		y += h + 6;
 
 		while (*start && (*start != '\n'))
@@ -636,7 +636,6 @@ SCR_DrawNet
 void SCR_DrawNet (void)
 {
 	int	w, h;
-	float scale = SCR_GetMenuScale();
 
 	if (cls.netchan.outgoing_sequence - cls.netchan.incoming_acknowledged < CMD_BACKUP - 1)
 		return;
@@ -678,6 +677,7 @@ void SCR_DrawLoading (void)
 		return;
 
 	scr_draw_loading = false;
+
 	RE_Draw_GetPicSize (&w, &h, "loading");
 	SCR_DrawPic((SCREEN_WIDTH - w) / 2, (SCREEN_HEIGHT - h) / 2, w, h, "loading");
 }

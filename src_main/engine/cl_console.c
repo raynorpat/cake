@@ -818,13 +818,13 @@ void Con_DrawConsole (float frac)
 		}
 	}
 
+	RE_Draw_SetColor (NULL);
+
 	// draw the download bar
 	Con_DrawDownloadBar (text);
 
 	// draw the input prompt, user text, and cursor if desired
 	Con_DrawInput (color);
-
-	RE_Draw_SetColor (NULL);
 }
 
 //=============================================================================
