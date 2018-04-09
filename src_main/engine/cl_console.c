@@ -611,7 +611,7 @@ void Con_DrawNotify (void)
 		if (chat_bufferlen > (SCREEN_WIDTH - (skip + 1)))
 			s += chat_bufferlen - (SCREEN_WIDTH - (skip + 1));
 
-		SCR_Text_PaintAligned(skip, v + SCR_Text_Height(s, 0.25f, 0, &cls.consoleFont) / 2, s, 0.25f, UI_LEFT, colorWhite, &cls.consoleFont);
+		SCR_Text_PaintAligned(skip, v, s, 0.25f, UI_LEFT, colorWhite, &cls.consoleFont);
 		v += SMALLCHAR_HEIGHT;
 	}
 }
