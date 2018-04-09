@@ -1886,7 +1886,7 @@ void CL_Frame (int packetdelta, int renderdelta, int timedelta, qboolean packetf
 		SCR_RunCinematic ();
 
 		// update console
-		SCR_RunConsole ();
+		Con_RunConsole ();
 
 		// update framecounter
 		cls.framecount++;

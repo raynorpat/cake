@@ -21,12 +21,41 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
 #include "client.h"
 
-console_t	con;
-cvar_t		*con_notifytime;
+#define	NUM_CON_TIMES			4
+#define CON_LINESTEP			2
 
-#define CON_LINESTEP 2
+#define CON_TEXTSIZE			4194304
 
-#define	DEFAULT_CONSOLE_WIDTH 78
+#define	DEFAULT_CONSOLE_WIDTH	78
+
+typedef struct
+{
+	qboolean initialized;
+
+	short	text[CON_TEXTSIZE];
+	int		current;		// line where next message will be printed
+	int		x;				// offset in current line for next print
+	int		display;		// bottom of console displays this line
+
+	int 	linewidth;		// characters across screen
+	int		totallines;		// total lines in console scrollback
+
+	float	xadjust;		// for wide aspect screens
+	float	yadjust;		// for narrow aspect screens
+
+	float	displayFrac;	// aproaches finalFrac at scr_conspeed
+	float	finalFrac;		// 0.0 to 1.0 lines of console to display
+
+	int		vislines;
+
+	float	times[NUM_CON_TIMES];	// cls.realtime time the line was generated for transparent notify lines
+
+	vec4_t	color;
+} console_t;
+console_t con;
+
+cvar_t *con_notifytime;
+cvar_t *con_conspeed;
 
 extern	char key_lines[NUM_KEY_LINES][MAXCMDLINE];
 extern	int edit_line;
@@ -327,6 +356,7 @@ void Con_Init (void)
 	// register our commands
 	//
 	con_notifytime = Cvar_Get ("con_notifytime", "4", 0);
+	con_conspeed = Cvar_Get("con_conspeed", "3", 0);
 
 	Cmd_AddCommand ("toggleconsole", Con_ToggleConsole_f);
 	Cmd_AddCommand ("togglechat", Con_ToggleChat_f);
@@ -427,6 +457,37 @@ void Con_Print (char *txt)
 	}
 }
 
+/*
+==================
+Con_RunConsole
+
+Scroll it up or down
+==================
+*/
+void Con_RunConsole(void)
+{
+	// decide on the height of the console
+	if (cls.key_dest == key_console)
+		con.finalFrac = 0.5;			// half screen
+	else
+		con.finalFrac = 0;				// none visible
+
+										// scroll towards the destination height
+	if (con.finalFrac < con.displayFrac)
+	{
+		con.displayFrac -= con_conspeed->value * cls.rframetime;
+		if (con.finalFrac > con.displayFrac)
+			con.displayFrac = con.finalFrac;
+
+	}
+	else if (con.finalFrac > con.displayFrac)
+	{
+		con.displayFrac += con_conspeed->value * cls.rframetime;
+		if (con.finalFrac < con.displayFrac)
+			con.displayFrac = con.finalFrac;
+	}
+}
+
 
 /*
 ==============================================================================
@@ -435,7 +496,6 @@ DRAWING
 
 ==============================================================================
 */
-
 
 /*
 ================
@@ -473,7 +533,6 @@ void Con_DrawInput (vec4_t color)
 	// remove cursor
 	key_lines[edit_line][key_linepos] = 0;
 }
-
 
 /*
 ================
@@ -557,7 +616,6 @@ void Con_DrawNotify (void)
 		v += SMALLCHAR_HEIGHT;
 	}
 }
-
 
 /*
 ================
@@ -758,4 +816,42 @@ void Con_DrawConsole (float frac)
 	Con_DrawInput (color);
 
 	RE_Draw_SetColor (NULL);
+}
+
+//=============================================================================
+
+/*
+==================
+SCR_DrawConsole
+==================
+*/
+void SCR_DrawConsole (void)
+{
+	// check for console width changes from a vid mode change
+	Con_CheckResize ();
+
+	// if disconnected, render console full screen
+	if (cls.state == ca_disconnected)
+	{
+		if (!(cls.key_dest == key_menu))
+		{
+			Con_DrawConsole (1.0);
+			return;
+		}
+	}
+
+	if (con.displayFrac)
+	{
+		// draw console
+		Con_DrawConsole (con.displayFrac);
+	}
+	else
+	{
+		// draw notify lines
+		if (cls.state == ca_active)
+		{
+			if (cls.key_dest == key_game || cls.key_dest == key_message)
+				Con_DrawNotify (); // only draw notify in game
+		}
+	}
 }

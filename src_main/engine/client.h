@@ -35,7 +35,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #include "sound.h"
 #include "input.h"
 #include "keys.h"
-#include "console.h"
 
 // for curl downloading
 #include <curl/curl.h>
@@ -512,6 +511,15 @@ char *Key_KeynumToString (int keynum);
 //
 // cl_console.c
 //
+void Con_CheckResize (void);
+void Con_Init (void);
+void Con_RunConsole (void);
+void Con_DrawConsole (float frac);
+void Con_Print (char *txt);
+void Con_Clear_f (void);
+void Con_DrawNotify (void);
+void Con_ClearNotify (void);
+void Con_ToggleConsole_f (void);
 void Con_PageUp (void);
 void Con_PageDown (void);
 void Con_Top (void);

@@ -35,7 +35,7 @@ void	SCR_DebugGraph (float value, int color);
 
 void	SCR_TouchPics (void);
 
-void	SCR_RunConsole (void);
+
 
 
 void	SCR_AdjustFrom640 (float *x, float *y, float *w, float *h);
@@ -47,7 +47,7 @@ void	SCR_DrawPic (float x, float y, float width, float height, char *pic);
 int		SCR_Text_Width (char *text, float scale, int limit, fontInfo_t * font);
 int		SCR_Text_Height (char *text, float scale, int limit, fontInfo_t * font);
 void	SCR_Text_Paint (float x, float y, float scale, vec4_t color, char *text, float adjust, int limit, int style, fontInfo_t * font);
-void	SCR_Text_PaintAligned (int x, int y, const char *s, float scale, int style, const vec4_t color, const fontInfo_t * font);
+void	SCR_Text_PaintAligned (int x, int y, char *s, float scale, int style, vec4_t color, fontInfo_t * font);
 void	SCR_Text_PaintSingleChar (float x, float y, float scale, vec4_t color, int ch, float adjust, int limit, int style, fontInfo_t * font);
 
 extern	int			sb_lines;
@@ -60,11 +60,15 @@ extern	int			crosshair_width, crosshair_height;
 //
 // cl_cin.c
 //
-void SCR_PlayCinematic (char *name);
+void	SCR_PlayCinematic (char *name);
 qboolean SCR_DrawCinematic (void);
-void SCR_InitCinematic (void);
+void	SCR_InitCinematic (void);
 unsigned int SCR_GetCinematicTime (void);
-void SCR_RunCinematic (void);
-void SCR_StopCinematic (void);
-void SCR_FinishCinematic (void);
+void	SCR_RunCinematic (void);
+void	SCR_StopCinematic (void);
+void	SCR_FinishCinematic (void);
 
+//
+// cl_console.c
+//
+void	SCR_DrawConsole (void);

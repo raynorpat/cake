@@ -38,7 +38,6 @@ qboolean	scr_initialized;	// ready to draw
 
 int			scr_draw_loading;
 
-cvar_t		*scr_conspeed;
 cvar_t		*scr_centertime;
 cvar_t		*scr_showturtle;
 cvar_t		*scr_showpause;
@@ -662,7 +661,6 @@ SCR_Init
 */
 void SCR_Init (void)
 {
-	scr_conspeed = Cvar_Get ("scr_conspeed", "3", 0);
 	scr_showturtle = Cvar_Get ("scr_showturtle", "0", 0);
 	scr_showpause = Cvar_Get ("scr_showpause", "1", 0);
 	scr_centertime = Cvar_Get ("scr_centertime", "2.5", 0);
@@ -812,76 +810,6 @@ void SCR_Framecounter (void)
 		if (cl_showfps->value > 2) {
 			snprintf(str, sizeof(str), "Max: %5.2fms, Min: %5.2fms, Avg: %5.2fms", 0.001f*min, 0.001f*max, 0.001f*(avg / num));
 			DrawStringScaled(viddef.width - scale*(strlen(str) * 8 + 2), scale * 10, str, scale);
-		}
-	}
-}
-
-//=============================================================================
-
-/*
-==================
-SCR_RunConsole
-
-Scroll it up or down
-==================
-*/
-void SCR_RunConsole (void)
-{
-	// decide on the height of the console
-	if (cls.key_dest == key_console)
-		con.finalFrac = 0.5;			// half screen
-	else
-		con.finalFrac = 0;				// none visible
-
-	// scroll towards the destination height
-	if (con.finalFrac < con.displayFrac)
-	{
-		con.displayFrac -= scr_conspeed->value * cls.rframetime;
-		if (con.finalFrac > con.displayFrac)
-			con.displayFrac = con.finalFrac;
-
-	}
-	else if (con.finalFrac > con.displayFrac)
-	{
-		con.displayFrac += scr_conspeed->value * cls.rframetime;
-		if (con.finalFrac < con.displayFrac)
-			con.displayFrac = con.finalFrac;
-	}
-
-}
-
-/*
-==================
-SCR_DrawConsole
-==================
-*/
-void SCR_DrawConsole (void)
-{
-	// check for console width changes from a vid mode change
-	Con_CheckResize ();
-
-	// if disconnected, render console full screen
-	if (cls.state == ca_disconnected)
-	{
-		if (!(cls.key_dest == key_menu))
-		{
-			Con_DrawConsole(1.0);
-			return;
-		}
-	}
-	
-	if (con.displayFrac)
-	{
-		// draw console
-		Con_DrawConsole (con.displayFrac);
-	}
-	else
-	{
-		// draw notify lines
-		if (cls.state == ca_active)
-		{
-			if (cls.key_dest == key_game || cls.key_dest == key_message)
-				Con_DrawNotify(); // only draw notify in game
 		}
 	}
 }
@@ -1527,8 +1455,8 @@ void SCR_UpdateScreen (void)
 		return;
 	}
 
-	if (!scr_initialized || !con.initialized)
-		return;				// not initialized yet
+	if (!scr_initialized)
+		return; // not initialized yet
 
 	// range check cl_camera_separation so we don't inadvertently fry someone's brain
 	if (cl_stereo_separation->value > 1.0)
