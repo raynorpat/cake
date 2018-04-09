@@ -892,50 +892,13 @@ char		*sb_nums[2][11] =
 #define	CHAR_WIDTH	16
 #define	ICON_SPACE	8
 
-/*
-================
-SizeHUDString
-
-Allow embedded \n in the string
-================
-*/
-void SizeHUDString (char *string, int *w, int *h)
-{
-	int		lines, width, current;
-
-	lines = 1;
-	width = 0;
-
-	current = 0;
-
-	while (*string)
-	{
-		if (*string == '\n')
-		{
-			lines++;
-			current = 0;
-		}
-		else
-		{
-			current++;
-
-			if (current > width)
-				width = current;
-		}
-
-		string++;
-	}
-
-	*w = width * 8;
-	*h = lines * 8;
-}
-
-void DrawHUDStringScaled (char *string, int x, int y, int centerwidth, int xor, float factor)
+static void DrawHUDString (char *string, int x, int y, qboolean isGreen)
 {
 	int		margin;
 	char	line[1024];
 	int		width;
 	int		i;
+	vec4_t  color;
 
 	margin = x;
 
@@ -949,42 +912,36 @@ void DrawHUDStringScaled (char *string, int x, int y, int centerwidth, int xor, 
 
 		line[width] = 0;
 
-		if (centerwidth)
-			x = margin + (centerwidth - width * 8) * factor / 2;
-		else
-			x = margin;
+		x = margin + (SCREEN_WIDTH - width) / 2;
+		x -= 320;
 
-		for (i = 0; i < width; i++)
-		{
-			RE_Draw_Char (x, y, line[i] ^ xor, factor);
-			x += 8 * factor;
-		}
+		if (isGreen)
+			Vector4Set (color, 0.0f, 1.0f, 0.0f, 1.0f);
+		else
+			Vector4Set (color, 1.0f, 1.0f, 1.0f, 1.0f);
+
+		SCR_Text_PaintAligned(x, y - 110, line, 0.2f, 0, color, &cls.consoleBoldFont);
 
 		if (*string)
 		{
-			string++;	// skip the \n
+			string++; // skip the \n
 			x = margin;
-			y += 8 * factor;
+			y += SMALLCHAR_WIDTH;
 		}
 	}
 }
-
-void DrawHUDString(char *string, int x, int y, int centerwidth, int xor)
-{
-	DrawHUDStringScaled (string, x, y, centerwidth, xor, 1.0f);
-}
-
 
 /*
 ==============
 SCR_DrawField
 ==============
 */
-void SCR_DrawFieldScaled (int x, int y, int color, int width, int value, float factor)
+static void SCR_DrawField (int x, int y, int color, int width, int value)
 {
 	char	num[16], *ptr;
 	int		l;
 	int		frame;
+	int		w, h;
 
 	if (width < 1)
 		return;
@@ -999,7 +956,7 @@ void SCR_DrawFieldScaled (int x, int y, int color, int width, int value, float f
 	if (l > width)
 		l = width;
 
-	x += (2 + CHAR_WIDTH * (width - l)) * factor;
+	x += (2 + CHAR_WIDTH * (width - l));
 
 	ptr = num;
 
@@ -1010,16 +967,13 @@ void SCR_DrawFieldScaled (int x, int y, int color, int width, int value, float f
 		else
 			frame = *ptr - '0';
 
-		RE_Draw_Pic (x, y, sb_nums[color][frame], factor);
-		x += CHAR_WIDTH * factor;
+		RE_Draw_GetPicSize (&w, &h, sb_nums[color][frame]);
+		SCR_AdjustFrom640 (NULL, NULL, (float *)&w, (float *)&h);
+		RE_Draw_StretchPicExt (x, y, w, h, 0, 0, 1, 1, sb_nums[color][frame]);
+		x += w;
 		ptr++;
 		l--;
 	}
-}
-
-void SCR_DrawField(int x, int y, int color, int width, int value)
-{
-	SCR_DrawFieldScaled (x, y, color, width, value, 1.0f);
 }
 
 /*
@@ -1059,7 +1013,8 @@ SCR_ExecuteLayoutString
 */
 void SCR_ExecuteLayoutString (char *s)
 {
-	int		x, y;
+	float	x, y;
+	int		w, h;
 	int		value;
 	char	*token;
 	int		width;
@@ -1088,42 +1043,48 @@ void SCR_ExecuteLayoutString (char *s)
 		if (!strcmp (token, "xl"))
 		{
 			token = COM_Parse (&s);
-			x = scale * atoi (token);
+			x = atoi (token);
+			SCR_AdjustFrom640 (&x, NULL, NULL, NULL);
 			continue;
 		}
 
 		if (!strcmp (token, "xr"))
 		{
 			token = COM_Parse (&s);
-			x = viddef.width + scale * atoi (token);
+			x = SCREEN_WIDTH + atoi (token);
+			SCR_AdjustFrom640 (&x, NULL, NULL, NULL);
 			continue;
 		}
 
 		if (!strcmp (token, "xv"))
 		{
 			token = COM_Parse (&s);
-			x = viddef.width / 2 - scale * 160 + scale * atoi (token);
+			x = SCREEN_WIDTH / 2 - 160 + atoi (token);
+			SCR_AdjustFrom640 (&x, NULL, NULL, NULL);
 			continue;
 		}
 
 		if (!strcmp (token, "yt"))
 		{
 			token = COM_Parse (&s);
-			y = scale * atoi (token);
+			y = atoi (token);
+			SCR_AdjustFrom640 (NULL, &y, NULL, NULL);
 			continue;
 		}
 
 		if (!strcmp (token, "yb"))
 		{
 			token = COM_Parse (&s);
-			y = viddef.height + scale * atoi (token);
+			y = SCREEN_HEIGHT + atoi (token);
+			SCR_AdjustFrom640 (NULL, &y, NULL, NULL);
 			continue;
 		}
 
 		if (!strcmp (token, "yv"))
 		{
 			token = COM_Parse (&s);
-			y = viddef.height / 2 - scale * 120 + scale * atoi (token);
+			y = SCREEN_HEIGHT / 2 - 120 + atoi (token);
+			SCR_AdjustFrom640 (NULL, &y, NULL, NULL);
 			continue;
 		}
 
@@ -1141,32 +1102,14 @@ void SCR_ExecuteLayoutString (char *s)
 
 			if (value >= MAX_IMAGES) Com_Error (ERR_DROP, "Pic >= MAX_IMAGES");
 
+			// draw pic
 			statpic = cl.configstrings[CS_IMAGES + value];
 			if (statpic)
-				RE_Draw_Pic (x, y, statpic, scale);
-
-			if (statnum == STAT_SELECTED_ICON)
 			{
-				if (cl.frame.playerstate.stats[STAT_SELECTED_ITEM] != lastitem)
-				{
-					itemtime = cl.time + 1500;
-					lastitem = cl.frame.playerstate.stats[STAT_SELECTED_ITEM];
-				}
-
-				if (cl.time < itemtime)
-				{
-					int i;
-					int xx;
-
-					for (i = 0, xx = x + 32; ; i++, xx += 8)
-					{
-						if (!cl.configstrings[CS_ITEMS + cl.frame.playerstate.stats[STAT_SELECTED_ITEM]][i]) break;
-
-						RE_Draw_Char (xx * scale, y + 8 * scale, cl.configstrings[CS_ITEMS + cl.frame.playerstate.stats[STAT_SELECTED_ITEM]][i], scale);
-					}
-				}
+				RE_Draw_GetPicSize (&w, &h, statpic);
+				SCR_AdjustFrom640 (NULL, NULL, (float *)&w, (float *)&h);
+				RE_Draw_StretchPicExt (x, y, w, h, 0, 0, 1, 1, statpic);
 			}
-
 			continue;
 		}
 
@@ -1252,7 +1195,9 @@ void SCR_ExecuteLayoutString (char *s)
 		{
 			// draw a pic from a name
 			token = COM_Parse (&s);
-			RE_Draw_Pic (x, y, token, scale);
+			RE_Draw_GetPicSize (&w, &h, token);
+			SCR_AdjustFrom640 (NULL, NULL, (float *)&w, (float *)&h);
+			RE_Draw_StretchPicExt (x, y, w, h, 0, 0, 1, 1, token);
 			continue;
 		}
 
@@ -1263,58 +1208,66 @@ void SCR_ExecuteLayoutString (char *s)
 			width = atoi (token);
 			token = COM_Parse (&s);
 			value = cl.frame.playerstate.stats[atoi (token)];
-			SCR_DrawFieldScaled (x, y, 0, width, value, scale);
+			SCR_DrawField (x, y, 0, width, value);
 			continue;
 		}
 
 		if (!strcmp (token, "hnum"))
 		{
 			// health number
-			int		color;
+			int color;
 
 			width = 3;
 			value = cl.frame.playerstate.stats[STAT_HEALTH];
 
 			if (value > 25)
-				color = 0;	// green
+				color = 0; // green
 			else if (value > 0)
-				color = (cl.frame.serverframe >> 2) & 1;		// flash
+				color = (cl.frame.serverframe >> 2) & 1; // flash
 			else
 				color = 1;
 
 			if (cl.frame.playerstate.stats[STAT_FLASHES] & 1)
-				RE_Draw_Pic (x, y, "field_3", scale);
+			{
+				RE_Draw_GetPicSize (&w, &h, "field_3");
+				SCR_AdjustFrom640 (NULL, NULL, (float *)&w, (float *)&h);
+				RE_Draw_StretchPicExt (x, y, w, h, 0, 0, 1, 1, "field_3");
+			}
 
-			SCR_DrawFieldScaled (x, y, color, width, value, scale);
+			SCR_DrawField (x, y, color, width, value);
 			continue;
 		}
 
 		if (!strcmp (token, "anum"))
 		{
 			// ammo number
-			int		color;
+			int color;
 
 			width = 3;
 			value = cl.frame.playerstate.stats[STAT_AMMO];
 
 			if (value > 5)
-				color = 0;	// green
+				color = 0; // green
 			else if (value >= 0)
-				color = (cl.frame.serverframe >> 2) & 1;		// flash
+				color = (cl.frame.serverframe >> 2) & 1; // flash
 			else
-				continue;	// negative number = don't show
+				continue; // negative number = don't show
 
 			if (cl.frame.playerstate.stats[STAT_FLASHES] & 4)
-				RE_Draw_Pic (x, y, "field_3", scale);
+			{
+				RE_Draw_GetPicSize (&w, &h, "field_3");
+				SCR_AdjustFrom640 (NULL, NULL, (float *)&w, (float *)&h);
+				RE_Draw_StretchPicExt (x, y, w, h, 0, 0, 1, 1, "field_3");
+			}
 
-			SCR_DrawFieldScaled (x, y, color, width, value, scale);
+			SCR_DrawField (x, y, color, width, value);
 			continue;
 		}
 
 		if (!strcmp (token, "rnum"))
 		{
 			// armor number
-			int		color;
+			int	color;
 
 			width = 3;
 			value = cl.frame.playerstate.stats[STAT_ARMOR];
@@ -1322,16 +1275,20 @@ void SCR_ExecuteLayoutString (char *s)
 			if (value < 1)
 				continue;
 
-			color = 0;	// green
+			color = 0; // green
 
 			if (cl.frame.playerstate.stats[STAT_FLASHES] & 2)
-				RE_Draw_Pic (x, y, "field_3", scale);
+			{
+				RE_Draw_GetPicSize (&w, &h, "field_3");
+				SCR_AdjustFrom640 (NULL, NULL, (float *)&w, (float *)&h);
+				RE_Draw_StretchPicExt (x, y, w, h, 0, 0, 1, 1, "field_3");
+			}
 
-			SCR_DrawFieldScaled (x, y, color, width, value, scale);
+			SCR_DrawField (x, y, color, width, value);
 			continue;
 		}
 
-
+		// player stats string
 		if (!strcmp (token, "stat_string"))
 		{
 			token = COM_Parse (&s);
@@ -1349,13 +1306,15 @@ void SCR_ExecuteLayoutString (char *s)
 			continue;
 		}
 
+		// center string
 		if (!strcmp (token, "cstring"))
 		{
 			token = COM_Parse (&s);
-			DrawHUDStringScaled (token, x, y, 320, 0, scale); // FIXME: or scale 320 here?
+			DrawHUDString (token, x, y, false);
 			continue;
 		}
 
+		// string
 		if (!strcmp (token, "string"))
 		{
 			token = COM_Parse (&s);
@@ -1363,13 +1322,15 @@ void SCR_ExecuteLayoutString (char *s)
 			continue;
 		}
 
+		// green center string
 		if (!strcmp (token, "cstring2"))
 		{
 			token = COM_Parse (&s);
-			DrawHUDStringScaled (token, x, y, 320, 0x80, scale); // FIXME: or scale 320 here?
+			DrawHUDString (token, x, y, true);
 			continue;
 		}
 
+		// green string
 		if (!strcmp (token, "string2"))
 		{
 			token = COM_Parse (&s);
@@ -1377,19 +1338,17 @@ void SCR_ExecuteLayoutString (char *s)
 			continue;
 		}
 
+		// if statement for player stats
 		if (!strcmp (token, "if"))
 		{
-			// draw a number
 			token = COM_Parse (&s);
-			value = cl.frame.playerstate.stats[atoi (token)];
 
+			value = cl.frame.playerstate.stats[atoi (token)];
 			if (!value)
 			{
 				// skip to endif
 				while (s && strcmp (token, "endif"))
-				{
 					token = COM_Parse (&s);
-				}
 			}
 
 			continue;
