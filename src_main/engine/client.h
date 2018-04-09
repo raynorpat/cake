@@ -304,6 +304,10 @@ typedef struct
 	dlhandle_t	HTTPHandles[4];	// actual download handles
 	char		downloadServer[512]; // base url prefix to download from
 	char		downloadReferer[32]; // libcurl requires a static string for referers...
+
+	// true type fonts
+	fontInfo_t	consoleFont;
+	fontInfo_t	consoleBoldFont;
 } client_static_t;
 
 extern client_static_t	cls;
