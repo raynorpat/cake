@@ -21,14 +21,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
 #include "client.h"
 
-//=============
-//
 // development tools for weapons
-//
 int			gun_frame;
-struct model_s	*gun_model;
-
-//=============
+struct model_s *gun_model;
 
 cvar_t		*crosshair;
 cvar_t		*crosshairX;
@@ -42,7 +37,6 @@ cvar_t		*cl_testblend;
 
 cvar_t		*cl_stats;
 
-
 int			r_numdlights;
 dlight_t	r_dlights[MAX_LIGHTS];
 
@@ -54,8 +48,9 @@ particle_t	r_particles[MAX_PARTICLES];
 
 lightstyle_t	r_lightstyles[MAX_LIGHTSTYLES];
 
-char cl_weaponmodels[MAX_CLIENTWEAPONMODELS][MAX_QPATH];
-int num_cl_weaponmodels;
+int			num_cl_weaponmodels;
+char		cl_weaponmodels[MAX_CLIENTWEAPONMODELS][MAX_QPATH];
+
 
 /*
 ====================
