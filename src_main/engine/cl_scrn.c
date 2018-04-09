@@ -34,9 +34,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
 #include "client.h"
 
-float		scr_con_current;	// aproaches scr_conlines at scr_conspeed
-float		scr_conlines;		// 0.0 to 1.0 lines of console to display
-
 qboolean	scr_initialized;	// ready to draw
 
 int			scr_draw_loading;
@@ -55,7 +52,6 @@ cvar_t		*scr_graphscale;
 cvar_t		*scr_graphshift;
 
 cvar_t		*cl_hudscale;
-cvar_t		*cl_consolescale;
 cvar_t		*cl_menuscale;
 
 char		crosshair_pic[MAX_QPATH];
@@ -345,6 +341,29 @@ void SCR_Text_PaintAligned(int x, int y, char *s, float scale, int style, vec4_t
 	}
 }
 
+void DrawStringScaled(int x, int y, char *s, float factor)
+{
+	while (*s)
+	{
+		RE_Draw_Char (x, y, *s, factor);
+		x += 8 * factor;
+		s++;
+	}
+}
+
+void DrawAltStringScaled(int x, int y, char *s, float factor)
+{
+	RE_Draw_SetColor (colorGreen);
+
+	while (*s)
+	{
+		RE_Draw_Char (x, y, *s, factor);
+		x += 8 * factor;
+		s++;
+	}
+
+	RE_Draw_SetColor (NULL);
+}
 
 /*
 ===============================================================================
@@ -545,7 +564,7 @@ void SCR_DrawCenterString (void)
 
 	scr_erase_center = 0;
 	start = scr_centerstring;
-	scale = SCR_GetConsoleScale();
+	scale = SCR_GetHUDScale();
 
 	if (scr_center_lines <= 4)
 		y = (viddef.height * 0.35) / scale;
@@ -656,7 +675,6 @@ void SCR_Init (void)
 	scr_graphshift = Cvar_Get ("graphshift", "0", 0);
 
 	cl_hudscale = Cvar_Get("cl_hudscale", "-1", CVAR_ARCHIVE);
-	cl_consolescale = Cvar_Get("cl_consolescale", "-1", CVAR_ARCHIVE);
 	cl_menuscale = Cvar_Get("cl_menuscale", "-1", CVAR_ARCHIVE);
 
 	// register our commands
@@ -744,7 +762,7 @@ void SCR_Framecounter (void)
 		frame = 0;
 	}
 
-	float scale = SCR_GetConsoleScale();
+	float scale = SCR_GetHUDScale();
 
 	if (cl_showfps->value == 1) {
 		// calculate average of frames.
@@ -811,24 +829,23 @@ void SCR_RunConsole (void)
 {
 	// decide on the height of the console
 	if (cls.key_dest == key_console)
-		scr_conlines = 0.5;		// half screen
+		con.finalFrac = 0.5;			// half screen
 	else
-		scr_conlines = 0;				// none visible
+		con.finalFrac = 0;				// none visible
 
-	if (scr_conlines < scr_con_current)
+	// scroll towards the destination height
+	if (con.finalFrac < con.displayFrac)
 	{
-		scr_con_current -= scr_conspeed->value * cls.rframetime;
-
-		if (scr_conlines > scr_con_current)
-			scr_con_current = scr_conlines;
+		con.displayFrac -= scr_conspeed->value * cls.rframetime;
+		if (con.finalFrac > con.displayFrac)
+			con.displayFrac = con.finalFrac;
 
 	}
-	else if (scr_conlines > scr_con_current)
+	else if (con.finalFrac > con.displayFrac)
 	{
-		scr_con_current += scr_conspeed->value * cls.rframetime;
-
-		if (scr_conlines < scr_con_current)
-			scr_con_current = scr_conlines;
+		con.displayFrac += scr_conspeed->value * cls.rframetime;
+		if (con.finalFrac < con.displayFrac)
+			con.displayFrac = con.finalFrac;
 	}
 
 }
@@ -843,29 +860,29 @@ void SCR_DrawConsole (void)
 	// check for console width changes from a vid mode change
 	Con_CheckResize ();
 
-	if (cls.state == ca_disconnected || cls.state == ca_connecting)
+	// if disconnected, render console full screen
+	if (cls.state == ca_disconnected)
 	{
-		// forced full screen console
-		Con_DrawConsole (1.0);
-		return;
+		if (!(cls.key_dest == key_menu))
+		{
+			Con_DrawConsole(1.0);
+			return;
+		}
 	}
-
-	if (cls.state != ca_active || !cl.refresh_prepped)
+	
+	if (con.displayFrac)
 	{
-		// connected, but can't render
-		Con_DrawConsole (0.5);
-		RE_Draw_Fill (0, viddef.height / 2, viddef.width, viddef.height / 2, 0);
-		return;
-	}
-
-	if (scr_con_current)
-	{
-		Con_DrawConsole (scr_con_current);
+		// draw console
+		Con_DrawConsole (con.displayFrac);
 	}
 	else
 	{
-		if (cls.key_dest == key_game || cls.key_dest == key_message)
-			Con_DrawNotify ();	// only draw notify in game
+		// draw notify lines
+		if (cls.state == ca_active)
+		{
+			if (cls.key_dest == key_game || cls.key_dest == key_message)
+				Con_DrawNotify(); // only draw notify in game
+		}
 	}
 }
 
@@ -1640,26 +1657,6 @@ float SCR_GetHUDScale(void)
 	else
 	{
 		scale = cl_hudscale->value;
-	}
-
-	return scale;
-}
-
-float SCR_GetConsoleScale(void)
-{
-	float scale;
-
-	if (!scr_initialized)
-	{
-		scale = 1;
-	}
-	else if (cl_consolescale->value < 0)
-	{
-		scale = SCR_GetScale();
-	}
-	else
-	{
-		scale = cl_consolescale->value;
 	}
 
 	return scale;

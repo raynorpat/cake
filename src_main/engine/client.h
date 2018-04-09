@@ -366,7 +366,6 @@ extern	cvar_t	*cl_aviFrameRate;
 extern	cvar_t	*cl_vwep;
 
 extern  cvar_t	*cl_hudscale;
-extern  cvar_t	*cl_consolescale;
 extern  cvar_t	*cl_menuscale;
 
 extern	cvar_t	*cl_http_downloads;
@@ -509,6 +508,14 @@ void IN_CenterView (void);
 
 float CL_KeyState (kbutton_t *key);
 char *Key_KeynumToString (int keynum);
+
+//
+// cl_console.c
+//
+void Con_PageUp (void);
+void Con_PageDown (void);
+void Con_Top (void);
+void Con_Bottom (void);
 
 //
 // cl_demo.c

@@ -24,7 +24,6 @@ void	SCR_Init (void);
 void	SCR_UpdateScreen (void);
 
 float	SCR_GetHUDScale (void);
-float	SCR_GetConsoleScale (void);
 float	SCR_GetMenuScale (void);
 
 void	SCR_CenterPrint (char *str);
@@ -38,8 +37,6 @@ void	SCR_TouchPics (void);
 
 void	SCR_RunConsole (void);
 
-extern	float		scr_con_current;
-extern	float		scr_conlines;		// lines of console to display
 
 void	SCR_AdjustFrom640 (float *x, float *y, float *w, float *h);
 

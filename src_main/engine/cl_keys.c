@@ -361,45 +361,25 @@ void Key_Console (int key)
 
 	if ((key == K_PGUP) || (key == K_KP_PGUP) || (key == K_MWHEELUP) || (key == K_MOUSE4))
 	{
-		con.display -= 2;
+		Con_PageUp ();
 		return;
 	}
 
 	if ((key == K_PGDN) || (key == K_KP_PGDN) || (key == K_MWHEELDOWN) || (key == K_MOUSE5))
 	{
-		con.display += 2;
-
-		if (con.display > con.current)
-			con.display = con.current;
-
+		Con_PageDown ();
 		return;
 	}
 
 	if ((key == K_HOME) || (key == K_KP_HOME))
 	{
-		if (keydown[K_CTRL])
-		{
-			con.display = con.current - con.totallines + 10;
-		}
-		else
-		{
-			key_linepos = 1;
-		}
-
+		Con_Top ();
 		return;
 	}
 
 	if ((key == K_END) || (key == K_KP_END))
 	{
-		if (keydown[K_CTRL])
-		{
-			con.display = con.current;
-		}
-		else
-		{
-			key_linepos = (int)strlen(key_lines[edit_line]);
-		}
-
+		Con_Bottom ();
 		return;
 	}
 
@@ -414,9 +394,7 @@ void Key_Console (int key)
 		length = strlen(key_lines[edit_line]);
 
 		if (length >= MAXCMDLINE - 1)
-		{
 			return;
-		}
 
 		last = key_lines[edit_line][key_linepos];
 
