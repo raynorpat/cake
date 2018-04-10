@@ -687,6 +687,8 @@ void SCR_DrawPause (void)
 	if (!cl_paused->value)
 		return;
 
+	RE_Draw_FadeScreen ();
+
 	RE_Draw_GetPicSize (&w, &h, "pause");
 	SCR_DrawPic((SCREEN_WIDTH - w) / 2, (SCREEN_HEIGHT - h) / 2, w, h, "pause");
 }
@@ -704,6 +706,8 @@ void SCR_DrawLoading (void)
 		return;
 
 	scr_draw_loading = false;
+
+	RE_Draw_FadeScreen ();
 
 	RE_Draw_GetPicSize (&w, &h, "loading");
 	SCR_DrawPic((SCREEN_WIDTH - w) / 2, (SCREEN_HEIGHT - h) / 2, w, h, "loading");
@@ -816,9 +820,15 @@ void SCR_BeginLoadingPlaque (void)
 	M_ForceMenuOff ();
 
 	if (SCR_GetCinematicTime() > 0)
-		scr_draw_loading = 2;	// clear to black first
+	{
+		// clear to black first
+		scr_draw_loading = 2;	
+	}
 	else
+	{
+		// loading from ingame, apply background post effect
 		scr_draw_loading = 1;
+	}
 
 	SCR_UpdateScreen ();
 	cls.disable_screen = Sys_Milliseconds ();
