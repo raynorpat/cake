@@ -34,9 +34,6 @@ void	SCR_DebugGraph (float value, int color);
 
 void	SCR_TouchPics (void);
 
-
-
-
 void	SCR_AdjustFrom640 (float *x, float *y, float *w, float *h);
 
 void	SCR_FillRect (float x, float y, float width, float height, float *color);
