@@ -364,7 +364,6 @@ extern	cvar_t	*cl_aviFrameRate;
 
 extern	cvar_t	*cl_vwep;
 
-extern  cvar_t	*cl_hudscale;
 extern  cvar_t	*cl_menuscale;
 
 extern	cvar_t	*cl_http_downloads;
@@ -396,8 +395,6 @@ extern	entity_state_t	cl_parse_entities[MAX_PARSE_ENTITIES];
 
 extern	netadr_t	net_from;
 extern	sizebuf_t	net_message;
-
-void DrawStringScaled (int x, int y, char *s, float factor);
 
 qboolean CL_CheckOrDownloadFile (char *filename);
 
