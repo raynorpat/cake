@@ -1444,7 +1444,7 @@ void SCR_UpdateScreen (void)
 		RE_BeginFrame (separation[i]);
 
 		// clear the screen with black unless they are displaying game renderings or cinematics
-		if (cls.state != ca_active && !(SCR_GetCinematicTime() > 0))
+		if ((cls.state != ca_active) || !(SCR_GetCinematicTime() > 0))
 		{
 			RE_Draw_SetColor (g_color_table[0]);
 			RE_Draw_StretchPicExt (0, 0, viddef.width, viddef.height, 0, 0, 0, 0, "pics/white.png");
