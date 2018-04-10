@@ -505,10 +505,9 @@ Draws a picture banner overhead
 void M_Banner(char *name)
 {
 	int w, h;
-	float scale = SCR_GetMenuScale();
 
 	RE_Draw_GetPicSize(&w, &h, name);
-	RE_Draw_Pic (viddef.width / 2 - (w * scale) / 2, viddef.height / 2 - (110 * scale), name, scale);
+	SCR_DrawPic (SCREEN_WIDTH / 2 - w / 2, SCREEN_HEIGHT / 2 - 110, w, h, name);
 }
 
 //=============================================================================
@@ -599,7 +598,7 @@ void M_Draw (void)
 	// see if the mouse is hitting anything
 	if(!bselected)
 	{
-		index = Menu_HitTest(m_active, m_mouse[0], m_mouse[1]);
+		index = Menu_HitTest (m_active, m_mouse[0], m_mouse[1]);
 		if( prev != index )
 		{
 			if( index != -1 )
