@@ -1098,24 +1098,26 @@ void SCR_ExecuteLayoutString (char *s)
 			// draw selected item name
 			if (statnum == STAT_SELECTED_ICON)
 			{
+				int i;
+				int xx;
+				float *color;
+
 				if (cl.frame.playerstate.stats[STAT_SELECTED_ITEM] != lastitem)
 				{
 					itemtime = cl.time + 1500;
 					lastitem = cl.frame.playerstate.stats[STAT_SELECTED_ITEM];
 				}
 
-				if (cl.time < itemtime)
+				color = SCR_FadeColor (itemtime, 1000 * scr_centertime->value);
+				if (!color)
+					continue;
+
+				for (i = 0, xx = x + 32; ; i++, xx += 8)
 				{
-					int i;
-					int xx;
+					if (!cl.configstrings[CS_ITEMS + cl.frame.playerstate.stats[STAT_SELECTED_ITEM]][i])
+						break;
 
-					for (i = 0, xx = x + 32; ; i++, xx += 8)
-					{
-						if (!cl.configstrings[CS_ITEMS + cl.frame.playerstate.stats[STAT_SELECTED_ITEM]][i])
-							break;
-
-						SCR_Text_PaintSingleChar (xx, y + SMALLCHAR_HEIGHT, 0.2f, colorWhite, cl.configstrings[CS_ITEMS + cl.frame.playerstate.stats[STAT_SELECTED_ITEM]][i], 0, 0, 0, &cls.consoleFont);
-					}
+					SCR_Text_PaintSingleChar (xx, y + SMALLCHAR_HEIGHT, 0.2f, color, cl.configstrings[CS_ITEMS + cl.frame.playerstate.stats[STAT_SELECTED_ITEM]][i], 0, 0, 0, &cls.consoleFont);
 				}
 			}
 			continue;
@@ -1296,12 +1298,10 @@ void SCR_ExecuteLayoutString (char *s)
 		{
 			token = COM_Parse (&s);
 			index = atoi (token);
-
 			if (index < 0 || index >= MAX_CONFIGSTRINGS)
 				Com_Error (ERR_DROP, "Bad stat_string index");
 
 			index = cl.frame.playerstate.stats[index];
-
 			if (index < 0 || index >= MAX_CONFIGSTRINGS)
 				Com_Error (ERR_DROP, "Bad stat_string index");
 
