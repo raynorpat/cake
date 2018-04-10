@@ -21,42 +21,76 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
 #include "client.h"
 
-console_t	con;
-cvar_t		*con_notifytime;
+#define	NUM_CON_TIMES			4
+#define CON_LINESTEP			2
 
-extern	char	key_lines[NUM_KEY_LINES][MAXCMDLINE];
-extern	int		edit_line;
-extern	int		key_linepos;
+#define CON_TEXTSIZE			4194304
 
-void DrawStringScaled (int x, int y, char *s, float factor)
+#define	DEFAULT_CONSOLE_WIDTH	78
+
+typedef struct
 {
-	while (*s)
-	{
-		RE_Draw_Char (x, y, *s, factor);
-		x += 8 * factor;
-		s++;
-	}
-}
+	qboolean initialized;
 
-void DrawAltStringScaled (int x, int y, char *s, float factor)
-{
-	RE_Draw_SetColor (colorGreen);
+	short	text[CON_TEXTSIZE];
+	int		current;		// line where next message will be printed
+	int		x;				// offset in current line for next print
+	int		display;		// bottom of console displays this line
 
-	while (*s)
-	{
-		RE_Draw_Char (x, y, *s, factor);
-		x += 8 * factor;
-		s++;
-	}
+	int 	linewidth;		// characters across screen
+	int		totallines;		// total lines in console scrollback
 
-	RE_Draw_SetColor (NULL);
-}
+	float	xadjust;		// for wide aspect screens
+	float	yadjust;		// for narrow aspect screens
 
+	float	displayFrac;	// aproaches finalFrac at scr_conspeed
+	float	finalFrac;		// 0.0 to 1.0 lines of console to display
+
+	int		vislines;
+
+	float	times[NUM_CON_TIMES];	// cls.realtime time the line was generated for transparent notify lines
+
+	vec4_t	color;
+} console_t;
+console_t con;
+
+cvar_t *con_notifytime;
+cvar_t *con_conspeed;
+
+extern	char key_lines[NUM_KEY_LINES][MAXCMDLINE];
+extern	int edit_line;
+extern	int key_linepos;
 
 void Key_ClearTyping (void)
 {
 	key_lines[edit_line][1] = 0;	// clear any typing
 	key_linepos = 1;
+}
+
+void Con_PageUp(void)
+{
+	con.display -= CON_LINESTEP;
+	if (con.current - con.display >= con.totallines)
+		con.display = con.current - con.totallines + 1;
+}
+
+void Con_PageDown(void)
+{
+	con.display += CON_LINESTEP;
+	if (con.display > con.current)
+		con.display = con.current;
+}
+
+void Con_Top(void)
+{
+	con.display = con.totallines;
+	if (con.current - con.display >= con.totallines)
+		con.display = con.current - con.totallines + 1;
+}
+
+void Con_Bottom(void)
+{
+	con.display = con.current;
 }
 
 /*
@@ -66,35 +100,27 @@ Con_ToggleConsole_f
 */
 void Con_ToggleConsole_f (void)
 {
-	SCR_EndLoadingPlaque ();	// get rid of loading plaque
-
-	if (cl.attractloop)
-	{
-		Cbuf_AddText ("killserver\n");
+	// can't toggle the console when it's the only thing available
+	if (cls.state == ca_disconnected && cls.key_dest == key_console)
 		return;
-	}
 
-	if (cls.state == ca_disconnected)
-	{
-		// start the demo loop again
-		Cbuf_AddText ("d1\n");
-		return;
-	}
+	// get rid of loading plaque
+	SCR_EndLoadingPlaque ();
 
 	Key_ClearTyping ();
 	Con_ClearNotify ();
 
 	if (cls.key_dest == key_console)
 	{
-		M_ForceMenuOff ();
+		cls.key_dest = key_game;
+		Key_ClearStates ();
 		Cvar_Set ("paused", "0");
 	}
 	else
 	{
 		M_ForceMenuOff ();
 		cls.key_dest = key_console;
-
-		if (Cvar_VariableValue ("maxclients") == 1 && Com_ServerState ())
+		if (Cvar_VariableValue ("maxclients") == 1 && Com_ServerState() && !cl.attractloop)
 			Cvar_Set ("paused", "1");
 	}
 }
@@ -117,7 +143,9 @@ void Con_ToggleChat_f (void)
 		}
 	}
 	else
+	{
 		cls.key_dest = key_console;
+	}
 
 	Con_ClearNotify ();
 }
@@ -129,7 +157,12 @@ Con_Clear_f
 */
 void Con_Clear_f (void)
 {
-	memset (con.text, ' ', CON_TEXTSIZE);
+	int i;
+
+	for (i = 0; i < CON_TEXTSIZE; i++)
+		con.text[i] = (ColorIndex(COLOR_WHITE) << 8) | ' ';
+
+	Con_Bottom(); // go to end
 }
 
 
@@ -258,16 +291,14 @@ void Con_CheckResize (void)
 {
 	int	i, j, width, oldwidth, oldtotallines, numlines, numchars;
 	static short tbuf[CON_TEXTSIZE];
-	float scale = SCR_GetConsoleScale();
 
-	width = ((int)(viddef.width / scale) >> 3) - 2;
-
+	width = (SCREEN_WIDTH / SMALLCHAR_WIDTH) - 2;
 	if (width == con.linewidth)
 		return;
 
 	if (width < 1)			// video hasn't been initialized yet
 	{
-		width = 78;
+		width = DEFAULT_CONSOLE_WIDTH;
 		con.linewidth = width;
 		con.totallines = CON_TEXTSIZE / con.linewidth;
 		for (i = 0; i<CON_TEXTSIZE; i++)
@@ -324,7 +355,8 @@ void Con_Init (void)
 	//
 	// register our commands
 	//
-	con_notifytime = Cvar_Get ("con_notifytime", "3", 0);
+	con_notifytime = Cvar_Get ("con_notifytime", "4", 0);
+	con_conspeed = Cvar_Get("con_conspeed", "3", 0);
 
 	Cmd_AddCommand ("toggleconsole", Con_ToggleConsole_f);
 	Cmd_AddCommand ("togglechat", Con_ToggleChat_f);
@@ -343,13 +375,18 @@ Con_Linefeed
 */
 void Con_Linefeed (void)
 {
-	con.x = 0;
+	int             i;
 
+	// mark time for transparent overlay
+	if (con.current >= 0)
+		con.times[con.current % NUM_CON_TIMES] = cls.realtime;
+
+	con.x = 0;
 	if (con.display == con.current)
 		con.display++;
-
 	con.current++;
-	memset (&con.text[(con.current%con.totallines) *con.linewidth], ' ', con.linewidth);
+	for (i = 0; i < con.linewidth; i++)
+		con.text[(con.current % con.totallines) * con.linewidth + i] = (ColorIndex(COLOR_WHITE) << 8) | ' ';
 }
 
 /*
@@ -366,7 +403,6 @@ void Con_Print (char *txt)
 	int y, l;
 	unsigned char c;
 	unsigned short color;
-	static int	cr;
 
 	if (!con.initialized)
 		return;
@@ -392,34 +428,18 @@ void Con_Print (char *txt)
 
 		// word wrap
 		if ((l != con.linewidth) && (con.x + l > con.linewidth))
-			con.x = 0;
+			Con_Linefeed();
 
 		txt++;
-
-		if (cr)
-		{
-			con.current--;
-			cr = false;
-		}
-
-		if (!con.x)
-		{
-			Con_Linefeed ();
-
-			// mark time for transparent overlay
-			if (con.current >= 0)
-				con.times[con.current % NUM_CON_TIMES] = cls.realtime;
-		}
 
 		switch (c)
 		{
 		case '\n':
-			con.x = 0;
+			Con_Linefeed();
 			break;
 
 		case '\r':
 			con.x = 0;
-			cr = 1;
 			break;
 
 		default: // display character and advance
@@ -427,10 +447,43 @@ void Con_Print (char *txt)
 			con.text[y * con.linewidth + con.x] = (color << 8) | c;
 			con.x++;
 			if (con.x >= con.linewidth)
+			{
+				Con_Linefeed();
 				con.x = 0;
+			}
 			break;
 		}
+	}
+}
 
+/*
+==================
+Con_RunConsole
+
+Scroll it up or down
+==================
+*/
+void Con_RunConsole(void)
+{
+	// decide on the height of the console
+	if (cls.key_dest == key_console)
+		con.finalFrac = 0.5;			// half screen
+	else
+		con.finalFrac = 0;				// none visible
+
+	// scroll towards the destination height
+	if (con.finalFrac < con.displayFrac)
+	{
+		con.displayFrac -= con_conspeed->value * cls.rframetime;
+		if (con.finalFrac > con.displayFrac)
+			con.displayFrac = con.finalFrac;
+
+	}
+	else if (con.finalFrac > con.displayFrac)
+	{
+		con.displayFrac += con_conspeed->value * cls.rframetime;
+		if (con.finalFrac < con.displayFrac)
+			con.displayFrac = con.finalFrac;
 	}
 }
 
@@ -443,7 +496,6 @@ DRAWING
 ==============================================================================
 */
 
-
 /*
 ================
 Con_DrawInput
@@ -451,40 +503,38 @@ Con_DrawInput
 The input line scrolls horizontally if typing goes beyond the right edge
 ================
 */
-void Con_DrawInput (void)
+void Con_DrawInput (vec4_t color)
 {
 	int		i;
-	float	scale;
 	char	*text;
 
 	if (cls.key_dest == key_menu)
 		return;
 	if (cls.key_dest != key_console && cls.state == ca_active)
-		return;		// don't draw anything (always draw if not active)
+		return; // don't draw anything (always draw if not active)
 
-	scale = SCR_GetConsoleScale();
 	text = key_lines[edit_line];
 
 	// add the cursor frame
-	text[key_linepos] = 10 + ((int) (cls.realtime >> 8) & 1);
+	if ((int)(cls.realtime >> 8) & 1)
+	{
+		text[key_linepos] = '_';
 
-	// fill out remainder with spaces
-	for (i = key_linepos + 1; i < con.linewidth; i++)
-		text[i] = ' ';
+		// fill out remainder with spaces
+		for (i = key_linepos + 1; i < con.linewidth; i++)
+			text[i] = ' ';
+	}
 
-	//	prestep if horizontally scrolling
+	// prestep if horizontally scrolling
 	if (key_linepos >= con.linewidth)
 		text += 1 + key_linepos - con.linewidth;
 
 	// draw it
-	RE_Draw_SetColor (con.color);
-	for (i = 0; i < con.linewidth; i++)
-		RE_Draw_Char (((i + 1) << 3) * scale, con.vislines - 22 * scale, text[i], scale);
+	SCR_Text_Paint (20, 234, 0.15f, color, text, 0, 0, UI_DROPSHADOW, &cls.consoleFont);
 
 	// remove cursor
 	key_lines[edit_line][key_linepos] = 0;
 }
-
 
 /*
 ================
@@ -499,31 +549,29 @@ void Con_DrawNotify (void)
 	short	*text;
 	int		i;
 	int		time;
-	char	*s;
 	int		skip;
-	float	scale;
 	int		currentColor;
-
-	v = 0;
-	scale = SCR_GetConsoleScale();
+	vec4_t	color;
+	float	alpha;
 
 	currentColor = 7;
 	RE_Draw_SetColor (g_color_table[currentColor]);
 
+	v = 10;
 	for (i = con.current - NUM_CON_TIMES + 1; i <= con.current; i++)
 	{
 		if (i < 0)
 			continue;
 
 		time = con.times[i % NUM_CON_TIMES];
-
 		if (time == 0)
 			continue;
 
 		time = cls.realtime - time;
-
 		if (time > con_notifytime->value * 1000)
 			continue;
+
+		alpha = 1.0f - (1.0f / (con_notifytime->value * 1000) * time);
 
 		text = con.text + (i % con.totallines) * con.linewidth;
 
@@ -538,7 +586,10 @@ void Con_DrawNotify (void)
 				RE_Draw_SetColor (g_color_table[currentColor]);
 			}
 
-			RE_Draw_Char (((x + 1) << 3) * scale, v * scale, text[x] & 0xff, scale);
+			Vector4Copy(g_color_table[currentColor], color);
+			color[3] = alpha;
+
+			SCR_Text_PaintSingleChar(con.xadjust + (x + 1) * 5, v, 0.15f, color, text[x] & 0xff, 0, 0, UI_DROPSHADOW, &cls.consoleFont);
 		}
 
 		v += 8;
@@ -549,35 +600,94 @@ void Con_DrawNotify (void)
 	// draw the chat line
 	if (cls.key_dest == key_message)
 	{
+		char *s;
+
 		if (chat_team)
-		{
-			DrawStringScaled (8 * scale, v * scale, "say_team:", scale);
-			skip = 11;
-		}
+			s = "say_team:";
 		else
-		{
-			DrawStringScaled (8 * scale, v * scale, "say:", scale);
-			skip = 5;
-		}
+			s = "say:";
+
+		SCR_Text_PaintAligned(8, v, s, 0.25f, UI_LEFT, colorWhite, &cls.consoleFont);
+		skip = SCR_Text_Width(s, 0.25f, 0, &cls.consoleFont) + 7;
 
 		s = chat_buffer;
+		if (chat_bufferlen > (SCREEN_WIDTH - (skip + 1)))
+			s += chat_bufferlen - (SCREEN_WIDTH - (skip + 1));
 
-		if (chat_bufferlen > (viddef.width >> 3) - (skip + 1))
-			s += chat_bufferlen - ((viddef.width >> 3) - (skip + 1));
-
-		x = 0;
-
-		while (s[x])
-		{
-			RE_Draw_Char (((x + skip) << 3) * scale, v * scale, s[x], scale);
-			x++;
-		}
-
-		RE_Draw_Char (((x + skip) << 3) * scale, v + scale, 10 + ((cls.realtime >> 8) & 1), scale);
-		v += 8;
+		SCR_Text_PaintAligned(skip, v, s, 0.25f, UI_LEFT, colorWhite, &cls.consoleFont);
+		v += SMALLCHAR_HEIGHT;
 	}
 }
 
+/*
+================
+Con_DrawDownloadBar
+
+download progress bar
+================
+*/
+void Con_DrawDownloadBar (short *text)
+{
+	char	dlbar[1024];
+	int		j, n, x, y, i;
+
+	// skip if we are not downloading any files
+	if (!(cls.downloadname[0] && (cls.download || cls.downloadposition)))
+		return;
+
+	if ((text = (short *)strrchr(cls.downloadname, '/')) != NULL)
+		text++;
+	else
+		text = (short *)cls.downloadname;
+	
+	// figure out width
+	x = con.linewidth - ((con.linewidth * 7) / 40);
+	y = x - strlen((char *)text) - 8;
+	i = con.linewidth / 3;
+
+	if (strlen((char *)text) > i)
+	{
+		y = x - i - 11;
+		memcpy(dlbar, text, i);
+		dlbar[i] = 0;
+		strcat(dlbar, "...");
+	}
+	else
+	{
+		strcpy(dlbar, (char *)text);
+	}
+
+	strcat(dlbar, ": ");
+	i = strlen(dlbar);
+	dlbar[i++] = '\x80';
+
+	// where's the dot go?
+	if (cls.downloadpercent == 0)
+		n = 0;
+	else
+		n = y * cls.downloadpercent / 100;
+	
+	for (j = 0; j < y; j++)
+	{
+		if (j == n)
+			dlbar[i++] = '\x83';
+		else
+			dlbar[i++] = '\x81';
+	}
+
+	dlbar[i++] = '\x82';
+	dlbar[i] = 0;
+
+	if (cls.download)
+		cls.downloadposition = ftell(cls.download);
+
+	sprintf(dlbar + i, " %02d%% (%.02f KB)", cls.downloadpercent, (float)cls.downloadposition / 1024.0);
+
+	// draw it
+	y = con.vislines - 12;
+	for (i = 0; i < strlen(dlbar); i++)
+		SCR_Text_PaintSingleChar (((i + 1) << 3), y, 0.2f, colorGreen, dlbar[i], 0, 0, UI_DROPSHADOW, &cls.consoleFont);
+}
 
 /*
 ================
@@ -588,51 +698,96 @@ Draws the console with the solid background
 */
 void Con_DrawConsole (float frac)
 {
-	int				i, j, x, y, n;
+	int				i, x, y;
 	int				rows;
 	short			*text;
 	int				row;
 	int				lines;
-	float			scale;
 	char			version[64];
-	char			dlbar[1024];
 	int				currentColor;
+	vec4_t          color;
+	vec4_t          fontColor;
+	vec4_t          fontColorHighlight;
+	float           alpha;
+	int             rowOffset = 0;
 
-	scale = SCR_GetConsoleScale();
 	lines = viddef.height * frac;
-
 	if (lines <= 0)
 		return;
 
 	if (lines > viddef.height)
 		lines = viddef.height;
 
-	// draw the background
-	RE_Draw_StretchPic (0, -viddef.height + lines, viddef.width, viddef.height, "conback");
+	// on wide screens, we will center the text
+	con.yadjust = 0;
+	SCR_AdjustFrom640 (&con.xadjust, &con.yadjust, NULL, NULL);
 
-	// draw the version
+	// draw the background
+	y = 240;
+
+	alpha = frac;
+
+	color[0] = 0.05f;
+	color[1] = 0.25f;
+	color[2] = 0.30f;
+	color[3] = alpha * 0.85f;
+
+	RE_Draw_SetColor (color);
+	SCR_FillRect (10, 10, 620, 230, color);
+	RE_Draw_SetColor (NULL);
+
+	// draw the sides
+	color[0] = 0.7f;
+	color[1] = 0.7f;
+	color[2] = 0.9f;
+	color[3] = alpha * 0.75f;
+
+	SCR_FillRect (10, 10, 620, 1, color);	// top
+	SCR_FillRect (10, 240, 620, 1, color);	// buttom
+
+	SCR_FillRect (10, 10, 1, 230, color);	// left
+	SCR_FillRect (630, 10, 1, 230, color);	// right
+
+	// draw the version number
+	RE_Draw_SetColor (g_color_table[ColorIndex(COLOR_RED)]);
+
+	Vector4Set (fontColor, 1.0f, 1.0f, 1.0f, alpha);
+	Vector4Set (fontColorHighlight, 1.0f, 1.0f, 1.0f, alpha * 1.5f);
+
+	y = 230;
+
+	// version string
 	Com_sprintf (version, sizeof (version), "v%4.2f", VERSION);
-	RE_Draw_SetColor (colorRed);
-	for (x = 0; x < 5; x++)
-		RE_Draw_Char (viddef.width - (44 * scale) + x * 8 * scale, lines - 12 * scale, version[x], scale);
+	SCR_Text_PaintAligned (626, y, version, 0.2f, UI_RIGHT | UI_DROPSHADOW, fontColorHighlight, &cls.consoleFont);
+	y -= 10;
+
+	// engine string
+	Com_sprintf (version, sizeof(version), "Cake");
+	SCR_Text_PaintAligned (626, y, version, 0.2f, UI_RIGHT | UI_DROPSHADOW, fontColorHighlight, &cls.consoleFont);
+	y -= 10;
 
 	// draw the text
 	con.vislines = lines;
-
-	rows = (lines - 22) >> 3;		// rows of text to draw
-	y = (lines - 30 * scale) / scale;
+	rows = 26; // rows of text to draw
+	y = 222;
 
 	// draw from the bottom up
 	if (con.display != con.current)
 	{
 		// draw arrows to show the buffer is backscrolled
-		for (x = 0; x < con.linewidth; x += 4)
-			RE_Draw_Char (((x + 1) << 3) * scale, y * scale, '^', scale);
+		for (x = 0; x < con.linewidth - 12; x += 3)
+			SCR_Text_PaintSingleChar (con.xadjust + (x + 1) * 8 + 15, y, 0.15f, fontColorHighlight, '^', 0, 0, UI_DROPSHADOW, &cls.consoleBoldFont);
+
 		y -= 8;
-		rows--;
+		rows -= CON_LINESTEP;
+		rowOffset = CON_LINESTEP;
 	}
 
 	row = con.display;
+	row -= rowOffset;
+
+	if (con.x == 0)
+		row--;
 
 	currentColor = 7;
 	RE_Draw_SetColor (g_color_table[currentColor]);
@@ -643,7 +798,10 @@ void Con_DrawConsole (float frac)
 			break;
 
 		if (con.current - row >= con.totallines)
-			break;		// past scrollback wrap point
+		{
+			// past scrollback wrap point
+			continue;
+		}
 
 		text = con.text + (row % con.totallines) * con.linewidth;
 
@@ -658,68 +816,55 @@ void Con_DrawConsole (float frac)
 				RE_Draw_SetColor (g_color_table[currentColor]);
 			}
 
-			RE_Draw_Char (((x + 1) << 3) * scale, y * scale, text[x] & 0xff, scale);
+			Vector4Copy (g_color_table[currentColor], color);
+			color[3] = alpha * 1.5f;
+			SCR_Text_PaintSingleChar (15 + con.xadjust + (x + 1) * 5, y, 0.15f, color, text[x] & 0xff, 0, 0, UI_DROPSHADOW, &cls.consoleFont);
 		}
 	}
 
 	RE_Draw_SetColor (NULL);
 
 	// draw the download bar
-	if (cls.downloadname[0] && (cls.download || cls.downloadposition))
-	{
-		if ((text = (short *)strrchr (cls.downloadname, '/')) != NULL)
-			text++;
-		else
-			text = (short *)cls.downloadname;
-
-		// figure out width
-		x = con.linewidth - ((con.linewidth * 7) / 40);
-		y = x - strlen ((char *)text) - 8;
-		i = con.linewidth / 3;
-
-		if (strlen ((char *)text) > i)
-		{
-			y = x - i - 11;
-			memcpy (dlbar, text, i);
-			dlbar[i] = 0;
-			strcat (dlbar, "...");
-		}
-		else
-			strcpy (dlbar, (char *)text);
-
-		strcat (dlbar, ": ");
-		i = strlen (dlbar);
-		dlbar[i++] = '\x80';
-
-		// where's the dot go?
-		if (cls.downloadpercent == 0)
-			n = 0;
-		else
-			n = y * cls.downloadpercent / 100;
-
-		for (j = 0; j < y; j++)
-			if (j == n)
-				dlbar[i++] = '\x83';
-			else
-				dlbar[i++] = '\x81';
-
-		dlbar[i++] = '\x82';
-		dlbar[i] = 0;
-
-		if (cls.download)
-			cls.downloadposition = ftell(cls.download);
-
-		sprintf(dlbar + i, " %02d%% (%.02f KB)", cls.downloadpercent, (float)cls.downloadposition / 1024.0);
-
-		// draw it
-		y = con.vislines - 12;
-
-		RE_Draw_SetColor (colorGreen);
-		for (i = 0; i < strlen (dlbar); i++)
-			RE_Draw_Char (((i + 1) << 3) * scale, y * scale, dlbar[i], scale);
-		RE_Draw_SetColor (NULL);
-	}
+	Con_DrawDownloadBar (text);
 
 	// draw the input prompt, user text, and cursor if desired
-	Con_DrawInput ();
+	Con_DrawInput (color);
+}
+
+//=============================================================================
+
+/*
+==================
+SCR_DrawConsole
+==================
+*/
+void SCR_DrawConsole (void)
+{
+	// check for console width changes from a vid mode change
+	Con_CheckResize ();
+
+	// if disconnected, render console full screen
+	if (cls.state == ca_disconnected)
+	{
+		if (!(cls.key_dest == key_menu))
+		{
+			Con_DrawConsole (1.0);
+			return;
+		}
+	}
+
+	if (con.displayFrac)
+	{
+		// draw console
+		Con_DrawConsole (con.displayFrac);
+	}
+	else
+	{
+		// draw notify lines
+		if (cls.state == ca_active)
+		{
+			if (cls.key_dest == key_game || cls.key_dest == key_message)
+				Con_DrawNotify (); // only draw notify in game
+		}
+	}
 }

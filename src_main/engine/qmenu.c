@@ -614,7 +614,8 @@ void MenuList_Draw (menulist_s *l)
 		if (strlen(buffer) > (width / 8))
 			strcpy(buffer + (width / 8) - 3, "...");
 
-		DrawStringScaled(x, y, buffer, SCR_GetMenuScale());
+		//TODO
+		//DrawStringScaled(x, y, buffer, SCR_GetMenuScale());
 		y += MLIST_SPACING;
 	}
 }

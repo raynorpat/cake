@@ -30,7 +30,7 @@ out vec4 fragColor;
 void DrawFS ()
 {
 	vec4 colorTex = texture (diffuse, texcoords.st);
-	colorTex.rgb *= colorAdd.rgb;
+	colorTex *= colorAdd;
 	
 	fragColor = mix (colorTex, iocolor, texturecolormix);
 

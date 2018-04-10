@@ -213,7 +213,18 @@ void Q_sincos (float angradians, float *angsin, float *angcos);
 #define VectorNegate(src,dst)	(dst[0]=-src[0],dst[1]=-src[1],dst[2]=-src[2])
 
 #define Vector2Set(v, x, y)		(v[0]=(x), v[1]=(y))
+
 #define Vector3Set(v, x, y, z)	(v[0]=(x), v[1]=(y), v[2]=(z))
+
+#define DotProduct4(x,y)		((x)[0]*(y)[0]+(x)[1]*(y)[1]+(x)[2]*(y)[2]+(x)[3]*(y)[3])
+#define Vector4Subtract(a,b,c)	((c)[0]=(a)[0]-(b)[0],(c)[1]=(a)[1]-(b)[1],(c)[2]=(a)[2]-(b)[2],(c)[3]=(a)[3]-(b)[3])
+#define Vector4Add(a,b,c)		((c)[0]=(a)[0]+(b)[0],(c)[1]=(a)[1]+(b)[1],(c)[2]=(a)[2]+(b)[2],(c)[3]=(a)[3]+(b)[3])
+#define Vector4Copy(a,b)		((b)[0]=(a)[0],(b)[1]=(a)[1],(b)[2]=(a)[2],(b)[3]=(a)[3])
+#define Vector4Scale(v, s, o)	((o)[0]=(v)[0]*(s),(o)[1]=(v)[1]*(s),(o)[2]=(v)[2]*(s),(o)[3]=(v)[3]*(s))
+#define Vector4MA(v, s, b, o)	((o)[0]=(v)[0]+(b)[0]*(s),(o)[1]=(v)[1]+(b)[1]*(s),(o)[2]=(v)[2]+(b)[2]*(s),(o)[3]=(v)[3]+(b)[3]*(s))
+#define Vector4Clear(a)			((a)[0]=(a)[1]=(a)[2]=(a)[3]=0)
+#define Vector4Negate(a,b)		((b)[0]=-(a)[0],(b)[1]=-(a)[1],(b)[2]=-(a)[2],(b)[3]=-(a)[3])
+#define Vector4Set(v,x,y,z,w)	((v)[0]=(x),(v)[1]=(y),(v)[2]=(z),(v)[3]=(w))
 
 void VectorMA (vec3_t addvec, float scale, vec3_t mulvec, vec3_t out);
 
@@ -1076,5 +1087,57 @@ typedef struct
 
 	short		stats[MAX_STATS];		// fast status bar updates
 } player_state_t;
+
+// all drawing is done to a 640*480 virtual screen size
+// and will be automatically scaled to the real resolution
+#define SCREEN_WIDTH		640
+#define SCREEN_HEIGHT		480
+
+// font support
+#define SMALLCHAR_WIDTH		8
+#define SMALLCHAR_HEIGHT	16
+
+#define BIGCHAR_WIDTH		16
+#define BIGCHAR_HEIGHT		16
+
+#define GIANTCHAR_WIDTH		32
+#define GIANTCHAR_HEIGHT	48
+
+#define UI_LEFT			0x00000000	// default
+#define UI_CENTER		0x00000001
+#define UI_RIGHT		0x00000002
+
+#define UI_SMALLFONT	0x00000010
+#define UI_BIGFONT		0x00000020	// default
+#define UI_GIANTFONT	0x00000040
+#define UI_DROPSHADOW	0x00000800
+
+#define GLYPH_START 0
+#define GLYPH_END 255
+#define GLYPH_CHARSTART 32
+#define GLYPH_CHAREND 127
+#define GLYPHS_PER_FONT GLYPH_END - GLYPH_START + 1
+typedef struct
+{
+	int             height;		// number of scan lines
+	int             top;		// top of glyph in buffer
+	int             bottom;		// bottom of glyph in buffer
+	int             pitch;		// width for copying
+	int             xSkip;		// x adjustment
+	int             imageWidth;	// width of actual image
+	int             imageHeight; // height of actual image
+	float           s;			// x offset in image where glyph starts
+	float           t;			// y offset in image where glyph starts
+	float           s2;
+	float           t2;
+	char            imageName[MAX_OSPATH];
+} glyphInfo_t;
+
+typedef struct
+{
+	glyphInfo_t     glyphs[GLYPHS_PER_FONT];
+	float           glyphScale;
+	char            name[MAX_QPATH];
+} fontInfo_t;
 
 #endif

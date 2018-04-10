@@ -109,6 +109,7 @@ set(RENDERER_GL_SOURCES
 	../refresh/gl/gl_beam.c
 	../refresh/gl/gl_draw.c
 	../refresh/gl/gl_framebuffer.c
+	../refresh/gl/gl_font.c
 	../refresh/gl/gl_image.c
 	../refresh/gl/gl_light.c
 	../refresh/gl/gl_mesh.c

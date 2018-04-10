@@ -35,7 +35,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #include "sound.h"
 #include "input.h"
 #include "keys.h"
-#include "console.h"
 
 // for curl downloading
 #include <curl/curl.h>
@@ -304,6 +303,10 @@ typedef struct
 	dlhandle_t	HTTPHandles[4];	// actual download handles
 	char		downloadServer[512]; // base url prefix to download from
 	char		downloadReferer[32]; // libcurl requires a static string for referers...
+
+	// true type fonts
+	fontInfo_t	consoleFont;
+	fontInfo_t	consoleBoldFont;
 } client_static_t;
 
 extern client_static_t	cls;
@@ -361,8 +364,6 @@ extern	cvar_t	*cl_aviFrameRate;
 
 extern	cvar_t	*cl_vwep;
 
-extern  cvar_t	*cl_hudscale;
-extern  cvar_t	*cl_consolescale;
 extern  cvar_t	*cl_menuscale;
 
 extern	cvar_t	*cl_http_downloads;
@@ -394,9 +395,6 @@ extern	entity_state_t	cl_parse_entities[MAX_PARSE_ENTITIES];
 
 extern	netadr_t	net_from;
 extern	sizebuf_t	net_message;
-
-void DrawStringScaled (int x, int y, char *s, float factor);
-void DrawAltStringScaled (int x, int y, char *s, float factor); // toggle high bit
 
 qboolean CL_CheckOrDownloadFile (char *filename);
 
@@ -505,6 +503,23 @@ void IN_CenterView (void);
 
 float CL_KeyState (kbutton_t *key);
 char *Key_KeynumToString (int keynum);
+
+//
+// cl_console.c
+//
+void Con_CheckResize (void);
+void Con_Init (void);
+void Con_RunConsole (void);
+void Con_DrawConsole (float frac);
+void Con_Print (char *txt);
+void Con_Clear_f (void);
+void Con_DrawNotify (void);
+void Con_ClearNotify (void);
+void Con_ToggleConsole_f (void);
+void Con_PageUp (void);
+void Con_PageDown (void);
+void Con_Top (void);
+void Con_Bottom (void);
 
 //
 // cl_demo.c

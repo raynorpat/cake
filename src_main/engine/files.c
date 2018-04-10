@@ -215,27 +215,6 @@ char *FS_Gamedir(void)
 
 /*
 =================
-FS_FileForHandle
-
-Returns a FILE * for a fileHandle_t.
-=================
-*/
-FILE *FS_FileForHandle(fileHandle_t f)
-{
-	fsHandle_t     *handle;
-
-	handle = FS_GetFileByHandle(f);
-
-	if (handle->zip != NULL)
-		Com_Error(ERR_DROP, "FS_FileForHandle: can't get FILE on zip file");
-	if (handle->file == NULL)
-		Com_Error(ERR_DROP, "FS_FileForHandle: NULL");
-
-	return handle->file;
-}
-
-/*
-=================
 FS_HandleForFile
 
 Finds a free fileHandle_t.
@@ -703,53 +682,6 @@ int FS_FTell(fileHandle_t f)
 
 /*
 =================
-FS_FEof
-=================
-*/
-int FS_FEof(fileHandle_t f)
-{
-	fsHandle_t *handle;
-
-	handle = FS_GetFileByHandle(f);
-
-	if (handle->file)
-		return feof(handle->file);
-	else if (handle->zip)
-		return unzeof(handle->zip);
-
-	return 0;
-}
-
-/*
-=================
-FS_FError
-=================
-*/
-int FS_FError(fileHandle_t f)
-{
-	fsHandle_t *handle;
-
-	handle = FS_GetFileByHandle(f);
-
-	if (handle->file)
-		return ferror(handle->file);
-
-	return 0;
-}
-
-/*
-=================
-FS_Rewind
-=================
-*/
-void FS_Rewind(fileHandle_t f, int offset, int *pos)
-{
-	FS_Seek(f, offset, FS_SEEK_SET);
-	pos = 0;
-}
-
-/*
-=================
 FS_ListPak
 
 Generates a listing of the contents of a pak file.
@@ -874,27 +806,6 @@ void FS_Seek(fileHandle_t f, int offset, fsOrigin_t origin)
 			remaining -= r;
 		}
 	}
-}
-
-/*
-=================
-FS_Tell
-
-Returns -1 if an error occurs.
-=================
-*/
-int FS_Tell(fileHandle_t f)
-{
-	fsHandle_t *handle;
-
-	handle = FS_GetFileByHandle(f);
-
-	if (handle->file)
-		return ftell(handle->file);
-	else if (handle->zip)
-		return unztell(handle->zip);
-
-	return -1;
 }
 
 /*

@@ -60,6 +60,7 @@ src_main/build
 
 baseq2/*.pak
 baseq2/*.cfg
+baseq2/fonts
 baseq2/demos
 baseq2/env
 baseq2/maps
@@ -72,7 +73,7 @@ baseq2/screenshots
 baseq2/sound
 baseq2/sprites
 baseq2/textures
-baseq2/video/*.cin
+baseq2/video
 
 *.lst
 *.bak

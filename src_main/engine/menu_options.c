@@ -380,22 +380,14 @@ static void ConsoleFunc (void *unused)
 
 	SCR_EndLoadingPlaque(); // get rid of loading plaque
 
-	if (cl.attractloop)
-	{
-		Cbuf_AddText ("killserver\n");
-		return;
-	}
-
 	Key_ClearTyping ();
 	Con_ClearNotify ();
 
 	M_ForceMenuOff ();
 	cls.key_dest = key_console;
 
-	if ((Cvar_VariableValue("maxclients") == 1) && Com_ServerState())
-	{
+	if ((Cvar_VariableValue("maxclients") == 1) && Com_ServerState() && !cl.attractloop)
 		Cvar_Set("paused", "1");
-	}
 }
 
 static void UpdateSoundQualityFunc (void *unused)

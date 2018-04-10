@@ -121,7 +121,6 @@ include_directories("../libs/minizip")
 # engine side code
 set(CLIENT_INCLUDES
 	client.h
-	console.h
 	keys.h
 	screen.h
 	sound.h

@@ -948,6 +948,8 @@ int RE_GL_Init (void)
 
 	R_Register ();
 
+	R_InitFreeType ();
+
 	// initialize OS-specific parts of OpenGL
 	if (!VID_Init_GL())
 		return -1;
@@ -1025,6 +1027,8 @@ void RE_GL_Shutdown (void)
 
 	R_ShutdownFBOs ();
 
+	R_DoneFreeType ();
+
 	// shut down OS specific OpenGL stuff like contexts, etc.
 	VID_Shutdown_GL(true);
 }
@@ -1089,6 +1093,7 @@ void GL_GFX_CoreInit(void)
 	RE_Draw_SetColor = RE_GL_Draw_SetColor;
 	RE_Draw_Char = RE_GL_Draw_Char;
 	RE_Draw_StretchPic = RE_GL_Draw_StretchPic;
+	RE_Draw_StretchPicExt = RE_GL_Draw_StretchPicExt;
 	RE_Draw_Pic = RE_GL_Draw_Pic;
 	RE_Draw_GetPicSize = RE_GL_Draw_GetPicSize;
 

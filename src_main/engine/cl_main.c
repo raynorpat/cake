@@ -1693,6 +1693,10 @@ void CL_InitLocal (void)
 	Cmd_AddCommand ("invdrop", NULL);
 	Cmd_AddCommand ("weapnext", NULL);
 	Cmd_AddCommand ("weapprev", NULL);
+
+	// true type fonts
+	RE_RegisterFont("fonts/VeraMono.ttf", 24, &cls.consoleFont);
+	RE_RegisterFont("fonts/VeraMoBd.ttf", 24, &cls.consoleBoldFont);
 }
 
 /*
@@ -1882,7 +1886,7 @@ void CL_Frame (int packetdelta, int renderdelta, int timedelta, qboolean packetf
 		SCR_RunCinematic ();
 
 		// update console
-		SCR_RunConsole ();
+		Con_RunConsole ();
 
 		// update framecounter
 		cls.framecount++;

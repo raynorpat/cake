@@ -34,14 +34,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
 #include "client.h"
 
-float		scr_con_current;	// aproaches scr_conlines at scr_conspeed
-float		scr_conlines;		// 0.0 to 1.0 lines of console to display
-
 qboolean	scr_initialized;	// ready to draw
 
 int			scr_draw_loading;
 
-cvar_t		*scr_conspeed;
 cvar_t		*scr_centertime;
 cvar_t		*scr_showturtle;
 cvar_t		*scr_showpause;
@@ -54,8 +50,6 @@ cvar_t		*scr_graphheight;
 cvar_t		*scr_graphscale;
 cvar_t		*scr_graphshift;
 
-cvar_t		*cl_hudscale;
-cvar_t		*cl_consolescale;
 cvar_t		*cl_menuscale;
 
 char		crosshair_pic[MAX_QPATH];
@@ -63,6 +57,346 @@ int			crosshair_width, crosshair_height;
 
 void SCR_Loading_f (void);
 
+#define FADE_TIME 200
+
+/*
+================
+SCR_AdjustFrom640
+
+Adjusted for resolution and screen aspect ratio
+================
+*/
+void SCR_AdjustFrom640 (float *x, float *y, float *w, float *h)
+{
+	float           xscale;
+	float           yscale;
+	float           xbias = 0.0f;
+	float           ybias = 0.0f;
+
+	// adjust for wide screens
+	xscale = viddef.width / 640.0f;
+	yscale = viddef.height / 480.0f;
+#if 0
+	if (viddef.width * 480 > viddef.height * 640)
+	{
+		xbias = 0.5f * (viddef.width - (viddef.height * 640.0f / 480.0f));
+		xscale = yscale;
+	}
+	else if (viddef.width * 480 < viddef.height * 640)
+	{
+		ybias = 0.5f * (viddef.height - (viddef.width * 480.0f / 640.0f));
+		yscale = xscale;
+	}
+#endif
+
+	// scale for screen sizes
+	if (x)
+		*x = xbias + *x * xscale;
+	if (y)
+		*y = ybias + *y * yscale;
+	if (w)
+		*w *= xscale;
+	if (h)
+		*h *= yscale;
+}
+
+/*
+================
+SCR_FillRect
+
+Coordinates are 640*480 virtual values
+=================
+*/
+void SCR_FillRect (float x, float y, float width, float height, float *color)
+{
+	RE_Draw_SetColor (color);
+
+	SCR_AdjustFrom640 (&x, &y, &width, &height);
+	RE_Draw_StretchPicExt (x, y, width, height, 0, 0, 0, 0, "pics/white.png");
+
+	RE_Draw_SetColor (NULL);
+}
+
+/*
+================
+SCR_DrawPic
+
+Coordinates are 640*480 virtual values
+=================
+*/
+void SCR_DrawPic (float x, float y, float width, float height, char *pic)
+{
+	SCR_AdjustFrom640 (&x, &y, &width, &height);
+	RE_Draw_StretchPicExt (x, y, width, height, 0, 0, 1, 1, pic);
+}
+
+/*
+================
+SCR_FadeColor
+================
+*/
+float *SCR_FadeColor (int startMsec, int totalMsec)
+{
+	static vec4_t	color;
+	int				t;
+
+	if (startMsec == 0)
+		return NULL;
+
+	t = cl.time - startMsec;
+
+	if (t >= totalMsec)
+		return NULL;
+
+	// fade out
+	if (totalMsec - t < FADE_TIME)
+		color[3] = (totalMsec - t) * 1.0 / FADE_TIME;
+	else
+		color[3] = 1.0;
+	color[0] = color[1] = color[2] = 1;
+
+	return color;
+}
+
+
+/*
+===============================================================================
+
+FONT PRINTING
+
+===============================================================================
+*/
+
+/*
+==============
+SCR_Text_PaintChar
+==============
+*/
+void SCR_Text_PaintChar(float x, float y, float width, float height, float scale, float s, float t, float s2, float t2, char *name)
+{
+	float w, h;
+
+	w = width * scale;
+	h = height * scale;
+	SCR_AdjustFrom640 (&x, &y, &w, &h);
+
+	RE_Draw_StretchPicExt (x, y, w, h, s, t, s2, t2, name);
+}
+
+/*
+==============
+SCR_Text_Width
+==============
+*/
+int SCR_Text_Width (char *text, float scale, int limit, fontInfo_t * font)
+{
+	int             count, len;
+	float           out;
+	glyphInfo_t		*glyph;
+	float           useScale;
+	char			*s = text;
+
+	useScale = scale * font->glyphScale;
+	out = 0;
+	if (text)
+	{
+		len = strlen(text);
+		if (limit > 0 && len > limit)
+			len = limit;
+		count = 0;
+
+		while (s && *s && count < len)
+		{
+			if (Q_IsColorString(s))
+			{
+				s += 2;
+				continue;
+			}
+			else
+			{
+				glyph = &font->glyphs[(int)*s];
+				out += glyph->xSkip;
+				s++;
+				count++;
+			}
+		}
+	}
+
+	return out * useScale;
+}
+
+/*
+==============
+SCR_Text_Height
+==============
+*/
+int SCR_Text_Height (char *text, float scale, int limit, fontInfo_t * font)
+{
+	int             len, count;
+	float           max;
+	glyphInfo_t		*glyph;
+	float           useScale;
+	char			*s = text;
+
+	useScale = scale * font->glyphScale;
+	max = 0;
+	if (text)
+	{
+		len = strlen(text);
+		if (limit > 0 && len > limit)
+			len = limit;
+		count = 0;
+
+		while (s && *s && count < len)
+		{
+			if (Q_IsColorString(s))
+			{
+				s += 2;
+				continue;
+			}
+			else
+			{
+				glyph = &font->glyphs[(int)*s];
+				if (max < glyph->height)
+					max = glyph->height;
+				s++;
+				count++;
+			}
+		}
+	}
+
+	return max * useScale;
+}
+
+/*
+==============
+SCR_Text_PaintSingleChar
+==============
+*/
+void SCR_Text_PaintSingleChar (float x, float y, float scale, vec4_t color, int ch, float adjust, int limit, int style, fontInfo_t * font)
+{
+	glyphInfo_t		*glyph;
+	float           useScale;
+	float           yadj;
+
+	ch &= 255;
+	if (ch == ' ')
+		return;
+
+	useScale = scale * font->glyphScale;
+
+	glyph = &font->glyphs[ch];
+	yadj = useScale * glyph->top;
+
+	if (style & UI_DROPSHADOW)
+	{
+		int ofs = 1;
+
+		colorBlack[3] = color[3];
+		RE_Draw_SetColor (colorBlack);
+		SCR_Text_PaintChar (x + ofs, y - yadj + ofs, glyph->imageWidth, glyph->imageHeight, useScale, glyph->s, glyph->t, glyph->s2, glyph->t2, glyph->imageName);
+		colorBlack[3] = 1.0;
+	}
+
+	RE_Draw_SetColor (color);
+
+	SCR_Text_PaintChar (x, y - yadj, glyph->imageWidth, glyph->imageHeight, useScale, glyph->s, glyph->t, glyph->s2, glyph->t2, glyph->imageName);
+
+	RE_Draw_SetColor (NULL);
+}
+
+/*
+==============
+SCR_Text_Paint
+==============
+*/
+void SCR_Text_Paint(float x, float y, float scale, vec4_t color, char *text, float adjust, int limit, int style, fontInfo_t *font)
+{
+	int             len, count;
+	vec4_t          newColor;
+	glyphInfo_t		*glyph;
+	float           useScale;
+
+	useScale = scale * font->glyphScale;
+	if (text)
+	{
+		char *s = text;
+
+		RE_Draw_SetColor (color);
+
+		memcpy(&newColor[0], &color[0], sizeof(vec4_t));
+		len = strlen(text);
+		if (limit > 0 && len > limit)
+			len = limit;
+		count = 0;
+		while (s && *s && count < len)
+		{
+			glyph = &font->glyphs[(int)*s];
+
+			if (Q_IsColorString(s))
+			{
+				memcpy(newColor, (float *)g_color_table[ColorIndex(*(s + 1))], sizeof(newColor));
+				newColor[3] = color[3];
+				RE_Draw_SetColor (newColor);
+				s += 2;
+				continue;
+			}
+			else
+			{
+				float yadj = useScale * glyph->top;
+
+				if (style & UI_DROPSHADOW)
+				{
+					int ofs = 1;
+
+					colorBlack[3] = newColor[3];
+					RE_Draw_SetColor (colorBlack);
+					SCR_Text_PaintChar (x + ofs, y - yadj + ofs,
+						glyph->imageWidth,
+						glyph->imageHeight, useScale, glyph->s, glyph->t, glyph->s2, glyph->t2, glyph->imageName);
+					colorBlack[3] = 1.0;
+					RE_Draw_SetColor (newColor);
+				}
+
+				SCR_Text_PaintChar (x, y - yadj,
+					glyph->imageWidth,
+					glyph->imageHeight, useScale, glyph->s, glyph->t, glyph->s2, glyph->t2, glyph->imageName);
+
+				x += (glyph->xSkip * useScale) + adjust;
+				s++;
+				count++;
+			}
+		}
+		RE_Draw_SetColor (NULL);
+	}
+}
+
+/*
+==============
+SCR_Text_PaintAligned
+==============
+*/
+void SCR_Text_PaintAligned(int x, int y, char *s, float scale, int style, vec4_t color, fontInfo_t * font)
+{
+	int w, h;
+
+	w = SCR_Text_Width(s, scale, 0, font);
+	h = SCR_Text_Height(s, scale, 0, font);
+
+	if (style & UI_CENTER)
+	{
+		SCR_Text_Paint(x - w / 2, y + h / 2, scale, color, s, 0, 0, style, font);
+	}
+	else if (style & UI_RIGHT)
+	{
+		SCR_Text_Paint(x - w, y + h / 2, scale, color, s, 0, 0, style, font);
+	}
+	else
+	{
+		// UI_LEFT
+		SCR_Text_Paint(x, y + h / 2, scale, color, s, 0, 0, style, font);
+	}
+}
 
 /*
 ===============================================================================
@@ -85,14 +419,12 @@ void CL_AddNetgraph (void)
 	int		in;
 	int		ping;
 
-	// if using the debuggraph for something else, don't
-	// add the net lines
+	// if using the debuggraph for something else, don't add the net lines
 	if (scr_debuggraph->value || scr_timegraph->value)
 		return;
 
 	for (i = 0; i < cls.netchan.dropped; i++)
 		SCR_DebugGraph (30, 0x40);
-
 	for (i = 0; i < cl.surpressCount; i++)
 		SCR_DebugGraph (30, 0xdf);
 
@@ -100,13 +432,11 @@ void CL_AddNetgraph (void)
 	in = cls.netchan.incoming_acknowledged & (CMD_BACKUP - 1);
 	ping = cls.realtime - cl.cmd_time[in];
 	ping /= 30;
-
 	if (ping > 30)
 		ping = 30;
 
 	SCR_DebugGraph (ping, 0xd0);
 }
-
 
 typedef struct
 {
@@ -172,10 +502,9 @@ CENTER PRINTING
 */
 
 char		scr_centerstring[1024];
-float		scr_centertime_start;	// for slow victory printing
-float		scr_centertime_off;
+float		scr_centertime_time;
+float		scr_center_y;
 int			scr_center_lines;
-int			scr_erase_center;
 
 /*
 ==============
@@ -187,128 +516,71 @@ for a few moments
 */
 void SCR_CenterPrint (char *str)
 {
-	char	*s;
-	char	line[64];
-	int		i, j, l;
+	char *s;
 
-	strncpy (scr_centerstring, str, sizeof (scr_centerstring) - 1);
-	scr_centertime_off = scr_centertime->value;
-	scr_centertime_start = cl.time;
+	Q_strlcpy (scr_centerstring, str, sizeof(scr_centerstring));
+	scr_centertime_time = cl.time;
+	scr_center_y = SCREEN_HEIGHT * 0.30;
 
 	// count the number of lines for centering
 	scr_center_lines = 1;
-	s = str;
-
+	s = scr_centerstring;
 	while (*s)
 	{
 		if (*s == '\n')
 			scr_center_lines++;
-
 		s++;
 	}
-
-	// echo it to the console
-	Com_Printf ("\n\n\35\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\37\n\n");
-
-	s = str;
-
-	do
-	{
-		// scan the width of the line
-		for (l = 0; l < 40; l++)
-			if (s[l] == '\n' || !s[l])
-				break;
-
-		for (i = 0; i < (40 - l) / 2; i++)
-			line[i] = ' ';
-
-		for (j = 0; j < l; j++)
-		{
-			line[i++] = s[j];
-		}
-
-		line[i] = '\n';
-		line[i+1] = 0;
-
-		Com_Printf ("%s", line);
-
-		while (*s && *s != '\n')
-			s++;
-
-		if (!*s)
-			break;
-
-		s++;		// skip the \n
-	}
-	while (1);
-
-	Com_Printf ("\n\n\35\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\37\n\n");
-	Con_ClearNotify ();
 }
-
 
 void SCR_DrawCenterString (void)
 {
 	char	*start;
 	int		l;
-	int		j;
-	int		x, y;
-	int		remaining;
-	float	scale;
-	const int char_unscaled_width = 8;
-	const int char_unscaled_height = 8;
+	int		x, y, w, h;
+	float	*color;
 
-	// the finale prints the characters one at a time
-	remaining = 9999;
-
-	scr_erase_center = 0;
-	start = scr_centerstring;
-	scale = SCR_GetConsoleScale();
-
-	if (scr_center_lines <= 4)
-		y = (viddef.height * 0.35) / scale;
-	else
-		y = 48 / scale;
-
-	do
-	{
-		// scan the width of the line
-		for (l = 0; l < 40; l++)
-			if (start[l] == '\n' || !start[l])
-				break;
-
-		x = ((viddef.width / scale) - (l * char_unscaled_width)) / 2;
-
-		for (j = 0; j < l; j++, x += char_unscaled_width)
-		{
-			RE_Draw_Char (x * scale, y * scale, start[j], scale);
-
-			if (!remaining--)
-				return;
-		}
-
-		y += char_unscaled_height;
-
-		while (*start && *start != '\n')
-			start++;
-
-		if (!*start)
-			break;
-
-		start++;		// skip the \n
-	}
-	while (1);
-}
-
-void SCR_CheckDrawCenterString (void)
-{
-	scr_centertime_off -= cls.rframetime;
-
-	if (scr_centertime_off <= 0)
+	if (!scr_centertime_time)
 		return;
 
-	SCR_DrawCenterString ();
+	color = SCR_FadeColor (scr_centertime_time, 1000 * scr_centertime->value);
+	if (!color)
+		return;
+
+	RE_Draw_SetColor (color);
+
+	start = scr_centerstring;
+	y = scr_center_y - scr_center_lines * BIGCHAR_HEIGHT / 2;
+
+	while (1)
+	{
+		char linebuffer[1024];
+
+		// scan the width of the line
+		for (l = 0; l < 50; l++)
+		{
+			if (!start[l] || start[l] == '\n')
+				break;
+			linebuffer[l] = start[l];
+		}
+		linebuffer[l] = 0;
+
+		w = SCR_Text_Width (linebuffer, 0.5f, 0, &cls.consoleBoldFont);
+		h = SCR_Text_Height (linebuffer, 0.5f, 0, &cls.consoleBoldFont);
+		x = (SCREEN_WIDTH - w) / 2;
+		SCR_Text_Paint (x, y + h, 0.5f, color, linebuffer, 0, 0, UI_DROPSHADOW, &cls.consoleBoldFont);
+		y += h + 6;
+
+		while (*start && (*start != '\n'))
+			start++;
+		if (!*start)
+			break;
+		start++; // skip the \n
+	}
+
+	RE_Draw_SetColor (NULL);
 }
+
 
 //=============================================================================
 
@@ -361,7 +633,6 @@ SCR_Init
 */
 void SCR_Init (void)
 {
-	scr_conspeed = Cvar_Get ("scr_conspeed", "3", 0);
 	scr_showturtle = Cvar_Get ("scr_showturtle", "0", 0);
 	scr_showpause = Cvar_Get ("scr_showpause", "1", 0);
 	scr_centertime = Cvar_Get ("scr_centertime", "2.5", 0);
@@ -373,8 +644,6 @@ void SCR_Init (void)
 	scr_graphscale = Cvar_Get ("graphscale", "1", 0);
 	scr_graphshift = Cvar_Get ("graphshift", "0", 0);
 
-	cl_hudscale = Cvar_Get("cl_hudscale", "-1", CVAR_ARCHIVE);
-	cl_consolescale = Cvar_Get("cl_consolescale", "-1", CVAR_ARCHIVE);
 	cl_menuscale = Cvar_Get("cl_menuscale", "-1", CVAR_ARCHIVE);
 
 	// register our commands
@@ -386,7 +655,6 @@ void SCR_Init (void)
 	scr_initialized = true;
 }
 
-
 /*
 ==============
 SCR_DrawNet
@@ -394,12 +662,13 @@ SCR_DrawNet
 */
 void SCR_DrawNet (void)
 {
-	float scale = SCR_GetMenuScale();
+	int	w, h;
 
 	if (cls.netchan.outgoing_sequence - cls.netchan.incoming_acknowledged < CMD_BACKUP - 1)
 		return;
 
-	RE_Draw_Pic (64 * scale, 0, "net", scale);
+	RE_Draw_GetPicSize(&w, &h, "net");
+	SCR_DrawPic (64, 0, w, h, "net");
 }
 
 /*
@@ -410,17 +679,18 @@ SCR_DrawPause
 void SCR_DrawPause (void)
 {
 	int	w, h;
-	float scale = SCR_GetMenuScale();
 
-	if (cl.attractloop)				// turn off for attract loop
+	if (cls.key_dest == key_menu)	// turn off in menu
 		return;
 	if (!scr_showpause->value)		// turn off for screenshots
 		return;
 	if (!cl_paused->value)
 		return;
 
+	RE_Draw_FadeScreen ();
+
 	RE_Draw_GetPicSize (&w, &h, "pause");
-	RE_Draw_Pic ((viddef.width - w * scale) / 2, viddef.height / 2 + 8 * scale, "pause", scale);
+	SCR_DrawPic((SCREEN_WIDTH - w) / 2, (SCREEN_HEIGHT - h) / 2, w, h, "pause");
 }
 
 /*
@@ -431,46 +701,49 @@ SCR_DrawLoading
 void SCR_DrawLoading (void)
 {
 	int w, h;
-	float scale = SCR_GetMenuScale();
 
 	if (!scr_draw_loading)
 		return;
 
 	scr_draw_loading = false;
+
+	RE_Draw_FadeScreen ();
+
 	RE_Draw_GetPicSize (&w, &h, "loading");
-	RE_Draw_Pic ((viddef.width - w * scale) / 2, (viddef.height - h * scale) / 2, "loading", scale);
+	SCR_DrawPic((SCREEN_WIDTH - w) / 2, (SCREEN_HEIGHT - h) / 2, w, h, "loading");
 }
 
 /*
 ==============
-SCR_Framecounter
+SCR_DrawFPS
 ==============
 */
-void SCR_Framecounter (void)
+void SCR_DrawFPS (void)
 {
 	long long newtime;
 	static int frame;
 	static int frametimes[60] = { 0 };
 	static long long oldtime;
+	int w;
 
 	newtime = Sys_Microseconds();
 	frametimes[frame] = (int)(newtime - oldtime);
 
 	oldtime = newtime;
 	frame++;
-	if (frame > 59) {
+	if (frame > 59)
 		frame = 0;
-	}
 
-	float scale = SCR_GetConsoleScale();
-
-	if (cl_showfps->value == 1) {
+	if (cl_showfps->value == 1)
+	{
 		// calculate average of frames.
 		int avg = 0;
 		int num = 0;
 
-		for (int i = 0; i < 60; i++) {
-			if (frametimes[i] != 0) {
+		for (int i = 0; i < 60; i++)
+		{
+			if (frametimes[i] != 0)
+			{
 				avg += frametimes[i];
 				num++;
 			}
@@ -478,14 +751,20 @@ void SCR_Framecounter (void)
 
 		char str[10];
 		snprintf(str, sizeof(str), "%3.2ffps", (1000.0 * 1000.0) / (avg / num));
-		DrawStringScaled(viddef.width - scale*(strlen(str) * 8 + 2), 0, str, scale);
-	} else if (cl_showfps->value >= 2) {
+
+		w = SCR_Text_Width(str, 0.2f, 0, &cls.consoleFont);
+		SCR_Text_PaintAligned(635 - w, 10, str, 0.2f, UI_LEFT, colorWhite, &cls.consoleFont);		
+	}
+	else if (cl_showfps->value >= 2)
+	{
 		// calculate average of frames.
 		int avg = 0;
 		int num = 0;
 
-		for (int i = 0; i < 60; i++) {
-			if (frametimes[i] != 0) {
+		for (int i = 0; i < 60; i++)
+		{
+			if (frametimes[i] != 0)
+			{
 				avg += frametimes[i];
 				num++;
 			}
@@ -495,94 +774,25 @@ void SCR_Framecounter (void)
 		int min = frametimes[0];
 		int max = frametimes[1];
 
-		for (int i = 1; i < 60; i++) {
-			if ((frametimes[i] > 0) && (min < frametimes[i])) {
+		for (int i = 1; i < 60; i++)
+		{
+			if ((frametimes[i] > 0) && (min < frametimes[i]))
 				min = frametimes[i];
-			}
-
-			if ((frametimes[i] > 0) && (max > frametimes[i])) {
+			if ((frametimes[i] > 0) && (max > frametimes[i]))
 				max = frametimes[i];
-			}
 		}
 
 		char str[64];
 		snprintf(str, sizeof(str), "Min: %7.2ffps, Max: %7.2ffps, Avg: %7.2ffps", (1000.0 * 1000.0) / min, (1000.0 * 1000.0) / max, (1000.0 * 1000.0) / (avg / num));
-		DrawStringScaled(viddef.width - scale*(strlen(str) * 8 + 2), 0, str, scale);
+		w = SCR_Text_Width(str, 0.2f, 0, &cls.consoleFont);
+		SCR_Text_PaintAligned(635 - w, 10, str, 0.2f, UI_LEFT, colorWhite, &cls.consoleFont);
 
-		if (cl_showfps->value > 2) {
+		if (cl_showfps->value > 2)
+		{
 			snprintf(str, sizeof(str), "Max: %5.2fms, Min: %5.2fms, Avg: %5.2fms", 0.001f*min, 0.001f*max, 0.001f*(avg / num));
-			DrawStringScaled(viddef.width - scale*(strlen(str) * 8 + 2), scale * 10, str, scale);
+			w = SCR_Text_Width(str, 0.2f, 0, &cls.consoleFont);
+			SCR_Text_PaintAligned(635 - w, 20, str, 0.2f, UI_LEFT, colorWhite, &cls.consoleFont);
 		}
-	}
-}
-
-//=============================================================================
-
-/*
-==================
-SCR_RunConsole
-
-Scroll it up or down
-==================
-*/
-void SCR_RunConsole (void)
-{
-	// decide on the height of the console
-	if (cls.key_dest == key_console)
-		scr_conlines = 0.5;		// half screen
-	else
-		scr_conlines = 0;				// none visible
-
-	if (scr_conlines < scr_con_current)
-	{
-		scr_con_current -= scr_conspeed->value * cls.rframetime;
-
-		if (scr_conlines > scr_con_current)
-			scr_con_current = scr_conlines;
-
-	}
-	else if (scr_conlines > scr_con_current)
-	{
-		scr_con_current += scr_conspeed->value * cls.rframetime;
-
-		if (scr_conlines < scr_con_current)
-			scr_con_current = scr_conlines;
-	}
-
-}
-
-/*
-==================
-SCR_DrawConsole
-==================
-*/
-void SCR_DrawConsole (void)
-{
-	Con_CheckResize ();
-
-	if (cls.state == ca_disconnected || cls.state == ca_connecting)
-	{
-		// forced full screen console
-		Con_DrawConsole (1.0);
-		return;
-	}
-
-	if (cls.state != ca_active || !cl.refresh_prepped)
-	{
-		// connected, but can't render
-		Con_DrawConsole (0.5);
-		RE_Draw_Fill (0, viddef.height / 2, viddef.width, viddef.height / 2, 0);
-		return;
-	}
-
-	if (scr_con_current)
-	{
-		Con_DrawConsole (scr_con_current);
-	}
-	else
-	{
-		if (cls.key_dest == key_game || cls.key_dest == key_message)
-			Con_DrawNotify ();	// only draw notify in game
 	}
 }
 
@@ -610,9 +820,15 @@ void SCR_BeginLoadingPlaque (void)
 	M_ForceMenuOff ();
 
 	if (SCR_GetCinematicTime() > 0)
-		scr_draw_loading = 2;	// clear to balack first
+	{
+		// clear to black first
+		scr_draw_loading = 2;	
+	}
 	else
+	{
+		// loading from ingame, apply background post effect
 		scr_draw_loading = 1;
+	}
 
 	SCR_UpdateScreen ();
 	cls.disable_screen = Sys_Milliseconds ();
@@ -642,7 +858,7 @@ void SCR_Loading_f (void)
 
 //===============================================================
 
-#define STAT_MINUS		10	// num frame for '-' stats digit
+#define STAT_MINUS 10	// num frame for '-' stats digit
 char		*sb_nums[2][11] =
 {
 	{
@@ -658,54 +874,16 @@ char		*sb_nums[2][11] =
 #define	ICON_WIDTH	24
 #define	ICON_HEIGHT	24
 #define	CHAR_WIDTH	16
+#define	CHAR_HEIGHT 24
 #define	ICON_SPACE	8
 
-
-
-/*
-================
-SizeHUDString
-
-Allow embedded \n in the string
-================
-*/
-void SizeHUDString (char *string, int *w, int *h)
-{
-	int		lines, width, current;
-
-	lines = 1;
-	width = 0;
-
-	current = 0;
-
-	while (*string)
-	{
-		if (*string == '\n')
-		{
-			lines++;
-			current = 0;
-		}
-		else
-		{
-			current++;
-
-			if (current > width)
-				width = current;
-		}
-
-		string++;
-	}
-
-	*w = width * 8;
-	*h = lines * 8;
-}
-
-void DrawHUDStringScaled (char *string, int x, int y, int centerwidth, int xor, float factor)
+static void DrawHUDString (char *string, int x, int y, qboolean isGreen)
 {
 	int		margin;
 	char	line[1024];
 	int		width;
 	int		i;
+	vec4_t	color;
 
 	margin = x;
 
@@ -713,44 +891,38 @@ void DrawHUDStringScaled (char *string, int x, int y, int centerwidth, int xor, 
 	{
 		// scan out one line of text from the string
 		width = 0;
-
 		while (*string && *string != '\n')
 			line[width++] = *string++;
-
 		line[width] = 0;
 
-		if (centerwidth)
-			x = margin + (centerwidth - width * 8) * factor / 2;
+		x = margin + (320 - width * 8) / 2;
+
+		if (isGreen)
+			Vector4Set(color, 0.0f, 1.0f, 0.0f, 1.0f);
 		else
-			x = margin;
+			Vector4Set(color, 1.0f, 1.0f, 1.0f, 1.0f);
 
 		for (i = 0; i < width; i++)
 		{
-			RE_Draw_Char (x, y, line[i] ^ xor, factor);
-			x += 8 * factor;
+			SCR_Text_PaintSingleChar (x, y, 0.2f, color, line[i], 0, 0, 0, &cls.consoleFont);
+			x += SMALLCHAR_WIDTH;
 		}
 
 		if (*string)
 		{
-			string++;	// skip the \n
+			string++; // skip the \n
 			x = margin;
-			y += 8 * factor;
+			y += SMALLCHAR_HEIGHT;
 		}
 	}
 }
-
-void DrawHUDString(char *string, int x, int y, int centerwidth, int xor)
-{
-	DrawHUDStringScaled (string, x, y, centerwidth, xor, 1.0f);
-}
-
 
 /*
 ==============
 SCR_DrawField
 ==============
 */
-void SCR_DrawFieldScaled (int x, int y, int color, int width, int value, float factor)
+static void SCR_DrawField (float x, float y, int color, int width, int value)
 {
 	char	num[16], *ptr;
 	int		l;
@@ -763,16 +935,34 @@ void SCR_DrawFieldScaled (int x, int y, int color, int width, int value, float f
 	if (width > 5)
 		width = 5;
 
+	switch (width)
+	{
+		case 1:
+			value = value > 9 ? 9 : value;
+			value = value < 0 ? 0 : value;
+			break;
+		case 2:
+			value = value > 99 ? 99 : value;
+			value = value < -9 ? -9 : value;
+			break;
+		case 3:
+			value = value > 999 ? 999 : value;
+			value = value < -99 ? -99 : value;
+			break;
+		case 4:
+			value = value > 9999 ? 9999 : value;
+			value = value < -999 ? -999 : value;
+			break;
+	}
+
 	Com_sprintf (num, sizeof (num), "%i", value);
 	l = strlen (num);
-
 	if (l > width)
 		l = width;
 
-	x += (2 + CHAR_WIDTH * (width - l)) * factor;
+	x += (2 + CHAR_WIDTH * (width - l));
 
 	ptr = num;
-
 	while (*ptr && l)
 	{
 		if (*ptr == '-')
@@ -780,18 +970,12 @@ void SCR_DrawFieldScaled (int x, int y, int color, int width, int value, float f
 		else
 			frame = *ptr - '0';
 
-		RE_Draw_Pic (x, y, sb_nums[color][frame], factor);
-		x += CHAR_WIDTH * factor;
+		SCR_DrawPic (x, y, CHAR_WIDTH, CHAR_HEIGHT, sb_nums[color][frame]);
+		x += CHAR_WIDTH;
 		ptr++;
 		l--;
 	}
 }
-
-void SCR_DrawField(int x, int y, int color, int width, int value)
-{
-	SCR_DrawFieldScaled (x, y, color, width, value, 1.0f);
-}
-
 
 /*
 ===============
@@ -805,8 +989,10 @@ void SCR_TouchPics (void)
 	int		i, j;
 
 	for (i = 0; i < 2; i++)
+	{
 		for (j = 0; j < 11; j++)
 			RE_Draw_RegisterPic (sb_nums[i][j]);
+	}
 
 	if (crosshair->value)
 	{
@@ -824,19 +1010,17 @@ void SCR_TouchPics (void)
 /*
 ================
 SCR_ExecuteLayoutString
-
 ================
 */
 void SCR_ExecuteLayoutString (char *s)
 {
-	int		x, y;
+	float	x, y;
+	int		w, h;
 	int		value;
 	char	*token;
 	int		width;
 	int		index;
 	clientinfo_t	*ci;
-
-	float scale = SCR_GetHUDScale();
 
 	static int lastitem = -1;
 	static int itemtime = 0;
@@ -849,6 +1033,8 @@ void SCR_ExecuteLayoutString (char *s)
 
 	x = 0;
 	y = 0;
+	w = 0;
+	h = 0;
 	width = 3;
 
 	while (s)
@@ -858,42 +1044,42 @@ void SCR_ExecuteLayoutString (char *s)
 		if (!strcmp (token, "xl"))
 		{
 			token = COM_Parse (&s);
-			x = scale * atoi (token);
+			x = atoi (token);
 			continue;
 		}
 
 		if (!strcmp (token, "xr"))
 		{
 			token = COM_Parse (&s);
-			x = viddef.width + scale * atoi (token);
+			x = SCREEN_WIDTH + atoi (token);
 			continue;
 		}
 
 		if (!strcmp (token, "xv"))
 		{
 			token = COM_Parse (&s);
-			x = viddef.width / 2 - scale * 160 + scale * atoi (token);
+			x = SCREEN_WIDTH / 2 - 160 + atoi (token);
 			continue;
 		}
 
 		if (!strcmp (token, "yt"))
 		{
 			token = COM_Parse (&s);
-			y = scale * atoi (token);
+			y = atoi (token);
 			continue;
 		}
 
 		if (!strcmp (token, "yb"))
 		{
 			token = COM_Parse (&s);
-			y = viddef.height + scale * atoi (token);
+			y = SCREEN_HEIGHT + atoi (token);
 			continue;
 		}
 
 		if (!strcmp (token, "yv"))
 		{
 			token = COM_Parse (&s);
-			y = viddef.height / 2 - scale * 120 + scale * atoi (token);
+			y = SCREEN_HEIGHT / 2 - 120 + atoi (token);
 			continue;
 		}
 
@@ -911,44 +1097,51 @@ void SCR_ExecuteLayoutString (char *s)
 
 			if (value >= MAX_IMAGES) Com_Error (ERR_DROP, "Pic >= MAX_IMAGES");
 
+			// draw pic
 			statpic = cl.configstrings[CS_IMAGES + value];
 			if (statpic)
-				RE_Draw_Pic (x, y, statpic, scale);
+			{
+				RE_Draw_GetPicSize (&w, &h, statpic);
+				SCR_DrawPic (x, y, w, h, statpic);
+			}
 
+			// draw selected item name
 			if (statnum == STAT_SELECTED_ICON)
 			{
+				int i;
+				int xx;
+				float *color;
+
 				if (cl.frame.playerstate.stats[STAT_SELECTED_ITEM] != lastitem)
 				{
 					itemtime = cl.time + 1500;
 					lastitem = cl.frame.playerstate.stats[STAT_SELECTED_ITEM];
 				}
 
-				if (cl.time < itemtime)
+				color = SCR_FadeColor (itemtime, 1000 * scr_centertime->value);
+				if (!color)
+					continue;
+
+				for (i = 0, xx = x + 32; ; i++, xx += 8)
 				{
-					int i;
-					int xx;
+					if (!cl.configstrings[CS_ITEMS + cl.frame.playerstate.stats[STAT_SELECTED_ITEM]][i])
+						break;
 
-					for (i = 0, xx = x + 32; ; i++, xx += 8)
-					{
-						if (!cl.configstrings[CS_ITEMS + cl.frame.playerstate.stats[STAT_SELECTED_ITEM]][i]) break;
-
-						RE_Draw_Char (xx * scale, y + 8 * scale, cl.configstrings[CS_ITEMS + cl.frame.playerstate.stats[STAT_SELECTED_ITEM]][i], scale);
-					}
+					SCR_Text_PaintSingleChar (xx, y + SMALLCHAR_HEIGHT, 0.2f, color, cl.configstrings[CS_ITEMS + cl.frame.playerstate.stats[STAT_SELECTED_ITEM]][i], 0, 0, 0, &cls.consoleFont);
 				}
 			}
-
 			continue;
 		}
 
 		if (!strcmp (token, "client"))
 		{
 			// draw a deathmatch client block
-			int		score, ping, time;
+			int score, ping, time;
 
 			token = COM_Parse (&s);
-			x = viddef.width / 2 - scale * 160 + scale * atoi (token);
+			x = SCREEN_WIDTH / 2 - 160 + atoi (token);
 			token = COM_Parse (&s);
-			y = viddef.height / 2 - scale * 120 + scale * atoi (token);
+			y = SCREEN_HEIGHT / 2 - 120 + atoi (token);
 
 			token = COM_Parse (&s);
 			value = atoi (token);
@@ -967,16 +1160,17 @@ void SCR_ExecuteLayoutString (char *s)
 			token = COM_Parse (&s);
 			time = atoi (token);
 
-			DrawAltStringScaled (x + scale * 32, y, ci->name, scale);
-			DrawStringScaled(x + scale * 32, y + scale * 8, "Score: ", scale);
-			DrawAltStringScaled (x + scale * (32 + 7 * 8), y + scale * 8, va ("%i", score), scale);
-			DrawStringScaled (x + scale * 32, y + scale * 16, va ("Ping: %i", ping), scale);
-			DrawStringScaled (x + scale * 32, y + scale * 24, va ("Time: %i", time), scale);
+			SCR_Text_Paint (x + 32, y + 8, 0.2f, colorGreen, ci->name, 0, 0, 0, &cls.consoleBoldFont);
+			SCR_Text_Paint (x + 32, y + 16, 0.2f, colorWhite, "Score: ", 0, 0, 0, &cls.consoleBoldFont);
+			SCR_Text_Paint (x + 32 + 7 * 8, y + 16, 0.2f, colorGreen, va("%i", score), 0, 0, 0, &cls.consoleBoldFont);
+			SCR_Text_Paint (x + 32, y + 24, 0.2f, colorWhite, va("Ping: %i", ping), 0, 0, 0, &cls.consoleBoldFont);
+			SCR_Text_Paint (x + 32, y + 32, 0.2f, colorWhite, va("Time: %i", time), 0, 0, 0, &cls.consoleBoldFont);
 
 			if (!ci->icon)
 				ci = &cl.baseclientinfo;
 
-			RE_Draw_Pic (x, y, ci->iconname, scale);
+			RE_Draw_GetPicSize (&w, &h, ci->iconname);
+			SCR_DrawPic (x, y, w, h, ci->iconname);
 			continue;
 		}
 
@@ -987,9 +1181,9 @@ void SCR_ExecuteLayoutString (char *s)
 			char	block[80];
 
 			token = COM_Parse (&s);
-			x = viddef.width / 2 - scale * 160 + scale * atoi (token);
+			x = SCREEN_WIDTH / 2 - 160 + atoi (token);
 			token = COM_Parse (&s);
-			y = viddef.height / 2 - scale * 120 + scale * atoi (token);
+			y = SCREEN_HEIGHT / 2 - 120 + atoi (token);
 
 			token = COM_Parse (&s);
 			value = atoi (token);
@@ -1004,17 +1198,15 @@ void SCR_ExecuteLayoutString (char *s)
 
 			token = COM_Parse (&s);
 			ping = atoi (token);
-
 			if (ping > 999)
 				ping = 999;
 
 			sprintf (block, "%3d %3d %-12.12s", score, ping, ci->name);
 
 			if (value == cl.playernum)
-				DrawAltStringScaled (x, y, block, scale);
+				SCR_Text_Paint (x, y, 0.2f, colorGreen, block, 0, 0, 0, &cls.consoleBoldFont);
 			else
-				DrawStringScaled (x, y, block, scale);
-
+				SCR_Text_Paint (x, y, 0.2f, colorWhite, block, 0, 0, 0, &cls.consoleBoldFont);
 			continue;
 		}
 
@@ -1022,7 +1214,8 @@ void SCR_ExecuteLayoutString (char *s)
 		{
 			// draw a pic from a name
 			token = COM_Parse (&s);
-			RE_Draw_Pic (x, y, token, scale);
+			RE_Draw_GetPicSize (&w, &h, token);
+			SCR_DrawPic (x, y, w, h, token);
 			continue;
 		}
 
@@ -1033,58 +1226,64 @@ void SCR_ExecuteLayoutString (char *s)
 			width = atoi (token);
 			token = COM_Parse (&s);
 			value = cl.frame.playerstate.stats[atoi (token)];
-			SCR_DrawFieldScaled (x, y, 0, width, value, scale);
+			SCR_DrawField (x, y, 0, width, value);
 			continue;
 		}
 
 		if (!strcmp (token, "hnum"))
 		{
 			// health number
-			int		color;
+			int color;
 
 			width = 3;
 			value = cl.frame.playerstate.stats[STAT_HEALTH];
 
 			if (value > 25)
-				color = 0;	// green
+				color = 0; // green
 			else if (value > 0)
-				color = (cl.frame.serverframe >> 2) & 1;		// flash
+				color = (cl.frame.serverframe >> 2) & 1; // flash
 			else
 				color = 1;
 
 			if (cl.frame.playerstate.stats[STAT_FLASHES] & 1)
-				RE_Draw_Pic (x, y, "field_3", scale);
+			{
+				RE_Draw_GetPicSize (&w, &h, "field_3");
+				SCR_DrawPic (x, y, w, h, "field_3");
+			}
 
-			SCR_DrawFieldScaled (x, y, color, width, value, scale);
+			SCR_DrawField (x, y, color, width, value);
 			continue;
 		}
 
 		if (!strcmp (token, "anum"))
 		{
 			// ammo number
-			int		color;
+			int color;
 
 			width = 3;
 			value = cl.frame.playerstate.stats[STAT_AMMO];
 
 			if (value > 5)
-				color = 0;	// green
+				color = 0; // green
 			else if (value >= 0)
-				color = (cl.frame.serverframe >> 2) & 1;		// flash
+				color = (cl.frame.serverframe >> 2) & 1; // flash
 			else
-				continue;	// negative number = don't show
+				continue; // negative number = don't show
 
 			if (cl.frame.playerstate.stats[STAT_FLASHES] & 4)
-				RE_Draw_Pic (x, y, "field_3", scale);
+			{
+				RE_Draw_GetPicSize (&w, &h, "field_3");
+				SCR_DrawPic (x, y, w, h, "field_3");
+			}
 
-			SCR_DrawFieldScaled (x, y, color, width, value, scale);
+			SCR_DrawField (x, y, color, width, value);
 			continue;
 		}
 
 		if (!strcmp (token, "rnum"))
 		{
 			// armor number
-			int		color;
+			int	color;
 
 			width = 3;
 			value = cl.frame.playerstate.stats[STAT_ARMOR];
@@ -1092,74 +1291,77 @@ void SCR_ExecuteLayoutString (char *s)
 			if (value < 1)
 				continue;
 
-			color = 0;	// green
+			color = 0; // green
 
 			if (cl.frame.playerstate.stats[STAT_FLASHES] & 2)
-				RE_Draw_Pic (x, y, "field_3", scale);
+			{
+				RE_Draw_GetPicSize (&w, &h, "field_3");
+				SCR_DrawPic (x, y, w, h, "field_3");
+			}
 
-			SCR_DrawFieldScaled (x, y, color, width, value, scale);
+			SCR_DrawField (x, y, color, width, value);
 			continue;
 		}
 
-
+		// player stats string
 		if (!strcmp (token, "stat_string"))
 		{
 			token = COM_Parse (&s);
 			index = atoi (token);
-
 			if (index < 0 || index >= MAX_CONFIGSTRINGS)
 				Com_Error (ERR_DROP, "Bad stat_string index");
 
 			index = cl.frame.playerstate.stats[index];
-
 			if (index < 0 || index >= MAX_CONFIGSTRINGS)
 				Com_Error (ERR_DROP, "Bad stat_string index");
 
-			DrawStringScaled (x, y, cl.configstrings[index], scale);
+			SCR_Text_Paint (x, y + SMALLCHAR_WIDTH, 0.2f, colorWhite, cl.configstrings[index], 0, 0, 0, &cls.consoleBoldFont);
 			continue;
 		}
 
+		// center string
 		if (!strcmp (token, "cstring"))
 		{
 			token = COM_Parse (&s);
-			DrawHUDStringScaled (token, x, y, 320, 0, scale); // FIXME: or scale 320 here?
+			DrawHUDString (token, x, y + SMALLCHAR_WIDTH, false);
 			continue;
 		}
 
+		// string
 		if (!strcmp (token, "string"))
 		{
 			token = COM_Parse (&s);
-			DrawStringScaled (x, y, token, scale);
+			SCR_Text_Paint (x, y + SMALLCHAR_WIDTH, 0.2f, colorWhite, token, 0, 0, 0, &cls.consoleBoldFont);
 			continue;
 		}
 
+		// green center string
 		if (!strcmp (token, "cstring2"))
 		{
 			token = COM_Parse (&s);
-			DrawHUDStringScaled (token, x, y, 320, 0x80, scale); // FIXME: or scale 320 here?
+			DrawHUDString (token, x, y + SMALLCHAR_WIDTH, true);
 			continue;
 		}
 
+		// green string
 		if (!strcmp (token, "string2"))
 		{
 			token = COM_Parse (&s);
-			DrawAltStringScaled (x, y, token, scale);
+			SCR_Text_Paint (x, y + SMALLCHAR_WIDTH, 0.2f, colorGreen, token, 0, 0, 0, &cls.consoleBoldFont);
 			continue;
 		}
 
+		// if statement for player stats
 		if (!strcmp (token, "if"))
 		{
-			// draw a number
 			token = COM_Parse (&s);
-			value = cl.frame.playerstate.stats[atoi (token)];
 
+			value = cl.frame.playerstate.stats[atoi (token)];
 			if (!value)
 			{
 				// skip to endif
 				while (s && strcmp (token, "endif"))
-				{
 					token = COM_Parse (&s);
-				}
 			}
 
 			continue;
@@ -1185,10 +1387,9 @@ void SCR_DrawStats (void)
 /*
 ================
 SCR_DrawLayout
-
 ================
 */
-#define	STAT_LAYOUTS		13
+#define STAT_LAYOUTS 13
 
 void SCR_DrawLayout (void)
 {
@@ -1213,7 +1414,6 @@ void SCR_UpdateScreen (void)
 	int numframes;
 	int i;
 	float separation[2] = { 0, 0 };
-	float scale = SCR_GetMenuScale();
 
 	// if the screen is disabled (loading plaque is up, or vid mode changing)
 	// do nothing at all
@@ -1227,8 +1427,8 @@ void SCR_UpdateScreen (void)
 		return;
 	}
 
-	if (!scr_initialized || !con.initialized)
-		return;				// not initialized yet
+	if (!scr_initialized)
+		return; // not initialized yet
 
 	// range check cl_camera_separation so we don't inadvertently fry someone's brain
 	if (cl_stereo_separation->value > 1.0)
@@ -1253,6 +1453,14 @@ void SCR_UpdateScreen (void)
 	{
 		RE_BeginFrame (separation[i]);
 
+		// clear the screen with black unless they are displaying game renderings or cinematics
+		if ((cls.state != ca_active) || !(SCR_GetCinematicTime() > 0))
+		{
+			RE_Draw_SetColor (g_color_table[0]);
+			RE_Draw_StretchPicExt (0, 0, viddef.width, viddef.height, 0, 0, 0, 0, "pics/white.png");
+			RE_Draw_SetColor (NULL);
+		}
+
 		if (scr_draw_loading == 2)
 		{
 			// loading plaque over black screen
@@ -1260,11 +1468,10 @@ void SCR_UpdateScreen (void)
 
 			scr_draw_loading = false;
 
-			RE_Draw_GetPicSize (&w, &h, "loading");
-			RE_Draw_Pic ((viddef.width - w * scale) / 2, (viddef.height - h * scale) / 2, "loading", scale);
+			RE_Draw_GetPicSize(&w, &h, "loading");
+			SCR_DrawPic((SCREEN_WIDTH - w) / 2, (SCREEN_HEIGHT - h) / 2, w, h, "loading");
 		}
-		// if a cinematic is supposed to be running, handle menus
-		// and console specially
+		// if a cinematic is supposed to be running, handle menus and console specially
 		else if (SCR_GetCinematicTime() > 0)
 		{
 			if (cls.key_dest == key_menu)
@@ -1293,7 +1500,7 @@ void SCR_UpdateScreen (void)
 				CL_DrawInventory ();
 
 			SCR_DrawNet ();
-			SCR_CheckDrawCenterString ();
+			SCR_DrawCenterString ();
 
 			if (scr_timegraph->value)
 				SCR_DebugGraph (cls.rframetime * 300, 0);
@@ -1303,15 +1510,16 @@ void SCR_UpdateScreen (void)
 
 			SCR_DrawPause ();
 
-			SCR_DrawConsole ();
-
 			M_Draw ();
+
+			SCR_DrawConsole ();
 
 			SCR_DrawLoading ();
 		}
 	}
 
-	SCR_Framecounter ();
+	SCR_DrawFPS ();
+
 	RE_EndFrame ();
 }
 
@@ -1330,46 +1538,6 @@ static float SCR_GetScale(void)
 	}
 
 	return i;
-}
-
-float SCR_GetHUDScale(void)
-{
-	float scale;
-
-	if (!scr_initialized)
-	{
-		scale = 1;
-	}
-	else if (cl_hudscale->value < 0)
-	{
-		scale = SCR_GetScale();
-	}
-	else
-	{
-		scale = cl_hudscale->value;
-	}
-
-	return scale;
-}
-
-float SCR_GetConsoleScale(void)
-{
-	float scale;
-
-	if (!scr_initialized)
-	{
-		scale = 1;
-	}
-	else if (cl_consolescale->value < 0)
-	{
-		scale = SCR_GetScale();
-	}
-	else
-	{
-		scale = cl_consolescale->value;
-	}
-
-	return scale;
 }
 
 float SCR_GetMenuScale(void)
