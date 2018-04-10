@@ -488,7 +488,7 @@ void SaveGame_MenuInit (void)
 void M_Menu_SaveGame_f (void)
 {
 	if (!Com_ServerState())
-		return;		// not playing a game
+		return;	// not playing a game
 
 	LoadSave_AdjustPage(0);
 	SaveGame_MenuInit ();
@@ -505,139 +505,158 @@ CREDITS MENU
 */
 
 static int credits_start_time;
-static const char **credits;
-static char *creditsIndex[256];
-static char *creditsBuffer;
 
-static const char *idcredits[] =
+#define SCROLLSPEED 3
+
+typedef struct
 {
-	"+QUAKE II BY ID SOFTWARE",
-	"",
-	"+PROGRAMMING",
-	"John Carmack",
-	"John Cash",
-	"Brian Hook",
-	"",
-	"+ART",
-	"Adrian Carmack",
-	"Kevin Cloud",
-	"Paul Steed",
-	"",
-	"+LEVEL DESIGN",
-	"Tim Willits",
-	"American McGee",
-	"Christian Antkow",
-	"Paul Jaquays",
-	"Brandon James",
-	"",
-	"+BIZ",
-	"Todd Hollenshead",
-	"Barrett (Bear) Alexander",
-	"Donna Jackson",
-	"",
-	"",
-	"+SPECIAL THANKS",
-	"Ben Donges for beta testing",
-	"",
-	"",
-	"",
-	"",
-	"",
-	"",
-	"+ADDITIONAL SUPPORT",
-	"",
-	"+LINUX PORT AND CTF",
-	"Dave \"Zoid\" Kirsch",
-	"",
-	"+CINEMATIC SEQUENCES",
-	"Ending Cinematic by Blur Studio - ",
-	"Venice, CA",
-	"",
-	"Environment models for Introduction",
-	"Cinematic by Karl Dolgener",
-	"",
-	"Assistance with environment design",
-	"by Cliff Iwai",
-	"",
-	"+SOUND EFFECTS AND MUSIC",
-	"Sound Design by Soundelux Media Labs.",
-	"Music Composed and Produced by",
-	"Soundelux Media Labs. Special thanks",
-	"to Bill Brown, Tom Ozanich, Brian",
-	"Celano, Jeff Eisner, and The Soundelux",
-	"Players.",
-	"",
-	"\"Level Music\" by Sonic Mayhem",
-	"www.sonicmayhem.com",
-	"",
-	"\"Quake II Theme Song\"",
-	"(C) 1997 Rob Zombie. All Rights",
-	"Reserved.",
-	"",
-	"Track 10 (\"Climb\") by Jer Sypult",
-	"",
-	"Voice of computers by",
-	"Carly Staehlin-Taylor",
-	"",
-	"+THANKS TO ACTIVISION",
-	"+IN PARTICULAR:",
-	"",
-	"John Tam",
-	"Steve Rosenthal",
-	"Marty Stratton",
-	"Henk Hartong",
-	"",
-	"Quake II(tm) (C)1997 Id Software, Inc.",
-	"All Rights Reserved. Distributed by",
-	"Activision, Inc. under license.",
-	"Quake II(tm), the Id Software name,",
-	"the \"Q II\"(tm) logo and id(tm)",
-	"logo are trademarks of Id Software,",
-	"Inc. Activision(R) is a registered",
-	"trademark of Activision, Inc. All",
-	"other trademarks and trade names are",
-	"properties of their respective owners.",
-	0
+	char *string;
+	int style;
+	vec_t *color;
+} cr_line;
+
+cr_line credits[] = {
+	{ "QUAKE II BY ID SOFTWARE", UI_CENTER | UI_GIANTFONT, colorWhite },
+	{ "", UI_CENTER | UI_SMALLFONT, colorWhite },
+	{ "PROGRAMMING", UI_CENTER | UI_BIGFONT, colorMdGrey },
+	{ "John Carmack", UI_CENTER | UI_SMALLFONT, colorWhite },
+	{ "John Cash", UI_CENTER | UI_SMALLFONT, colorWhite },
+	{ "Brian Hook", UI_CENTER | UI_SMALLFONT, colorWhite },
+	{ "", UI_CENTER | UI_SMALLFONT, colorWhite },
+	{ "ART", UI_CENTER | UI_BIGFONT, colorMdGrey },
+	{ "Adrian Carmack", UI_CENTER | UI_SMALLFONT, colorWhite },
+	{ "Kevin Cloud", UI_CENTER | UI_SMALLFONT, colorWhite },
+	{ "Paul Steed", UI_CENTER | UI_SMALLFONT, colorWhite },
+	{ "", UI_CENTER | UI_SMALLFONT, colorWhite },
+	{ "LEVEL DESIGN", UI_CENTER | UI_BIGFONT, colorMdGrey },
+	{ "Tim Willits", UI_CENTER | UI_SMALLFONT, colorWhite },
+	{ "American McGee", UI_CENTER | UI_SMALLFONT, colorWhite },
+	{ "Christian Antkow", UI_CENTER | UI_SMALLFONT, colorWhite },
+	{ "Paul Jaquays", UI_CENTER | UI_SMALLFONT, colorWhite },
+	{ "Brandon James", UI_CENTER | UI_SMALLFONT, colorWhite },
+	{ "", UI_CENTER | UI_SMALLFONT, colorWhite },
+	{ "BIZ", UI_CENTER | UI_BIGFONT, colorMdGrey },
+	{ "Todd Hollenshead", UI_CENTER | UI_SMALLFONT, colorWhite },
+	{ "Barrett (Bear) Alexander", UI_CENTER | UI_SMALLFONT, colorWhite },
+	{ "Donna Jackson", UI_CENTER | UI_SMALLFONT, colorWhite },
+	{ "", UI_CENTER | UI_SMALLFONT, colorWhite },
+	{ "", UI_CENTER | UI_SMALLFONT, colorWhite },
+	{ "SPECIAL THANKS", UI_CENTER | UI_BIGFONT, colorMdGrey },
+	{ "Ben Donges for beta testing", UI_CENTER | UI_SMALLFONT, colorWhite },
+	{ "", UI_CENTER | UI_SMALLFONT, colorWhite },
+	{ "", UI_CENTER | UI_SMALLFONT, colorWhite },
+	{ "", UI_CENTER | UI_SMALLFONT, colorWhite },
+	{ "", UI_CENTER | UI_SMALLFONT, colorWhite },
+	{ "", UI_CENTER | UI_SMALLFONT, colorWhite },
+	{ "", UI_CENTER | UI_SMALLFONT, colorWhite },
+	{ "ADDITIONAL SUPPORT", UI_CENTER | UI_BIGFONT, colorMdGrey },
+	{ "", UI_CENTER | UI_SMALLFONT, colorWhite },
+	{ "LINUX PORT AND CTF", UI_CENTER | UI_BIGFONT, colorMdGrey },
+	{ "Dave \"Zoid\" Kirsch", UI_CENTER | UI_SMALLFONT, colorWhite },
+	{ "", UI_CENTER | UI_SMALLFONT, colorWhite },
+	{ "CINEMATIC SEQUENCES", UI_CENTER | UI_BIGFONT, colorMdGrey },
+	{ "Ending Cinematic by Blur Studio - ", UI_CENTER | UI_SMALLFONT, colorWhite },
+	{ "Venice, CA", UI_CENTER | UI_SMALLFONT, colorWhite },
+	{ "", UI_CENTER | UI_SMALLFONT, colorWhite },
+	{ "Environment models for Introduction", UI_CENTER | UI_SMALLFONT, colorWhite },
+	{ "Cinematic by Karl Dolgener", UI_CENTER | UI_SMALLFONT, colorWhite },
+	{ "", UI_CENTER | UI_SMALLFONT, colorWhite },
+	{ "Assistance with environment design", UI_CENTER | UI_SMALLFONT, colorWhite },
+	{ "by Cliff Iwai", UI_CENTER | UI_SMALLFONT, colorWhite },
+	{ "", UI_CENTER | UI_SMALLFONT, colorWhite },
+	{ "SOUND EFFECTS AND MUSIC", UI_CENTER | UI_BIGFONT, colorMdGrey },
+	{ "Sound Design by Soundelux Media Labs.", UI_CENTER | UI_SMALLFONT, colorWhite },
+	{ "Music Composed and Produced by", UI_CENTER | UI_SMALLFONT, colorWhite },
+	{ "Soundelux Media Labs. Special thanks", UI_CENTER | UI_SMALLFONT, colorWhite },
+	{ "to Bill Brown, Tom Ozanich, Brian", UI_CENTER | UI_SMALLFONT, colorWhite },
+	{ "Celano, Jeff Eisner, and The Soundelux", UI_CENTER | UI_SMALLFONT, colorWhite },
+	{ "Players.", UI_CENTER | UI_SMALLFONT, colorWhite },
+	{ "", UI_CENTER | UI_SMALLFONT, colorWhite },
+	{ "\"Level Music\" by Sonic Mayhem", UI_CENTER | UI_SMALLFONT, colorWhite },
+	{ "www.sonicmayhem.com", UI_CENTER | UI_SMALLFONT, colorWhite },
+	{ "", UI_CENTER | UI_SMALLFONT, colorWhite },
+	{ "\"Quake II Theme Song\"", UI_CENTER | UI_SMALLFONT, colorWhite },
+	{ "(C) 1997 Rob Zombie. All Rights", UI_CENTER | UI_SMALLFONT, colorWhite },
+	{ "Reserved.", UI_CENTER | UI_SMALLFONT, colorWhite },
+	{ "", UI_CENTER | UI_SMALLFONT, colorWhite },
+	{ "Track 10 (\"Climb\") by Jer Sypult", UI_CENTER | UI_SMALLFONT, colorWhite },
+	{ "", UI_CENTER | UI_SMALLFONT, colorWhite },
+	{ "Voice of computers by", UI_CENTER | UI_SMALLFONT, colorWhite },
+	{ "Carly Staehlin-Taylor", UI_CENTER | UI_SMALLFONT, colorWhite },
+	{ "", UI_CENTER | UI_SMALLFONT, colorWhite },
+	{ "THANKS TO ACTIVISION", UI_CENTER | UI_BIGFONT, colorMdGrey },
+	{ "IN PARTICULAR:", UI_CENTER | UI_BIGFONT, colorMdGrey },
+	{ "", UI_CENTER | UI_SMALLFONT, colorWhite },
+	{ "John Tam", UI_CENTER | UI_SMALLFONT, colorWhite },
+	{ "Steve Rosenthal", UI_CENTER | UI_SMALLFONT, colorWhite },
+	{ "Marty Stratton", UI_CENTER | UI_SMALLFONT, colorWhite },
+	{ "Henk Hartong", UI_CENTER | UI_SMALLFONT, colorWhite },
+	{ "", UI_CENTER | UI_SMALLFONT, colorWhite },
+	{ "Quake II(tm) (C)1997 Id Software, Inc.", UI_CENTER | UI_SMALLFONT, colorWhite },
+	{ "All Rights Reserved. Distributed by", UI_CENTER | UI_SMALLFONT, colorWhite },
+	{ "Activision, Inc. under license.", UI_CENTER | UI_SMALLFONT, colorWhite },
+	{ "Quake II(tm), the Id Software name,", UI_CENTER | UI_SMALLFONT, colorWhite },
+	{ "the \"Q II\"(tm) logo and id(tm)", UI_CENTER | UI_SMALLFONT, colorWhite },
+	{ "logo are trademarks of Id Software,", UI_CENTER | UI_SMALLFONT, colorWhite },
+	{ "Inc. Activision(R) is a registered", UI_CENTER | UI_SMALLFONT, colorWhite },
+	{ "trademark of Activision, Inc. All", UI_CENTER | UI_SMALLFONT, colorWhite },
+	{ "other trademarks and trade names are", UI_CENTER | UI_SMALLFONT, colorWhite },
+	{ "properties of their respective owners.", UI_CENTER | UI_SMALLFONT, colorWhite },
+	{ NULL }
 };
 
 void M_Credits_MenuDraw (menuframework_s *self)
 {
-	int i, y;
-	float scale = SCR_GetMenuScale();
+	int		x, y, n;
+	float	textScale = 0.25f;
+	vec4_t	color;
+	float	textZoom;
 
-	// draw the credits
-	for (i = 0, y = (int)(viddef.height / scale - ((cls.realtime - credits_start_time) / 40.0f)); credits[i] && y < viddef.height / scale; y += 10, i++)
+	// draw the stuff by setting the initial x and y location
+	x = SCREEN_HEIGHT / 2;
+	y = SCREEN_HEIGHT - SCROLLSPEED * (float)(cls.realtime - credits_start_time) / 100;
+
+	// loop through the entire credits sequence
+	for (n = 0; n <= sizeof(credits) - 1; n++)
 	{
-		int j, stringoffset = 0;
-		int bold = false;
-
-		if (y <= -8)
-			continue;
-
-		if (credits[i][0] == '+')
+		// this NULL string marks the end of the credits struct
+		if (credits[n].string == NULL)
 		{
-			bold = true;
-			stringoffset = 1;
+			/*
+			// credits sequence is completely off screen
+			if(y < -16)
+			{
+				// TODO: bring up plaque, fade-in, and wait for keypress?
+				break;
+			}
+			*/
+			break;
 		}
+
+		if (credits[n].style & UI_GIANTFONT)
+			textScale = 0.5f;
+		else if (credits[n].style & UI_BIGFONT)
+			textScale = 0.35f;
 		else
-		{
-			bold = false;
-			stringoffset = 0;
-		}
+			textScale = 0.2f;
 
-		for (j = 0; credits[i][j+stringoffset]; j++)
-		{
-			int x;
+		Vector4Set (color, credits[n].color[0], credits[n].color[1], credits[n].color[2], 0.0f);
 
-			x = (viddef.width / scale - strlen (credits[i]) * 8 - stringoffset * 8) / 2 + (j + stringoffset) * 8;
+		if (y <= 0 || y >= SCREEN_HEIGHT)
+			color[3] = 0;
+		else
+			color[3] = sin (M_PI / SCREEN_HEIGHT * y);
 
-			if (bold)
-				RE_Draw_Char (x * scale, y * scale, credits[i][j + stringoffset] + 128, scale);
-			else
-				RE_Draw_Char (x * scale, y * scale, credits[i][j + stringoffset], scale);
-		}
+		textZoom = color[3] * 4 * textScale;
+		if (textZoom > textScale)
+			textZoom = textScale;
+		textScale = textZoom;
+
+		SCR_Text_Paint (x, y, textScale, color, credits[n].string, 0, 0, credits[n].style | UI_DROPSHADOW, &cls.consoleBoldFont);
+		y += SMALLCHAR_HEIGHT + 4;
 	}
 
+	// repeat the credits
 	if (y < 0)
 		credits_start_time = cls.realtime;
 }
@@ -649,8 +668,6 @@ char *M_Credits_Key (menuframework_s *self, int key)
 	case K_ESCAPE:
 	case K_MOUSE2:
 	case K_GAMEPAD_B:
-		if (creditsBuffer)
-			FS_FreeFile (creditsBuffer);
 		M_PopMenu ();
 		break;
 	}
@@ -667,55 +684,8 @@ static void Credits_MenuInit (void)
 	m_creditsMenu.key = M_Credits_Key;
 }
 
-
 void M_Menu_Credits_f (void)
 {
-	int		n;
-	int		count;
-	char	*p;
-	int		isdeveloper = 0;
-
-	creditsBuffer = NULL;
-	count = FS_LoadFile ("credits", &creditsBuffer);
-
-	if (count != -1)
-	{
-		p = creditsBuffer;
-
-		for (n = 0; n < 255; n++)
-		{
-			creditsIndex[n] = p;
-
-			while (*p != '\r' && *p != '\n')
-			{
-				p++;
-
-				if (--count == 0)
-					break;
-			}
-
-			if (*p == '\r')
-			{
-				*p++ = 0;
-
-				if (--count == 0)
-					break;
-			}
-
-			*p++ = 0;
-
-			if (--count == 0)
-				break;
-		}
-
-		creditsIndex[++n] = 0;
-		credits = creditsIndex;
-	}
-	else
-	{
-		credits = idcredits;
-	}
-
 	credits_start_time = cls.realtime;
 
 	Credits_MenuInit ();
