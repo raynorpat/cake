@@ -322,9 +322,8 @@ void SV_BeginDownload_f (void)
 	if (Cmd_Argc() > 2)
 		offset = atoi (Cmd_Argv (2)); // downloaded offset
 
-	// hacked by zoid to allow more conrol over download
 	// first off, no .. or global allow check
-	if (strstr (name, "..") || !allow_download->value
+	if (strstr (name, "..") || strstr(name, "\\") || strstr(name, ":") || !allow_download->value
 			// leading dot is no good
 			|| *name == '.'
 			// leading slash bad as well, must be in subdir
@@ -358,8 +357,7 @@ void SV_BeginDownload_f (void)
 		sv_client->downloadcount = sv_client->downloadsize;
 
 	if (!sv_client->download
-			// special check for maps, if it came from a pak file, don't allow
-			// download ZOID
+			// special check for maps, if it came from a pak file, don't allow the download
 			|| (strncmp (name, "maps/", 5) == 0 && file_from_pak))
 	{
 		Com_DPrintf ("Couldn't download %s to %s\n", name, sv_client->name);
