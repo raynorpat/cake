@@ -99,7 +99,7 @@ void RDraw_CreatePrograms (void)
 	gl_drawstate.numquads = 0;
 	gl_drawstate.currenttexture = 0xffffffff;
 	gl_drawstate.currentsampler = 0xffffffff;
-	VectorCopy (colorWhite, gl_drawstate.colorAdd);
+	Vector4Set (gl_drawstate.colorAdd, 1.0, 1.0, 1.0, 1.0);
 
 	glDeleteTextures (1, &r_rawtexture);
 	glGenTextures (1, &r_rawtexture);
@@ -317,7 +317,11 @@ Passing NULL will set the color to white
 void RE_GL_Draw_SetColor (float *rgba)
 {
 	if (!rgba)
-		rgba = colorWhite;
+	{
+		// just send white
+		Vector4Set(gl_drawstate.colorAdd, 1.0, 1.0, 1.0, 1.0);
+		return;
+	}
 
 	gl_drawstate.colorAdd[0] = rgba[0];
 	gl_drawstate.colorAdd[1] = rgba[1];
