@@ -504,6 +504,8 @@ CREDITS MENU
 =============================================================================
 */
 
+static menuframework_s m_creditsMenu;
+
 static int credits_start_time;
 
 #define SCROLLSPEED 3
@@ -675,19 +677,14 @@ char *M_Credits_Key (menuframework_s *self, int key)
 	return menu_out_sound;
 }
 
-static menuframework_s	m_creditsMenu;
-
-static void Credits_MenuInit (void)
-{
-	memset (&m_creditsMenu, 0, sizeof(m_creditsMenu));
-	m_creditsMenu.draw = M_Credits_MenuDraw;
-	m_creditsMenu.key = M_Credits_Key;
-}
-
 void M_Menu_Credits_f (void)
 {
 	credits_start_time = cls.realtime;
 
-	Credits_MenuInit ();
+	memset(&m_creditsMenu, 0, sizeof(m_creditsMenu));
+
+	m_creditsMenu.draw = M_Credits_MenuDraw;
+	m_creditsMenu.key = M_Credits_Key;
+
 	M_PushMenu (&m_creditsMenu);
 }
