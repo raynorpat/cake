@@ -516,11 +516,14 @@ void Con_DrawInput (vec4_t color)
 	text = key_lines[edit_line];
 
 	// add the cursor frame
-	text[key_linepos] = 10 + ((int) (cls.realtime >> 8) & 1);
+	if ((int)(cls.realtime >> 8) & 1)
+	{
+		text[key_linepos] = '_';
 
-	// fill out remainder with spaces
-	for (i = key_linepos + 1; i < con.linewidth; i++)
-		text[i] = ' ';
+		// fill out remainder with spaces
+		for (i = key_linepos + 1; i < con.linewidth; i++)
+			text[i] = ' ';
+	}
 
 	// prestep if horizontally scrolling
 	if (key_linepos >= con.linewidth)
