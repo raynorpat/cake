@@ -73,7 +73,6 @@ static void M_DrawCursor(int x, int y, int f)
 {
 	char cursorname[80];
 	static qboolean cached;
-	float scale = SCR_GetMenuScale();
 
 	if (!cached)
 	{
@@ -89,7 +88,7 @@ static void M_DrawCursor(int x, int y, int f)
 	}
 
 	Com_sprintf(cursorname, sizeof(cursorname), "m_cursor%d", f);
-	RE_Draw_Pic (x, y, cursorname, scale);
+	SCR_DrawPic (x, y, 24, 24, cursorname);
 }
 
 static void MainMenu_CursorDraw(void *self)
@@ -97,7 +96,7 @@ static void MainMenu_CursorDraw(void *self)
 	menubitmap_s *b;
 
 	b = (menubitmap_s *)self;
-	M_DrawCursor(b->generic.x - 50, b->generic.y + 5, (int)(cls.realtime / 100) % NUM_CURSOR_FRAMES);
+	M_DrawCursor(b->generic.x - 25, b->generic.y + 5, (int)(cls.realtime / 100) % NUM_CURSOR_FRAMES);
 }
 
 void M_Main_Draw (menuframework_s *self)
@@ -107,24 +106,23 @@ void M_Main_Draw (menuframework_s *self)
 	int ystart;
 	int	xoffset;
 	int widest = -1;
-	float scale = SCR_GetMenuScale();
 
 	for (i = 0; names[i] != 0; i++)
 	{
 		RE_Draw_GetPicSize (&w, &h, names[i]);
-
 		if (w > widest)
 			widest = w;
 	}
 
-	ystart = (viddef.height / (2 * scale) - 110);
-	xoffset = (viddef.width / scale - widest + 70) / 2;
+	ystart = SCREEN_HEIGHT / 2 - 110;
+	xoffset = (SCREEN_WIDTH - widest + 70) / 2;
 
 	RE_Draw_GetPicSize (&w, &h, "m_main_plaque");
-	RE_Draw_Pic ((xoffset - 30 - w) * scale, ystart * scale, "m_main_plaque", scale);
+	SCR_DrawPic (xoffset - 30 - w, ystart, w, h, "m_main_plaque");
 
-	RE_Draw_Pic ((xoffset - 30 - w) * scale, (ystart + h + 5) * scale, "m_main_logo", scale);
-
+	RE_Draw_GetPicSize (&w, &h, "m_main_logo");
+	SCR_DrawPic (xoffset - 30 - w, ystart + h + 125, w, h, "m_main_logo");
+	
 	Menu_Draw (self);
 }
 
@@ -140,19 +138,15 @@ static void MainMenu_Callback (void *self)
 		case 0:
 			M_Menu_Game_f ();
 			break;
-
 		case 1:
 			M_Menu_Multiplayer_f ();
 			break;
-
 		case 2:
 			M_Menu_Options_f ();
 			break;
-
 		case 3:
 			M_Menu_Video_f ();
 			break;
-
 		case 4:
 			M_Menu_Quit_f ();
 			break;
@@ -166,7 +160,6 @@ void MainMenu_Init (void)
 	int ystart;
 	int	xoffset;
 	int widest = -1;
-	float scale = SCR_GetMenuScale();
 
 	for( i=0 ; names[i] ; i++ )
 	{
@@ -175,8 +168,8 @@ void MainMenu_Init (void)
 			widest = w;
 	}
 
-	ystart = (viddef.height / (2 * scale) - 110);
-	xoffset = (viddef.width / scale - widest + 70) / 2;
+	ystart = SCREEN_HEIGHT / 2 - 110;
+	xoffset = (SCREEN_WIDTH - widest + 70) / 2;
 
 	memset (&m_main, 0, sizeof(m_main));
 
@@ -186,8 +179,8 @@ void MainMenu_Init (void)
 
 		m_main.bitmaps[i].generic.type = MTYPE_BITMAP;
 		m_main.bitmaps[i].generic.name = names[i];
-		m_main.bitmaps[i].generic.x = xoffset * scale;
-		m_main.bitmaps[i].generic.y = (ystart + i * 40 + 13) * scale;
+		m_main.bitmaps[i].generic.x = xoffset;
+		m_main.bitmaps[i].generic.y = ystart + i * 40 + 13;
 		m_main.bitmaps[i].generic.width = w;
 		m_main.bitmaps[i].generic.height = h;
 		m_main.bitmaps[i].generic.cursordraw = MainMenu_CursorDraw;
@@ -314,4 +307,3 @@ void M_Menu_Quit_f(void)
 	QuitMenu_Init();
 	M_PushMenu(&m_quitMenu);
 }
-
