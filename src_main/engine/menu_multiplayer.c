@@ -73,37 +73,41 @@ static void StartNetworkServerFunc (void *unused)
 
 void Multiplayer_MenuInit (void)
 {
-	float scale = SCR_GetMenuScale();
+	int y;
 
-	s_multiplayer_menu.x = (int)(viddef.width * 0.50f) - 64 * scale;
+	s_multiplayer_menu.x = (int)(SCREEN_WIDTH * 0.50f) - 32;
 	s_multiplayer_menu.nitems = 0;
 
+	y = 200;
 	s_join_gamespy_server_action.generic.type = MTYPE_ACTION;
 	s_join_gamespy_server_action.generic.flags = QMF_LEFT_JUSTIFY;
 	s_join_gamespy_server_action.generic.x = 0;
-	s_join_gamespy_server_action.generic.y = 0;
+	s_join_gamespy_server_action.generic.y = y;
 	s_join_gamespy_server_action.generic.name = " join gamespy server";
 	s_join_gamespy_server_action.generic.callback = JoinGamespyServerFunc;
 
+	y += 10;
 	s_join_network_server_action.generic.type	= MTYPE_ACTION;
 	s_join_network_server_action.generic.flags = QMF_LEFT_JUSTIFY;
-	s_join_network_server_action.generic.x		= 0;
-	s_join_network_server_action.generic.y		= 10;
-	s_join_network_server_action.generic.name	= " join network server";
+	s_join_network_server_action.generic.x = 0;
+	s_join_network_server_action.generic.y = y;
+	s_join_network_server_action.generic.name = " join network server";
 	s_join_network_server_action.generic.callback = JoinNetworkServerFunc;
 
+	y += 10;
 	s_start_network_server_action.generic.type	= MTYPE_ACTION;
 	s_start_network_server_action.generic.flags = QMF_LEFT_JUSTIFY;
-	s_start_network_server_action.generic.x		= 0;
-	s_start_network_server_action.generic.y		= 20;
-	s_start_network_server_action.generic.name	= " start network server";
+	s_start_network_server_action.generic.x = 0;
+	s_start_network_server_action.generic.y = y;
+	s_start_network_server_action.generic.name = " start network server";
 	s_start_network_server_action.generic.callback = StartNetworkServerFunc;
 
+	y += 10;
 	s_player_setup_action.generic.type	= MTYPE_ACTION;
 	s_player_setup_action.generic.flags = QMF_LEFT_JUSTIFY;
-	s_player_setup_action.generic.x		= 0;
-	s_player_setup_action.generic.y		= 30;
-	s_player_setup_action.generic.name	= " player setup";
+	s_player_setup_action.generic.x = 0;
+	s_player_setup_action.generic.y = y;
+	s_player_setup_action.generic.name = " player setup";
 	s_player_setup_action.generic.callback = PlayerSetupFunc;
 
 	s_multiplayer_menu.draw = Multiplayer_MenuDraw;
@@ -122,6 +126,7 @@ void Multiplayer_MenuInit (void)
 void M_Menu_Multiplayer_f (void)
 {
 	Multiplayer_MenuInit ();
+
 	M_PushMenu (&s_multiplayer_menu);
 }
 
@@ -336,8 +341,9 @@ static void JoinGamespyServer_PrevPageFunc(void *unused)
 
 static void JoinGamespyServer_MenuDraw(menuframework_s *self)
 {
-	//M_Banner("m_banner_join_server");
-	Menu_Draw(self);
+	//M_Banner ("m_banner_join_server");
+	
+	Menu_Draw (self);
 }
 
 static char *JoinGamespyServer_MenuKey(menuframework_s *self, int key)
@@ -391,10 +397,10 @@ static char *JoinGamespyServer_MenuKey(menuframework_s *self, int key)
 void JoinGamespyServer_MenuInit(void)
 {
 	int i, vidscale = 18;
-	float scale = SCR_GetMenuScale();
 
 	memset(&s_joingamespyserver_menu, 0, sizeof(s_joingamespyserver_menu));
-	s_joingamespyserver_menu.x = (int)(viddef.width * 0.50f) - 120 * scale;
+
+	s_joingamespyserver_menu.x = (int)(SCREEN_WIDTH * 0.50f) - 120;
 	s_joingamespyserver_menu.nitems = 0;
 	s_joingamespyserver_menu.cursor = 0; /* FS: Set the cursor at the top */
 
@@ -408,7 +414,7 @@ void JoinGamespyServer_MenuInit(void)
 
 	s_joingamespyserver_server_title.generic.type = MTYPE_SEPARATOR;
 	s_joingamespyserver_server_title.generic.name = "connect to...";
-	s_joingamespyserver_server_title.generic.x = 80 * scale;
+	s_joingamespyserver_server_title.generic.x = 80;
 	s_joingamespyserver_server_title.generic.y = 20;
 
 	for (i = 0; i <= MAX_GAMESPY_MENU_SERVERS; i++)
@@ -465,11 +471,11 @@ void JoinGamespyServer_MenuInit(void)
 static void JoinGamespyServer_Redraw(int serverscale)
 {
 	int i, vidscale = 18;
-	float scale = SCR_GetMenuScale();
 	qboolean didBreak = false;
 
 	memset(&s_joingamespyserver_menu, 0, sizeof(s_joingamespyserver_menu));
-	s_joingamespyserver_menu.x = (int)(viddef.width * 0.50f) - 120 * scale;
+
+	s_joingamespyserver_menu.x = (int)(SCREEN_WIDTH * 0.50f) - 120;
 	s_joingamespyserver_menu.nitems = 0;
 	s_joingamespyserver_menu.cursor = 0; /* FS: Set the cursor at the top */
 
@@ -556,8 +562,9 @@ static void JoinGamespyServer_Redraw(int serverscale)
 
 void M_Menu_JoinGamespyServer_f(void)
 {
-	JoinGamespyServer_MenuInit();
-	M_PushMenu(&s_joingamespyserver_menu);
+	JoinGamespyServer_MenuInit ();
+
+	M_PushMenu (&s_joingamespyserver_menu);
 }
 
 /*
