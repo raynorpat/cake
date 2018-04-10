@@ -173,12 +173,8 @@ VID_MenuDraw
 */
 void VID_MenuDraw (menuframework_s *self)
 {
-	int w, h;
-	float scale = SCR_GetMenuScale();
-
 	// draw the banner
-	RE_Draw_GetPicSize (&w, &h, "m_banner_video");
-	RE_Draw_Pic (viddef.width / 2 - (w * scale) / 2, viddef.height / 2 - (110 * scale), "m_banner_video", scale);
+	M_Banner ("m_banner_video");
 
 	// move cursor to a reasonable starting position
 	Menu_AdjustCursor (self, 1);
