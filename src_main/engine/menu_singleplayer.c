@@ -48,9 +48,7 @@ static void StartGame (void)
 {
 	// if we are already connected to a server, disconnect
 	if (cls.state != ca_disconnected && cls.state != ca_uninitialized)
-	{
 		CL_Disconnect();
-	}
 
 	// disable updates and start the cinematic going
 	cl.servercount = -1;
@@ -110,59 +108,72 @@ void Game_MenuDraw (menuframework_s *self)
 
 void Game_MenuInit (void)
 {
+	int y;
+
 	memset (&s_game_menu, 0, sizeof(s_game_menu));
-	s_game_menu.x = (int)(viddef.width * 0.50f);
+	s_game_menu.x = (int)(SCREEN_WIDTH * 0.50f);
 	s_game_menu.nitems = 0;
 
+	y = 200;
 	s_easy_game_action.generic.type	= MTYPE_ACTION;
 	s_easy_game_action.generic.flags = QMF_LEFT_JUSTIFY;
-	s_easy_game_action.generic.x		= 0;
-	s_easy_game_action.generic.y		= 0;
+	s_easy_game_action.generic.x = 0;
+	s_easy_game_action.generic.y = y;
 	s_easy_game_action.generic.name	= "easy";
 	s_easy_game_action.generic.callback = EasyGameFunc;
 
+	y += 10;
 	s_medium_game_action.generic.type	= MTYPE_ACTION;
 	s_medium_game_action.generic.flags = QMF_LEFT_JUSTIFY;
-	s_medium_game_action.generic.x		= 0;
-	s_medium_game_action.generic.y		= 10;
-	s_medium_game_action.generic.name	= "medium";
+	s_medium_game_action.generic.x = 0;
+	s_medium_game_action.generic.y = y;
+	s_medium_game_action.generic.name = "medium";
 	s_medium_game_action.generic.callback = MediumGameFunc;
 
+	y += 10;
 	s_hard_game_action.generic.type	= MTYPE_ACTION;
 	s_hard_game_action.generic.flags = QMF_LEFT_JUSTIFY;
-	s_hard_game_action.generic.x		= 0;
-	s_hard_game_action.generic.y		= 20;
+	s_hard_game_action.generic.x = 0;
+	s_hard_game_action.generic.y = y;
 	s_hard_game_action.generic.name	= "hard";
 	s_hard_game_action.generic.callback = HardGameFunc;
 
+	y += 10;
     s_hardp_game_action.generic.type = MTYPE_ACTION;
     s_hardp_game_action.generic.flags = QMF_LEFT_JUSTIFY;
     s_hardp_game_action.generic.x = 0;
-    s_hardp_game_action.generic.y = 30;
+    s_hardp_game_action.generic.y = y;
     s_hardp_game_action.generic.name = "nightmare";
     s_hardp_game_action.generic.callback = HardpGameFunc;
 
+	y += 20;
 	s_blankline.generic.type = MTYPE_SEPARATOR;
 
+	y += 10;
 	s_load_game_action.generic.type	= MTYPE_ACTION;
 	s_load_game_action.generic.flags = QMF_LEFT_JUSTIFY;
-	s_load_game_action.generic.x		= 0;
-    s_load_game_action.generic.y = 50;
+	s_load_game_action.generic.x = 0;
+    s_load_game_action.generic.y = y;
 	s_load_game_action.generic.name	= "load game";
 	s_load_game_action.generic.callback = LoadGameFunc;
 
+	y += 10;
 	s_save_game_action.generic.type	= MTYPE_ACTION;
 	s_save_game_action.generic.flags = QMF_LEFT_JUSTIFY;
-	s_save_game_action.generic.x		= 0;
-    s_save_game_action.generic.y = 60;
+	s_save_game_action.generic.x = 0;
+    s_save_game_action.generic.y = y;
 	s_save_game_action.generic.name	= "save game";
 	s_save_game_action.generic.callback = SaveGameFunc;
 
-	s_credits_action.generic.type	= MTYPE_ACTION;
+	y += 20;
+	// another blank line
+
+	y += 10;
+	s_credits_action.generic.type = MTYPE_ACTION;
 	s_credits_action.generic.flags = QMF_LEFT_JUSTIFY;
-	s_credits_action.generic.x		= 0;
-    s_credits_action.generic.y = 70;
-	s_credits_action.generic.name	= "credits";
+	s_credits_action.generic.x = 0;
+    s_credits_action.generic.y = y;
+	s_credits_action.generic.name = "credits";
 	s_credits_action.generic.callback = CreditsFunc;
 
 	s_game_menu.draw = Game_MenuDraw;
@@ -331,8 +342,8 @@ void LoadGame_MenuInit (void)
 	float scale = SCR_GetMenuScale();
 
 	memset(&s_loadgame_menu, 0, sizeof(s_loadgame_menu));
-	s_loadgame_menu.x = viddef.width / 2 - (120 * scale);
-	s_loadgame_menu.y = viddef.height / (2 * scale) - 58;
+	s_loadgame_menu.x = SCREEN_WIDTH / 2 - 120;
+	s_loadgame_menu.y = SCREEN_HEIGHT / 2 - 58;
 	s_loadgame_menu.nitems = 0;
 
 	s_loadgame_menu.draw = LoadGame_MenuDraw;
@@ -459,8 +470,8 @@ void SaveGame_MenuInit (void)
 	float scale = SCR_GetMenuScale();
 
 	memset(&s_savegame_menu, 0, sizeof(s_savegame_menu));
-	s_savegame_menu.x = viddef.width / 2 - (120 * scale);
-	s_savegame_menu.y = viddef.height / (2 * scale) - 58;
+	s_savegame_menu.x = SCREEN_WIDTH / 2 - 120;
+	s_savegame_menu.y = SCREEN_HEIGHT / 2 - 58;
 	s_savegame_menu.nitems = 0;
 
 	s_savegame_menu.draw = SaveGame_MenuDraw;
@@ -518,7 +529,8 @@ typedef struct
 } cr_line;
 
 cr_line credits[] = {
-	{ "QUAKE II BY ID SOFTWARE", UI_CENTER | UI_GIANTFONT, colorWhite },
+	{ "QUAKE II", UI_CENTER | UI_GIANTFONT, colorWhite },
+	{ "BY ID SOFTWARE", UI_CENTER | UI_GIANTFONT, colorWhite },
 	{ "", UI_CENTER | UI_SMALLFONT, colorWhite },
 	{ "PROGRAMMING", UI_CENTER | UI_BIGFONT, colorMdGrey },
 	{ "John Carmack", UI_CENTER | UI_SMALLFONT, colorWhite },
