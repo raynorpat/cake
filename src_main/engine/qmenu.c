@@ -50,21 +50,29 @@ void Action_DoEnter (menuaction_s *a)
 
 void Action_Draw (menuaction_s *a)
 {
-	if (a->generic.flags & QMF_LEFT_JUSTIFY)
-	{
-		if (a->generic.flags & QMF_GRAYED)
-			Menu_DrawStringDark (a->generic.x + a->generic.parent->x + LCOLUMN_OFFSET, a->generic.y + a->generic.parent->y, a->generic.name);
-		else
-			Menu_DrawString (a->generic.x + a->generic.parent->x + LCOLUMN_OFFSET, a->generic.y + a->generic.parent->y, a->generic.name);
-	}
-	else
-	{
-		if (a->generic.flags & QMF_GRAYED)
-			Menu_DrawStringR2LDark (a->generic.x + a->generic.parent->x + LCOLUMN_OFFSET, a->generic.y + a->generic.parent->y, a->generic.name);
-		else
-			Menu_DrawStringR2L (a->generic.x + a->generic.parent->x + LCOLUMN_OFFSET, a->generic.y + a->generic.parent->y, a->generic.name);
-	}
+	int x, y;
+	vec4_t color;
+	int style;
+	
+	x = a->generic.x + a->generic.parent->x + LCOLUMN_OFFSET;
+	y = a->generic.y + a->generic.parent->y;
 
+	// set style flags
+	if (a->generic.flags & QMF_LEFT_JUSTIFY)
+		style = UI_LEFT;
+	else
+		style = UI_RIGHT;
+
+	// set color
+	if (a->generic.flags & QMF_GRAYED)
+		Vector4Set (color, 0.0f, 1.0f, 0.0f, 1.0f);
+	else
+		Vector4Set (color, 1.0f, 1.0f, 1.0f, 1.0f);
+
+	// draw text
+	SCR_Text_Paint (x, y, 0.2f, color, (char *)a->generic.name, 0, 0, style, &cls.consoleFont);
+
+	// do any owner drawing
 	if (a->generic.ownerdraw)
 		a->generic.ownerdraw (a);
 }
@@ -138,7 +146,7 @@ void Field_Draw (menufield_s *f)
 			offset = f->cursor;
 
 		if (((int) (Sys_Milliseconds() / 250)) & 1)
-			RE_Draw_Char (f->generic.x + f->generic.parent->x + 24 + offset * 8, f->generic.y + f->generic.parent->y, 11, 1.0);
+			RE_Draw_Char (f->generic.x + f->generic.parent->x + 24 + offset * 8, f->generic.y + f->generic.parent->y, '_', 1.0);
 		else
 			RE_Draw_Char (f->generic.x + f->generic.parent->x + 24 + offset * 8, f->generic.y + f->generic.parent->y, ' ', 1.0);
 	}
@@ -351,12 +359,13 @@ void Menu_Center (menuframework_s *menu)
 	height = ((menucommon_s *) menu->items[menu->nitems-1])->y;
 	height += 10;
 
-	menu->y = (VID_HEIGHT / height) / 2;
+	menu->y = (SCREEN_HEIGHT / height) / 2;
 }
 
 void Menu_Draw (menuframework_s *menu)
 {
 	int i;
+	float x, y;
 	menucommon_s *item;
 
 	// draw contents
@@ -388,8 +397,8 @@ void Menu_Draw (menuframework_s *menu)
 		}
 	}
 
+	// draw current selected item cursor
 	item = Menu_ItemAtCursor (menu);
-
 	if (item && item->cursordraw)
 	{
 		item->cursordraw (item);
@@ -401,11 +410,20 @@ void Menu_Draw (menuframework_s *menu)
 	else if (item && ((item->type != MTYPE_FIELD) && (item->type != MTYPE_LIST)))
 	{
 		if (item->flags & QMF_LEFT_JUSTIFY)
-			RE_Draw_Char (menu->x + item->x / 24 + item->cursor_offset, menu->y + item->y, 12 + ((int) (Sys_Milliseconds() / 250) & 1), 1.0);
+		{
+			x = menu->x + item->x / 24 + item->cursor_offset - 24;
+			y = menu->y + item->y;
+			SCR_Text_PaintSingleChar (x, y, 0.2f, colorWhite, '!' + ((int)(Sys_Milliseconds() / 250) & 1), 0, 0, 0, &cls.consoleFont);
+		}
 		else
-			RE_Draw_Char (menu->x + item->cursor_offset, menu->y + item->y, 12 + ((int) (Sys_Milliseconds() / 250) & 1), 1.0);
+		{
+			x = menu->x + item->cursor_offset - 24;
+			y = menu->y + item->y;
+			SCR_Text_PaintSingleChar (x, y, 0.2f, colorWhite, '!' + ((int)(Sys_Milliseconds() / 250) & 1), 0, 0, 0, &cls.consoleFont);
+		}
 	}
 
+	// draw statusbar
 	if (item)
 	{
 		if (item->statusbarfunc)
@@ -414,7 +432,6 @@ void Menu_Draw (menuframework_s *menu)
 			Menu_DrawStatusBar (item->statusbar);
 		else
 			Menu_DrawStatusBar (menu->statusbar);
-
 	}
 	else
 	{
@@ -424,18 +441,24 @@ void Menu_Draw (menuframework_s *menu)
 
 void Menu_DrawStatusBar (const char *string)
 {
-	if (string)
-	{
-		int l = (int)strlen(string);
-		float col = (VID_WIDTH / 2) - l * 8 / 2;
+	int len;
+	float x, y, col;
+	vec4_t color;
 
-		RE_Draw_Fill (0, VID_HEIGHT - 8, VID_WIDTH, 8, 4);
-		Menu_DrawString (col, VID_HEIGHT / 8, string);
-	}
-	else
-	{
-		RE_Draw_Fill (0, VID_HEIGHT - 8, VID_WIDTH, 8, 0);
-	}
+	if (!string)
+		return;
+
+	x = SCREEN_HEIGHT - 8;
+	y = SCREEN_WIDTH;
+	
+	len = (int)strlen(string);
+	col = (SCREEN_WIDTH / 2) - len * 8 / 2;
+
+	Vector4Set (color, 0.4, 0.4, 0.4, 0.6);
+
+	SCR_FillRect (0, x, y, 8, color);
+	
+	SCR_Text_Paint (col + len + 8, SCREEN_HEIGHT, 0.2f, colorWhite, (char *)string, 0, 0, 0, &cls.consoleFont);
 }
 
 void Menu_DrawString (int x, int y, const char *string)
