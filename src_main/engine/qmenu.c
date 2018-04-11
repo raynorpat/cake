@@ -470,36 +470,6 @@ void Menu_DrawString (int x, int y, const char *string)
 	}
 }
 
-void Menu_DrawStringDark (int x, int y, const char *string)
-{
-	unsigned i;
-
-	for (i = 0; i < strlen (string); i++)
-	{
-		RE_Draw_Char (x + i * 8, y, string[i] + 128, 1.0);
-	}
-}
-
-void Menu_DrawStringR2L (int x, int y, const char *string)
-{
-	unsigned i;
-
-	for (i = 0; i < strlen (string); i++)
-	{
-		RE_Draw_Char (x - i * 8, y, string[strlen(string) - i - 1], 1.0);
-	}
-}
-
-void Menu_DrawStringR2LDark (int x, int y, const char *string)
-{
-	unsigned i;
-
-	for (i = 0; i < strlen (string); i++)
-	{
-		RE_Draw_Char (x - i * 8, y, string[strlen(string) - i - 1] + 128, 1.0);
-	}
-}
-
 void *Menu_ItemAtCursor (menuframework_s *m)
 {
 	if ((m->cursor < 0) || (m->cursor >= m->nitems))
@@ -813,6 +783,7 @@ void Separator_Draw (menuseparator_s *s)
 {
 	float x, y;
 
+	// draw name
 	if (s->generic.name)
 	{
 		x = s->generic.x + s->generic.parent->x;
@@ -840,25 +811,28 @@ void Slider_DoSlide (menuslider_s *s, int dir)
 void Slider_Draw (menuslider_s *s)
 {
 	int	i;
-	float x;
 
-	x = s->generic.x + s->generic.parent->x + LCOLUMN_OFFSET;
-	x -= strlen(s->generic.name) * 8;
-	SCR_Text_PaintAligned (x, s->generic.y + s->generic.parent->y, (char *)s->generic.name, 0.2f, 0, colorGreen, &cls.consoleFont);
+	// draw name
+	SCR_Text_PaintAligned (s->generic.x + s->generic.parent->x - RCOLUMN_OFFSET, s->generic.y + s->generic.parent->y, (char *)s->generic.name, 0.2f, UI_RIGHT, colorGreen, &cls.consoleFont);
 
+	// set range
 	s->range = (s->curvalue - s->minvalue) / (float) (s->maxvalue - s->minvalue);
-
 	if (s->range < 0)
 		s->range = 0;
 	if (s->range > 1)
 		s->range = 1;
 
+	// draw start of slider
 	RE_Draw_Char (s->generic.x + s->generic.parent->x + RCOLUMN_OFFSET, s->generic.y + s->generic.parent->y, 128, 1.0);
 
+	// draw length of slider
 	for (i = 0; i < SLIDER_RANGE; i++)
 		RE_Draw_Char (RCOLUMN_OFFSET + s->generic.x + i * 8 + s->generic.parent->x + 8, s->generic.y + s->generic.parent->y, 129, 1.0);
 
+	// draw slider
 	RE_Draw_Char (RCOLUMN_OFFSET + s->generic.x + i * 8 + s->generic.parent->x + 8, s->generic.y + s->generic.parent->y, 130, 1.0);
+	
+	// draw end of slider
 	RE_Draw_Char ((int)(8 + RCOLUMN_OFFSET + s->generic.parent->x + s->generic.x + (SLIDER_RANGE - 1) * 8 * s->range), s->generic.y + s->generic.parent->y, 131, 1.0);
 }
 

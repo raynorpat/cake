@@ -152,8 +152,5 @@ void	Menu_SlideItem (menuframework_s *s, int dir);
 void 	MenuList_Init (menulist_s *l);
 
 void	Menu_DrawString (int, int, const char *);
-void	Menu_DrawStringDark (int, int, const char *);
-void	Menu_DrawStringR2L (int, int, const char *);
-void	Menu_DrawStringR2LDark (int, int, const char *);
 
 #endif
