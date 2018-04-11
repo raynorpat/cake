@@ -219,7 +219,7 @@ static void Keys_MenuInit (void)
     int i;
 
 	memset (&s_keys_menu, 0, sizeof(s_keys_menu));
-    s_keys_menu.x = (int)(viddef.width * 0.50f);
+    s_keys_menu.x = (int)(SCREEN_WIDTH * 0.50f);
 	s_keys_menu.nitems = 0;
 	s_keys_menu.cursordraw = KeyCursorDrawFunc;
 
@@ -228,7 +228,7 @@ static void Keys_MenuInit (void)
         s_keys_actions[i].generic.type = MTYPE_ACTION;
         s_keys_actions[i].generic.flags = QMF_GRAYED;
         s_keys_actions[i].generic.x = 0;
-        s_keys_actions[i].generic.y = (i * 9);
+        s_keys_actions[i].generic.y = i * 9;
         s_keys_actions[i].generic.ownerdraw = DrawKeyBindingFunc;
         s_keys_actions[i].generic.localdata[0] = i;
         s_keys_actions[i].generic.name = bindnames[s_keys_actions[i].generic.localdata[0]][1];
@@ -439,7 +439,7 @@ static void Options_MenuDraw (menuframework_s *self)
 
 void Options_MenuInit (void)
 {
-	int squality = 0, y = 0;
+	int squality = 0;
 
 	static const char *cd_music_items[] =
 	{
@@ -479,9 +479,7 @@ void Options_MenuInit (void)
 		"angle",
 		0
 	};
-
-	float scale = SCR_GetMenuScale();
-
+	
 	squality = Cvar_VariableInteger ("s_khz");
 	switch (squality)
 	{
@@ -502,111 +500,113 @@ void Options_MenuInit (void)
 			break;
 	}
 
+	float y = 30;
+
 	// configure controls menu and menu items
 	memset (&s_options_menu, 0, sizeof(s_options_menu));
-	s_options_menu.x = viddef.width / 2;
-	s_options_menu.y = viddef.height / (2 * scale) - 58;
+	s_options_menu.x = SCREEN_WIDTH / 2;
+	s_options_menu.y = SCREEN_HEIGHT / 2 - 58;
 	s_options_menu.nitems = 0;
 
 	s_options_sound_enable_list.generic.type = MTYPE_SPINCONTROL;
-	s_options_sound_enable_list.generic.x	= 0;
-	s_options_sound_enable_list.generic.y	= 0;
+	s_options_sound_enable_list.generic.x = 0;
+	s_options_sound_enable_list.generic.y = y;
 	s_options_sound_enable_list.generic.name = "sound engine";
 	s_options_sound_enable_list.generic.callback = UpdateSoundQualityFunc;
-	s_options_sound_enable_list.itemnames	= compatibility_items;
-	s_options_sound_enable_list.curvalue	= Cvar_VariableInteger ("s_enable");
+	s_options_sound_enable_list.itemnames = compatibility_items;
+	s_options_sound_enable_list.curvalue = Cvar_VariableInteger ("s_enable");
 
 	s_options_quality_list.generic.type = MTYPE_SPINCONTROL;
-	s_options_quality_list.generic.x		= 0;
-	s_options_quality_list.generic.y		= y += 10;
-	s_options_quality_list.generic.name		= "sound quality";
+	s_options_quality_list.generic.x = 0;
+	s_options_quality_list.generic.y = y += 10;
+	s_options_quality_list.generic.name = "sound quality";
 	s_options_quality_list.generic.callback = UpdateSoundQualityFunc;
 	s_options_quality_list.itemnames = quality_items;
 	s_options_quality_list.curvalue = squality;
 
 	s_options_sfxvolume_slider.generic.type	= MTYPE_SLIDER;
-	s_options_sfxvolume_slider.generic.x	= 0;
-	s_options_sfxvolume_slider.generic.y	= y += 10;
+	s_options_sfxvolume_slider.generic.x = 0;
+	s_options_sfxvolume_slider.generic.y = y += 10;
 	s_options_sfxvolume_slider.generic.name	= "volume";
 	s_options_sfxvolume_slider.generic.callback	= UpdateVolumeFunc;
-	s_options_sfxvolume_slider.minvalue		= 0;
-	s_options_sfxvolume_slider.maxvalue		= 10;
-	s_options_sfxvolume_slider.curvalue		= Cvar_VariableValue ("s_volume") * 10;
+	s_options_sfxvolume_slider.minvalue = 0;
+	s_options_sfxvolume_slider.maxvalue = 10;
+	s_options_sfxvolume_slider.curvalue = Cvar_VariableValue ("s_volume") * 10;
 
-	s_options_cdvolume_box.generic.type		= MTYPE_SPINCONTROL;
-	s_options_cdvolume_box.generic.x		= 0;
-	s_options_cdvolume_box.generic.y		= y += 10;
-	s_options_cdvolume_box.generic.name		= "background music";
+	s_options_cdvolume_box.generic.type = MTYPE_SPINCONTROL;
+	s_options_cdvolume_box.generic.x = 0;
+	s_options_cdvolume_box.generic.y = y += 10;
+	s_options_cdvolume_box.generic.name = "background music";
 	s_options_cdvolume_box.generic.callback	= UpdateCDVolumeFunc;
-	s_options_cdvolume_box.itemnames		= cd_music_items;
-	s_options_cdvolume_box.curvalue 		= !Cvar_VariableValue("ogg_enable");
+	s_options_cdvolume_box.itemnames = cd_music_items;
+	s_options_cdvolume_box.curvalue = !Cvar_VariableValue("ogg_enable");
 
-	s_options_sensitivity_slider.generic.type	= MTYPE_SLIDER;
-	s_options_sensitivity_slider.generic.x		= 0;
-	s_options_sensitivity_slider.generic.y		= y += 20;
-	s_options_sensitivity_slider.generic.name	= "mouse speed";
+	s_options_sensitivity_slider.generic.type = MTYPE_SLIDER;
+	s_options_sensitivity_slider.generic.x = 0;
+	s_options_sensitivity_slider.generic.y = y += 20;
+	s_options_sensitivity_slider.generic.name = "mouse speed";
 	s_options_sensitivity_slider.generic.callback = MouseSpeedFunc;
-	s_options_sensitivity_slider.minvalue		= 2;
-	s_options_sensitivity_slider.maxvalue		= 22;
+	s_options_sensitivity_slider.minvalue = 2;
+	s_options_sensitivity_slider.maxvalue = 22;
 
 	s_options_alwaysrun_box.generic.type = MTYPE_SPINCONTROL;
-	s_options_alwaysrun_box.generic.x	= 0;
-	s_options_alwaysrun_box.generic.y	= y += 10;
-	s_options_alwaysrun_box.generic.name	= "always run";
+	s_options_alwaysrun_box.generic.x = 0;
+	s_options_alwaysrun_box.generic.y = y += 10;
+	s_options_alwaysrun_box.generic.name = "always run";
 	s_options_alwaysrun_box.generic.callback = AlwaysRunFunc;
 	s_options_alwaysrun_box.itemnames = yesno_names;
 
 	s_options_invertmouse_box.generic.type = MTYPE_SPINCONTROL;
 	s_options_invertmouse_box.generic.x	= 0;
 	s_options_invertmouse_box.generic.y	= y += 10;
-	s_options_invertmouse_box.generic.name	= "invert mouse";
+	s_options_invertmouse_box.generic.name = "invert mouse";
 	s_options_invertmouse_box.generic.callback = InvertMouseFunc;
 	s_options_invertmouse_box.itemnames = yesno_names;
 
 	s_options_lookstrafe_box.generic.type = MTYPE_SPINCONTROL;
-	s_options_lookstrafe_box.generic.x	= 0;
-	s_options_lookstrafe_box.generic.y	= y += 10;
-	s_options_lookstrafe_box.generic.name	= "lookstrafe";
+	s_options_lookstrafe_box.generic.x = 0;
+	s_options_lookstrafe_box.generic.y = y += 10;
+	s_options_lookstrafe_box.generic.name = "lookstrafe";
 	s_options_lookstrafe_box.generic.callback = LookstrafeFunc;
 	s_options_lookstrafe_box.itemnames = yesno_names;
 
 	s_options_freelook_box.generic.type = MTYPE_SPINCONTROL;
-	s_options_freelook_box.generic.x	= 0;
-	s_options_freelook_box.generic.y	= y += 10;
+	s_options_freelook_box.generic.x = 0;
+	s_options_freelook_box.generic.y = y += 10;
 	s_options_freelook_box.generic.name	= "free look";
 	s_options_freelook_box.generic.callback = FreeLookFunc;
 	s_options_freelook_box.itemnames = yesno_names;
 
 	s_options_crosshair_box.generic.type = MTYPE_SPINCONTROL;
-	s_options_crosshair_box.generic.x	= 0;
-	s_options_crosshair_box.generic.y	= y += 10;
-	s_options_crosshair_box.generic.name	= "crosshair";
+	s_options_crosshair_box.generic.x = 0;
+	s_options_crosshair_box.generic.y = y += 10;
+	s_options_crosshair_box.generic.name = "crosshair";
 	s_options_crosshair_box.generic.callback = CrosshairFunc;
 	s_options_crosshair_box.itemnames = crosshair_names;
 
 	s_options_joystick_box.generic.type = MTYPE_SPINCONTROL;
-	s_options_joystick_box.generic.x	= 0;
-	s_options_joystick_box.generic.y	= y += 10;
+	s_options_joystick_box.generic.x = 0;
+	s_options_joystick_box.generic.y = y += 10;
 	s_options_joystick_box.generic.name	= "use controller";
 	s_options_joystick_box.generic.callback = JoystickFunc;
 	s_options_joystick_box.itemnames = yesno_names;
 
 	s_options_customize_options_action.generic.type	= MTYPE_ACTION;
-	s_options_customize_options_action.generic.x		= 0;
-	s_options_customize_options_action.generic.y		= y += 20;
-	s_options_customize_options_action.generic.name	= "customize controls";
+	s_options_customize_options_action.generic.x = 0;
+	s_options_customize_options_action.generic.y = y += 20;
+	s_options_customize_options_action.generic.name	= S_COLOR_BLUE "customize controls";
 	s_options_customize_options_action.generic.callback = CustomizeControlsFunc;
 
 	s_options_defaults_action.generic.type	= MTYPE_ACTION;
-	s_options_defaults_action.generic.x		= 0;
-	s_options_defaults_action.generic.y		= y += 10;
-	s_options_defaults_action.generic.name	= "reset defaults";
+	s_options_defaults_action.generic.x = 0;
+	s_options_defaults_action.generic.y = y += 10;
+	s_options_defaults_action.generic.name = S_COLOR_BLUE "reset defaults";
 	s_options_defaults_action.generic.callback = ControlsResetDefaultsFunc;
 
-	s_options_console_action.generic.type	= MTYPE_ACTION;
-	s_options_console_action.generic.x		= 0;
-	s_options_console_action.generic.y		= y += 10;
-	s_options_console_action.generic.name	= "go to console";
+	s_options_console_action.generic.type = MTYPE_ACTION;
+	s_options_console_action.generic.x = 0;
+	s_options_console_action.generic.y = y += 10;
+	s_options_console_action.generic.name = S_COLOR_BLUE "go to console";
 	s_options_console_action.generic.callback = ConsoleFunc;
 
 	ControlsSetMenuItemValues ();

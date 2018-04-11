@@ -153,8 +153,18 @@ set(MENU_SOURCES
 	qmenu.c
 	menu.c
 	menu_main.c
+	menu_quit.c
 	menu_multiplayer.c
+	menu_mp_addressbook.c
+	menu_mp_dmoptions.c
+	menu_mp_download.c
+	menu_mp_joingamespy.c
+	menu_mp_joinserver.c
+	menu_mp_playersetup.c
+	menu_mp_startserver.c
 	menu_singleplayer.c
+	menu_sp_saveload.c
+	menu_sp_credits.c
 	menu_options.c
 	menu_vid.c
 	)

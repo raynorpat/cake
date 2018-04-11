@@ -266,14 +266,16 @@ void VID_MenuInit (void)
 		r_fxaa = Cvar_Get("r_fxaa", "0", CVAR_ARCHIVE);
 
 	memset(&s_video_menu, 0, sizeof(s_video_menu));
-	s_video_menu.x = (int)(viddef.width * 0.50f);
+	s_video_menu.x = (int)(SCREEN_WIDTH * 0.50f);
 	s_video_menu.nitems = 0;
+
+	y = 10;
 
 	// video mode resolution
 	s_mode_list.generic.type = MTYPE_SPINCONTROL;
 	s_mode_list.generic.name = "video mode";
 	s_mode_list.generic.x = 0;
-	s_mode_list.generic.y = (y = 0);
+	s_mode_list.generic.y = y;
 	s_mode_list.itemnames = resolutions;
 	if (gl_mode->value >= 0)
 	{

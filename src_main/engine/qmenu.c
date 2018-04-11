@@ -34,13 +34,8 @@ static void	Slider_Draw (menuslider_s *s);
 static void	SpinControl_Draw (menulist_s *s);
 static void	SpinControl_DoSlide (menulist_s *s, int dir);
 
-#define RCOLUMN_OFFSET 16
-#define LCOLUMN_OFFSET -16
-
-extern viddef_t viddef;
-
-#define VID_WIDTH viddef.width
-#define VID_HEIGHT viddef.height
+#define RCOLUMN_OFFSET 16 * 2
+#define LCOLUMN_OFFSET -16 * 2
 
 void Action_DoEnter (menuaction_s *a)
 {
@@ -112,15 +107,18 @@ void Field_Draw (menufield_s *f)
 	int n;
 	char tempbuffer[128] = "";
 
+	// draw name
 	if (f->generic.name)
 		SCR_Text_PaintAligned (f->generic.x + f->generic.parent->x + LCOLUMN_OFFSET, f->generic.y + f->generic.parent->y, (char *)f->generic.name, 0.2f, UI_RIGHT, colorWhite, &cls.consoleFont);
 
+	// get buffer size
 	n = f->visible_length + 1;
 	if (n > sizeof(tempbuffer))
 		n = sizeof(tempbuffer);
 	Q_strlcpy (tempbuffer, f->buffer + f->visible_offset, n);
 
 #if 0
+	// draw box around field
 	RE_Draw_Char (f->generic.x + f->generic.parent->x + 16, f->generic.y + f->generic.parent->y - 4, 18, 1.0);
 	RE_Draw_Char (f->generic.x + f->generic.parent->x + 16, f->generic.y + f->generic.parent->y + 4, 24, 1.0);
 
@@ -134,8 +132,10 @@ void Field_Draw (menufield_s *f)
 	}
 #endif
 
-	SCR_Text_PaintAligned (f->generic.x + f->generic.parent->x + 16, f->generic.y + f->generic.parent->y, tempbuffer, 0.2f, UI_LEFT, colorWhite, &cls.consoleFont);
+	// draw buffer
+	SCR_Text_PaintAligned (f->generic.x + f->generic.parent->x, f->generic.y + f->generic.parent->y, tempbuffer, 0.2f, UI_LEFT, colorWhite, &cls.consoleFont);
 
+	// draw cursur
 	if (Menu_ItemAtCursor (f->generic.parent) == f)
 	{
 		int offset;
@@ -146,9 +146,9 @@ void Field_Draw (menufield_s *f)
 			offset = f->cursor;
 
 		if (((int) (Sys_Milliseconds() / 250)) & 1)
-			SCR_Text_PaintSingleChar (f->generic.x + f->generic.parent->x + 16 + offset * 8, f->generic.y + f->generic.parent->y, 0.2f, colorWhite, '_', 0, 0, 0, &cls.consoleFont);
+			SCR_Text_PaintSingleChar (f->generic.x + f->generic.parent->x + offset * 8, f->generic.y + f->generic.parent->y, 0.2f, colorWhite, '_', 0, 0, 0, &cls.consoleFont);
 		else
-			SCR_Text_PaintSingleChar (f->generic.x + f->generic.parent->x + 16 + offset * 8, f->generic.y + f->generic.parent->y, 0.2f, colorWhite, ' ', 0, 0, 0, &cls.consoleFont);
+			SCR_Text_PaintSingleChar (f->generic.x + f->generic.parent->x + offset * 8, f->generic.y + f->generic.parent->y, 0.2f, colorWhite, ' ', 0, 0, 0, &cls.consoleFont);
 	}
 }
 
@@ -354,12 +354,8 @@ void Menu_AdjustCursor (menuframework_s *m, int dir)
 
 void Menu_Center (menuframework_s *menu)
 {
-	int height;
-
-	height = ((menucommon_s *) menu->items[menu->nitems-1])->y;
-	height += 10;
-
-	menu->y = (SCREEN_HEIGHT / height) / 2;
+	int height = ((menucommon_s *) menu->items[menu->nitems-1])->y + 10;
+	menu->y = (SCREEN_HEIGHT - height) / 2;
 }
 
 void Menu_Draw (menuframework_s *menu)
@@ -409,17 +405,20 @@ void Menu_Draw (menuframework_s *menu)
 	}
 	else if (item && ((item->type != MTYPE_FIELD) && (item->type != MTYPE_LIST)))
 	{
-		if (item->flags & QMF_LEFT_JUSTIFY)
+		if ((int)(Sys_Milliseconds() / 250) & 1)
 		{
-			x = menu->x + item->x / 24 + item->cursor_offset - 24;
-			y = menu->y + item->y;
-			SCR_Text_PaintSingleChar (x, y, 0.2f, colorWhite, '!' + ((int)(Sys_Milliseconds() / 250) & 1), 0, 0, 0, &cls.consoleFont);
-		}
-		else
-		{
-			x = menu->x + item->cursor_offset - 24;
-			y = menu->y + item->y;
-			SCR_Text_PaintSingleChar (x, y, 0.2f, colorWhite, '!' + ((int)(Sys_Milliseconds() / 250) & 1), 0, 0, 0, &cls.consoleFont);
+			if (item->flags & QMF_LEFT_JUSTIFY)
+			{
+				x = menu->x + item->x / 24 + item->cursor_offset - 24;
+				y = menu->y + item->y;
+				SCR_Text_PaintSingleChar (x, y, 0.2f, colorWhite, '>', 0, 0, 0, &cls.consoleFont);
+			}
+			else
+			{
+				x = menu->x + item->cursor_offset - 24;
+				y = menu->y + item->y;
+				SCR_Text_PaintSingleChar (x, y, 0.2f, colorWhite, '>', 0, 0, 0, &cls.consoleFont);
+			}
 		}
 	}
 
@@ -818,7 +817,8 @@ void Separator_Draw (menuseparator_s *s)
 	{
 		x = s->generic.x + s->generic.parent->x;
 		y = s->generic.y + s->generic.parent->y;
-		SCR_Text_PaintAligned (x, y, (char *)s->generic.name, 0.2f, UI_LEFT, colorWhite, &cls.consoleFont);
+		x -= strlen(s->generic.name) * MENU_FONT_SIZE;
+		SCR_Text_PaintAligned (x, y, (char *)s->generic.name, 0.2f, 0, colorWhite, &cls.consoleFont);
 	}
 }
 
@@ -840,10 +840,11 @@ void Slider_DoSlide (menuslider_s *s, int dir)
 void Slider_Draw (menuslider_s *s)
 {
 	int	i;
+	float x;
 
-	Menu_DrawStringR2LDark (s->generic.x + s->generic.parent->x + LCOLUMN_OFFSET,
-							s->generic.y + s->generic.parent->y,
-							s->generic.name);
+	x = s->generic.x + s->generic.parent->x + LCOLUMN_OFFSET;
+	x -= strlen(s->generic.name) * 8;
+	SCR_Text_PaintAligned (x, s->generic.y + s->generic.parent->y, (char *)s->generic.name, 0.2f, 0, colorGreen, &cls.consoleFont);
 
 	s->range = (s->curvalue - s->minvalue) / (float) (s->maxvalue - s->minvalue);
 
@@ -879,24 +880,23 @@ void SpinControl_Draw (menulist_s *s)
 	char buffer[100];
 	float x, y;
 
+	// draw name
 	if (s->generic.name)
 	{
-		x = s->generic.x + s->generic.parent->x + LCOLUMN_OFFSET;
-		y = s->generic.y + s->generic.parent->y - 4;
+		x = s->generic.x + s->generic.parent->x - RCOLUMN_OFFSET;
+		y = s->generic.y + s->generic.parent->y;
 		SCR_Text_PaintAligned (x, y, (char *)s->generic.name, 0.2f, UI_RIGHT, colorGreen, &cls.consoleFont);
 	}
 
+	// draw item name
+	x = s->generic.x + s->generic.parent->x;
+	y = s->generic.y + s->generic.parent->y;
 	if (!strchr (s->itemnames[s->curvalue], '\n'))
 	{
-		x = RCOLUMN_OFFSET + s->generic.x + s->generic.parent->x;
-		y = s->generic.y + s->generic.parent->y;
 		SCR_Text_PaintAligned (x, y, (char *)s->itemnames[s->curvalue], 0.2f, UI_LEFT, colorWhite, &cls.consoleFont);
 	}
 	else
 	{
-		x = RCOLUMN_OFFSET + s->generic.x + s->generic.parent->x;
-		y = s->generic.y + s->generic.parent->y;
-
 		strcpy (buffer, s->itemnames[s->curvalue]);
 		*strchr (buffer, '\n') = 0;
 		SCR_Text_PaintAligned (x, y, buffer, 0.2f, UI_LEFT, colorWhite, &cls.consoleFont);

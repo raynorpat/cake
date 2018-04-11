@@ -87,8 +87,8 @@ void M_PopMenu (void)
 		S_StartLocalSound( menu_out_sound );
 
 	m_menudepth--;
-
-	if (!m_menudepth) {
+	if (!m_menudepth)
+	{
 		M_ForceMenuOff ();
 		return;
 	}
@@ -363,20 +363,6 @@ void M_Print (int x, int y, char *str)
 }
 
 /*
-================
-M_DrawPic
-
-Draws a pic
-================
-*/
-void M_DrawPic (int x, int y, char *pic)
-{
-	float scale = SCR_GetMenuScale();
-
-	RE_Draw_Pic ((x + ((viddef.width - 320) >> 1)) * scale, (y + ((viddef.height - 240) >> 1)) * scale, pic, scale);
-}
-
-/*
 =============
 M_DrawTextBox
 
@@ -590,10 +576,16 @@ void M_Draw (void)
 		return;
 
 	// dim everything behind it down
-	if (SCR_GetCinematicTime() > 0 || (cls.state == ca_disconnected || cls.state == ca_connecting)) // if cinematic or in full screen console, all black please
-		RE_Draw_Fill (0, 0, viddef.width, viddef.height, 0);
+	if (SCR_GetCinematicTime() > 0 || (cls.state == ca_disconnected || cls.state == ca_connecting))
+	{
+		// if cinematic or in full screen console, all black please
+		RE_Draw_Fill(0, 0, viddef.width, viddef.height, 0);
+	}
 	else
-		RE_Draw_FadeScreen (); // draw fade screen post effect in-game or in attract loop
+	{
+		// draw post effect when ingame or in attract loop
+		RE_Draw_FadeScreen();
+	}
 
 	// see if the mouse is hitting anything
 	if(!bselected)
