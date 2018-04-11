@@ -269,7 +269,7 @@ void VID_MenuInit (void)
 	s_video_menu.x = (int)(SCREEN_WIDTH * 0.50f);
 	s_video_menu.nitems = 0;
 
-	y = 10;
+	y = MENU_LINE_SIZE;
 
 	// video mode resolution
 	s_mode_list.generic.type = MTYPE_SPINCONTROL;
@@ -290,7 +290,7 @@ void VID_MenuInit (void)
 	s_fs_box.generic.type = MTYPE_SPINCONTROL;
 	s_fs_box.generic.name = "fullscreen";
 	s_fs_box.generic.x = 0;
-	s_fs_box.generic.y = (y += 10);
+	s_fs_box.generic.y = y += MENU_LINE_SIZE;
 	s_fs_box.itemnames = fullscreen_names;
 	s_fs_box.curvalue = (int)vid_fullscreen->value;
 
@@ -298,7 +298,7 @@ void VID_MenuInit (void)
 	s_brightness_slider.generic.type = MTYPE_SLIDER;
 	s_brightness_slider.generic.name = "brightness";
 	s_brightness_slider.generic.x = 0;
-	s_brightness_slider.generic.y = (y += 10);
+	s_brightness_slider.generic.y = y += MENU_LINE_SIZE;
 	s_brightness_slider.generic.callback = BrightnessCallback;
 	s_brightness_slider.minvalue = 0;
 	s_brightness_slider.maxvalue = 20;
@@ -308,7 +308,7 @@ void VID_MenuInit (void)
 	s_contrast_slider.generic.type = MTYPE_SLIDER;
 	s_contrast_slider.generic.name = "contrast";
 	s_contrast_slider.generic.x = 0;
-	s_contrast_slider.generic.y = (y += 10);
+	s_contrast_slider.generic.y = y += MENU_LINE_SIZE;
 	s_contrast_slider.generic.callback = ContrastCallback;
 	s_contrast_slider.minvalue = 1;
 	s_contrast_slider.maxvalue = 5;
@@ -317,7 +317,7 @@ void VID_MenuInit (void)
 	// field of view
 	s_fov_slider.generic.type = MTYPE_SLIDER;
 	s_fov_slider.generic.x = 0;
-	s_fov_slider.generic.y = (y += 20);
+	s_fov_slider.generic.y = y += 2 * MENU_LINE_SIZE;
 	s_fov_slider.generic.name = "field of view";
 	s_fov_slider.generic.callback = FOVCallback;
 	s_fov_slider.minvalue = 60;
@@ -328,7 +328,7 @@ void VID_MenuInit (void)
 	s_vsync_list.generic.type = MTYPE_SPINCONTROL;
 	s_vsync_list.generic.name = "vertical sync";
 	s_vsync_list.generic.x = 0;
-	s_vsync_list.generic.y = (y += 10);
+	s_vsync_list.generic.y = y += MENU_LINE_SIZE;
 	s_vsync_list.itemnames = yesno_names;
 	s_vsync_list.curvalue = (gl_swapinterval->value != 0);
 
@@ -336,7 +336,7 @@ void VID_MenuInit (void)
 	s_af_list.generic.type = MTYPE_SPINCONTROL;
 	s_af_list.generic.name = "aniso filtering";
 	s_af_list.generic.x = 0;
-	s_af_list.generic.y = (y += 10);
+	s_af_list.generic.y = y += MENU_LINE_SIZE;
 	s_af_list.generic.callback = AnisotropicCallback;
 	s_af_list.itemnames = pow2_names;
 	s_af_list.curvalue = 0;
@@ -353,7 +353,7 @@ void VID_MenuInit (void)
 	s_ssao_list.generic.type = MTYPE_SPINCONTROL;
 	s_ssao_list.generic.name = "SSAO";
 	s_ssao_list.generic.x = 0;
-	s_ssao_list.generic.y = (y += 10);
+	s_ssao_list.generic.y = y += MENU_LINE_SIZE;
 	s_ssao_list.itemnames = yesno_names;
 	s_ssao_list.curvalue = (r_ssao->value != 0);
 
@@ -361,7 +361,7 @@ void VID_MenuInit (void)
 	s_postprocessing_list.generic.type = MTYPE_SPINCONTROL;
 	s_postprocessing_list.generic.name = "HDR post-processing";
 	s_postprocessing_list.generic.x = 0;
-	s_postprocessing_list.generic.y = (y += 10);
+	s_postprocessing_list.generic.y = y += MENU_LINE_SIZE;
 	s_postprocessing_list.itemnames = yesno_names;
 	s_postprocessing_list.curvalue = (r_postprocessing->value != 0);
 
@@ -375,16 +375,16 @@ void VID_MenuInit (void)
 
 	// reset button
 	s_defaults_action.generic.type = MTYPE_ACTION;
-	s_defaults_action.generic.name = "reset to default";
+	s_defaults_action.generic.name = S_COLOR_BLUE "reset to default";
 	s_defaults_action.generic.x  = 0;
-	s_defaults_action.generic.y = (y += 20);
+	s_defaults_action.generic.y = y += 2 * MENU_LINE_SIZE;
 	s_defaults_action.generic.callback = ResetDefaults;
 
 	// apply button
 	s_apply_action.generic.type = MTYPE_ACTION;
-	s_apply_action.generic.name = "apply";
+	s_apply_action.generic.name = S_COLOR_BLUE "apply";
 	s_apply_action.generic.x = 0;
-	s_apply_action.generic.y = (y += 10);
+	s_apply_action.generic.y = y += MENU_LINE_SIZE;
 	s_apply_action.generic.callback = ApplyChanges;
 
 	s_video_menu.draw = VID_MenuDraw;
