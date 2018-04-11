@@ -166,6 +166,7 @@ set(MENU_SOURCES
 	menu_sp_saveload.c
 	menu_sp_credits.c
 	menu_options.c
+	menu_options_keys.c
 	menu_vid.c
 	)
 source_group("client\\menu" FILES ${MENU_INCLUDES})
