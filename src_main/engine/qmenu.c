@@ -818,7 +818,7 @@ void Separator_Draw (menuseparator_s *s)
 	{
 		x = s->generic.x + s->generic.parent->x;
 		y = s->generic.y + s->generic.parent->y;
-		SCR_Text_Paint(x, y, 0.2f, colorWhite, (char *)s->generic.name, 0, 0, 0, &cls.consoleFont);
+		SCR_Text_PaintAligned (x, y, (char *)s->generic.name, 0.2f, UI_LEFT, colorWhite, &cls.consoleFont);
 	}
 }
 
@@ -890,7 +890,7 @@ void SpinControl_Draw (menulist_s *s)
 	{
 		x = RCOLUMN_OFFSET + s->generic.x + s->generic.parent->x;
 		y = s->generic.y + s->generic.parent->y;
-		SCR_Text_Paint (x, y, 0.2f, colorWhite, (char *)s->itemnames[s->curvalue], 0, 0, 0, &cls.consoleFont);
+		SCR_Text_PaintAligned (x, y, (char *)s->itemnames[s->curvalue], 0.2f, UI_LEFT, colorWhite, &cls.consoleFont);
 	}
 	else
 	{
@@ -899,10 +899,10 @@ void SpinControl_Draw (menulist_s *s)
 
 		strcpy (buffer, s->itemnames[s->curvalue]);
 		*strchr (buffer, '\n') = 0;
-		SCR_Text_PaintAligned (x, y, buffer, 0.2f, 0, colorWhite, &cls.consoleFont);
+		SCR_Text_PaintAligned (x, y, buffer, 0.2f, UI_LEFT, colorWhite, &cls.consoleFont);
 		
 		strcpy (buffer, strchr (s->itemnames[s->curvalue], '\n') + 1);
-		SCR_Text_PaintAligned (x, y + 10, buffer, 0.2f, 0, colorWhite, &cls.consoleFont);
+		SCR_Text_PaintAligned (x, y + 10, buffer, 0.2f, UI_LEFT, colorWhite, &cls.consoleFont);
 	}
 }
 
