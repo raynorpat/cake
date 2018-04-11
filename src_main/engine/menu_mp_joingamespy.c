@@ -254,7 +254,7 @@ void JoinGamespyServer_MenuInit(void)
 	y += 2 * MENU_LINE_SIZE;
 	s_joingamespyserver_server_title.generic.type = MTYPE_SEPARATOR;
 	s_joingamespyserver_server_title.generic.name = S_COLOR_GREEN "connect to...";
-	s_joingamespyserver_server_title.generic.x = 210;
+	s_joingamespyserver_server_title.generic.x = 240;
 	s_joingamespyserver_server_title.generic.y = y;
 	y += MENU_LINE_SIZE;
 
@@ -331,7 +331,7 @@ static void JoinGamespyServer_Redraw(int serverscale)
 	y += 2 * MENU_LINE_SIZE;
 	s_joingamespyserver_server_title.generic.type = MTYPE_SEPARATOR;
 	s_joingamespyserver_server_title.generic.name = S_COLOR_GREEN "connect to...";
-	s_joingamespyserver_server_title.generic.x = 210;
+	s_joingamespyserver_server_title.generic.x = 240;
 	s_joingamespyserver_server_title.generic.y = y;
 	y += MENU_LINE_SIZE;
 

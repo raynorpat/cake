@@ -47,10 +47,12 @@ void Action_Draw (menuaction_s *a)
 {
 	int x, y;
 	vec4_t color;
-	int style;
+	int style = 0;
 	
-	x = a->generic.x + a->generic.parent->x + LCOLUMN_OFFSET;
+	x = a->generic.x + a->generic.parent->x;
 	y = a->generic.y + a->generic.parent->y;
+	if (a->generic.flags & QMF_RIGHT2LEFT)
+		x -= strlen(a->generic.name) * MENU_FONT_SIZE;
 
 	// set style flags
 	if (a->generic.flags & QMF_LEFT_JUSTIFY)
@@ -458,16 +460,6 @@ void Menu_DrawStatusBar (const char *string)
 	SCR_FillRect (0, x, y, 8, color);
 	
 	SCR_Text_Paint (col + len + 8, SCREEN_HEIGHT, 0.2f, colorWhite, (char *)string, 0, 0, 0, &cls.consoleFont);
-}
-
-void Menu_DrawString (int x, int y, const char *string)
-{
-	unsigned i;
-
-	for (i = 0; i < strlen (string); i++)
-	{
-		RE_Draw_Char (x + i * 8, y, string[i], 1.0);
-	}
 }
 
 void *Menu_ItemAtCursor (menuframework_s *m)

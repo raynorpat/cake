@@ -164,7 +164,7 @@ void JoinServer_MenuInit (void)
 	y += 2 * MENU_LINE_SIZE;
 	s_joinserver_server_title.generic.type = MTYPE_SEPARATOR;
 	s_joinserver_server_title.generic.name = S_COLOR_GREEN "connect to...";
-	s_joinserver_server_title.generic.x = 210;
+	s_joinserver_server_title.generic.x = 240;
 	s_joinserver_server_title.generic.y = y;
 	y += MENU_LINE_SIZE;
 

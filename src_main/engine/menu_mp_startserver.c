@@ -28,6 +28,8 @@ START SERVER MENU
 =============================================================================
 */
 
+void M_Menu_DMOptions_f (void);
+
 static menuframework_s s_startserver_menu;
 static char **mapnames = NULL;
 static int nummaps = 0;
@@ -262,7 +264,7 @@ void StartServer_MenuInit (void)
 	s_startserver_dmoptions_action.generic.type = MTYPE_ACTION;
 	s_startserver_dmoptions_action.generic.name	= S_COLOR_BLUE " deathmatch flags";
 	s_startserver_dmoptions_action.generic.flags = QMF_LEFT_JUSTIFY;
-	s_startserver_dmoptions_action.generic.x = 24;
+	s_startserver_dmoptions_action.generic.x = 0;
 	s_startserver_dmoptions_action.generic.y = y;
 	s_startserver_dmoptions_action.generic.statusbar = NULL;
 	s_startserver_dmoptions_action.generic.callback = DMOptionsFunc;
@@ -271,7 +273,7 @@ void StartServer_MenuInit (void)
 	s_startserver_start_action.generic.type = MTYPE_ACTION;
 	s_startserver_start_action.generic.name	= S_COLOR_BLUE " begin";
 	s_startserver_start_action.generic.flags = QMF_LEFT_JUSTIFY;
-	s_startserver_start_action.generic.x = 24;
+	s_startserver_start_action.generic.x = 0;
 	s_startserver_start_action.generic.y = y;
 	s_startserver_start_action.generic.callback = StartServerActionFunc;
 

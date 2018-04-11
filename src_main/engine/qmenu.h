@@ -38,8 +38,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #define MLIST_SSIZE 		16
 
 #define QMF_LEFT_JUSTIFY	0x00000001
-#define QMF_GRAYED			0x00000002
-#define QMF_NUMBERSONLY		0x00000004
+#define QMF_RIGHT2LEFT		0x00000002
+#define QMF_GRAYED			0x00000004
+#define QMF_NUMBERSONLY		0x00000006
 
 typedef struct mrect_s
 {
@@ -150,7 +151,5 @@ void	Menu_SetStatusBar (menuframework_s *s, const char *string);
 void	Menu_SlideItem (menuframework_s *s, int dir);
 
 void 	MenuList_Init (menulist_s *l);
-
-void	Menu_DrawString (int, int, const char *);
 
 #endif
