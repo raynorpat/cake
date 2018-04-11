@@ -141,7 +141,7 @@ GAMESPY JOIN SERVER MENU
 
 void JoinGamespyServer_MenuInit(void);
 
-#define	NO_SERVER_STRING	"<no server>"
+#define	NO_SERVER_STRING "<no server>"
 
 #define MAX_GAMESPY_MENU_SERVERS MAX_SERVERS // Maximum number of servers to show in the browser
 static menuframework_s	s_joingamespyserver_menu;
@@ -201,24 +201,7 @@ static void FormatGamespyList(void)
 		{
 			if (browserList[j].curPlayers > 0)
 			{
-				if (viddef.height <= 300) /* FS: Special formatting for low res. */
-				{
-					char buffer[80];
-
-					Q_strlcpy(gamespy_server_names[m_num_gamespy_servers], browserList[j].hostname, 20);
-
-					if (strlen(browserList[j].hostname) >= 20)
-					{
-						strcat(gamespy_server_names[m_num_gamespy_servers], "...");
-					}
-
-					Com_sprintf(buffer, sizeof(buffer), " [%d] %d/%d", browserList[j].ping, browserList[j].curPlayers, browserList[j].maxPlayers);
-					Com_strcat(gamespy_server_names[m_num_gamespy_servers], sizeof(gamespy_server_names[m_num_gamespy_servers]), buffer);
-				}
-				else
-				{
-					Com_sprintf(gamespy_server_names[m_num_gamespy_servers], sizeof(gamespy_server_names[m_num_gamespy_servers]), "%s [%d] %d/%d", browserList[j].hostname, browserList[j].ping, browserList[j].curPlayers, browserList[j].maxPlayers);
-				}
+				Com_sprintf(gamespy_server_names[m_num_gamespy_servers], sizeof(gamespy_server_names[m_num_gamespy_servers]), "%s [%d] %d/%d", browserList[j].hostname, browserList[j].ping, browserList[j].curPlayers, browserList[j].maxPlayers);
 				Com_sprintf(gamespy_connect_string[m_num_gamespy_servers], sizeof(gamespy_server_names[m_num_gamespy_servers]), "connect %s:%d", browserList[j].ip, browserList[j].port);
 				m_num_gamespy_servers++;
 				m_num_active_gamespy_servers++;
@@ -239,24 +222,7 @@ static void FormatGamespyList(void)
 
 		if ((browserListAll[j].hostname[0] != 0))
 		{
-			if (viddef.height <= 300) /* FS: Special formatting for low res. */
-			{
-				char buffer[80];
-
-				Q_strlcpy(gamespy_server_names[m_num_gamespy_servers - skip], browserListAll[j].hostname, 20);
-
-				if (strlen(browserListAll[j].hostname) >= 20)
-				{
-					strcat(gamespy_server_names[m_num_gamespy_servers - skip], "...");
-				}
-
-				Com_sprintf(buffer, sizeof(buffer), " [%d] %d/%d", browserListAll[j].ping, browserListAll[j].curPlayers, browserListAll[j].maxPlayers);
-				Com_strcat(gamespy_server_names[m_num_gamespy_servers - skip], sizeof(gamespy_server_names[m_num_gamespy_servers - skip]), buffer);
-			}
-			else
-			{
-				Com_sprintf(gamespy_server_names[m_num_gamespy_servers - skip], sizeof(gamespy_server_names[m_num_gamespy_servers - skip]), "%s [%d] %d/%d", browserListAll[j].hostname, browserListAll[j].ping, browserListAll[j].curPlayers, browserListAll[j].maxPlayers);
-			}
+			Com_sprintf(gamespy_server_names[m_num_gamespy_servers - skip], sizeof(gamespy_server_names[m_num_gamespy_servers - skip]), "%s [%d] %d/%d", browserListAll[j].hostname, browserListAll[j].ping, browserListAll[j].curPlayers, browserListAll[j].maxPlayers);
 			Com_sprintf(gamespy_connect_string[m_num_gamespy_servers - skip], sizeof(gamespy_server_names[m_num_gamespy_servers - skip]), "connect %s:%d", browserListAll[j].ip, browserListAll[j].port);
 			m_num_gamespy_servers++;
 		}
@@ -289,14 +255,7 @@ static void SearchGamespyGames(void)
 		strcpy(gamespy_server_names[i], NO_SERVER_STRING);
 	}
 
-	if (viddef.height < 300) /* FS: 400x300 can handle the longer string */
-	{
-		s_joingamespyserver_search_action.generic.statusbar = "Querying GameSpy. . .";
-	}
-	else
-	{
-		s_joingamespyserver_search_action.generic.statusbar = "Querying GameSpy for servers, please wait. . .";
-	}
+	s_joingamespyserver_search_action.generic.statusbar = "Querying GameSpy for servers, please wait. . .";
 
 	// send out info packets
 	CL_GameSpy_PingServers_f ();
@@ -312,9 +271,7 @@ static void JoinGamespyServer_NextPageFunc(void *unused)
 	int serverscale = 20;
 
 	if ((gspyCurPage + 1) > totalAllowedBrowserPages)
-	{
 		return;
-	}
 
 	gspyCurPage++;
 	serverscale = 18 * gspyCurPage;
@@ -328,9 +285,7 @@ static void JoinGamespyServer_PrevPageFunc(void *unused)
 	int serverscale = 20;
 
 	if ((gspyCurPage - 1) < 0)
-	{
 		return;
-	}
 
 	gspyCurPage--;
 	serverscale = (18 * gspyCurPage);
@@ -341,7 +296,10 @@ static void JoinGamespyServer_PrevPageFunc(void *unused)
 
 static void JoinGamespyServer_MenuDraw(menuframework_s *self)
 {
-	//M_Banner ("m_banner_join_server");
+	int w, h;
+
+	RE_Draw_GetPicSize (&w, &h, "m_banner_join_server");
+	SCR_DrawPic (SCREEN_WIDTH / 2 - w / 2, 5, w, h, "m_banner_join_server");
 	
 	Menu_Draw (self);
 }
@@ -385,9 +343,7 @@ static char *JoinGamespyServer_MenuKey(menuframework_s *self, int key)
 		if (keydown[K_CTRL])
 		{
 			if (cls.gamespyupdate)
-			{
 				Cbuf_AddText("gspystop\n");
-			}
 		}
 	}
 
@@ -396,7 +352,7 @@ static char *JoinGamespyServer_MenuKey(menuframework_s *self, int key)
 
 void JoinGamespyServer_MenuInit(void)
 {
-	int i, vidscale = 18;
+	int i, vidscale = 18, y;
 
 	memset(&s_joingamespyserver_menu, 0, sizeof(s_joingamespyserver_menu));
 
@@ -404,18 +360,20 @@ void JoinGamespyServer_MenuInit(void)
 	s_joingamespyserver_menu.nitems = 0;
 	s_joingamespyserver_menu.cursor = 0; /* FS: Set the cursor at the top */
 
+	y = 50;
 	s_joingamespyserver_search_action.generic.type = MTYPE_ACTION;
-	s_joingamespyserver_search_action.generic.name = "Query server list";
+	s_joingamespyserver_search_action.generic.name = S_COLOR_BLUE "Query server list";
 	s_joingamespyserver_search_action.generic.flags = QMF_LEFT_JUSTIFY;
 	s_joingamespyserver_search_action.generic.x = 0;
-	s_joingamespyserver_search_action.generic.y = 0;
+	s_joingamespyserver_search_action.generic.y = y;
 	s_joingamespyserver_search_action.generic.callback = SearchGamespyGamesFunc;
 	s_joingamespyserver_search_action.generic.statusbar = "search for servers";
 
+	y += 10;
 	s_joingamespyserver_server_title.generic.type = MTYPE_SEPARATOR;
-	s_joingamespyserver_server_title.generic.name = "connect to...";
-	s_joingamespyserver_server_title.generic.x = 80;
-	s_joingamespyserver_server_title.generic.y = 20;
+	s_joingamespyserver_server_title.generic.name = S_COLOR_GREEN "connect to...";
+	s_joingamespyserver_server_title.generic.x = 90;
+	s_joingamespyserver_server_title.generic.y = y;
 
 	for (i = 0; i <= MAX_GAMESPY_MENU_SERVERS; i++)
 	{
@@ -425,14 +383,14 @@ void JoinGamespyServer_MenuInit(void)
 
 	totalAllowedBrowserPages = (MAX_GAMESPY_MENU_SERVERS / vidscale);
 	i = 0;
-
 	for (i = 0; i < vidscale; i++)
 	{
+		y += 10;
 		s_joingamespyserver_server_actions[i].generic.type = MTYPE_ACTION;
 		s_joingamespyserver_server_actions[i].generic.name = gamespy_server_names[i];
 		s_joingamespyserver_server_actions[i].generic.flags = QMF_LEFT_JUSTIFY;
 		s_joingamespyserver_server_actions[i].generic.x = 0;
-		s_joingamespyserver_server_actions[i].generic.y = 30 + i * 10;
+		s_joingamespyserver_server_actions[i].generic.y = y + i * 10;
 		s_joingamespyserver_server_actions[i].generic.callback = ConnectGamespyServerFunc;
 		s_joingamespyserver_server_actions[i].generic.statusbar = "press ENTER to connect";
 	}
@@ -444,19 +402,18 @@ void JoinGamespyServer_MenuInit(void)
 	Menu_AddItem(&s_joingamespyserver_menu, &s_joingamespyserver_server_title);
 
 	i = 0;
-
 	for (i = 0; i < vidscale; i++)
 	{
 		Menu_AddItem(&s_joingamespyserver_menu, &s_joingamespyserver_server_actions[i]);
 	}
-
 	i++;
 
+	y += 10;
 	s_joingamespyserver_nextpage_action.generic.type = MTYPE_ACTION;
-	s_joingamespyserver_nextpage_action.generic.name = "<Next Page>";
+	s_joingamespyserver_nextpage_action.generic.name = S_COLOR_BLUE "<Next Page>";
 	s_joingamespyserver_nextpage_action.generic.flags = QMF_LEFT_JUSTIFY;
 	s_joingamespyserver_nextpage_action.generic.x = 0;
-	s_joingamespyserver_nextpage_action.generic.y = 30 + i * 10;
+	s_joingamespyserver_nextpage_action.generic.y = y + i * 10;
 	s_joingamespyserver_nextpage_action.generic.callback = JoinGamespyServer_NextPageFunc;
 	s_joingamespyserver_nextpage_action.generic.statusbar = "continue browsing list";
 
@@ -470,7 +427,7 @@ void JoinGamespyServer_MenuInit(void)
 
 static void JoinGamespyServer_Redraw(int serverscale)
 {
-	int i, vidscale = 18;
+	int i, vidscale = 18, y;
 	qboolean didBreak = false;
 
 	memset(&s_joingamespyserver_menu, 0, sizeof(s_joingamespyserver_menu));
@@ -479,33 +436,34 @@ static void JoinGamespyServer_Redraw(int serverscale)
 	s_joingamespyserver_menu.nitems = 0;
 	s_joingamespyserver_menu.cursor = 0; /* FS: Set the cursor at the top */
 
+	y = 50;
 	s_joingamespyserver_search_action.generic.type = MTYPE_ACTION;
-	s_joingamespyserver_search_action.generic.name = "Query server list";
+	s_joingamespyserver_search_action.generic.name = S_COLOR_BLUE "Query server list";
 	s_joingamespyserver_search_action.generic.flags = QMF_LEFT_JUSTIFY;
 	s_joingamespyserver_search_action.generic.x = 0;
-	s_joingamespyserver_search_action.generic.y = 0;
+	s_joingamespyserver_search_action.generic.y = y;
 	s_joingamespyserver_search_action.generic.callback = SearchGamespyGamesFunc;
 	s_joingamespyserver_search_action.generic.statusbar = "search for servers";
 
+	y += 20;
 	s_joingamespyserver_server_title.generic.type = MTYPE_SEPARATOR;
-	s_joingamespyserver_server_title.generic.name = "connect to...";
-	s_joingamespyserver_server_title.generic.x = 80;
-	s_joingamespyserver_server_title.generic.y = 20;
+	s_joingamespyserver_server_title.generic.name = S_COLOR_GREEN "connect to...";
+	s_joingamespyserver_server_title.generic.x = 90;
+	s_joingamespyserver_server_title.generic.y = y;
 
 	for (i = 0; i <= MAX_GAMESPY_MENU_SERVERS; i++)
-	{
 		strcpy(gamespy_server_names[i], NO_SERVER_STRING);
-	}
 
 	i = 0;
 
 	for (i = 0; i < vidscale; i++)
 	{
+		y += 10;
 		s_joingamespyserver_server_actions[i].generic.type = MTYPE_ACTION;
 		s_joingamespyserver_server_actions[i].generic.name = gamespy_server_names[i + serverscale];
 		s_joingamespyserver_server_actions[i].generic.flags = QMF_LEFT_JUSTIFY;
 		s_joingamespyserver_server_actions[i].generic.x = 0;
-		s_joingamespyserver_server_actions[i].generic.y = 30 + i * 10;
+		s_joingamespyserver_server_actions[i].generic.y = y + i * 10;
 		s_joingamespyserver_server_actions[i].generic.callback = ConnectGamespyServerFunc;
 		s_joingamespyserver_server_actions[i].generic.statusbar = "press ENTER to connect";
 	}
@@ -529,33 +487,31 @@ static void JoinGamespyServer_Redraw(int serverscale)
 		Menu_AddItem(&s_joingamespyserver_menu, &s_joingamespyserver_server_actions[i]);
 	}
 
+	y += 10;
 	s_joingamespyserver_prevpage_action.generic.type = MTYPE_ACTION;
-	s_joingamespyserver_prevpage_action.generic.name = "<Previous Page>";
+	s_joingamespyserver_prevpage_action.generic.name = S_COLOR_BLUE "<Previous Page>";
 	s_joingamespyserver_prevpage_action.generic.flags = QMF_LEFT_JUSTIFY;
 	s_joingamespyserver_prevpage_action.generic.x = 0;
-	s_joingamespyserver_prevpage_action.generic.y = 30 + i * 10;
+	s_joingamespyserver_prevpage_action.generic.y = y + i * 10;
 	s_joingamespyserver_prevpage_action.generic.callback = JoinGamespyServer_PrevPageFunc;
 	s_joingamespyserver_prevpage_action.generic.statusbar = "continue browsing list";
 
 	i++;
 
+	y += 10;
 	s_joingamespyserver_nextpage_action.generic.type = MTYPE_ACTION;
-	s_joingamespyserver_nextpage_action.generic.name = "<Next Page>";
+	s_joingamespyserver_nextpage_action.generic.name = S_COLOR_BLUE "<Next Page>";
 	s_joingamespyserver_nextpage_action.generic.flags = QMF_LEFT_JUSTIFY;
 	s_joingamespyserver_nextpage_action.generic.x = 0;
-	s_joingamespyserver_nextpage_action.generic.y = 30 + i * 10;
+	s_joingamespyserver_nextpage_action.generic.y = y + i * 10;
 	s_joingamespyserver_nextpage_action.generic.callback = JoinGamespyServer_NextPageFunc;
 	s_joingamespyserver_nextpage_action.generic.statusbar = "continue browsing list";
 
 	if (serverscale)
-	{
 		Menu_AddItem(&s_joingamespyserver_menu, &s_joingamespyserver_prevpage_action);
-	}
 
 	if (!didBreak)
-	{
 		Menu_AddItem(&s_joingamespyserver_menu, &s_joingamespyserver_nextpage_action);
-	}
 
 	FormatGamespyList(); /* FS: Incase we changed resolution or ran slist2 in the console and went back to this menu... */
 }
@@ -607,8 +563,10 @@ void M_AddToServerList (netadr_t adr, char *info)
 
 	// ignore if duplicated
 	for (i = 0; i < m_num_servers; i++)
+	{
 		if (!strcmp(local_server_names[i], info) && !strcmp(local_server_netadr_strings[i], s))
 			return;
+	}
 
 	local_server_netadr[m_num_servers] = adr;
 	Q_strlcpy(local_server_names[m_num_servers], info, sizeof(local_server_names[m_num_servers]));
@@ -626,7 +584,6 @@ void JoinServerFunc (void *self)
 
 	if (Q_stricmp (local_server_names[index], NO_SERVER_STRING) == 0)
 		return;
-
 	if (index >= m_num_servers)
 		return;
 
@@ -673,6 +630,7 @@ void SearchLocalGamesFunc (void *self)
 static void JoinServer_MenuDraw (menuframework_s *self)
 {
 	M_Banner ("m_banner_join_server");
+
 	Menu_Draw (self);
     M_Popup();
 }
@@ -680,39 +638,43 @@ static void JoinServer_MenuDraw (menuframework_s *self)
 void JoinServer_MenuInit (void)
 {
 	int i;
-	float scale = SCR_GetMenuScale();
+	float y;
 
 	memset(&s_joinserver_menu, 0, sizeof(s_joinserver_menu));
-	s_joinserver_menu.x = (int)(viddef.width * 0.50f) - 120 * scale;
+	s_joinserver_menu.x = (int)(SCREEN_WIDTH * 0.50f) - 120;
 	s_joinserver_menu.nitems = 0;
 
-	s_joinserver_address_book_action.generic.type	= MTYPE_ACTION;
-	s_joinserver_address_book_action.generic.name	= "address book";
-	s_joinserver_address_book_action.generic.flags	= QMF_LEFT_JUSTIFY;
-	s_joinserver_address_book_action.generic.x		= 0;
-	s_joinserver_address_book_action.generic.y		= 0;
+	y = 180;
+	s_joinserver_address_book_action.generic.type = MTYPE_ACTION;
+	s_joinserver_address_book_action.generic.name = "address book";
+	s_joinserver_address_book_action.generic.flags = QMF_LEFT_JUSTIFY;
+	s_joinserver_address_book_action.generic.x = 0;
+	s_joinserver_address_book_action.generic.y = y;
 	s_joinserver_address_book_action.generic.callback = AddressBookFunc;
 
+	y += 10;
 	s_joinserver_search_action.generic.type = MTYPE_ACTION;
 	s_joinserver_search_action.generic.name	= "refresh server list";
-	s_joinserver_search_action.generic.flags	= QMF_LEFT_JUSTIFY;
-	s_joinserver_search_action.generic.x	= 0;
-	s_joinserver_search_action.generic.y	= 10;
+	s_joinserver_search_action.generic.flags = QMF_LEFT_JUSTIFY;
+	s_joinserver_search_action.generic.x = 0;
+	s_joinserver_search_action.generic.y = y;
 	s_joinserver_search_action.generic.callback = SearchLocalGamesFunc;
 	s_joinserver_search_action.generic.statusbar = "search for servers";
 
+	y += 20;
 	s_joinserver_server_title.generic.type = MTYPE_SEPARATOR;
-	s_joinserver_server_title.generic.name = "connect to...";
-	s_joinserver_server_title.generic.x  = 80 * scale;
-	s_joinserver_server_title.generic.y	 = 30;
+	s_joinserver_server_title.generic.name = S_COLOR_GREEN "connect to...";
+	s_joinserver_server_title.generic.x = 90;
+	s_joinserver_server_title.generic.y = y;
 
 	for (i = 0; i < MAX_LOCAL_SERVERS; i++)
 	{
+		y += 10;
 		s_joinserver_server_actions[i].generic.type	= MTYPE_ACTION;
 		s_joinserver_server_actions[i].generic.name	= local_server_names[i];
-		s_joinserver_server_actions[i].generic.flags	= QMF_LEFT_JUSTIFY;
-		s_joinserver_server_actions[i].generic.x		= 0;
-		s_joinserver_server_actions[i].generic.y		= 40 + i * 10;
+		s_joinserver_server_actions[i].generic.flags = QMF_LEFT_JUSTIFY;
+		s_joinserver_server_actions[i].generic.x = 0;
+		s_joinserver_server_actions[i].generic.y = y + i * 10;
 		s_joinserver_server_actions[i].generic.callback = JoinServerFunc;
         s_joinserver_server_actions[i].generic.statusbar = local_server_netadr_strings[i];
 	}
@@ -845,7 +807,7 @@ void StartServer_MenuInit (void)
 	char *s;
 	int length;
 	int i;
-	float scale = SCR_GetMenuScale();
+	float y;
 
     // initialize list of maps once, reuse it afterwards (=> it isn't freed)
     if (mapnames == NULL)
@@ -902,42 +864,45 @@ void StartServer_MenuInit (void)
 
 	// initialize the menu stuff
 	memset(&s_startserver_menu, 0, sizeof(s_startserver_menu));
-	s_startserver_menu.x = (int)(viddef.width * 0.50f);
+	s_startserver_menu.x = (int)(SCREEN_WIDTH * 0.50f);
 	s_startserver_menu.nitems = 0;
 
+	y = 180;
 	s_startmap_list.generic.type = MTYPE_SPINCONTROL;
-	s_startmap_list.generic.x	= 0;
-	s_startmap_list.generic.y	= 0;
-	s_startmap_list.generic.name	= "initial map";
+	s_startmap_list.generic.x = 0;
+	s_startmap_list.generic.y = y;
+	s_startmap_list.generic.name = "initial map";
     s_startmap_list.itemnames = (const char **)mapnames;
 
+	y += 20;
 	s_rules_box.generic.type = MTYPE_SPINCONTROL;
-	s_rules_box.generic.x	= 0;
-	s_rules_box.generic.y	= 20;
-	s_rules_box.generic.name	= "rules";
+	s_rules_box.generic.x = 0;
+	s_rules_box.generic.y = y;
+	s_rules_box.generic.name = "rules";
 	s_rules_box.itemnames = dm_coop_names;
 	if (Cvar_VariableValue ("coop"))
 		s_rules_box.curvalue = 1;
 	else
 		s_rules_box.curvalue = 0;
-
 	s_rules_box.generic.callback = RulesChangeFunc;
 
+	y += 10;
 	s_timelimit_field.generic.type = MTYPE_FIELD;
 	s_timelimit_field.generic.name = "time limit";
 	s_timelimit_field.generic.flags = QMF_NUMBERSONLY;
 	s_timelimit_field.generic.x	= 0;
-	s_timelimit_field.generic.y	= 36;
+	s_timelimit_field.generic.y	= y;
 	s_timelimit_field.generic.statusbar = "0 = no limit";
 	s_timelimit_field.length = 3;
 	s_timelimit_field.visible_length = 3;
 	strcpy (s_timelimit_field.buffer, Cvar_VariableString ("timelimit"));
 
+	y += 10;
 	s_fraglimit_field.generic.type = MTYPE_FIELD;
 	s_fraglimit_field.generic.name = "frag limit";
 	s_fraglimit_field.generic.flags = QMF_NUMBERSONLY;
 	s_fraglimit_field.generic.x	= 0;
-	s_fraglimit_field.generic.y	= 54;
+	s_fraglimit_field.generic.y	= y;
 	s_fraglimit_field.generic.statusbar = "0 = no limit";
 	s_fraglimit_field.length = 3;
 	s_fraglimit_field.visible_length = 3;
@@ -947,43 +912,46 @@ void StartServer_MenuInit (void)
 	// the game. If maxclients is only "1" then we should default the menu
 	// option to 8 players, otherwise use whatever its current value is.
 	// Clamping will be done when the server is actually started.
+	y += 10;
 	s_maxclients_field.generic.type = MTYPE_FIELD;
 	s_maxclients_field.generic.name = "max players";
 	s_maxclients_field.generic.flags = QMF_NUMBERSONLY;
-	s_maxclients_field.generic.x	= 0;
-	s_maxclients_field.generic.y	= 72;
+	s_maxclients_field.generic.x = 0;
+	s_maxclients_field.generic.y = y;
 	s_maxclients_field.generic.statusbar = NULL;
 	s_maxclients_field.length = 3;
 	s_maxclients_field.visible_length = 3;
-
 	if (Cvar_VariableValue ("maxclients") == 1)
 		strcpy (s_maxclients_field.buffer, "8");
 	else
 		strcpy (s_maxclients_field.buffer, Cvar_VariableString ("maxclients"));
 
+	y += 10;
 	s_hostname_field.generic.type = MTYPE_FIELD;
 	s_hostname_field.generic.name = "hostname";
 	s_hostname_field.generic.flags = 0;
-	s_hostname_field.generic.x	= 0;
-	s_hostname_field.generic.y	= 90;
+	s_hostname_field.generic.x = 0;
+	s_hostname_field.generic.y = y;
 	s_hostname_field.generic.statusbar = NULL;
 	s_hostname_field.length = 12;
 	s_hostname_field.visible_length = 12;
 	strcpy (s_hostname_field.buffer, Cvar_VariableString ("hostname"));
 
+	y += 20;
 	s_startserver_dmoptions_action.generic.type = MTYPE_ACTION;
-	s_startserver_dmoptions_action.generic.name	= " deathmatch flags";
+	s_startserver_dmoptions_action.generic.name	= S_COLOR_BLUE " deathmatch flags";
 	s_startserver_dmoptions_action.generic.flags = QMF_LEFT_JUSTIFY;
-	s_startserver_dmoptions_action.generic.x	= 24 * scale;
-	s_startserver_dmoptions_action.generic.y	= 108;
+	s_startserver_dmoptions_action.generic.x = 24;
+	s_startserver_dmoptions_action.generic.y = y;
 	s_startserver_dmoptions_action.generic.statusbar = NULL;
 	s_startserver_dmoptions_action.generic.callback = DMOptionsFunc;
 
+	y += 20;
 	s_startserver_start_action.generic.type = MTYPE_ACTION;
-	s_startserver_start_action.generic.name	= " begin";
+	s_startserver_start_action.generic.name	= S_COLOR_BLUE " begin";
 	s_startserver_start_action.generic.flags = QMF_LEFT_JUSTIFY;
-	s_startserver_start_action.generic.x	= 24 * scale;
-	s_startserver_start_action.generic.y	= 128;
+	s_startserver_start_action.generic.x = 24;
+	s_startserver_start_action.generic.y = y;
 	s_startserver_start_action.generic.callback = StartServerActionFunc;
 
 	s_startserver_menu.draw = NULL;
@@ -1172,10 +1140,10 @@ void DMOptions_MenuInit (void)
 		"disabled", "by skin", "by model", 0
 	};
 	int dmflags = Cvar_VariableValue ("dmflags");
-	int y = 0;
+	float y = 180;
 
 	memset (&s_dmoptions_menu, 0, sizeof(s_dmoptions_menu));
-	s_dmoptions_menu.x = (int)(viddef.width * 0.50f);
+	s_dmoptions_menu.x = (int)(SCREEN_WIDTH * 0.50f);
 	s_dmoptions_menu.nitems = 0;
 
 	s_falls_box.generic.type = MTYPE_SPINCONTROL;
@@ -1378,22 +1346,21 @@ void DownloadOptions_MenuInit (void)
 	{
 		"no", "yes", 0
 	};
-	int y = 0;
-	float scale = SCR_GetMenuScale();
+	float y = 180;
 
 	memset (&s_downloadoptions_menu, 0, sizeof(s_downloadoptions_menu));
-    s_downloadoptions_menu.x = (int)(viddef.width * 0.50f);
+    s_downloadoptions_menu.x = (int)(SCREEN_WIDTH * 0.50f);
 	s_downloadoptions_menu.nitems = 0;
 
 	s_download_title.generic.type = MTYPE_SEPARATOR;
-	s_download_title.generic.name = "Download Options";
-	s_download_title.generic.x  = 48 * scale;
-	s_download_title.generic.y	 = y;
+	s_download_title.generic.name = "Download Options:";
+	s_download_title.generic.x = 0;
+	s_download_title.generic.y = y;
 
 	s_allow_download_box.generic.type = MTYPE_SPINCONTROL;
-	s_allow_download_box.generic.x	= 0;
-	s_allow_download_box.generic.y	= y += 20;
-	s_allow_download_box.generic.name	= "allow downloading";
+	s_allow_download_box.generic.x = 0;
+	s_allow_download_box.generic.y = y += 20;
+	s_allow_download_box.generic.name = "allow downloading";
 	s_allow_download_box.generic.callback = DownloadCallback;
 	s_allow_download_box.itemnames = yes_no_names;
 	s_allow_download_box.curvalue = (Cvar_VariableValue ("allow_download") != 0);
@@ -1401,31 +1368,31 @@ void DownloadOptions_MenuInit (void)
 	s_allow_download_maps_box.generic.type = MTYPE_SPINCONTROL;
 	s_allow_download_maps_box.generic.x	= 0;
 	s_allow_download_maps_box.generic.y	= y += 20;
-	s_allow_download_maps_box.generic.name	= "maps";
+	s_allow_download_maps_box.generic.name = "maps";
 	s_allow_download_maps_box.generic.callback = DownloadCallback;
 	s_allow_download_maps_box.itemnames = yes_no_names;
 	s_allow_download_maps_box.curvalue = (Cvar_VariableValue ("allow_download_maps") != 0);
 
 	s_allow_download_players_box.generic.type = MTYPE_SPINCONTROL;
-	s_allow_download_players_box.generic.x	= 0;
-	s_allow_download_players_box.generic.y	= y += 10;
-	s_allow_download_players_box.generic.name	= "player models/skins";
+	s_allow_download_players_box.generic.x = 0;
+	s_allow_download_players_box.generic.y = y += 10;
+	s_allow_download_players_box.generic.name = "player models/skins";
 	s_allow_download_players_box.generic.callback = DownloadCallback;
 	s_allow_download_players_box.itemnames = yes_no_names;
 	s_allow_download_players_box.curvalue = (Cvar_VariableValue ("allow_download_players") != 0);
 
 	s_allow_download_models_box.generic.type = MTYPE_SPINCONTROL;
-	s_allow_download_models_box.generic.x	= 0;
-	s_allow_download_models_box.generic.y	= y += 10;
-	s_allow_download_models_box.generic.name	= "models";
+	s_allow_download_models_box.generic.x = 0;
+	s_allow_download_models_box.generic.y = y += 10;
+	s_allow_download_models_box.generic.name = "models";
 	s_allow_download_models_box.generic.callback = DownloadCallback;
 	s_allow_download_models_box.itemnames = yes_no_names;
 	s_allow_download_models_box.curvalue = (Cvar_VariableValue ("allow_download_models") != 0);
 
 	s_allow_download_sounds_box.generic.type = MTYPE_SPINCONTROL;
-	s_allow_download_sounds_box.generic.x	= 0;
-	s_allow_download_sounds_box.generic.y	= y += 10;
-	s_allow_download_sounds_box.generic.name	= "sounds";
+	s_allow_download_sounds_box.generic.x = 0;
+	s_allow_download_sounds_box.generic.y = y += 10;
+	s_allow_download_sounds_box.generic.name = "sounds";
 	s_allow_download_sounds_box.generic.callback = DownloadCallback;
 	s_allow_download_sounds_box.itemnames = yes_no_names;
 	s_allow_download_sounds_box.curvalue = (Cvar_VariableValue ("allow_download_sounds") != 0);
@@ -1490,11 +1457,10 @@ static void AddressBook_MenuDraw(menuframework_s *self)
 static void AddressBook_MenuInit (void)
 {
 	int i;
-	float scale = SCR_GetMenuScale();
 
 	memset(&s_addressbook_menu, 0, sizeof(s_addressbook_menu));
-	s_addressbook_menu.x = viddef.width / 2 - (142 * scale);
-	s_addressbook_menu.y = viddef.height / (2 * scale) - 58;
+	s_addressbook_menu.x = SCREEN_WIDTH / 2 - 142;
+	s_addressbook_menu.y = SCREEN_HEIGHT / 2 - 58;
 	s_addressbook_menu.nitems = 0;
 
 	for (i = 0; i < NUM_ADDRESSBOOK_ENTRIES; i++)
@@ -1509,12 +1475,12 @@ static void AddressBook_MenuInit (void)
 		s_addressbook_fields[i].generic.type = MTYPE_FIELD;
 		s_addressbook_fields[i].generic.name = 0;
 		s_addressbook_fields[i].generic.callback = 0;
-		s_addressbook_fields[i].generic.x		= 0;
-		s_addressbook_fields[i].generic.y		= i * 18;
+		s_addressbook_fields[i].generic.x = 0;
+		s_addressbook_fields[i].generic.y = i * 18;
 		s_addressbook_fields[i].generic.localdata[0] = i;
-		s_addressbook_fields[i].cursor			= 0;
-		s_addressbook_fields[i].length			= 60;
-		s_addressbook_fields[i].visible_length	= 30;
+		s_addressbook_fields[i].cursor = 0;
+		s_addressbook_fields[i].length = 60;
+		s_addressbook_fields[i].visible_length = 30;
 
 		strcpy (s_addressbook_fields[i].buffer, adr->string);
 
@@ -1766,14 +1732,13 @@ void PlayerConfig_MenuDraw (menuframework_s *self)
 {
 	refdef_t refdef;
 	char scratch[MAX_QPATH];
-	float scale = SCR_GetMenuScale();
 
 	memset (&refdef, 0, sizeof (refdef));
 
-	refdef.x = viddef.width / 2;
-	refdef.y = viddef.height / 2 - 72 * scale;
-	refdef.width = 144 * scale;
-	refdef.height = 168 * scale;
+	refdef.x = SCREEN_WIDTH / 2;
+	refdef.y = SCREEN_HEIGHT / 2 - 72;
+	refdef.width = 144;
+	refdef.height = 168;
 	refdef.fov_x = 40;
 	refdef.fov_y = SCR_CalcFovY (refdef.fov_x, (float)refdef.width, (float)refdef.height);
 	refdef.time = cls.realtime * 0.001f;
@@ -1810,15 +1775,16 @@ void PlayerConfig_MenuDraw (menuframework_s *self)
 
 		Menu_Draw (self);
 
-		M_DrawTextBox ((refdef.x) * (320.0f / viddef.width) - 8, (viddef.height / 2) * (240.0f / viddef.height) - 77, refdef.width / (8 * scale), refdef.height / (8 * scale));
-		refdef.height += 4 * scale;
+		//M_DrawTextBox ((refdef.x) * (320.0f / SCREEN_WIDTH) - 8, (SCREEN_HEIGHT / 2) * (240.0f / SCREEN_HEIGHT) - 77, refdef.width / 8, refdef.height / 8);
+		refdef.height += 4;
 
 		RE_RenderFrame (&refdef);
 
 		Com_sprintf (scratch, sizeof (scratch), "/players/%s/%s_i.pcx",
 					 s_pmi[s_player_model_box.curvalue].directory,
 					 s_pmi[s_player_model_box.curvalue].skindisplaynames[s_player_skin_box.curvalue]);
-		RE_Draw_Pic (s_player_config_menu.x - 40 * scale, refdef.y, scratch, scale);
+
+		SCR_DrawPic (s_player_config_menu.x - 40, refdef.y, 24, 24, scratch);
 	}
 }
 
@@ -1866,7 +1832,7 @@ qboolean PlayerConfig_MenuInit (void)
 	char currentdirectory[1024];
 	char currentskin[1024];
 	int i = 0;
-	float scale = SCR_GetMenuScale();
+	float y;
 
 	int currentdirectoryindex = 0;
 	int currentskinindex = 0;
@@ -1924,16 +1890,17 @@ qboolean PlayerConfig_MenuInit (void)
 	}
 
 	memset (&s_player_config_menu, 0, sizeof(s_player_config_menu));
-	s_player_config_menu.x = viddef.width / 2 - 95 * scale;
-	s_player_config_menu.y = viddef.height / (2 * scale) - 97;
+	s_player_config_menu.x = SCREEN_WIDTH / 2 - 95;
+	s_player_config_menu.y = SCREEN_HEIGHT / 2 - 97;
 	s_player_config_menu.nitems = 0;
 
+	y = 0;
 	s_player_name_field.generic.type = MTYPE_FIELD;
 	s_player_name_field.generic.name = "name";
 	s_player_name_field.generic.callback = 0;
-	s_player_name_field.generic.x		= 0;
-	s_player_name_field.generic.y		= 0;
-	s_player_name_field.length	= 20;
+	s_player_name_field.generic.x = 0;
+	s_player_name_field.generic.y = 0;
+	s_player_name_field.length = 20;
 	s_player_name_field.visible_length = 20;
 	Q_CleanStr (name->string);
 	strcpy (s_player_name_field.buffer, name->string);
@@ -1941,24 +1908,25 @@ qboolean PlayerConfig_MenuInit (void)
 
 	s_player_model_title.generic.type = MTYPE_SEPARATOR;
 	s_player_model_title.generic.name = "model";
-	s_player_model_title.generic.x = -8 * scale;
-	s_player_model_title.generic.y	 = 60;
+	s_player_model_title.generic.x = 0;
+	s_player_model_title.generic.y = 60;
 
 	s_player_model_box.generic.type = MTYPE_SPINCONTROL;
-	s_player_model_box.generic.x = -56 * scale;
-	s_player_model_box.generic.y	= 70;
+	s_player_model_box.generic.x = 0;
+	s_player_model_box.generic.y = 70;
 	s_player_model_box.generic.callback = ModelCallback;
 	s_player_model_box.generic.cursor_offset = -48;
 	s_player_model_box.curvalue = currentdirectoryindex;
 	s_player_model_box.itemnames = s_pmnames;
 
+	y += 84;
 	s_player_skin_title.generic.type = MTYPE_SEPARATOR;
 	s_player_skin_title.generic.name = "skin";
-	s_player_skin_title.generic.x  = -16 * scale;
-	s_player_skin_title.generic.y	 = 84;
+	s_player_skin_title.generic.x = -16;
+	s_player_skin_title.generic.y = y;
 
 	s_player_skin_box.generic.type = MTYPE_SPINCONTROL;
-	s_player_skin_box.generic.x	= -56 * scale;
+	s_player_skin_box.generic.x	= -56;
 	s_player_skin_box.generic.y	= 94;
 	s_player_skin_box.generic.name	= 0;
 	s_player_skin_box.generic.callback = 0;
@@ -1968,13 +1936,13 @@ qboolean PlayerConfig_MenuInit (void)
 
 	s_player_hand_title.generic.type = MTYPE_SEPARATOR;
 	s_player_hand_title.generic.name = "handedness";
-	s_player_hand_title.generic.x  = 32 * scale;
-	s_player_hand_title.generic.y	 = 108;
+	s_player_hand_title.generic.x = 32;
+	s_player_hand_title.generic.y = 108;
 
 	s_player_handedness_box.generic.type = MTYPE_SPINCONTROL;
-	s_player_handedness_box.generic.x	= -56 * scale;
-	s_player_handedness_box.generic.y	= 118;
-	s_player_handedness_box.generic.name	= 0;
+	s_player_handedness_box.generic.x = -56;
+	s_player_handedness_box.generic.y = 118;
+	s_player_handedness_box.generic.name = 0;
 	s_player_handedness_box.generic.cursor_offset = -48;
 	s_player_handedness_box.generic.callback = HandednessCallback;
     s_player_handedness_box.curvalue = Q_Clamp (0, 2, hand->value);
@@ -1986,11 +1954,11 @@ qboolean PlayerConfig_MenuInit (void)
 
 	s_player_rate_title.generic.type = MTYPE_SEPARATOR;
 	s_player_rate_title.generic.name = "connect speed";
-	s_player_rate_title.generic.x = 56 * scale;
+	s_player_rate_title.generic.x = 56;
 	s_player_rate_title.generic.y = 156;
 
 	s_player_rate_box.generic.type = MTYPE_SPINCONTROL;
-	s_player_rate_box.generic.x	= -56 * scale;
+	s_player_rate_box.generic.x	= -56;
 	s_player_rate_box.generic.y	= 166;
 	s_player_rate_box.generic.name	= 0;
 	s_player_rate_box.generic.cursor_offset = -48;
@@ -1999,10 +1967,10 @@ qboolean PlayerConfig_MenuInit (void)
 	s_player_rate_box.itemnames = rate_names;
 
 	s_player_download_action.generic.type = MTYPE_ACTION;
-	s_player_download_action.generic.name	= "download options";
+	s_player_download_action.generic.name = S_COLOR_BLUE "download options";
 	s_player_download_action.generic.flags = QMF_LEFT_JUSTIFY;
-	s_player_download_action.generic.x	= -24 * scale;
-	s_player_download_action.generic.y	= 186;
+	s_player_download_action.generic.x = -24;
+	s_player_download_action.generic.y = 186;
 	s_player_download_action.generic.statusbar = NULL;
 	s_player_download_action.generic.callback = DownloadOptionsFunc;
 

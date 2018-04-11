@@ -899,10 +899,10 @@ void SpinControl_Draw (menulist_s *s)
 
 		strcpy (buffer, s->itemnames[s->curvalue]);
 		*strchr (buffer, '\n') = 0;
-		SCR_Text_Paint (x, y, 0.2f, colorWhite, buffer, 0, 0, 0, &cls.consoleFont);
+		SCR_Text_PaintAligned (x, y, buffer, 0.2f, 0, colorWhite, &cls.consoleFont);
 		
 		strcpy (buffer, strchr (s->itemnames[s->curvalue], '\n') + 1);
-		SCR_Text_Paint (x, y + 10, 0.2f, colorWhite, buffer, 0, 0, 0, &cls.consoleFont);
+		SCR_Text_PaintAligned (x, y + 10, buffer, 0.2f, 0, colorWhite, &cls.consoleFont);
 	}
 }
 
