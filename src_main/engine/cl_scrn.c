@@ -172,7 +172,7 @@ FONT PRINTING
 SCR_Text_PaintChar
 ==============
 */
-void SCR_Text_PaintChar(float x, float y, float width, float height, float scale, float s, float t, float s2, float t2, char *name)
+void SCR_Text_PaintChar (float x, float y, float width, float height, float scale, float s, float t, float s2, float t2, char *name)
 {
 	float w, h;
 

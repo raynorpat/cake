@@ -52,7 +52,10 @@ void Action_Draw (menuaction_s *a)
 	x = a->generic.x + a->generic.parent->x;
 	y = a->generic.y + a->generic.parent->y;
 	if (a->generic.flags & QMF_RIGHT2LEFT)
-		x -= strlen(a->generic.name) * MENU_FONT_SIZE;
+	{
+		x -= RCOLUMN_OFFSET;
+		x -= 5 * MENU_FONT_SIZE;
+	}
 
 	// set style flags
 	if (a->generic.flags & QMF_LEFT_JUSTIFY)

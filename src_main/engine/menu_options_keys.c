@@ -113,9 +113,14 @@ static void M_FindKeysForCommand (char *command, int *twokeys)
 static void KeyCursorDrawFunc (menuframework_s *menu)
 {
 	if (bind_grab)
-		RE_Draw_Char (menu->x, menu->y + menu->cursor * MENU_LINE_SIZE, '=', 1.0);
+	{
+		SCR_Text_PaintSingleChar (menu->x - 8, menu->y + menu->cursor * MENU_LINE_SIZE, 0.2f, colorWhite, '=', 0, 0, 0, &cls.consoleFont);
+	}
 	else
-		RE_Draw_Char (menu->x, menu->y + menu->cursor * MENU_LINE_SIZE, 12 + ((int)(Sys_Milliseconds() / 250) & 1), 1.0);
+	{
+		if ((int)(Sys_Milliseconds() / 250) & 1)
+			SCR_Text_PaintSingleChar (menu->x - 8, menu->y + menu->cursor * MENU_LINE_SIZE, 0.2f, colorWhite, '>', 0, 0, 0, &cls.consoleFont);
+	}
 }
 
 static void DrawKeyBindingFunc (void *self)
@@ -136,7 +141,6 @@ static void DrawKeyBindingFunc (void *self)
 	}
 	else
 	{
-		int xx;
 		char *name;
 
 		name = Key_KeynumToString (keys[0]);
@@ -144,13 +148,11 @@ static void DrawKeyBindingFunc (void *self)
 		// draw key binding name
 		SCR_Text_Paint (x, y, 0.2f, colorWhite, name, 0, 0, 0, &cls.consoleFont);
 
-		xx = strlen(name) * MENU_FONT_SIZE;
-
 		// draw other key bind name if set
 		if (keys[1] != -1)
 		{
-			SCR_Text_Paint (x + xx, y, 0.2f, colorWhite, "or", 0, 0, 0, &cls.consoleFont);
-			SCR_Text_Paint (x + xx, y, 0.2f, colorWhite, Key_KeynumToString(keys[1]), 0, 0, 0, &cls.consoleFont);
+			SCR_Text_Paint (x + 5 * MENU_FONT_SIZE, y, 0.2f, colorWhite, "or", 0, 0, 0, &cls.consoleFont);
+			SCR_Text_Paint (x + 8 * MENU_FONT_SIZE, y, 0.2f, colorWhite, Key_KeynumToString(keys[1]), 0, 0, 0, &cls.consoleFont);
 		}
 	}
 }
