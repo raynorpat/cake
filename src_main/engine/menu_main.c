@@ -117,6 +117,10 @@ void M_Main_Draw (menuframework_s *self)
 	RE_Draw_GetPicSize (&w, &h, "m_main_logo");
 	SCR_DrawPic (xoffset - 30 - w, ystart + h + 125, w, h, "m_main_logo");
 	
+	SCR_Text_Paint (135, 470, 0.2f, colorGreen, "Quake II(c), 1996-1997, Id Software, Inc.  All Rights Reserved", 0, 0, UI_CENTER | UI_DROPSHADOW, &cls.consoleBoldFont);
+
+	SCR_Text_Paint (610, 480, 0.1f, colorRed, va("cake v%4.2f", VERSION), 0, 0, UI_CENTER | UI_DROPSHADOW, &cls.consoleBoldFont);
+
 	Menu_Draw (self);
 }
 
