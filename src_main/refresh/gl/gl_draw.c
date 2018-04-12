@@ -220,7 +220,7 @@ void Draw_GenericRect (GLuint texture, GLuint sampler, float texturecolormix, fl
 
 	if (brightness != gl_drawstate.brightness)
 	{
-		Draw_Flush();
+		Draw_Flush ();
 
 		glProgramUniform1f(gl_drawprog, u_drawBrightnessAmount, brightness);
 
@@ -229,7 +229,7 @@ void Draw_GenericRect (GLuint texture, GLuint sampler, float texturecolormix, fl
 
 	if (contrast != gl_drawstate.contrast)
 	{
-		Draw_Flush();
+		Draw_Flush ();
 
 		glProgramUniform1f(gl_drawprog, u_drawContrastAmount, contrast);
 
@@ -253,6 +253,15 @@ void Draw_GenericRect (GLuint texture, GLuint sampler, float texturecolormix, fl
 		glNamedBufferDataEXT (gl_drawvbo, MAX_DRAW_QUADS * 4 * sizeof (drawvert_t), NULL, GL_STREAM_DRAW);
 
 		gl_drawstate.firstquad = 0;
+	}
+
+	if (VectorCompare(gl_drawstate.colorAdd, colorWhite))
+	{
+		Draw_Flush ();
+
+		Vector4Set (gl_drawstate.colorAdd, 1.0, 1.0, 1.0, 1.0);
+
+		glProgramUniform4f (gl_drawprog, u_drawcolorAdd, gl_drawstate.colorAdd[0], gl_drawstate.colorAdd[1], gl_drawstate.colorAdd[2], gl_drawstate.colorAdd[3]);
 	}
 
 	dv = &gl_drawquads[(gl_drawstate.firstquad + gl_drawstate.numquads) * 4];
