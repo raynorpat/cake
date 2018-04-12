@@ -128,16 +128,16 @@ void Field_Draw (menufield_s *f)
 
 #if 0
 	// draw box around field
-	RE_Draw_Char (f->generic.x + f->generic.parent->x + 16, f->generic.y + f->generic.parent->y - 4, 18, 1.0);
-	RE_Draw_Char (f->generic.x + f->generic.parent->x + 16, f->generic.y + f->generic.parent->y + 4, 24, 1.0);
+	SCR_DrawChar (f->generic.x + f->generic.parent->x + 16, f->generic.y + f->generic.parent->y - 4, 18);
+	SCR_DrawChar (f->generic.x + f->generic.parent->x + 16, f->generic.y + f->generic.parent->y + 4, 24);
 
-	RE_Draw_Char (f->generic.x + f->generic.parent->x + 24 + f->visible_length * 8, f->generic.y + f->generic.parent->y - 4, 20, 1.0);
-	RE_Draw_Char (f->generic.x + f->generic.parent->x + 24 + f->visible_length * 8, f->generic.y + f->generic.parent->y + 4, 26, 1.0);
+	SCR_DrawChar (f->generic.x + f->generic.parent->x + 24 + f->visible_length * 8, f->generic.y + f->generic.parent->y - 4, 20);
+	SCR_DrawChar (f->generic.x + f->generic.parent->x + 24 + f->visible_length * 8, f->generic.y + f->generic.parent->y + 4, 26);
 
 	for (int i = 0; i < f->visible_length; i++)
 	{
-		RE_Draw_Char (f->generic.x + f->generic.parent->x + 24 + i * 8, f->generic.y + f->generic.parent->y - 4, 19, 1.0);
-		RE_Draw_Char (f->generic.x + f->generic.parent->x + 24 + i * 8, f->generic.y + f->generic.parent->y + 4, 25, 1.0);
+		SCR_DrawChar (f->generic.x + f->generic.parent->x + 24 + i * 8, f->generic.y + f->generic.parent->y - 4, 19);
+		SCR_DrawChar (f->generic.x + f->generic.parent->x + 24 + i * 8, f->generic.y + f->generic.parent->y + 4, 25);
 	}
 #endif
 
@@ -772,9 +772,8 @@ void Separator_Draw (menuseparator_s *s)
 	// draw name
 	if (s->generic.name)
 	{
-		x = s->generic.x + s->generic.parent->x;
+		x = s->generic.x + s->generic.parent->x - strlen(s->generic.name) * MENU_FONT_SIZE;
 		y = s->generic.y + s->generic.parent->y;
-		x -= strlen(s->generic.name) * MENU_FONT_SIZE;
 		SCR_Text_PaintAligned (x, y, (char *)s->generic.name, 0.2f, 0, colorWhite, &cls.consoleFont);
 	}
 }
@@ -809,17 +808,17 @@ void Slider_Draw (menuslider_s *s)
 		s->range = 1;
 
 	// draw start of slider
-	RE_Draw_Char (s->generic.x + s->generic.parent->x + RCOLUMN_OFFSET, s->generic.y + s->generic.parent->y, 128, 1.0);
+	SCR_DrawChar (s->generic.x + s->generic.parent->x, s->generic.y + s->generic.parent->y, 128);
 
 	// draw length of slider
 	for (i = 0; i < SLIDER_RANGE; i++)
-		RE_Draw_Char (RCOLUMN_OFFSET + s->generic.x + i * 8 + s->generic.parent->x + 8, s->generic.y + s->generic.parent->y, 129, 1.0);
+		SCR_DrawChar (s->generic.x + i * 8 + s->generic.parent->x + 8, s->generic.y + s->generic.parent->y, 129);
 
 	// draw slider
-	RE_Draw_Char (RCOLUMN_OFFSET + s->generic.x + i * 8 + s->generic.parent->x + 8, s->generic.y + s->generic.parent->y, 130, 1.0);
+	SCR_DrawChar (s->generic.x + i * 8 + s->generic.parent->x + 8, s->generic.y + s->generic.parent->y, 130);
 	
 	// draw end of slider
-	RE_Draw_Char ((int)(8 + RCOLUMN_OFFSET + s->generic.parent->x + s->generic.x + (SLIDER_RANGE - 1) * 8 * s->range), s->generic.y + s->generic.parent->y, 131, 1.0);
+	SCR_DrawChar ((int)(8 + s->generic.parent->x + s->generic.x + (SLIDER_RANGE - 1) * 8 * s->range), s->generic.y + s->generic.parent->y, 131);
 }
 
 void SpinControl_DoSlide (menulist_s *s, int dir)
