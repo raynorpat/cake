@@ -16,6 +16,7 @@ Some of the major features currently implemented are:
   * OGG Vorbis background music support
   * RoQ cinematic video encoder/decoder
   * Brand new OpenGL 3.x renderer
+  * TrueType font support in the UI
   * HTTP/FTP download redirection (using cURL)
   * Portable content creation tools (q2map, bake)
   * Master server and dedicated server tool
