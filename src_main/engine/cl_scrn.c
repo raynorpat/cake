@@ -139,8 +139,24 @@ Coordinates are 640*480 virtual values
 */
 void SCR_DrawChar (float x, float y, int num)
 {
-	SCR_AdjustFrom640 (&x, &y, NULL, NULL);
-	RE_Draw_Char (x, y, num, 2.0);
+	float frow, fcol, size, w, h;
+
+	num &= 255;
+
+	if ((num & 127) == 32)
+		return; // space
+	if (y <= -8)
+		return; // totally off screen
+
+	frow = (num >> 4) * 0.0625;
+	fcol = (num & 15) * 0.0625;
+	size = 0.0625;
+
+	w = 8;
+	h = 8;
+
+	SCR_AdjustFrom640 (&x, &y, &w, &h);
+	RE_Draw_StretchPicExt (x, y, w, h, fcol, frow, fcol + size, frow + size, "pics/charset.png");
 }
 
 /*
