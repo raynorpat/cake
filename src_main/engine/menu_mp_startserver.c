@@ -41,6 +41,11 @@ static menufield_s	s_hostname_field;
 static menulist_s	s_startmap_list;
 static menulist_s	s_rules_box;
 
+#define M_UNSET 0
+#define	M_MISSING 1
+#define	M_FOUND 2
+static byte *levelshotvalid; // levelshot truth table
+
 void DMOptionsFunc (void *self)
 {
 	M_Menu_DMOptions_f ();
@@ -48,11 +53,21 @@ void DMOptionsFunc (void *self)
 
 void RulesChangeFunc (void *self)
 {
-	// Deathmatch
+	// deathmatch
 	if (s_rules_box.curvalue == 0)
 	{
 		s_maxclients_field.generic.statusbar = NULL;
+		if (atoi(s_maxclients_field.buffer) <= 8) // set default of 8
+			strcpy(s_maxclients_field.buffer, "8");
 		s_startserver_dmoptions_action.generic.statusbar = NULL;
+	}
+	else if (s_rules_box.curvalue == 1)
+	{
+		// coop
+		s_maxclients_field.generic.statusbar = "4 maximum for cooperative";
+		if (atoi(s_maxclients_field.buffer) > 4)
+			strcpy(s_maxclients_field.buffer, "4");
+		s_startserver_dmoptions_action.generic.statusbar = "N/A for cooperative";
 	}
 }
 
@@ -75,8 +90,8 @@ void StartServerActionFunc (void *self)
 	Cvar_SetValue ("fraglimit", Q_Clamp (0, fraglimit, fraglimit));
 	Cvar_Set ("hostname", s_hostname_field.buffer);
 
-	Cvar_SetValue("deathmatch", (float)!s_rules_box.curvalue);
-	Cvar_SetValue("coop", (float)s_rules_box.curvalue);
+	Cvar_SetValue ("deathmatch", (float)!s_rules_box.curvalue);
+	Cvar_SetValue ("coop", (float)s_rules_box.curvalue);
 
 	spot = NULL;
 
@@ -116,6 +131,48 @@ void StartServerActionFunc (void *self)
 	M_ForceMenuOff ();
 }
 
+void DrawStartSeverLevelshot(void)
+{
+	char startmap[MAX_QPATH];
+	char mapshotname[MAX_QPATH];
+	int i = s_startmap_list.curvalue;
+
+	Q_strlcpy (startmap, strchr(mapnames[i], '\n') + 1, sizeof(startmap));
+
+	SCR_FillRect (SCREEN_WIDTH / 2 + 44, SCREEN_HEIGHT / 2 - 100, 244, 184, colorWhite);
+
+	if (levelshotvalid[i] == M_UNSET)
+	{
+		// init levelshot
+		Com_sprintf(mapshotname, sizeof(mapshotname), "levelshots/%s.png", startmap);
+		if (RE_Draw_RegisterPic(mapshotname))
+			levelshotvalid[i] = M_FOUND;
+		else
+			levelshotvalid[i] = M_MISSING;
+	}
+
+	if (levelshotvalid[i] == M_FOUND)
+	{
+		Com_sprintf (mapshotname, sizeof(mapshotname), "levelshots/%s.png", startmap);
+		SCR_DrawPic (SCREEN_WIDTH / 2 + 46, SCREEN_HEIGHT / 2 - 98, 240, 180, mapshotname);
+	}
+	else if (levelshotvalid[nummaps] == M_FOUND)
+	{
+		SCR_DrawPic (SCREEN_WIDTH / 2 + 46, SCREEN_HEIGHT / 2 - 98, 240, 180, "levelshots/unknownmap.png");
+	}
+	else
+	{
+		SCR_FillRect (SCREEN_WIDTH / 2 + 46, SCREEN_HEIGHT / 2 - 98, 240, 180, colorBlack);
+	}
+}
+
+void StartServer_MenuDraw (menuframework_s *self)
+{
+	Menu_Draw(self);
+
+	DrawStartSeverLevelshot();
+}
+
 void StartServer_MenuInit (void)
 {
 	static const char *dm_coop_names[] =
@@ -135,9 +192,7 @@ void StartServer_MenuInit (void)
     {
 		// load the list of map names
 		if ((length = FS_LoadFile("maps.lst", (void **)&buffer)) == -1)
-		{
 			Com_Error (ERR_DROP, "couldn't find maps.lst\n");
-		}
 	
 		s = buffer;	
 		i = 0;
@@ -145,14 +200,12 @@ void StartServer_MenuInit (void)
 		while (i < length)
 		{
 			if (s[i] == '\r')
-				nummaps++;
-	
+				nummaps++;	
 			i++;
 		}
 	
 		if (nummaps == 0)
-			Com_Error (ERR_DROP, "no maps in maps.lst\n");
-	
+			Com_Error (ERR_DROP, "no maps in maps.lst\n");	
 		mapnames = malloc (sizeof (char *) * (nummaps + 1));
 		memset (mapnames, 0, sizeof (char *) * (nummaps + 1));
 	
@@ -177,9 +230,24 @@ void StartServer_MenuInit (void)
 			mapnames[i] = malloc (strlen (scratch) + 1);
 			strcpy (mapnames[i], scratch);
 		}
-	
+
+		// levelshot found table
+		if (levelshotvalid)
+			free(levelshotvalid);
+		levelshotvalid = malloc(sizeof(byte) * (nummaps + 1));
+		memset(levelshotvalid, 0, sizeof(byte) * (nummaps + 1));
+
+		// register null levelshot
+		if (levelshotvalid[nummaps] == M_UNSET)
+		{
+			if (RE_Draw_RegisterPic("levelshots/unknownmap.png"))
+				levelshotvalid[nummaps] = M_FOUND;
+			else
+				levelshotvalid[nummaps] = M_MISSING;
+		}
+
 		mapnames[nummaps] = 0;
-	
+
 		FS_FreeFile (buffer);
     }
 
@@ -278,7 +346,7 @@ void StartServer_MenuInit (void)
 	s_startserver_start_action.generic.y = y;
 	s_startserver_start_action.generic.callback = StartServerActionFunc;
 
-	s_startserver_menu.draw = NULL;
+	s_startserver_menu.draw = StartServer_MenuDraw;
 	s_startserver_menu.key = NULL;
 
 	Menu_AddItem (&s_startserver_menu, &s_startmap_list);
