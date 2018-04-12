@@ -59,7 +59,12 @@ void Img_Free (void)
 
 void GL_ResampleTexture (unsigned *in, int inwidth, int inheight, unsigned *out, int outwidth, int outheight);
 
-void GL_Image8To32 (byte *data8, unsigned *data32, int size, unsigned *palette)
+/*
+=============
+GL_Image8To32
+=============
+*/
+static void GL_Image8To32 (byte *data8, unsigned *data32, int size, unsigned *palette)
 {
 	int i;
 
@@ -79,6 +84,27 @@ void GL_Image8To32 (byte *data8, unsigned *data32, int size, unsigned *palette)
 			data32[2] = palette[data8[2]];
 			data32[3] = palette[data8[3]];
 		}
+	}
+}
+
+/*
+=============
+GL_SwapBlueRed
+=============
+*/
+static void GL_SwapBlueRed (byte *data, int width, int height, int samples)
+{
+	int i, j, size;
+
+	size = width * height;
+	for (i = 0; i < size; i++, data += samples)
+	{
+		j = data[0];
+		data[0] = data[2];
+		data[2] = j;
+		// data[0] ^= data[2];
+		// data[2] = data[0] ^ data[2];
+		// data[0] ^= data[2];
 	}
 }
 
@@ -596,6 +622,7 @@ qboolean LoadImageThruSTB (char *origname, char* type, byte **pic, int *width, i
 	}
 
 	*pic = NULL;
+	*width = *height = 0;
 
 	byte* rawdata = NULL;
 	int rawsize = FS_LoadFile (filename, (void **)&rawdata);
@@ -612,12 +639,13 @@ qboolean LoadImageThruSTB (char *origname, char* type, byte **pic, int *width, i
 		FS_FreeFile (rawdata);
 		return false;
 	}
-
+	
 	FS_FreeFile (rawdata);
 
 	*pic = data;
 	*width = w;
 	*height = h;
+
 	return true;
 }
 
@@ -843,7 +871,10 @@ GLuint GL_UploadTexture (byte *data, int width, int height, qboolean mipmap, int
 		GL_Image8To32 (data, trans, width * height, d_8to24table_bgra);
 	}
 	else
+	{
 		trans = (unsigned *) data;
+		GL_SwapBlueRed (data, width, height, 4);
+	}
 
 	// it's assumed that our hardware can handle Q2 texture sizes
 	upload_width = width;

@@ -451,7 +451,6 @@ typedef struct cubeface_s
 
 GLuint GL_UploadTexture (byte *data, int width, int height, qboolean mipmap, int bits);
 GLuint GL_LoadCubeMap (cubeface_t *faces);
-void GL_Image8To32 (byte *data8, unsigned *data32, int size, unsigned *palette);
 
 void *Img_Alloc (int size);
 void Img_Free (void);
