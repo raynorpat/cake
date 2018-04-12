@@ -28,12 +28,6 @@ MULTIPLAYER MENU
 =======================================================================
 */
 
-void M_Menu_PlayerConfig_f (void);
-void M_Menu_JoinGamespyServer_f (void);
-void M_Menu_JoinServer_f (void);
-void M_Menu_StartServer_f (void);
-void M_Menu_DownloadOptions_f (void);
-
 menuframework_s			s_multiplayer_menu;
 static menuaction_s		s_join_gamespy_server_action;
 static menuaction_s		s_join_network_server_action;

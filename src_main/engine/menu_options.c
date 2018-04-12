@@ -28,8 +28,6 @@ OPTIONS MENU
 =======================================================================
 */
 
-void M_Menu_Keys_f (void);
-
 extern cvar_t *in_controller;
 
 static menuframework_s	s_options_menu;

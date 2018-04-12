@@ -28,8 +28,6 @@ JOIN SERVER MENU
 =============================================================================
 */
 
-void M_Menu_AddressBook_f (void);
-
 #define	NO_SERVER_STRING "<no server>"
 
 #define MAX_LOCAL_SERVERS 8

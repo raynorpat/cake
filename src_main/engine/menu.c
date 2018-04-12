@@ -25,24 +25,6 @@ char *menu_in_sound		= "misc/menu1.wav";
 char *menu_move_sound	= "misc/menu2.wav";
 char *menu_out_sound	= "misc/menu3.wav";
 
-void M_Menu_Main_f (void);
-void M_Menu_Game_f (void);
-void M_Menu_LoadGame_f (void);
-void M_Menu_SaveGame_f (void);
-void M_Menu_PlayerConfig_f (void);
-void M_Menu_DownloadOptions_f (void);
-void M_Menu_Credits_f (void);
-void M_Menu_Multiplayer_f (void);
-void M_Menu_JoinServer_f (void);
-void M_Menu_JoinGamespyServer_f (void);
-void M_Menu_AddressBook_f (void);
-void M_Menu_StartServer_f (void);
-void M_Menu_DMOptions_f (void);
-void M_Menu_Video_f (void);
-void M_Menu_Options_f (void);
-void M_Menu_Keys_f (void);
-void M_Menu_Quit_f (void);
-
 qboolean m_entersound; // play after drawing a frame, so caching won't disrupt the sound
 
 static menuframework_s *m_active;

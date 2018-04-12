@@ -28,8 +28,6 @@ START SERVER MENU
 =============================================================================
 */
 
-void M_Menu_DMOptions_f (void);
-
 static menuframework_s s_startserver_menu;
 static char **mapnames = NULL;
 static int nummaps = 0;

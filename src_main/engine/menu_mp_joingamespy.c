@@ -28,7 +28,7 @@ GAMESPY JOIN SERVER MENU
 =============================================================================
 */
 
-void JoinGamespyServer_MenuInit(void);
+void JoinGamespyServer_MenuInit (void);
 
 #define	NO_SERVER_STRING "<no server>"
 

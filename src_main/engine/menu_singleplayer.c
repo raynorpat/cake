@@ -28,10 +28,6 @@ GAME MENU
 =============================================================================
 */
 
-void M_Menu_LoadGame_f (void);
-void M_Menu_SaveGame_f (void);
-void M_Menu_Credits_f (void);
-
 static int				m_game_cursor;
 
 static menuframework_s	s_game_menu;

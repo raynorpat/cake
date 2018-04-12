@@ -633,6 +633,24 @@ void M_PushMenu (struct _tag_menuframework *menu);
 
 void M_AddToServerList (netadr_t adr, char *info);
 
+void M_Menu_Main_f(void);
+	void M_Menu_Game_f(void);
+		void M_Menu_LoadGame_f(void);
+		void M_Menu_SaveGame_f(void);
+		void M_Menu_Credits_f(void);
+	void M_Menu_Multiplayer_f(void);
+		void M_Menu_JoinGamespyServer_f(void);
+		void M_Menu_JoinServer_f(void);
+			void M_Menu_AddressBook_f(void);
+		void M_Menu_StartServer_f(void);
+			void M_Menu_DMOptions_f(void);
+		void M_Menu_PlayerConfig_f(void);
+		void M_Menu_DownloadOptions_f(void);
+	void M_Menu_Options_f(void);
+		void M_Menu_Keys_f(void);
+	void M_Menu_Video_f(void);
+	void M_Menu_Quit_f(void);
+
 //
 // cl_inv.c
 //

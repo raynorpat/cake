@@ -21,12 +21,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #include "client.h"
 #include "qmenu.h"
 
-void M_Menu_Game_f(void);
-void M_Menu_Multiplayer_f(void);
-void M_Menu_Options_f(void);
-void M_Menu_Video_f(void);
-void M_Menu_Quit_f(void);
-
 /*
 =======================================================================
 

@@ -152,8 +152,6 @@ void Field_Draw (menufield_s *f)
 
 		if (((int) (Sys_Milliseconds() / 250)) & 1)
 			SCR_Text_PaintSingleChar (f->generic.x + f->generic.parent->x + offset * 8, f->generic.y + f->generic.parent->y, 0.2f, colorWhite, '_', 0, 0, 0, &cls.consoleFont);
-		else
-			SCR_Text_PaintSingleChar (f->generic.x + f->generic.parent->x + offset * 8, f->generic.y + f->generic.parent->y, 0.2f, colorWhite, ' ', 0, 0, 0, &cls.consoleFont);
 	}
 }
 
@@ -226,7 +224,6 @@ qboolean Field_Key (menufield_s *f, int key)
 			strncpy (f->buffer, cbd, f->length - 1);
 			f->cursor = strlen (f->buffer);
 			f->visible_offset = f->cursor - f->visible_length;
-
 			if (f->visible_offset < 0)
 				f->visible_offset = 0;
 
