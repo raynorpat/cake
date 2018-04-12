@@ -40,6 +40,7 @@ void	SCR_FillRect (float x, float y, float width, float height, float *color);
 float	*SCR_FadeColor (int startMsec, int totalMsec);
 
 void	SCR_DrawPic (float x, float y, float width, float height, char *pic);
+void	SCR_DrawChar (float x, float y, int num);
 
 int		SCR_Text_Width (char *text, float scale, int limit, fontInfo_t * font);
 int		SCR_Text_Height (char *text, float scale, int limit, fontInfo_t * font);

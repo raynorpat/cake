@@ -132,6 +132,19 @@ void SCR_DrawPic (float x, float y, float width, float height, char *pic)
 
 /*
 ================
+SCR_DrawChar
+
+Coordinates are 640*480 virtual values
+=================
+*/
+void SCR_DrawChar (float x, float y, int num)
+{
+	SCR_AdjustFrom640 (&x, &y, NULL, NULL);
+	RE_Draw_Char (x, y, num, 2.0);
+}
+
+/*
+================
 SCR_FadeColor
 ================
 */
@@ -1500,6 +1513,7 @@ void SCR_UpdateScreen (void)
 				CL_DrawInventory ();
 
 			SCR_DrawNet ();
+
 			SCR_DrawCenterString ();
 
 			if (scr_timegraph->value)
