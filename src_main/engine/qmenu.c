@@ -109,12 +109,16 @@ qboolean Field_DoEnter (menufield_s *f)
 
 void Field_Draw (menufield_s *f)
 {
-	int n;
+	int n, x;
 	char tempbuffer[128] = "";
 
 	// draw name
 	if (f->generic.name)
-		SCR_Text_PaintAligned (f->generic.x + f->generic.parent->x + LCOLUMN_OFFSET, f->generic.y + f->generic.parent->y, (char *)f->generic.name, 0.2f, UI_RIGHT, colorWhite, &cls.consoleFont);
+	{
+		x = f->generic.x + f->generic.parent->x + LCOLUMN_OFFSET;
+		x -= strlen(f->generic.name) * MENU_FONT_SIZE;
+		SCR_Text_PaintAligned (x, f->generic.y + f->generic.parent->y, (char *)f->generic.name, 0.2f, 0, colorGreen, &cls.consoleFont);
+	}
 
 	// get buffer size
 	n = f->visible_length + 1;
@@ -137,22 +141,12 @@ void Field_Draw (menufield_s *f)
 	}
 #endif
 
+	// add cursor at end of buffer
+	if (Menu_ItemAtCursor(f->generic.parent) == f && ((int)(Sys_Milliseconds() / 250)) & 1)
+		Com_sprintf(tempbuffer, sizeof(tempbuffer), "%s_", tempbuffer);
+
 	// draw buffer
-	SCR_Text_PaintAligned (f->generic.x + f->generic.parent->x, f->generic.y + f->generic.parent->y, tempbuffer, 0.2f, UI_LEFT, colorWhite, &cls.consoleFont);
-
-	// draw cursur
-	if (Menu_ItemAtCursor (f->generic.parent) == f)
-	{
-		int offset;
-
-		if (f->visible_offset)
-			offset = f->visible_length;
-		else
-			offset = f->cursor;
-
-		if (((int) (Sys_Milliseconds() / 250)) & 1)
-			SCR_Text_PaintSingleChar (f->generic.x + f->generic.parent->x + offset * 8, f->generic.y + f->generic.parent->y, 0.2f, colorWhite, '_', 0, 0, 0, &cls.consoleFont);
-	}
+	SCR_Text_PaintAligned (f->generic.x + f->generic.parent->x - MENU_FONT_SIZE * 7, f->generic.y + f->generic.parent->y, tempbuffer, 0.2f, UI_LEFT, colorWhite, &cls.consoleFont);
 }
 
 qboolean Field_Key (menufield_s *f, int key)

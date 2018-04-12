@@ -313,7 +313,7 @@ void PlayerConfig_MenuDraw (menuframework_s *self)
 		Com_sprintf (scratch, sizeof (scratch), "/players/%s/%s_i.pcx",
 					 s_pmi[s_player_model_box.curvalue].directory,
 					 s_pmi[s_player_model_box.curvalue].skindisplaynames[s_player_skin_box.curvalue]);
-		SCR_DrawPic (s_player_config_menu.x - 120, s_player_config_menu.y - 16, 32, 32, scratch);
+		SCR_DrawPic (s_player_config_menu.x - 145, s_player_config_menu.y - 16, 32, 32, scratch);
 	}
 }
 
@@ -425,9 +425,9 @@ qboolean PlayerConfig_MenuInit (void)
 
 	y = 0;
 	s_player_name_field.generic.type = MTYPE_FIELD;
-	s_player_name_field.generic.name = "name:";
+	s_player_name_field.generic.name = S_COLOR_GREEN "name:";
 	s_player_name_field.generic.callback = 0;
-	s_player_name_field.generic.x = -MENU_FONT_SIZE;
+	s_player_name_field.generic.x = 2 * MENU_FONT_SIZE;
 	s_player_name_field.generic.y = y;
 	s_player_name_field.length = 20;
 	s_player_name_field.visible_length = 20;
@@ -442,10 +442,10 @@ qboolean PlayerConfig_MenuInit (void)
 	s_player_model_title.generic.y = y += 3 * MENU_LINE_SIZE;
 
 	s_player_model_box.generic.type = MTYPE_SPINCONTROL;
-	s_player_model_box.generic.x = -7 * MENU_FONT_SIZE;
+	s_player_model_box.generic.x = -9 * MENU_FONT_SIZE;
 	s_player_model_box.generic.y = y += MENU_LINE_SIZE;
 	s_player_model_box.generic.callback = ModelCallback;
-	s_player_model_box.generic.cursor_offset = -6 * MENU_FONT_SIZE;
+	s_player_model_box.generic.cursor_offset = -10 * MENU_FONT_SIZE;
 	s_player_model_box.curvalue = currentdirectoryindex;
 	s_player_model_box.itemnames = s_pmnames;
 
@@ -456,11 +456,11 @@ qboolean PlayerConfig_MenuInit (void)
 	s_player_skin_title.generic.y = y += 2 * MENU_LINE_SIZE;
 
 	s_player_skin_box.generic.type = MTYPE_SPINCONTROL;
-	s_player_skin_box.generic.x	= -7 * MENU_FONT_SIZE;
+	s_player_skin_box.generic.x	= -9 * MENU_FONT_SIZE;
 	s_player_skin_box.generic.y	= y += MENU_LINE_SIZE;
 	s_player_skin_box.generic.name = 0;
 	s_player_skin_box.generic.callback = 0;
-	s_player_skin_box.generic.cursor_offset = -6 * MENU_FONT_SIZE;
+	s_player_skin_box.generic.cursor_offset = -10 * MENU_FONT_SIZE;
 	s_player_skin_box.curvalue = currentskinindex;
 	s_player_skin_box.itemnames = s_pmi[currentdirectoryindex].skindisplaynames;
 
@@ -470,10 +470,10 @@ qboolean PlayerConfig_MenuInit (void)
 	s_player_hand_title.generic.y = y += 2 * MENU_LINE_SIZE;
 
 	s_player_handedness_box.generic.type = MTYPE_SPINCONTROL;
-	s_player_handedness_box.generic.x = -7 * MENU_FONT_SIZE;
+	s_player_handedness_box.generic.x = -9 * MENU_FONT_SIZE;
 	s_player_handedness_box.generic.y = y += MENU_LINE_SIZE;
 	s_player_handedness_box.generic.name = 0;
-	s_player_handedness_box.generic.cursor_offset = -6 * MENU_FONT_SIZE;
+	s_player_handedness_box.generic.cursor_offset = -10 * MENU_FONT_SIZE;
 	s_player_handedness_box.generic.callback = HandednessCallback;
     s_player_handedness_box.curvalue = Q_Clamp (0, 2, hand->value);
 	s_player_handedness_box.itemnames = handedness;
@@ -488,10 +488,10 @@ qboolean PlayerConfig_MenuInit (void)
 	s_player_rate_title.generic.y = y += 2 * MENU_LINE_SIZE;
 
 	s_player_rate_box.generic.type = MTYPE_SPINCONTROL;
-	s_player_rate_box.generic.x	= -7 * MENU_FONT_SIZE;
+	s_player_rate_box.generic.x	= -9 * MENU_FONT_SIZE;
 	s_player_rate_box.generic.y	= y += MENU_LINE_SIZE;
 	s_player_rate_box.generic.name	= 0;
-	s_player_rate_box.generic.cursor_offset = -6 * MENU_FONT_SIZE;
+	s_player_rate_box.generic.cursor_offset = -10 * MENU_FONT_SIZE;
 	s_player_rate_box.generic.callback = RateCallback;
 	s_player_rate_box.curvalue = i;
 	s_player_rate_box.itemnames = rate_names;
