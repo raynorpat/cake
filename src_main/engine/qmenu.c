@@ -115,8 +115,8 @@ void Field_Draw (menufield_s *f)
 	// draw name
 	if (f->generic.name)
 	{
-		x = f->generic.x + f->generic.parent->x + LCOLUMN_OFFSET;
-		x -= strlen(f->generic.name) * MENU_FONT_SIZE;
+		x = f->generic.x + f->generic.parent->x - MENU_FONT_SIZE;
+		x -= strlen(f->generic.name) * 8;
 		SCR_Text_PaintAligned (x, f->generic.y + f->generic.parent->y, (char *)f->generic.name, 0.2f, 0, colorGreen, &cls.consoleFont);
 	}
 
@@ -128,8 +128,8 @@ void Field_Draw (menufield_s *f)
 
 #if 0
 	// draw box around field
-	SCR_DrawChar (f->generic.x + f->generic.parent->x + 16, f->generic.y + f->generic.parent->y - 4, 18);
-	SCR_DrawChar (f->generic.x + f->generic.parent->x + 16, f->generic.y + f->generic.parent->y + 4, 24);
+	SCR_DrawChar (f->generic.x + f->generic.parent->x + MENU_FONT_SIZE, f->generic.y + f->generic.parent->y - 4, 18);
+	SCR_DrawChar (f->generic.x + f->generic.parent->x + MENU_FONT_SIZE, f->generic.y + f->generic.parent->y + 4, 24);
 
 	SCR_DrawChar (f->generic.x + f->generic.parent->x + 24 + f->visible_length * 8, f->generic.y + f->generic.parent->y - 4, 20);
 	SCR_DrawChar (f->generic.x + f->generic.parent->x + 24 + f->visible_length * 8, f->generic.y + f->generic.parent->y + 4, 26);
@@ -146,7 +146,7 @@ void Field_Draw (menufield_s *f)
 		Com_sprintf(tempbuffer, sizeof(tempbuffer), "%s_", tempbuffer);
 
 	// draw buffer
-	SCR_Text_PaintAligned (f->generic.x + f->generic.parent->x - MENU_FONT_SIZE * 7, f->generic.y + f->generic.parent->y, tempbuffer, 0.2f, UI_LEFT, colorWhite, &cls.consoleFont);
+	SCR_Text_PaintAligned (f->generic.x + f->generic.parent->x, f->generic.y + f->generic.parent->y, tempbuffer, 0.2f, 0, colorWhite, &cls.consoleFont);
 }
 
 qboolean Field_Key (menufield_s *f, int key)

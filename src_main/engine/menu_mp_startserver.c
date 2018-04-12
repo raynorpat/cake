@@ -185,7 +185,7 @@ void StartServer_MenuInit (void)
 
 	// initialize the menu stuff
 	memset(&s_startserver_menu, 0, sizeof(s_startserver_menu));
-	s_startserver_menu.x = (int)(SCREEN_WIDTH * 0.50f);
+	s_startserver_menu.x = (int)(SCREEN_WIDTH * 0.50f) - 140;
 	s_startserver_menu.nitems = 0;
 
 	y = 0;
@@ -214,9 +214,10 @@ void StartServer_MenuInit (void)
 	s_timelimit_field.generic.x	= 0;
 	s_timelimit_field.generic.y	= y;
 	s_timelimit_field.generic.statusbar = "0 = no limit";
-	s_timelimit_field.length = 3;
-	s_timelimit_field.visible_length = 3;
+	s_timelimit_field.length = 4;
+	s_timelimit_field.visible_length = 4;
 	strcpy (s_timelimit_field.buffer, Cvar_VariableString ("timelimit"));
+	s_timelimit_field.cursor = strlen(s_timelimit_field.buffer);
 
 	y += 2 * MENU_LINE_SIZE;
 	s_fraglimit_field.generic.type = MTYPE_FIELD;
@@ -225,9 +226,10 @@ void StartServer_MenuInit (void)
 	s_fraglimit_field.generic.x	= 0;
 	s_fraglimit_field.generic.y	= y;
 	s_fraglimit_field.generic.statusbar = "0 = no limit";
-	s_fraglimit_field.length = 3;
-	s_fraglimit_field.visible_length = 3;
+	s_fraglimit_field.length = 4;
+	s_fraglimit_field.visible_length = 4;
 	strcpy (s_fraglimit_field.buffer, Cvar_VariableString ("fraglimit"));
+	s_fraglimit_field.cursor = strlen(s_fraglimit_field.buffer);
 
 	// maxclients determines the maximum number of players that can join
 	// the game. If maxclients is only "1" then we should default the menu
@@ -246,17 +248,18 @@ void StartServer_MenuInit (void)
 		strcpy (s_maxclients_field.buffer, "8");
 	else
 		strcpy (s_maxclients_field.buffer, Cvar_VariableString ("maxclients"));
+	s_maxclients_field.cursor = strlen(s_maxclients_field.buffer);
 
 	y += 2 * MENU_LINE_SIZE;
 	s_hostname_field.generic.type = MTYPE_FIELD;
 	s_hostname_field.generic.name = "hostname";
-	s_hostname_field.generic.flags = 0;
 	s_hostname_field.generic.x = 0;
 	s_hostname_field.generic.y = y;
 	s_hostname_field.generic.statusbar = NULL;
 	s_hostname_field.length = 12;
 	s_hostname_field.visible_length = 12;
 	strcpy (s_hostname_field.buffer, Cvar_VariableString ("hostname"));
+	s_hostname_field.cursor = strlen(s_hostname_field.buffer);
 
 	y += 2 * MENU_LINE_SIZE;
 	s_startserver_dmoptions_action.generic.type = MTYPE_ACTION;

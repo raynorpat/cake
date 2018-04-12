@@ -427,7 +427,7 @@ qboolean PlayerConfig_MenuInit (void)
 	s_player_name_field.generic.type = MTYPE_FIELD;
 	s_player_name_field.generic.name = S_COLOR_GREEN "name:";
 	s_player_name_field.generic.callback = 0;
-	s_player_name_field.generic.x = 2 * MENU_FONT_SIZE;
+	s_player_name_field.generic.x = -2 * MENU_FONT_SIZE;
 	s_player_name_field.generic.y = y;
 	s_player_name_field.length = 20;
 	s_player_name_field.visible_length = 20;
