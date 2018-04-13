@@ -131,12 +131,6 @@ void Sounds_MenuInit (void)
 		"OpenAL",
 		0
 	};
-	static const char *yesno_names[] =
-	{
-		"no",
-		"yes",
-		0
-	};
 
 	squality = Cvar_VariableInteger ("s_khz");
 	switch (squality)
