@@ -156,7 +156,7 @@ static void VID_DetectAvailableModes(void)
 	{
 		buf[strlen(buf) - 1] = 0;
 		VID_Printf(PRINT_ALL, "Available modes: '%s'\n", buf);
-		Cvar_Set("r_availableModes", buf);
+		Cvar_ForceSet ("r_availableModes", buf);
 	}
 	SDL_free(modes);
 }
@@ -229,9 +229,7 @@ vidrserr_t VID_InitWindow(int mode, int fullscreen)
 	{
 		display = SDL_GetWindowDisplayIndex(window);
 		if (display < 0)
-		{
 			VID_Printf(PRINT_DEVELOPER, S_COLOR_RED "SDL_GetWindowDisplayIndex() failed: %s\n", SDL_GetError());
-		}
 	}
 
 	if (display >= 0 && SDL_GetDesktopDisplayMode(display, &desktopMode) == 0)
