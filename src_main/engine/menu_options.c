@@ -63,28 +63,28 @@ void Options_MenuInit (void)
 	// configure controls menu and menu items
 	memset (&s_options_menu, 0, sizeof(s_options_menu));
 	s_options_menu.x = SCREEN_WIDTH / 2 - 24;
-	s_options_menu.y = SCREEN_HEIGHT / 2 - 80;
+	s_options_menu.y = SCREEN_HEIGHT / 2 - 58;
 	s_options_menu.nitems = 0;
 
 	s_options_sound_section.generic.type = MTYPE_ACTION;
 	s_options_sound_section.generic.flags = QMF_LEFT_JUSTIFY;
 	s_options_sound_section.generic.name = " sound";
 	s_options_sound_section.generic.x = 0;
-	s_options_sound_section.generic.y = MENU_FONT_SIZE * 2;
+	s_options_sound_section.generic.y = y += MENU_FONT_SIZE;
 	s_options_sound_section.generic.callback = MenuSoundFunc;
 
 	s_options_controls_section.generic.type = MTYPE_ACTION;
 	s_options_controls_section.generic.flags = QMF_LEFT_JUSTIFY;
 	s_options_controls_section.generic.name = " controls";
 	s_options_controls_section.generic.x = 0;
-	s_options_controls_section.generic.y = MENU_FONT_SIZE * 4;
+	s_options_controls_section.generic.y = y += MENU_FONT_SIZE;
 	s_options_controls_section.generic.callback = MenuControlsFunc;
 
 	s_options_screen_section.generic.type = MTYPE_ACTION;
 	s_options_screen_section.generic.flags = QMF_LEFT_JUSTIFY;
 	s_options_screen_section.generic.name = " screen";
 	s_options_screen_section.generic.x = 0;
-	s_options_screen_section.generic.y = MENU_FONT_SIZE * 6;
+	s_options_screen_section.generic.y = y += MENU_FONT_SIZE;
 	s_options_screen_section.generic.callback = MenuScreenFunc;
 
 	s_options_menu.draw = Options_MenuDraw;
