@@ -683,6 +683,13 @@ void CL_Disconnect (void)
 
 	cls.servername[0] = '\0';
 	cls.state = ca_disconnected;
+
+	// save config for old game/mod
+	CL_WriteConfiguration ();
+	
+	// we disconnected, so revert to default game/mod (might have been a different mod on MP server)
+	char* game = Qcommon_GetInitialGame ();
+	Cvar_Set ("game", (char*)game);
 }
 
 void CL_Disconnect_f (void)

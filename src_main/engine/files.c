@@ -1688,6 +1688,9 @@ void FS_BuildGameSpecificSearchPath (char *dir)
 	// we need to create the screenshot directory since the refresh doesn't link the filesystem stuff
 	Com_sprintf (path, sizeof(path), "%s/scrnshot", fs_gamedir);
 	Sys_Mkdir (path);
+
+	// the gamedir has changed, so read in the corresponding configs
+	Qcommon_ExecConfigs (false);
 }
 
 void FS_AddDirToRawPath(const char *dir, qboolean create)
