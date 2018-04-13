@@ -316,6 +316,7 @@ vidrserr_t VID_InitWindow(int mode, int fullscreen)
 	for (i = 0; i < 16; i++)
 	{
 		int testColorBits, testDepthBits, testStencilBits;
+		int realColorBits[3];
 
 		// 0 - default
 		// 1 - minus colorBits
@@ -522,7 +523,15 @@ vidrserr_t VID_InitWindow(int mode, int fullscreen)
 			viddef.vsyncActive = SDL_GL_GetSwapInterval() != 0;
 		}
 
-		VID_Printf(PRINT_ALL, "Using %d color bits, %d depth, %d stencil display.\n", testColorBits, testDepthBits, testStencilBits);
+		SDL_GL_GetAttribute (SDL_GL_RED_SIZE, &realColorBits[0]);
+		SDL_GL_GetAttribute (SDL_GL_GREEN_SIZE, &realColorBits[1]);
+		SDL_GL_GetAttribute (SDL_GL_BLUE_SIZE, &realColorBits[2]);
+		SDL_GL_GetAttribute (SDL_GL_DEPTH_SIZE, &depthBits);
+		SDL_GL_GetAttribute (SDL_GL_STENCIL_SIZE, &stencilBits);
+		
+		colorBits = realColorBits[0] + realColorBits[1] + realColorBits[2];
+
+		VID_Printf(PRINT_ALL, "Using %d color bits, %d depth, %d stencil display.\n", colorBits, depthBits, stencilBits);
 		break;
 	}
 
