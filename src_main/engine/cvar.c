@@ -230,6 +230,7 @@ cvar_t *Cvar_Set2 (char *var_name, char *value, qboolean force)
 					return var;
 
 				Z_Free (var->latched_string);
+				var->latched_string = NULL;
 			}
 			else
 			{
