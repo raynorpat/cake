@@ -82,11 +82,10 @@ void M_PushMenu ( menuframework_s *menu )
 {
 	int		i;
 
-	if ((Cvar_VariableValue ("maxclients") == 1) && Com_ServerState ())
+	if ((Cvar_VariableValue ("maxclients") == 1) && Com_ServerState())
 		Cvar_Set ("paused", "1");
 
-	// if this menu is already present, drop back to that level
-	// to avoid stacking menus by hotkeys
+	// if this menu is already present, drop back to that level to avoid stacking menus by hotkeys
 	for (i = 0; i < m_menudepth; i++)
 	{
 		if( m_layers[i] == menu )
@@ -108,9 +107,7 @@ void M_PushMenu ( menuframework_s *menu )
 	}
 
 	m_active = menu;
-
 	m_entersound = true;
-
 	cls.key_dest = key_menu;
 }
 
@@ -145,9 +142,11 @@ char *Default_MenuKey (menuframework_s *m, int key)
 	char *sound = NULL;
 	menucommon_s *item = NULL;
 	int index;
+	int menu_key = Key_GetMenuKey (key);
 
 	if (m)
 	{
+		// check for click hit
 		if (key == K_MOUSE1)
 		{
 			index = Menu_ClickHit(m, m_mouse[0], m_mouse[1]);
@@ -170,7 +169,7 @@ char *Default_MenuKey (menuframework_s *m, int key)
 		}
 	}
 
-	// HACK
+	// HACK: make the mouse click work correctly on slider and spin controls
 	if(item && (item->type == MTYPE_SLIDER || item->type == MTYPE_SPINCONTROL))
 	{
 		if(key == K_MOUSE1)
@@ -179,121 +178,60 @@ char *Default_MenuKey (menuframework_s *m, int key)
 			key = K_LEFTARROW;
 	}
 
-	switch (key)
+	switch (menu_key)
 	{
-	case K_MOUSE2:
-	case K_ESCAPE:
-	case K_GAMEPAD_START:
-	case K_GAMEPAD_B:
-	case K_GAMEPAD_BACK:
-		M_PopMenu ();
-		return menu_out_sound;
+		case K_ESCAPE:
+			M_PopMenu ();
+			return menu_out_sound;
 
-	case K_GAMEPAD_UP:
-	case K_GAMEPAD_LSTICK_UP:
-	case K_GAMEPAD_RSTICK_UP:
-	case K_KP_UPARROW:
-	case K_UPARROW:
-		if (m)
-		{
-			m->cursor--;
-			Menu_AdjustCursor (m, -1);
-			sound = menu_move_sound;
-		}
-		break;
+		case K_UPARROW:
+			if (m)
+			{
+				m->cursor--;
+				Menu_AdjustCursor (m, -1);
+				sound = menu_move_sound;
+			}
+			break;
 
-	case K_TAB:
-		if ( m )
-		{
-			m->cursor++;
-			Menu_AdjustCursor( m, 1 );
-			sound = menu_move_sound;
-		}
-		break;
-	case K_KP_DOWNARROW:
-	case K_DOWNARROW:
-	case K_GAMEPAD_DOWN:
-	case K_GAMEPAD_LSTICK_DOWN:
-	case K_GAMEPAD_RSTICK_DOWN:
-		if (m)
-		{
-			m->cursor++;
-			Menu_AdjustCursor (m, 1);
-			sound = menu_move_sound;
-		}
-		break;
+		case K_TAB:
+			if ( m )
+			{
+				m->cursor++;
+				Menu_AdjustCursor( m, 1 );
+				sound = menu_move_sound;
+			}
+			break;
 
-	case K_GAMEPAD_LEFT:
-	case K_GAMEPAD_LSTICK_LEFT:
-	case K_GAMEPAD_RSTICK_LEFT:
-	case K_KP_LEFTARROW:
-	case K_LEFTARROW:
-		if (m)
-		{
-			Menu_SlideItem (m, -1);
-			sound = menu_move_sound;
-		}
-		break;
+		case K_DOWNARROW:
+			if (m)
+			{
+				m->cursor++;
+				Menu_AdjustCursor (m, 1);
+				sound = menu_move_sound;
+			}
+			break;
 
-	case K_GAMEPAD_RIGHT:
-	case K_GAMEPAD_LSTICK_RIGHT:
-	case K_GAMEPAD_RSTICK_RIGHT:
-	case K_KP_RIGHTARROW:
-	case K_RIGHTARROW:
-		if (m)
-		{
-			Menu_SlideItem (m, 1);
-			sound = menu_move_sound;
-		}
-		break;
+		case K_LEFTARROW:
+			if (m)
+			{
+				Menu_SlideItem (m, -1);
+				sound = menu_move_sound;
+			}
+			break;
 
-	case K_MOUSE1:
-	case K_MOUSE3:
-    case K_MOUSE4:
-    case K_MOUSE5:
-	case K_JOY1:
-	case K_JOY2:
-	case K_JOY3:
-	case K_JOY4:
-	case K_AUX1:
-	case K_AUX2:
-	case K_AUX3:
-	case K_AUX4:
-	case K_AUX5:
-	case K_AUX6:
-	case K_AUX7:
-	case K_AUX8:
-	case K_AUX9:
-	case K_AUX10:
-	case K_AUX11:
-	case K_AUX12:
-	case K_AUX13:
-	case K_AUX14:
-	case K_AUX15:
-	case K_AUX16:
-	case K_AUX17:
-	case K_AUX18:
-	case K_AUX19:
-	case K_AUX20:
-	case K_AUX21:
-	case K_AUX22:
-	case K_AUX23:
-	case K_AUX24:
-	case K_AUX25:
-	case K_AUX26:
-	case K_AUX27:
-	case K_AUX28:
-	case K_AUX29:
-	case K_AUX30:
-	case K_AUX31:
-	case K_AUX32:
-	case K_KP_ENTER:
-	case K_ENTER:
-	case K_GAMEPAD_A:
-		if (m)
-			Menu_SelectItem (m);
-		sound = menu_move_sound;
-		break;
+		case K_RIGHTARROW:
+			if (m)
+			{
+				Menu_SlideItem (m, 1);
+				sound = menu_move_sound;
+			}
+			break;
+
+		case K_ENTER:
+			if (m)
+				Menu_SelectItem (m);
+			sound = menu_move_sound;
+			break;
 	}
 
 	return sound;
@@ -547,7 +485,7 @@ void M_MouseMove (int mx, int my)
 M_Draw_Cursor
 =================
 */
-void M_Draw_Cursor(void)
+void M_Draw_Cursor (void)
 {
 	int		w, h;
 	float	ofs_x, ofs_y, ofs_scale = 2.5f;

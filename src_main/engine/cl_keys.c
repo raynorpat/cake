@@ -438,7 +438,7 @@ void Key_Message (int key)
 		return;
 	}
 
-	if (key == K_ESCAPE)
+	if ((key == K_ESCAPE) || (key == K_GAMEPAD_BACK) || (key == K_GAMEPAD_START))
 	{
 		cls.key_dest = key_game;
 		chat_cursorpos = 0;
@@ -521,6 +521,119 @@ void Key_Message (int key)
 	{
 		chat_buffer[chat_cursorpos] = 0;
 	}
+}
+
+//============================================================================
+
+/*
+===================
+Key_GetMenuKey
+
+Redirects button presses for the menu system
+===================
+*/
+int Key_GetMenuKey(int key)
+{
+	switch (key)
+	{
+		case K_KP_UPARROW:
+		case K_UPARROW:
+			return K_UPARROW;
+
+		case K_TAB:
+		case K_KP_DOWNARROW:
+		case K_DOWNARROW:
+			return K_DOWNARROW;
+
+		case K_KP_LEFTARROW:
+		case K_LEFTARROW:
+			return K_LEFTARROW;
+
+		case K_KP_RIGHTARROW:
+		case K_RIGHTARROW:
+			return K_RIGHTARROW;
+
+		case K_MOUSE1:
+		case K_MOUSE3:
+		case K_MOUSE4:
+		case K_MOUSE5:
+
+		case K_JOY1:
+		case K_JOY2:
+		case K_JOY3:
+		case K_JOY4:
+		case K_JOY5:
+		case K_JOY6:
+		case K_JOY7:
+		case K_JOY8:
+		case K_JOY9:
+		case K_JOY10:
+		case K_JOY11:
+		case K_JOY12:
+		case K_JOY13:
+		case K_JOY14:
+		case K_JOY15:
+		case K_JOY16:
+		case K_JOY17:
+		case K_JOY18:
+		case K_JOY19:
+		case K_JOY20:
+		case K_JOY21:
+		case K_JOY22:
+		case K_JOY23:
+		case K_JOY24:
+		case K_JOY25:
+		case K_JOY26:
+		case K_JOY27:
+		case K_JOY28:
+		case K_JOY29:
+		case K_JOY30:
+		case K_JOY31:
+
+		case K_AUX1:
+		case K_AUX2:
+		case K_AUX3:
+		case K_AUX4:
+		case K_AUX5:
+		case K_AUX6:
+		case K_AUX7:
+		case K_AUX8:
+		case K_AUX9:
+		case K_AUX10:
+		case K_AUX11:
+		case K_AUX12:
+		case K_AUX13:
+		case K_AUX14:
+		case K_AUX15:
+		case K_AUX16:
+		case K_AUX17:
+		case K_AUX18:
+		case K_AUX19:
+		case K_AUX20:
+		case K_AUX21:
+		case K_AUX22:
+		case K_AUX23:
+		case K_AUX24:
+		case K_AUX25:
+		case K_AUX26:
+		case K_AUX27:
+		case K_AUX28:
+		case K_AUX29:
+		case K_AUX30:
+		case K_AUX31:
+		case K_AUX32:
+
+		case K_KP_ENTER:
+		case K_ENTER:
+			return K_ENTER;
+
+		case K_MOUSE2:
+		case K_ESCAPE:
+		case K_GAMEPAD_BACK:
+			return K_ESCAPE;
+	}
+
+	return key;
 }
 
 //============================================================================
@@ -671,7 +784,6 @@ void Key_Bind_f (void)
 	}
 
 	b = Key_StringToKeynum (Cmd_Argv (1));
-
 	if (b == -1)
 	{
 		Com_Printf (S_COLOR_RED "\"%s\" isn't a valid key\n", Cmd_Argv (1));
@@ -936,7 +1048,7 @@ void Key_Event (int key, qboolean down, qboolean special)
 	// menu key is hardcoded, so the user can never unbind it
 	if (!cls.disable_screen)
 	{
-		if ((key == K_ESCAPE) || (key == K_GAMEPAD_START))
+		if ((key == K_ESCAPE) || (key == K_GAMEPAD_START) || (key == K_GAMEPAD_BACK))
 		{
 			if (!down)
 				return;

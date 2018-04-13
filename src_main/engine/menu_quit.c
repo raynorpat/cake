@@ -44,6 +44,8 @@ char *M_Quit_Key (menuframework_s *self, int key)
 		M_PopMenu();
 		break;
 
+	case K_ENTER:
+	case K_MOUSE1:
 	case 'Y':
 	case 'y':
 	case K_GAMEPAD_A:
