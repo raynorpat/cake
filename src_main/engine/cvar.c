@@ -104,6 +104,22 @@ char *Cvar_VariableString (char *var_name)
 	return var->string;
 }
 
+/*
+============
+Cvar_VariableStringBuffer
+============
+*/
+void Cvar_VariableStringBuffer(char *var_name, char *buffer, int bufsize)
+{
+	cvar_t *var;
+
+	var = Cvar_FindVar (var_name);
+
+	if (!var)
+		*buffer = 0;
+	else
+		Q_strlcpy (buffer, var->string, bufsize);
+}
 
 /*
 ============

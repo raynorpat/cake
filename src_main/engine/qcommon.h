@@ -435,6 +435,9 @@ int		Cvar_VariableInteger(char *var_name);
 char	*Cvar_VariableString (char *var_name);
 // returns an empty string if not defined
 
+void	Cvar_VariableStringBuffer (char *var_name, char *buffer, int bufsize);
+// puts an empty string in buffer if not defined
+
 void	Cvar_CommandCompletion(void(*callback)(char *s));
 // attempts to match a partial variable name for command line completion
 
