@@ -621,76 +621,6 @@ void Con_DrawNotify (void)
 
 /*
 ================
-Con_DrawDownloadBar
-
-download progress bar
-================
-*/
-void Con_DrawDownloadBar (short *text)
-{
-	char	dlbar[1024];
-	int		j, n, x, y, i;
-
-	// skip if we are not downloading any files
-	if (!(cls.downloadname[0] && (cls.download || cls.downloadposition)))
-		return;
-
-	if ((text = (short *)strrchr(cls.downloadname, '/')) != NULL)
-		text++;
-	else
-		text = (short *)cls.downloadname;
-	
-	// figure out width
-	x = con.linewidth - ((con.linewidth * 7) / 40);
-	y = x - strlen((char *)text) - 8;
-	i = con.linewidth / 3;
-
-	if (strlen((char *)text) > i)
-	{
-		y = x - i - 11;
-		memcpy(dlbar, text, i);
-		dlbar[i] = 0;
-		strcat(dlbar, "...");
-	}
-	else
-	{
-		strcpy(dlbar, (char *)text);
-	}
-
-	strcat(dlbar, ": ");
-	i = strlen(dlbar);
-	dlbar[i++] = '\x80';
-
-	// where's the dot go?
-	if (cls.downloadpercent == 0)
-		n = 0;
-	else
-		n = y * cls.downloadpercent / 100;
-	
-	for (j = 0; j < y; j++)
-	{
-		if (j == n)
-			dlbar[i++] = '\x83';
-		else
-			dlbar[i++] = '\x81';
-	}
-
-	dlbar[i++] = '\x82';
-	dlbar[i] = 0;
-
-	if (cls.download)
-		cls.downloadposition = ftell(cls.download);
-
-	sprintf(dlbar + i, " %02d%% (%.02f KB)", cls.downloadpercent, (float)cls.downloadposition / 1024.0);
-
-	// draw it
-	y = con.vislines - 12;
-	for (i = 0; i < strlen(dlbar); i++)
-		SCR_Text_PaintSingleChar (((i + 1) << 3), y, 0.2f, colorGreen, dlbar[i], 0, 0, UI_DROPSHADOW, &cls.consoleFont);
-}
-
-/*
-================
 Con_DrawConsole
 
 Draws the console with the solid background
@@ -823,9 +753,6 @@ void Con_DrawConsole (float frac)
 	}
 
 	RE_Draw_SetColor (NULL);
-
-	// draw the download bar
-	Con_DrawDownloadBar (text);
 
 	// draw the input prompt, user text, and cursor if desired
 	Con_DrawInput (color);

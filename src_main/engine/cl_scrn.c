@@ -882,6 +882,81 @@ void SCR_Loading_f (void)
 	SCR_BeginLoadingPlaque ();
 }
 
+/*
+================
+SCR_DrawDownloadBar
+
+download progress bar
+================
+*/
+void SCR_DrawDownloadBar (void)
+{
+	char	*text;
+	char	dlbar[1024];
+	int		j, n, x, y, i, w, h;
+
+	// skip if we are not downloading any files
+	if (!(cls.downloadname[0] && (cls.download || cls.downloadposition)))
+		return;
+
+	if ((text = strrchr(cls.downloadname, '/')) != NULL)
+		text++;
+	else
+		text = cls.downloadname;
+
+	// figure out width
+	x = 64;
+	y = x - strlen(text) - 16;
+	i = 26; // 26 characters ought to be enough
+
+	if (strlen(text) > i)
+	{
+		y = x - i - 11;
+		memcpy(dlbar, text, i);
+		dlbar[i] = 0;
+		strcat(dlbar, "...");
+	}
+	else
+	{
+		strcpy(dlbar, text);
+	}
+
+	strcat(dlbar, ": ");
+	i = strlen(dlbar);
+	dlbar[i++] = '_';
+
+	// where's the dot go?
+	if (cls.downloadpercent == 0)
+		n = 0;
+	else
+		n = y * cls.downloadpercent / 100;
+
+	for (j = 0; j < y; j++)
+	{
+		if (j == n)
+			dlbar[i++] = 'X';
+		else
+			dlbar[i++] = '_';
+	}
+
+	dlbar[i++] = '!';
+	dlbar[i] = 0;
+
+	if (cls.download)
+		cls.downloadposition = ftell(cls.download);
+
+	sprintf(dlbar + i, " %02d%% (%.02f KB)", cls.downloadpercent, (float)cls.downloadposition / 1024.0);
+
+	// draw the loading plaque
+	RE_Draw_GetPicSize(&w, &h, "loading");
+	SCR_DrawPic((SCREEN_WIDTH - w) / 2, (SCREEN_HEIGHT - h) / 2, w, h, "loading");
+
+	// draw the download bar
+	y = 470;
+	for (i = 0; i < strlen(dlbar); i++)
+		SCR_Text_PaintSingleChar(((i + 1) << 3) + 32, y, 0.2f, colorGreen, dlbar[i], 0, 0, 0, &cls.consoleBoldFont);
+}
+
 //===============================================================
 
 #define STAT_MINUS 10	// num frame for '-' stats digit
@@ -1544,9 +1619,11 @@ void SCR_UpdateScreen (void)
 
 			M_Draw ();
 
-			SCR_DrawConsole ();
-
 			SCR_DrawLoading ();
+
+			SCR_DrawDownloadBar ();
+
+			SCR_DrawConsole ();
 		}
 	}
 
