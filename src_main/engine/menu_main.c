@@ -18,6 +18,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
 */
 
+#include "q_gitbuild.h"
 #include "client.h"
 #include "qmenu.h"
 
@@ -154,6 +155,7 @@ void M_Main_Draw (menuframework_s *self)
 	SCR_Text_Paint (135, 470, 0.2f, colorGreen, "Quake II(c), 1996-1997, Id Software, Inc.  All Rights Reserved", 0, 0, UI_CENTER | UI_DROPSHADOW, &cls.consoleBoldFont);
 
 	SCR_Text_Paint (610, 480, 0.1f, colorRed, va("cake v%4.2f", VERSION), 0, 0, UI_CENTER | UI_DROPSHADOW, &cls.consoleBoldFont);
+	SCR_Text_Paint (0, 480, 0.1f, colorRed, va("git-%s", g_GIT_SHA1), 0, 0, UI_CENTER | UI_DROPSHADOW, &cls.consoleBoldFont);
 
 	Menu_Draw (self);
 }
