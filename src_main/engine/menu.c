@@ -554,6 +554,10 @@ void M_Draw_Cursor(void)
 	float	scale[3];
 	char	*cur_img = "ch1";
 
+	// if no mouse movement, get out of here
+	if (!m_mouse[0] && !m_mouse[1])
+		return;
+
 	scale[0] = viddef.width / SCREEN_WIDTH;
 	scale[1] = viddef.height / SCREEN_HEIGHT;
 	scale[2] = min (scale[0], scale[1]);
