@@ -602,8 +602,7 @@ int MenuList_HitTest (menulist_s *l, int mx, int my)
 		sbheight = height / 100 * (maxItems / numItems * 100);
 		sby = height / 100 * (l->prestep / numItems * 100);
 		width -= MLIST_SSIZE;
-		if(mx >= x + width && mx <= x + width + MLIST_SSIZE &&
-		   my >= y + sby+1 && my <= y + sby + sbheight)
+		if (mx >= x + width && mx <= x + width + MLIST_SSIZE && my >= y + sby+1 && my <= y + sby + sbheight)
 		   return -2;
 	}
 	else
@@ -615,9 +614,7 @@ int MenuList_HitTest (menulist_s *l, int mx, int my)
 	for (i = 0; i < maxItems && *n; i++, n++)
 	{
 		if (mx >= x && mx <= x + width && my >= y - 1 && my <= y + MLIST_SPACING)
-		{
 			return n - l->itemnames;
-		}
 
 		y += MLIST_SPACING;
 	}
@@ -876,23 +873,15 @@ void Field_GetSize(mrect_t *rc, menufield_s *f)
 	}
 
 	if (len)
-	{
 		rc->x = f->generic.x + f->generic.parent->x + LCOLUMN_OFFSET - len;
-	}
 	else
-	{
 		rc->x = f->generic.x + f->generic.parent->x + RCOLUMN_OFFSET;
-	}
 	rc->y = f->generic.y + f->generic.parent->y - 4;
 
 	if (len)
-	{
 		rc->width = 32 + len + ((f->visible_length + 2) << 3);
-	}
 	else
-	{
 		rc->width = (f->visible_length + 2) << 3;
-	}
 	rc->height = 16;
 }
 
@@ -920,23 +909,15 @@ void SpinControl_GetSize(mrect_t *rc, menulist_s *s)
 	}
 
 	if (len)
-	{
 		rc->x = s->generic.x + s->generic.parent->x + LCOLUMN_OFFSET - len;
-	}
 	else
-	{
 		rc->x = s->generic.x + s->generic.parent->x + RCOLUMN_OFFSET;
-	}
 	rc->y = s->generic.y + s->generic.parent->y;
 
 	if (len)
-	{
 		rc->width = 32 + len + (20 << 3);
-	}
 	else
-	{
 		rc->width = 20 << 3;
-	}
 	rc->height = 8;
 }
 
@@ -948,14 +929,9 @@ void Action_GetSize(mrect_t *rc, menuaction_s *a)
 	len <<= 3;
 
 	if (a->generic.flags & QMF_LEFT_JUSTIFY)
-	{
 		rc->x = a->generic.x + a->generic.parent->x + LCOLUMN_OFFSET;
-	}
 	else
-	{
 		rc->x = a->generic.x + a->generic.parent->x + LCOLUMN_OFFSET - len;
-	}
-
 	rc->y = a->generic.y + a->generic.parent->y;
 
 	rc->width = len + 8;

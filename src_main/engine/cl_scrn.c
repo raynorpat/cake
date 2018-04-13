@@ -50,8 +50,6 @@ cvar_t		*scr_graphheight;
 cvar_t		*scr_graphscale;
 cvar_t		*scr_graphshift;
 
-cvar_t		*cl_menuscale;
-
 char		*crosshairDotPic[NUM_CROSSHAIRS][MAX_QPATH];
 char		*crosshairCirclePic[NUM_CROSSHAIRS][MAX_QPATH];
 char		*crosshairCrossPic[NUM_CROSSHAIRS][MAX_QPATH];
@@ -673,8 +671,6 @@ void SCR_Init (void)
 	scr_graphheight = Cvar_Get ("graphheight", "32", 0);
 	scr_graphscale = Cvar_Get ("graphscale", "1", 0);
 	scr_graphshift = Cvar_Get ("graphshift", "0", 0);
-
-	cl_menuscale = Cvar_Get("cl_menuscale", "-1", CVAR_ARCHIVE);
 
 	// register our commands
 	Cmd_AddCommand ("loading", SCR_Loading_f);
@@ -1557,41 +1553,4 @@ void SCR_UpdateScreen (void)
 	SCR_DrawFPS ();
 
 	RE_EndFrame ();
-}
-
-static float SCR_GetScale(void)
-{
-	int i = round((float)viddef.width / 640);
-	int j = round((float)viddef.height / 480);
-
-	if (i > j)
-	{
-		i = j;
-	}
-	if (i < 1)
-	{
-		i = 1;
-	}
-
-	return i;
-}
-
-float SCR_GetMenuScale(void)
-{
-	float scale;
-
-	if (!scr_initialized)
-	{
-		scale = 1;
-	}
-	else if (cl_menuscale->value < 0)
-	{
-		scale = SCR_GetScale();
-	}
-	else
-	{
-		scale = cl_menuscale->value;
-	}
-
-	return scale;
 }

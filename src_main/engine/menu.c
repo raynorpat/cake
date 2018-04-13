@@ -89,9 +89,7 @@ void M_PushMenu ( menuframework_s *menu )
 	for (i = 0; i < m_menudepth; i++)
 	{
 		if( m_layers[i] == menu )
-		{
             break;
-		}
 	}
 
 	// menu was already opened further down the stack
@@ -239,21 +237,6 @@ char *Default_MenuKey (menuframework_s *m, int key)
 
 /*
 ================
-M_DrawCharacter
-
-Draws one solid graphics character
-cx and cy are in 320*240 coordinates, and will be centered on
-higher res screens.
-================
-*/
-void M_DrawCharacter (int cx, int cy, int num)
-{
-	float scale = SCR_GetMenuScale();
-	RE_Draw_Char (cx + ((int)(viddef.width - 320 * scale) >> 1), cy + ((int)(viddef.height - 240 * scale) >> 1), num, scale);
-}
-
-/*
-================
 M_Print
 
 Draws an entire string
@@ -262,7 +245,6 @@ Draws an entire string
 void M_Print (int x, int y, char *str)
 {
     int cx, cy;
-	float scale = SCR_GetMenuScale();
 
     cx = x;
     cy = y;
@@ -275,7 +257,7 @@ void M_Print (int x, int y, char *str)
         }
         else
         {
-			M_DrawCharacter (cx * scale, cy * scale, (*str) + 128);
+			SCR_DrawChar (cx, cy, (*str) + 128);
 			cx += 8;
 		}
         str++;
@@ -293,20 +275,19 @@ void M_DrawTextBox (int x, int y, int width, int lines)
 {
 	int		cx, cy;
 	int		n;
-	float	scale = SCR_GetMenuScale();
 
 	// draw left side
 	cx = x;
 	cy = y;
-	M_DrawCharacter (cx * scale, cy * scale, 1);
+	SCR_DrawChar (cx, cy, 1);
 
 	for (n = 0; n < lines; n++)
 	{
 		cy += 8;
-		M_DrawCharacter (cx * scale, cy * scale, 4);
+		SCR_DrawChar (cx, cy, 4);
 	}
 
-    M_DrawCharacter(cx * scale, cy * scale + 8 * scale, 7);
+	SCR_DrawChar (cx, cy + 8, 7);
 
 	// draw middle
 	cx += 8;
@@ -314,30 +295,30 @@ void M_DrawTextBox (int x, int y, int width, int lines)
 	while (width > 0)
 	{
 		cy = y;
-		M_DrawCharacter (cx * scale, cy * scale, 2);
+		SCR_DrawChar (cx, cy, 2);
 
 		for (n = 0; n < lines; n++)
 		{
 			cy += 8;
-			M_DrawCharacter (cx * scale, cy * scale, 10);
+			SCR_DrawChar (cx, cy, 10);
 		}
 
-        M_DrawCharacter(cx * scale, cy *scale + 8 * scale, 8);
+		SCR_DrawChar (cx, cy + 8, 8);
 		width -= 1;
 		cx += 8;
 	}
 
 	// draw right side
 	cy = y;
-	M_DrawCharacter (cx * scale, cy * scale, 3);
+	SCR_DrawChar (cx, cy, 3);
 
 	for (n = 0; n < lines; n++)
 	{
 		cy += 8;
-		M_DrawCharacter (cx * scale, cy * scale, 6);
+		SCR_DrawChar (cx, cy, 6);
 	}
 
-    M_DrawCharacter(cx * scale, cy * scale + 8 * scale, 9);
+    SCR_DrawChar (cx, cy + 8, 9);
 }
 
 /*
@@ -357,9 +338,7 @@ void M_Popup(void)
     char *str;
 
     if (!m_popup_string)
-    {
         return;
-    }
 
     if (m_popup_endtime && m_popup_endtime < cls.realtime)
     {
@@ -379,25 +358,28 @@ void M_Popup(void)
         {
             n++;
             if (n > width)
-            {
                 width = n;
-            }
         }
     }
-    if (n)
-    {
+
+	if (n)
         lines++;
-    }
 
     if (width)
     {
         width += 2;
 
-        x = (320 - (width + 2) * 8) / 2;
-        y = (240 - (lines + 2) * 8) / 3;
+        x = (SCREEN_WIDTH - (width + 2) * 8) / 2;
+        y = (SCREEN_HEIGHT - (lines + 2) * 8) / 3;
 
-        M_DrawTextBox(x, y, width, lines);
-        M_Print(x + 16, y + 8, m_popup_string);
+		// fade the screen
+		RE_Draw_FadeScreen ();
+
+		// then draw the box
+        M_DrawTextBox (x, y, width, lines);
+
+		// then finally the text on top
+        M_Print (x + 16, y + 8, m_popup_string);
     }
 }
 
@@ -412,7 +394,7 @@ void M_Banner(char *name)
 {
 	int w, h;
 
-	RE_Draw_GetPicSize(&w, &h, name);
+	RE_Draw_GetPicSize (&w, &h, name);
 	SCR_DrawPic (SCREEN_WIDTH / 2 - w / 2, SCREEN_HEIGHT / 2 - 110, w, h, name);
 }
 

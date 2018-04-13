@@ -364,8 +364,6 @@ extern	cvar_t	*cl_aviFrameRate;
 
 extern	cvar_t	*cl_vwep;
 
-extern  cvar_t	*cl_menuscale;
-
 extern	cvar_t	*cl_http_downloads;
 extern	cvar_t	*cl_http_filelists;
 extern	cvar_t	*cl_http_proxy;
