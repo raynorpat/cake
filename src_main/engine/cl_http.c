@@ -22,15 +22,20 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #include "client.h"
 
 /*
+
 HTTP downloading is used if the server provides a content
 server URL in the connect message. Any missing content the
 client needs will then use the HTTP server instead of auto
-downloading via UDP. CURL is used to enable multiple files
-to be downloaded in parallel to improve performance on high
-latency links when small files such as textures are needed.
+downloading via UDP.
+
+CURL is used to enable multiple files to be downloaded in
+parallel to improve performance on high latency links when
+small files such as textures are needed.
+
 Since CURL natively supports gzip content encoding, any files
 on the HTTP server should ideally be gzipped to conserve
 bandwidth.
+
 */
 
 cvar_t	*cl_http_downloads;
@@ -550,13 +555,15 @@ static void CL_CheckAndQueueDownload (char *path)
 
 	Q_strlwr (ext);
 
-	if (!strcmp (ext, "pak"))
+	if (!strcmp (ext, "pak") || !strcmp(ext, "pkz"))
 	{
-		Com_Printf ("NOTICE: Filelist is requesting a .pak file (%s)\n", path);
+		Com_Printf (S_COLOR_YELLOW "NOTICE: Filelist is requesting a pak file (%s)\n", path);
 		pak = true;
 	}
 	else
+	{
 		pak = false;
+	}
 
 	if (!pak && strcmp (ext, "pcx") && strcmp (ext, "wal") && strcmp (ext, "wav") && strcmp (ext, "md2") &&
 		strcmp (ext, "sp2") && strcmp (ext, "tga") && strcmp (ext, "png") && strcmp (ext, "jpg") &&
@@ -855,7 +862,7 @@ static void CL_FinishHTTPDownload (void)
 				if (responseCode == 404)
 				{
 					i = strlen (dl->queueEntry->quakePath);
-					if (!strcmp (dl->queueEntry->quakePath + i - 4, ".pak"))
+					if (!strcmp (dl->queueEntry->quakePath + i - 4, ".pak") || !strcmp(dl->queueEntry->quakePath + i - 4, ".pkz"))
 						downloading_pak = false;
 
 					if (isFile)
@@ -898,7 +905,7 @@ static void CL_FinishHTTPDownload (void)
 				continue;
 			default:
 				i = strlen (dl->queueEntry->quakePath);
-				if (!strcmp (dl->queueEntry->quakePath + i - 4, ".pak"))
+				if (!strcmp (dl->queueEntry->quakePath + i - 4, ".pak") || !strcmp(dl->queueEntry->quakePath + i - 4, ".pkz"))
 					downloading_pak = false;
 				if (isFile)
 					remove (dl->filePath);
@@ -917,7 +924,7 @@ static void CL_FinishHTTPDownload (void)
 
 			// a pak file is very special...
 			i = strlen (tempName);
-			if (!strcmp (tempName + i - 4, ".pak"))
+			if (!strcmp (tempName + i - 4, ".pak") || !strcmp(tempName + i - 4, ".pkz"))
 			{
 				CL_ReVerifyHTTPQueue ();
 				downloading_pak = false;
@@ -1004,7 +1011,7 @@ static void CL_StartNextHTTPDownload (void)
 
 			// HACK: for pak file single downloading
 			len = strlen (q->quakePath);
-			if (len > 4 && !Q_stricmp (q->quakePath + len - 4, ".pak"))
+			if (len > 4 && (!Q_stricmp (q->quakePath + len - 4, ".pak") || !Q_stricmp(q->quakePath + len - 4, ".pkz")))
 				downloading_pak = true;
 
 			break;
@@ -1055,4 +1062,3 @@ void CL_RunHTTPDownloads (void)
 	if (pendingCount && abortDownloads == HTTPDL_ABORT_NONE && !downloading_pak && handleCount < cl_http_max_connections->integer)
 		CL_StartNextHTTPDownload ();
 }
-
