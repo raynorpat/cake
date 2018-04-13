@@ -375,7 +375,7 @@ void GL_FreeUnusedImages (void);
 
 void R_InitFreeType (void);
 void R_DoneFreeType (void);
-void RE_RegisterFont (char *fontName, int pointSize, fontInfo_t * font);
+void RE_GL_RegisterFont (char *fontName, int pointSize, fontInfo_t * font);
 
 typedef struct
 {

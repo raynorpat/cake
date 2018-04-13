@@ -203,6 +203,7 @@ extern struct image_s * (*RE_RegisterSkin)(char *name);
 extern struct image_s * (*RE_Draw_RegisterPic)(char *name);
 extern void(*RE_SetSky)(char *name, float rotate, vec3_t axis);
 extern void(*RE_SetFog)(vec4_t fog);
+extern void(*RE_RegisterFont)(char *fontName, int pointSize, fontInfo_t *font);
 extern void(*RE_EndRegistration)(void);
 
 #define REF_API_UNDETERMINED	1

@@ -1701,8 +1701,8 @@ void CL_InitLocal (void)
 	Cmd_AddCommand ("weapprev", NULL);
 
 	// true type fonts
-	RE_RegisterFont("fonts/VeraMono.ttf", 24, &cls.consoleFont);
-	RE_RegisterFont("fonts/VeraMoBd.ttf", 24, &cls.consoleBoldFont);
+	RE_RegisterFont ("fonts/VeraMono.ttf", 24, &cls.consoleFont);
+	RE_RegisterFont ("fonts/VeraMoBd.ttf", 24, &cls.consoleBoldFont);
 }
 
 /*
