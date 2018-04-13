@@ -789,7 +789,8 @@ void *Z_TagMalloc (int size, int tag);
 void Z_FreeTags (int tag);
 
 void Qcommon_ExecConfigs (qboolean addEarlyCmds);
-char* Qcommon_GetInitialGame (void);
+
+extern char userGivenGame[MAX_QPATH]; // HACK: for 'game' cmd
 
 void Qcommon_Init (int argc, char **argv);
 void Qcommon_Frame (int msec);

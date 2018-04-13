@@ -688,8 +688,7 @@ void CL_Disconnect (void)
 	CL_WriteConfiguration ();
 	
 	// we disconnected, so revert to default game/mod (might have been a different mod on MP server)
-	char* game = Qcommon_GetInitialGame ();
-	Cvar_Set ("game", (char*)game);
+	Cvar_Set ("game", userGivenGame);
 }
 
 void CL_Disconnect_f (void)
@@ -708,8 +707,8 @@ drop to full console
 */
 void CL_Changing_f (void)
 {
-	//ZOID
-	//if we are downloading, we don't change! This so we don't suddenly stop downloading a map
+	// if we are downloading, we don't change!
+	// this is so we don't suddenly stop downloading a map
 	if (cls.download)
 		return;
 

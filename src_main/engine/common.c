@@ -1462,6 +1462,11 @@ float	crand (void)
 	return (rand () & 32767) * (2.0 / 32767) - 1;
 }
 
+/*
+=================
+Qcommon_ExecConfigs
+=================
+*/
 void Qcommon_ExecConfigs (qboolean gameStartUp)
 {
 	Cbuf_AddText ("exec default.cfg\n");
@@ -1475,11 +1480,8 @@ void Qcommon_ExecConfigs (qboolean gameStartUp)
 	Cbuf_Execute ();
 }
 
-static char initialGame[MAX_QPATH];
-char* Qcommon_GetInitialGame(void)
-{
-	return initialGame;
-}
+// game given by user
+char userGivenGame[MAX_QPATH];
 
 void Key_Init (void);
 void SCR_EndLoadingPlaque (void);
@@ -1524,7 +1526,7 @@ void Qcommon_Init (int argc, char **argv)
 		char* game = "";
 		if (gameCvar->string && gameCvar->string[0])
 			game = gameCvar->string;
-		Q_strlcpy(initialGame, game, sizeof(initialGame));
+		Q_strlcpy (userGivenGame, game, sizeof(userGivenGame));
 	}
 
 	FS_InitFilesystem ();
