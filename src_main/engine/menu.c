@@ -370,7 +370,7 @@ void M_Popup(void)
         width += 2;
 
         x = (SCREEN_WIDTH - (width + 2) * 8) / 2;
-        y = (SCREEN_HEIGHT - (lines + 2) * 8) / 3;
+        y = (SCREEN_HEIGHT - (lines + 2) * 8) / 3 + 64;
 
 		// fade the screen
 		RE_Draw_FadeScreen ();
