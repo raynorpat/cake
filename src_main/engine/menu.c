@@ -544,6 +544,31 @@ void M_MouseMove (int mx, int my)
 
 /*
 =================
+M_Draw_Cursor
+=================
+*/
+void M_Draw_Cursor(void)
+{
+	int		w, h;
+	float	ofs_x, ofs_y, ofs_scale = 2.5f;
+	float	scale[3];
+	char	*cur_img = "ch1";
+
+	scale[0] = viddef.width / SCREEN_WIDTH;
+	scale[1] = viddef.height / SCREEN_HEIGHT;
+	scale[2] = min (scale[0], scale[1]);
+
+	// get sizing vars
+	RE_Draw_GetPicSize (&w, &h, cur_img);
+	ofs_scale *= scale[2];
+	ofs_x = (scale[2] * w) * ofs_scale * 0.5f;
+	ofs_y = (scale[2] * h) * ofs_scale * 0.5f;
+
+	RE_Draw_Pic (m_mouse[0] - ofs_x, m_mouse[1] - ofs_y, cur_img, ofs_scale);
+}
+
+/*
+=================
 M_Draw
 =================
 */
@@ -561,12 +586,12 @@ void M_Draw (void)
 	if (SCR_GetCinematicTime() > 0 || (cls.state == ca_disconnected || cls.state == ca_connecting))
 	{
 		// if cinematic or in full screen console, all black please
-		RE_Draw_Fill(0, 0, viddef.width, viddef.height, 0);
+		RE_Draw_Fill (0, 0, viddef.width, viddef.height, 0);
 	}
 	else
 	{
 		// draw post effect when ingame or in attract loop
-		RE_Draw_FadeScreen();
+		RE_Draw_FadeScreen ();
 	}
 
 	// see if the mouse is hitting anything
@@ -588,11 +613,10 @@ void M_Draw (void)
 		Menu_Draw(m_active);
 
 	// draw the mouse cursor
-	RE_Draw_Pic (m_mouse[0], m_mouse[1], "ch1", SCR_GetMenuScale());
+	M_Draw_Cursor ();
 
 	// delay playing the enter sound until after the
-	// menu has been drawn, to avoid delay while
-	// caching images
+	// menu has been drawn, to avoid delay while caching images
 	if (m_entersound)
 	{
 		S_StartLocalSound (menu_in_sound);
