@@ -51,9 +51,15 @@ void	SCR_Text_PaintSingleChar (float x, float y, float scale, vec4_t color, int 
 extern	int			sb_lines;
 
 extern	cvar_t		*crosshair;
+extern	cvar_t		*crosshairDot;
+extern	cvar_t		*crosshairCircle;
+extern	cvar_t		*crosshairCross;
 
-extern	char		crosshair_pic[MAX_QPATH];
-extern	int			crosshair_width, crosshair_height;
+#define	NUM_CROSSHAIRS 10
+
+extern char	*crosshairDotPic[NUM_CROSSHAIRS][MAX_QPATH];
+extern char	*crosshairCirclePic[NUM_CROSSHAIRS][MAX_QPATH];
+extern char	*crosshairCrossPic[NUM_CROSSHAIRS][MAX_QPATH];
 
 //
 // cl_cin.c

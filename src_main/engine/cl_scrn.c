@@ -52,8 +52,9 @@ cvar_t		*scr_graphshift;
 
 cvar_t		*cl_menuscale;
 
-char		crosshair_pic[MAX_QPATH];
-int			crosshair_width, crosshair_height;
+char		*crosshairDotPic[NUM_CROSSHAIRS][MAX_QPATH];
+char		*crosshairCirclePic[NUM_CROSSHAIRS][MAX_QPATH];
+char		*crosshairCrossPic[NUM_CROSSHAIRS][MAX_QPATH];
 
 void SCR_Loading_f (void);
 
@@ -1017,22 +1018,27 @@ void SCR_TouchPics (void)
 {
 	int		i, j;
 
+	// cache status bar
 	for (i = 0; i < 2; i++)
 	{
 		for (j = 0; j < 11; j++)
 			RE_Draw_RegisterPic (sb_nums[i][j]);
 	}
 
+	// cache crosshairs
 	if (crosshair->value)
 	{
-		if (crosshair->value > 3 || crosshair->value < 0)
-			crosshair->value = 3;
+		for (i = 0; i < NUM_CROSSHAIRS; i++)
+		{
+			Com_sprintf((char *)crosshairDotPic[i], sizeof(crosshairDotPic[i]), "pics/crosshairs/dot%i.png", i + 1);
+			RE_Draw_RegisterPic ((char *)crosshairDotPic[i]);
 
-		Com_sprintf (crosshair_pic, sizeof (crosshair_pic), "ch%i", (int) (crosshair->value));
-		RE_Draw_GetPicSize (&crosshair_width, &crosshair_height, crosshair_pic);
+			Com_sprintf((char *)crosshairCirclePic[i], sizeof(crosshairCirclePic[i]), "pics/crosshairs/circle%i.png", i + 1);
+			RE_Draw_RegisterPic ((char *)crosshairCirclePic[i]);
 
-		if (!crosshair_width)
-			crosshair_pic[0] = 0;
+			Com_sprintf((char *)crosshairCrossPic[i], sizeof(crosshairCrossPic[i]), "pics/crosshairs/cross%i.png", i + 1);
+			RE_Draw_RegisterPic ((char *)crosshairCrossPic[i]);
+		}
 	}
 }
 
