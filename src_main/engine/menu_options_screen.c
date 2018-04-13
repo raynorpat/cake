@@ -30,6 +30,9 @@ SCREEN OPTIONS MENU
 
 static menuframework_s	s_screens_menu;
 static menulist_s		s_options_crosshair_box;
+static menuslider_s		s_options_screen_crosshairdot_slider;
+static menuslider_s		s_options_screen_crosshaircircle_slider;
+static menuslider_s		s_options_screen_crosshaircross_slider;
 static menuslider_s		s_options_screen_crosshairscale_slider;
 
 static void CrosshairFunc (void *unused)
@@ -39,15 +42,39 @@ static void CrosshairFunc (void *unused)
 
 static void CrosshairSizeFunc(void *unused)
 {
-	Cvar_SetValue("crosshairSize", s_options_screen_crosshairscale_slider.curvalue);
+	Cvar_SetValue("crosshairSize", s_options_screen_crosshairscale_slider.curvalue * 2);
+}
+
+static void CrosshairDotFunc(void *unused)
+{
+	Cvar_SetValue("crosshairDot", s_options_screen_crosshairdot_slider.curvalue);
+}
+
+static void CrosshairCircleFunc(void *unused)
+{
+	Cvar_SetValue("crosshairCircle", s_options_screen_crosshaircircle_slider.curvalue);
+}
+
+static void CrosshairCrossFunc(void *unused)
+{
+	Cvar_SetValue("crosshairCross", s_options_screen_crosshaircross_slider.curvalue);
 }
 
 static void ScreenSetMenuItemValues (void)
 {
-	Cvar_SetValue ("crosshair", Q_Clamp (0, 3, crosshair->value));
+	Cvar_SetValue ("crosshair", Q_Clamp (0, 1, crosshair->value));
 	s_options_crosshair_box.curvalue = crosshair->value;
 
-	Cvar_SetValue("crosshairSize", Q_Clamp (1, 15, Cvar_VariableValue("crosshairSize")));
+	Cvar_SetValue("crosshairDot", Q_Clamp(0, 10, Cvar_VariableValue("crosshairDot")));
+	s_options_screen_crosshairdot_slider.curvalue = Cvar_VariableValue("crosshairDot");
+
+	Cvar_SetValue("crosshairCircle", Q_Clamp(0, 10, Cvar_VariableValue("crosshairCircle")));
+	s_options_screen_crosshaircircle_slider.curvalue = Cvar_VariableValue("crosshairCircle");
+
+	Cvar_SetValue("crosshairCross", Q_Clamp(0, 10, Cvar_VariableValue("crosshairCross")));
+	s_options_screen_crosshaircross_slider.curvalue = Cvar_VariableValue("crosshairCross");
+
+	Cvar_SetValue("crosshairSize", Q_Clamp(8, 32, Cvar_VariableValue("crosshairSize")));
 	s_options_screen_crosshairscale_slider.curvalue = Cvar_VariableValue("crosshairSize");
 }
 
@@ -66,17 +93,7 @@ void Screen_MenuInit (void)
 		"no",
 		"yes",
 		0
-	};
-
-	static const char *crosshair_names[] =
-	{
-		"none",
-		"cross",
-		"dot",
-		"angle",
-		0
-	};
-	
+	};	
 	float y = 0;
 
 	// configure controls menu and menu items
@@ -90,16 +107,43 @@ void Screen_MenuInit (void)
 	s_options_crosshair_box.generic.y = y += MENU_LINE_SIZE;
 	s_options_crosshair_box.generic.name = "crosshair";
 	s_options_crosshair_box.generic.callback = CrosshairFunc;
-	s_options_crosshair_box.itemnames = crosshair_names;
-	s_options_crosshair_box.generic.statusbar = "changes crosshair";
+	s_options_crosshair_box.itemnames = yesno_names;
+	s_options_crosshair_box.generic.statusbar = "enables or disables crosshair";
+
+	s_options_screen_crosshairdot_slider.generic.type = MTYPE_SLIDER;
+	s_options_screen_crosshairdot_slider.generic.x = 0;
+	s_options_screen_crosshairdot_slider.generic.y = y += MENU_LINE_SIZE;
+	s_options_screen_crosshairdot_slider.generic.name = "crosshair dot";
+	s_options_screen_crosshairdot_slider.generic.callback = CrosshairDotFunc;
+	s_options_screen_crosshairdot_slider.minvalue = 0;
+	s_options_screen_crosshairdot_slider.maxvalue = 10;
+	s_options_screen_crosshairdot_slider.generic.statusbar = "changes the crosshair dot";
+
+	s_options_screen_crosshaircircle_slider.generic.type = MTYPE_SLIDER;
+	s_options_screen_crosshaircircle_slider.generic.x = 0;
+	s_options_screen_crosshaircircle_slider.generic.y = y += MENU_LINE_SIZE;
+	s_options_screen_crosshaircircle_slider.generic.name = "crosshair circle";
+	s_options_screen_crosshaircircle_slider.generic.callback = CrosshairCircleFunc;
+	s_options_screen_crosshaircircle_slider.minvalue = 0;
+	s_options_screen_crosshaircircle_slider.maxvalue = 10;
+	s_options_screen_crosshaircircle_slider.generic.statusbar = "changes the crosshair circle";
+
+	s_options_screen_crosshaircross_slider.generic.type = MTYPE_SLIDER;
+	s_options_screen_crosshaircross_slider.generic.x = 0;
+	s_options_screen_crosshaircross_slider.generic.y = y += MENU_LINE_SIZE;
+	s_options_screen_crosshaircross_slider.generic.name = "crosshair cross";
+	s_options_screen_crosshaircross_slider.generic.callback = CrosshairCrossFunc;
+	s_options_screen_crosshaircross_slider.minvalue = 0;
+	s_options_screen_crosshaircross_slider.maxvalue = 10;
+	s_options_screen_crosshaircross_slider.generic.statusbar = "changes the crosshair cross";
 
 	s_options_screen_crosshairscale_slider.generic.type = MTYPE_SLIDER;
 	s_options_screen_crosshairscale_slider.generic.x = 0;
 	s_options_screen_crosshairscale_slider.generic.y = y += MENU_LINE_SIZE;
 	s_options_screen_crosshairscale_slider.generic.name = "crosshair scale";
 	s_options_screen_crosshairscale_slider.generic.callback = CrosshairSizeFunc;
-	s_options_screen_crosshairscale_slider.minvalue = 1;
-	s_options_screen_crosshairscale_slider.maxvalue = 15;
+	s_options_screen_crosshairscale_slider.minvalue = 8;
+	s_options_screen_crosshairscale_slider.maxvalue = 32;
 	s_options_screen_crosshairscale_slider.generic.statusbar = "changes size of crosshair";
 
 	ScreenSetMenuItemValues ();
@@ -108,6 +152,9 @@ void Screen_MenuInit (void)
 	s_screens_menu.key = NULL;
 
 	Menu_AddItem (&s_screens_menu, (void *) &s_options_crosshair_box);
+	Menu_AddItem (&s_screens_menu, (void *) &s_options_screen_crosshairdot_slider);
+	Menu_AddItem (&s_screens_menu, (void *) &s_options_screen_crosshaircircle_slider);
+	Menu_AddItem (&s_screens_menu, (void *) &s_options_screen_crosshaircross_slider);
 	Menu_AddItem (&s_screens_menu, (void *) &s_options_screen_crosshairscale_slider);
 }
 
