@@ -808,17 +808,17 @@ void Slider_Draw (menuslider_s *s)
 		s->range = 1;
 
 	// draw start of slider
-	SCR_DrawChar (s->generic.x + s->generic.parent->x, s->generic.y + s->generic.parent->y, 128);
+	SCR_DrawChar (s->generic.x + s->generic.parent->x, s->generic.y + s->generic.parent->y - 4, 128);
 
 	// draw length of slider
 	for (i = 0; i < SLIDER_RANGE; i++)
-		SCR_DrawChar (s->generic.x + i * 8 + s->generic.parent->x + 8, s->generic.y + s->generic.parent->y, 129);
+		SCR_DrawChar (s->generic.x + i * 8 + s->generic.parent->x + 8, s->generic.y + s->generic.parent->y - 4, 129);
 
 	// draw slider
-	SCR_DrawChar (s->generic.x + i * 8 + s->generic.parent->x + 8, s->generic.y + s->generic.parent->y, 130);
+	SCR_DrawChar (s->generic.x + i * 8 + s->generic.parent->x + 8, s->generic.y + s->generic.parent->y - 4, 130);
 	
 	// draw end of slider
-	SCR_DrawChar ((int)(8 + s->generic.parent->x + s->generic.x + (SLIDER_RANGE - 1) * 8 * s->range), s->generic.y + s->generic.parent->y, 131);
+	SCR_DrawChar ((int)(8 + s->generic.parent->x + s->generic.x + (SLIDER_RANGE - 1) * 8 * s->range), s->generic.y + s->generic.parent->y - 4, 131);
 }
 
 void SpinControl_DoSlide (menulist_s *s, int dir)
