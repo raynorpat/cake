@@ -1469,14 +1469,20 @@ Qcommon_ExecConfigs
 */
 void Qcommon_ExecConfigs (qboolean gameStartUp)
 {
-	Cbuf_AddText ("exec default.cfg\n");
+	// only when the game is first started we execute defaults.cfg
+	if (gameStartUp)
+		Cbuf_AddText ("exec defaults.cfg\n");
+
+	// add in the game/mod config
 	Cbuf_AddText ("exec config.cfg\n");
+
 	if (gameStartUp)
 	{
 		// only when the game is first started we execute autoexec.cfg and set the cvars from commandline
 		Cbuf_AddText ("exec autoexec.cfg\n");
 		Cbuf_AddEarlyCommands (true);
 	}
+
 	Cbuf_Execute ();
 }
 
@@ -1485,7 +1491,6 @@ char userGivenGame[MAX_QPATH];
 
 void Key_Init (void);
 void SCR_EndLoadingPlaque (void);
-
 
 /*
 =================
@@ -1576,7 +1581,8 @@ void Qcommon_Init (int argc, char **argv)
 		// if the user didn't give any commands, run default action
 		if (!dedicated->value)
 			Cbuf_AddText ("d1\n");
-		else Cbuf_AddText ("dedicated_start\n");
+		else
+			Cbuf_AddText ("dedicated_start\n");
 
 		Cbuf_Execute ();
 	}
