@@ -638,7 +638,7 @@ FILESYSTEM
 ==============================================================
 */
 
-extern int file_from_pak;
+extern qboolean file_from_pak;
 
 typedef int	fileHandle_t;
 
@@ -681,7 +681,7 @@ char        **FS_ListFiles2(char *findname, int *numfiles);
 void		FS_FreeFileList(char **list, int nfiles);
 
 void		FS_InitFilesystem(void);
-void		FS_SetGamedir(char *dir);
+void		FS_BuildGameSpecificSearchPath(char *dir);
 char		*FS_Gamedir(void);
 char        *FS_NextPath(char *prevpath);
 

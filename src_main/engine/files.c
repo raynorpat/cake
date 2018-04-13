@@ -109,20 +109,22 @@ fsPackTypes_t	fs_packtypes[] = {
 };
 
 char			fs_gamedir[MAX_OSPATH];
-static char		fs_currentGame[MAX_QPATH];
-
-static char		fs_fileInPath[MAX_OSPATH];
-static qboolean	fs_fileInPack;
-
-// Set by FS_FOpenFile.
-int				file_from_pak = 0;
-int				file_from_pkz = 0;
-char			file_from_pkz_name[MAX_QPATH];
+qboolean		file_from_pak;
 
 cvar_t         *fs_basedir;
 cvar_t         *fs_cddir;
 cvar_t         *fs_gamedirvar;
 cvar_t         *fs_debug;
+
+// raw search path, the actual search path is built from this one
+typedef struct fsRawPath_s
+{
+	char		path[MAX_OSPATH];
+	qboolean	create;
+	qboolean	screenshot;
+	struct fsRawPath_s *next;
+} fsRawPath_t;
+fsRawPath_t		*fs_rawPath;
 
 fsHandle_t     *FS_GetFileByHandle(fileHandle_t f);
 
@@ -332,9 +334,7 @@ int FS_FOpenFileRead(fsHandle_t * handle, qboolean gamedirOnly)
 	fsSearchPath_t *search;
 	fsPack_t       *pack;
 
-	// HACK: for autodownloads
-	file_from_pak = 0;
-	file_from_pkz = 0;
+	file_from_pak = false;
 
 	// search through the path, one element at a time.
 	for (search = fs_searchPaths; search; search = search->next)
@@ -342,6 +342,14 @@ int FS_FOpenFileRead(fsHandle_t * handle, qboolean gamedirOnly)
 		if (gamedirOnly)
 		{
 			if (strstr(search->path, FS_Gamedir()) == NULL)
+				continue;
+		}
+
+		// HACK: for maps.lst and players/*
+		// TODO: A flag to ignore paks would be better
+		if ((strcmp(fs_gamedirvar->string, "") == 0) && search->pack)
+		{
+			if ((strcmp(handle->name, "maps.lst") == 0) || (strncmp(handle->name, "players/", 8) == 0))
 				continue;
 		}
 
@@ -354,16 +362,13 @@ int FS_FOpenFileRead(fsHandle_t * handle, qboolean gamedirOnly)
 				if (Q_stricmp(pack->files[i].name, handle->name) == 0)
 				{
 					// found it
-					COM_FilePath(pack->name, fs_fileInPath, sizeof(fs_fileInPath));
-					fs_fileInPack = true;
-
 					if (fs_debug->value)
 						Com_Printf("FS_FOpenFileRead: '%s' (found in '%s').\n",	handle->name, pack->name);
 
 					if (pack->pak)
 					{
 						// PAK
-						file_from_pak = 1;
+						file_from_pak = true;
 						handle->file = fopen(pack->name, "rb");
 						if (handle->file)
 						{
@@ -374,8 +379,7 @@ int FS_FOpenFileRead(fsHandle_t * handle, qboolean gamedirOnly)
 					else if (pack->pkz)
 					{
 						// PKZ
-						file_from_pkz = 1;
-						strncpy(file_from_pkz_name, strrchr(pack->name, '/') + 1, sizeof(file_from_pkz_name));
+						file_from_pak = true;
 						handle->zip = unzOpen(pack->name);
 						if (handle->zip)
 						{
@@ -410,9 +414,6 @@ int FS_FOpenFileRead(fsHandle_t * handle, qboolean gamedirOnly)
 			if (handle->file)
 			{
 				// found it
-				strncpy(fs_fileInPath, search->path, sizeof(fs_fileInPath));
-				fs_fileInPack = false;
-
 				if (fs_debug->value)
 					Com_Printf("FS_FOpenFileRead: '%s' (found in '%s').\n",	handle->name, search->path);
 
@@ -422,9 +423,6 @@ int FS_FOpenFileRead(fsHandle_t * handle, qboolean gamedirOnly)
 	}
 
 	// not found
-	fs_fileInPath[0] = 0;
-	fs_fileInPack = false;
-
 	if (fs_debug->value)
 		Com_Printf(S_COLOR_RED "FS_FOpenFileRead: couldn't find '%s'.\n", handle->name);
 
@@ -1037,154 +1035,6 @@ fsPack_t *FS_LoadPKZ(const char *packPath)
 
 /*
 ================
-FS_AddGameDirectory
-
-Sets fs_gamedir, adds the directory to the head of the path,
-then loads and adds pak1.pak pak2.pak ...
-================
-*/
-void FS_AddGameDirectory (char *dir)
-{
-	char			**list;
-	char			path[MAX_OSPATH];
-	int				i, j;
-	int				nfiles;
-	fsSearchPath_t	*search;
-	fsPack_t		*pack = NULL;
-
-	// set game directory
-	strncpy(fs_gamedir, dir, sizeof(fs_gamedir));
-
-	// create directory if it does not exist
-	FS_CreatePath(fs_gamedir);
-
-	// add the directory to the search path
-	search = Z_Malloc(sizeof(fsSearchPath_t));
-	strncpy(search->path, dir, sizeof(search->path));
-	search->next = fs_searchPaths;
-	fs_searchPaths = search;
-
-	// add numbered pack files in sequence
-	for (i = 0; i < sizeof(fs_packtypes) / sizeof(fs_packtypes[0]); i++)
-	{
-		for (j = 0; j < MAX_PAKS; j++)
-		{
-			Com_sprintf(path, sizeof(path), "%s/pak%d.%s", dir, j, fs_packtypes[i].suffix);
-
-			switch (fs_packtypes[i].format)
-			{
-				case PAK:
-					pack = FS_LoadPAK(path);
-					break;
-				case PKZ:
-					pack = FS_LoadPKZ(path);
-					break;
-			}
-
-			if (pack == NULL)
-				continue;
-			search = Z_Malloc(sizeof(fsSearchPath_t));
-			search->pack = pack;
-			search->next = fs_searchPaths;
-			fs_searchPaths = search;
-		}
-	}
-
-	// add non-numbered pack files
-	for (i = 0; i < sizeof(fs_packtypes) / sizeof(fs_packtypes[0]); i++)
-	{
-		Com_sprintf(path, sizeof(path), "%s/*.%s", dir, fs_packtypes[i].suffix);
-
-		if ((list = FS_ListFiles(path, &nfiles)) == NULL)
-			continue;
-
-		Com_sprintf(path, sizeof(path), "%s/pak*.%s", dir, fs_packtypes[i].suffix);
-
-		for (j = 0; j < nfiles - 1; j++)
-		{
-			// skip all packs starting with "pak"
-			if (glob_match(path, list[j]))
-				continue;
-
-			switch (fs_packtypes[i].format)
-			{
-				case PAK:
-					pack = FS_LoadPAK(list[j]);
-					break;
-				case PKZ:
-					pack = FS_LoadPKZ(list[j]);
-					break;
-			}
-
-			if (pack == NULL)
-				continue;
-			search = Z_Malloc(sizeof(fsSearchPath_t));
-			search->pack = pack;
-			search->next = fs_searchPaths;
-			fs_searchPaths = search;
-		}
-
-		FS_FreeFileList(list, nfiles);
-	}
-}
-
-/*
-================
-FS_AddHomeAsGameDirectory
-
-Use ~/.cake/dir as fs_gamedir.
-================
-*/
-void FS_AddHomeAsGameDirectory(char *dir)
-{
-	char *home;
-	char gdir[MAX_OSPATH];
-	size_t len;
-
-	home = Sys_GetHomeDir();
-	if (home == NULL)
-		return;
-
-	len = snprintf(gdir, sizeof(gdir), "%s%s/", home, dir);
-	FS_CreatePath(gdir);
-	if ((len > 0) && (len < sizeof(gdir)) && (gdir[len - 1] == '/'))
-		gdir[len - 1] = 0;
-
-	Com_Printf("Using home dir %s to fetch paks\n", gdir);
-
-	Q_strlcpy(fs_gamedir, gdir, sizeof(fs_gamedir));
-
-	FS_AddGameDirectory(gdir);
-}
-
-/*
-================
-FS_AddHomeAsGameDirectory
-
-Use ./ as fs_gamedir.
-================
-*/
-void FS_AddBinaryDirAsGameDirectory(char* dir)
-{
-	size_t len;
-	char gdir[MAX_OSPATH];
-	char *datadir;
-		
-	datadir = Sys_GetBinaryDir();
-	if (datadir[0] == '\0')
-		return;
-
-	len = snprintf(gdir, sizeof(gdir), "%s%s/", datadir, dir);
-	if ((len > 0) && (len < sizeof(gdir)) && (gdir[len - 1] == '/'))
-		gdir[len - 1] = 0;
-
-	Com_Printf("Using binary dir %s to fetch paks\n", gdir);
-	
-	FS_AddGameDirectory(gdir);
-}
-
-/*
-================
 FS_NextPath
 
 Allows enumerating all of the directories in the search path
@@ -1254,86 +1104,6 @@ void FS_Path_f(void)
 
 	Com_Printf("----------------------\n");
 	Com_Printf("%i files in PAK/PKZ files.\n", totalFiles);
-}
-
-/*
-================
-FS_SetGamedir
-
-Sets the gamedir and path to a different directory.
-================
-*/
-void FS_SetGamedir(char *dir)
-{
-	int				i;
-	char			path[MAX_OSPATH];
-	fsSearchPath_t	*next;
-
-	// make sure dir is valid
-	if (!*dir || !strcmp(dir, ".") || strstr(dir, "..") || strstr(dir, "/"))
-	{
-		Com_Printf("Gamedir should be a single filename, not a path.\n");
-		return;
-	}
-
-	// do not set BASEDIR as gamedir. It was already set by FS_InitFilesystem()
-	if (!Q_stricmp(dir, BASEDIRNAME))
-		return;
-
-	// free up any current game dir info
-	while (fs_searchPaths != fs_baseSearchPaths)
-	{
-		if (fs_searchPaths->pack)
-		{
-			if (fs_searchPaths->pack->pak)
-				fclose(fs_searchPaths->pack->pak);
-			if (fs_searchPaths->pack->pkz)
-				unzClose(fs_searchPaths->pack->pkz);
-			Z_Free(fs_searchPaths->pack->files);
-			Z_Free(fs_searchPaths->pack);
-		}
-		next = fs_searchPaths->next;
-		Z_Free(fs_searchPaths);
-		fs_searchPaths = next;
-	}
-
-	// close open files for game dir
-	for (i = 0; i < MAX_HANDLES; i++)
-	{
-		if (strstr(fs_handles[i].name, dir) && (fs_handles[i].file != NULL || fs_handles[i].zip != NULL))
-			FS_FCloseFile(i);
-	}
-
-	// flush all data, so it will be forced to reload
-	if (dedicated != NULL && dedicated->value != 1)
-		Cbuf_AddText("vid_restart\nsnd_restart\n");
-
-	Com_sprintf(fs_gamedir, sizeof(fs_gamedir), "%s/%s", fs_basedir->string, dir);
-
-	// see if we were reset or loaded a mod
-	if (strcmp(dir, BASEDIRNAME) == 0 || (*dir == 0))
-	{
-		// we were reset to baseq2
-		Cvar_FullSet("gamedir", "", CVAR_SERVERINFO | CVAR_NOSET);
-		Cvar_FullSet("game", "", CVAR_LATCH | CVAR_SERVERINFO);
-	}
-	else
-	{
-		// set all cvars
-		Cvar_FullSet("gamedir", dir, CVAR_SERVERINFO | CVAR_NOSET);
-		if (fs_cddir->string[0] == '\0')
-			FS_AddGameDirectory(va("%s/%s", fs_cddir->string, dir));
-
-		// add in mod directory
-		FS_AddGameDirectory(va("%s/%s", fs_basedir->string, dir));
-		FS_AddBinaryDirAsGameDirectory(dir);
-		FS_AddHomeAsGameDirectory(dir);
-	}
-
-	// create the screenshots directory if it doesn't exist
-	// do this here, since the refresh shouldn't have any contact with the filesystem
-	Com_sprintf(path, sizeof(path), "%s/scrnshot", dir);
-	FS_CreatePath(path);
 }
 
 /*
@@ -1684,46 +1454,291 @@ void FS_Dir_f(void)
 
 /*
 ================
-FS_InitFilesystem
+FS_AddDirToSearchPath
+
+adds the directory to the head of the path,
+then loads and adds pak1.pak pak2.pak ...
 ================
 */
-void FS_InitFilesystem(void)
+void FS_AddDirToSearchPath(char *dir, qboolean create)
 {
-	Cmd_AddCommand("path", FS_Path_f);
-	Cmd_AddCommand("link", FS_Link_f);
-	Cmd_AddCommand("dir", FS_Dir_f);
+	char **list;
+	char path[MAX_OSPATH];
+	int i, j;
+	int nfiles;
+	fsPack_t *pack = NULL;
+	fsSearchPath_t *search;
+	size_t len = strlen(dir);
 
-	// basedir <path> - allows the game to run from outside the data tree
-	fs_basedir = Cvar_Get("basedir", ".", CVAR_NOSET);
+	// the directory must not end with an /
+	// it would f*ck up the logic in other parts of the game...
+	if (dir[len - 1] == '/')
+		dir[len - 1] = '\0';
+	else if (dir[len - 1] == '\\')
+		dir[len - 1] = '\0';
 
-	// cddir <path> - Logically concatenates the cddir after the basedir to allow the game to run from outside the data tree.
-	fs_cddir = Cvar_Get("cddir", "", CVAR_NOSET);
-	if (fs_cddir->string[0] != '\0')
-		FS_AddGameDirectory(va("%s/" BASEDIRNAME, fs_cddir->string));
+	// set the current directory as game directory.
+	// this is somewhat fragile since the game directory MUST be the last directory added to the search path
+	Q_strlcpy(fs_gamedir, dir, sizeof(fs_gamedir));
+	if (create)
+		FS_CreatePath(fs_gamedir);
 
-	// debug flag
-	fs_debug = Cvar_Get("fs_debug", "0", 0);
+	// add the directory itself
+	search = Z_Malloc (sizeof(fsSearchPath_t));
+	Q_strlcpy (search->path, dir, sizeof(search->path));
+	search->next = fs_searchPaths;
+	fs_searchPaths = search;
 
-	// game directory
-	fs_gamedirvar = Cvar_Get("game", "", CVAR_LATCH | CVAR_SERVERINFO);
+	// we need to add numbered paks in te directory in sequence and all other paks after them.
+	// otherwise the gamedata may break.
+	for (i = 0; i < sizeof(fs_packtypes) / sizeof(fs_packtypes[0]); i++)
+	{
+		for (j = 0; j < MAX_PAKS; j++)
+		{
+			Com_sprintf (path, sizeof(path), "%s/pak%d.%s", dir, j, fs_packtypes[i].suffix);
 
-	// Add baseq2 to search path
-	FS_AddGameDirectory(va("%s/" BASEDIRNAME, fs_basedir->string));
-	FS_AddBinaryDirAsGameDirectory(BASEDIRNAME);
-	FS_AddHomeAsGameDirectory(BASEDIRNAME);
+			switch (fs_packtypes[i].format)
+			{
+				case PAK:
+					pack = FS_LoadPAK(path);
+					break;
+				case PKZ:
+					pack = FS_LoadPKZ(path);
+					break;
+			}
 
-	// any set gamedirs will be freed up to here
+			if (pack == NULL)
+				continue;
+
+			search = Z_Malloc (sizeof(fsSearchPath_t));
+			search->pack = pack;
+			search->next = fs_searchPaths;
+			fs_searchPaths = search;
+		}
+	}
+
+	// and as said above all other pak files
+	for (i = 0; i < sizeof(fs_packtypes) / sizeof(fs_packtypes[0]); i++)
+	{
+		Com_sprintf (path, sizeof(path), "%s/*.%s", dir, fs_packtypes[i].suffix);
+
+		// nothing here, next pak type please
+		if ((list = FS_ListFiles(path, &nfiles)) == NULL)
+			continue;
+
+		Com_sprintf (path, sizeof(path), "%s/pak*.%s", dir, fs_packtypes[i].suffix);
+
+		for (j = 0; j < nfiles - 1; j++)
+		{
+			// if the pak starts with the string 'pak' it's ignored
+			// this is somewhat stupid, it would be better to ignore just pak%d...
+			if (glob_match(path, list[j]))
+				continue;
+
+			switch (fs_packtypes[i].format)
+			{
+				case PAK:
+					pack = FS_LoadPAK (list[j]);
+					break;
+				case PKZ:
+					pack = FS_LoadPKZ (list[j]);
+					break;
+			}
+
+			if (pack == NULL)
+				continue;
+
+			search = Z_Malloc (sizeof(fsSearchPath_t));
+			search->pack = pack;
+			search->next = fs_searchPaths;
+			fs_searchPaths = search;
+		}
+
+		FS_FreeFileList (list, nfiles);
+	}
+}
+
+/*
+================
+FS_BuildGenericSearchPath
+
+builds all of the search paths
+for FS_AddDirToSearchPath()
+================
+*/
+void FS_BuildGenericSearchPath (void)
+{
+	// we may not use the va() function from q_shared.c
+	// since it's buffersize is 1024 while most OS have a maximum path size of 4096...
+	char path[MAX_OSPATH];
+	fsRawPath_t *search = fs_rawPath;
+
+	while (search != NULL)
+	{
+		Com_sprintf (path, sizeof(path), "%s/%s", search->path, BASEDIRNAME);
+		FS_AddDirToSearchPath (path, search->create);
+
+		search = search->next;
+	}
+
+	// until here we've added the generic directories to the search path
+	// save the current head node so we can distinguish generic and specialized directories
 	fs_baseSearchPaths = fs_searchPaths;
-	strncpy(fs_currentGame, BASEDIRNAME, sizeof(fs_currentGame));
 
-	// check for game override
+	// we need to create the game directory
+	Sys_Mkdir (fs_gamedir);
+
+	// we need to create the screenshot directory since the refresh doesn't link the filesystem stuff
+	Com_sprintf (path, sizeof(path), "%s/scrnshot", fs_gamedir);
+	Sys_Mkdir (path);
+}
+
+/*
+================
+FS_BuildGameSpecificSearchPath
+
+builds all of the game specific search paths
+for FS_AddDirToSearchPath()
+================
+*/
+void FS_BuildGameSpecificSearchPath (char *dir)
+{
+	// we may not use the va() function from q_shared.c
+	// since it's buffersize is 1024 while most OS have a maximum path size of 4096...
+	char path[MAX_OSPATH];
+	int i;
+	fsRawPath_t *search;
+	fsSearchPath_t *next;
+
+	// the user may give us paths like xatrix/ or even /home/stupid/quake2/xatrix
+	if (!*dir || !strcmp(dir, ".") || strstr(dir, "..") || strstr(dir, "/") || strstr(dir, "\\"))
+	{
+		Com_Printf (S_COLOR_RED "Gamedir should be a single filename, not a path.\n");
+		return;
+	}
+
+	// BASEDIR is already added as a generic directory
+	// adding it again as a specialised directory breaks the logic in other parts of the code
+	// this may happen if the user does something like ./quake2 +set game baseq2
+	if (!Q_stricmp(dir, BASEDIRNAME))
+		return;
+
+	// we may already have specialised directories in our search path
+	// this can happen if the server changes the mod. Let's remove them
+	while (fs_searchPaths != fs_baseSearchPaths)
+	{
+		if (fs_searchPaths->pack)
+		{
+			if (fs_searchPaths->pack->pak)
+				fclose (fs_searchPaths->pack->pak);
+
+			if (fs_searchPaths->pack->pkz)
+				unzClose (fs_searchPaths->pack->pkz);
+
+			Z_Free (fs_searchPaths->pack->files);
+			Z_Free (fs_searchPaths->pack);
+		}
+
+		next = fs_searchPaths->next;
+		Z_Free (fs_searchPaths);
+		fs_searchPaths = next;
+	}
+
+	// close open files for game dir
+	for (i = 0; i < MAX_HANDLES; i++)
+	{
+		if (strstr(fs_handles[i].name, dir) && ((fs_handles[i].file != NULL) || (fs_handles[i].zip != NULL)))
+			FS_FCloseFile(i);
+	}
+
+	// enforce a renderer and sound backend restart to purge all internal caches
+	// this is rather hacky but Quake II doesn't have a better mechanism...
+	if ((dedicated != NULL) && (dedicated->value != 1))
+		Cbuf_AddText("vid_restart\nsnd_restart\n");
+
+	// the game was reset to baseq2
+	if ((Q_stricmp(dir, BASEDIRNAME) == 0) || (*dir == 0))
+	{
+		Cvar_FullSet("gamedir", "", CVAR_SERVERINFO | CVAR_NOSET);
+		Cvar_FullSet("game", "", CVAR_LATCH | CVAR_SERVERINFO);
+
+		// fs_gamedir must be reset to the last dir of the generic search path.
+		Q_strlcpy (fs_gamedir, fs_baseSearchPaths->path, sizeof(fs_gamedir));
+	}
+	else
+	{
+		Cvar_FullSet("gamedir", dir, CVAR_SERVERINFO | CVAR_NOSET);
+		search = fs_rawPath;
+		while (search != NULL)
+		{
+			Com_sprintf (path, sizeof(path), "%s/%s", search->path, dir);
+			FS_AddDirToSearchPath (path, search->create);
+
+			search = search->next;
+		}
+	}
+
+	// create the game directory
+	Sys_Mkdir (fs_gamedir);
+
+	// we need to create the screenshot directory since the refresh doesn't link the filesystem stuff
+	Com_sprintf (path, sizeof(path), "%s/scrnshot", fs_gamedir);
+	Sys_Mkdir (path);
+}
+
+void FS_AddDirToRawPath(const char *dir, qboolean create)
+{
+	fsRawPath_t *search;
+
+	// Add the directory
+	search = Z_Malloc (sizeof(fsRawPath_t));
+	Q_strlcpy (search->path, dir, sizeof(search->path));
+	search->create = create;
+	search->next = fs_rawPath;
+	fs_rawPath = search;
+}
+
+void FS_BuildRawPath(void)
+{
+	// add $HOME/.xxx (MUST be the last dir!)
+	char *homedir = Sys_GetHomeDir ();
+	if (homedir != NULL)
+		FS_AddDirToRawPath (homedir, true);
+
+	// add $binarydir
+	char *binarydir = Sys_GetBinaryDir ();
+	if (binarydir[0] != '\0')
+		FS_AddDirToRawPath (binarydir, false);
+
+	// add $basedir/
+	FS_AddDirToRawPath (fs_basedir->string, false);
+
+	// the CD must be the last directory of the path, otherwise we cannot be sure that the game won't stream the videos from the CD.
+	if (fs_cddir->string[0] != '\0')
+		FS_AddDirToRawPath (fs_cddir->string, false);
+}
+
+void FS_InitFilesystem (void)
+{
+	// Register FS commands.
+	Cmd_AddCommand ("path", FS_Path_f);
+	Cmd_AddCommand ("link", FS_Link_f);
+	Cmd_AddCommand ("dir", FS_Dir_f);
+
+	// Register cvars
+	fs_basedir = Cvar_Get ("basedir", ".", CVAR_NOSET);
+	fs_cddir = Cvar_Get ("cddir", "", CVAR_NOSET);
+	fs_gamedirvar = Cvar_Get ("game", "", CVAR_LATCH | CVAR_SERVERINFO);
+	fs_debug = Cvar_Get ("fs_debug", "0", 0);
+
+	// Build search path
+	FS_BuildRawPath ();
+	FS_BuildGenericSearchPath ();
+
 	if (fs_gamedirvar->string[0] != '\0')
-		FS_SetGamedir(fs_gamedirvar->string);
+		FS_BuildGameSpecificSearchPath (fs_gamedirvar->string);
 
-	// create directory if it does not exist
-	FS_CreatePath(fs_gamedir);
-
-	Com_Printf("Using '%s' for writing.\n", fs_gamedir);
+	Com_Printf ("Using '%s' for writing.\n", fs_gamedir);
 }
 
 /*
@@ -1748,6 +1763,7 @@ void FS_Shutdown (void)
 	{
 		if (handle->file != NULL)
 			fclose(handle->file);
+
 		if (handle->zip != NULL)
 		{
 			unzCloseCurrentFile(handle->zip);

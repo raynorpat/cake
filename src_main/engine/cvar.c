@@ -239,9 +239,7 @@ cvar_t *Cvar_Set2 (char *var_name, char *value, qboolean force)
 				var->integer = atoi (var->string);
 
 				if (!strcmp (var->name, "game"))
-				{
-					FS_SetGamedir (var->string);
-				}
+					FS_BuildGameSpecificSearchPath (var->string);
 			}
 
 			return var;
@@ -366,9 +364,7 @@ void Cvar_GetLatchedVars (void)
 		var->integer = atoi (var->string);
 
 		if (!strcmp (var->name, "game"))
-		{
-			FS_SetGamedir (var->string);
-		}
+			FS_BuildGameSpecificSearchPath (var->string);
 	}
 }
 
