@@ -1000,6 +1000,8 @@ int Menu_ClickHit (menuframework_s *menu, int x, int y)
 				continue;
 		}
 
+		SCR_AdjustFrom640 ((float *)&rect.x, (float *)&rect.y, (float *)&rect.width, (float *)&rect.height);
+
 		if(x >= rect.x && x <= rect.x + rect.width && y >= rect.y && y <= rect.y + rect.height)
 			return i;
 	}
@@ -1039,6 +1041,8 @@ int Menu_HitTest (menuframework_s *menu, int x, int y)
 				Bitmap_GetSize(&rect, (menubitmap_s *)menu->items[i]);
 				break;
 		}
+
+		SCR_AdjustFrom640 ((float *)&rect.x, (float *)&rect.y, (float *)&rect.width, (float *)&rect.height);
 
 		if(x >= rect.x && x <= rect.x + rect.width && y >= rect.y && y <= rect.y + rect.height)
 			return i;
