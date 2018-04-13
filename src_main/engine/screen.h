@@ -53,6 +53,8 @@ extern	cvar_t		*crosshairDot;
 extern	cvar_t		*crosshairCircle;
 extern	cvar_t		*crosshairCross;
 
+extern  cvar_t		*scr_keepVidAspect;
+
 #define	NUM_CROSSHAIRS 10
 
 extern char	*crosshairDotPic[NUM_CROSSHAIRS][MAX_QPATH];

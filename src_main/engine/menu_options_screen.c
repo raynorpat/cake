@@ -34,6 +34,7 @@ static menuslider_s		s_options_screen_crosshairdot_slider;
 static menuslider_s		s_options_screen_crosshaircircle_slider;
 static menuslider_s		s_options_screen_crosshaircross_slider;
 static menuslider_s		s_options_screen_crosshairscale_slider;
+static menulist_s		s_options_screen_screenvidaspect_box;
 
 static void CrosshairFunc (void *unused)
 {
@@ -60,6 +61,11 @@ static void CrosshairCrossFunc(void *unused)
 	Cvar_SetValue("crosshairCross", s_options_screen_crosshaircross_slider.curvalue);
 }
 
+static void ScreenAspectFunc(void *unused)
+{
+	Cvar_SetValue("scr_keepVidAspect", s_options_screen_screenvidaspect_box.curvalue);
+}
+
 static void ScreenSetMenuItemValues (void)
 {
 	Cvar_SetValue ("crosshair", Q_Clamp (0, 1, crosshair->value));
@@ -76,6 +82,9 @@ static void ScreenSetMenuItemValues (void)
 
 	Cvar_SetValue("crosshairSize", Q_Clamp(8, 32, Cvar_VariableValue("crosshairSize")));
 	s_options_screen_crosshairscale_slider.curvalue = Cvar_VariableValue("crosshairSize");
+
+	Cvar_SetValue("scr_keepVidAspect", Q_Clamp(0, 1, scr_keepVidAspect->value));
+	s_options_screen_screenvidaspect_box.curvalue = scr_keepVidAspect->value;
 }
 
 static void Screen_MenuDraw (menuframework_s *self)
@@ -146,6 +155,14 @@ void Screen_MenuInit (void)
 	s_options_screen_crosshairscale_slider.maxvalue = 32;
 	s_options_screen_crosshairscale_slider.generic.statusbar = "changes size of crosshair";
 
+	s_options_screen_screenvidaspect_box.generic.type = MTYPE_SPINCONTROL;
+	s_options_screen_screenvidaspect_box.generic.x = 0;
+	s_options_screen_screenvidaspect_box.generic.y = y += 2 * MENU_LINE_SIZE;
+	s_options_screen_screenvidaspect_box.generic.name = "keep 4:3 screen aspect";
+	s_options_screen_screenvidaspect_box.generic.callback = ScreenAspectFunc;
+	s_options_screen_screenvidaspect_box.itemnames = yesno_names;
+	s_options_screen_screenvidaspect_box.generic.statusbar = "enables or disables 4:3 screen aspect resizing";
+
 	ScreenSetMenuItemValues ();
 
 	s_screens_menu.draw = Screen_MenuDraw;
@@ -156,6 +173,7 @@ void Screen_MenuInit (void)
 	Menu_AddItem (&s_screens_menu, (void *) &s_options_screen_crosshaircircle_slider);
 	Menu_AddItem (&s_screens_menu, (void *) &s_options_screen_crosshaircross_slider);
 	Menu_AddItem (&s_screens_menu, (void *) &s_options_screen_crosshairscale_slider);
+	Menu_AddItem (&s_screens_menu, (void *) &s_options_screen_screenvidaspect_box);
 }
 
 void M_Menu_Options_Screen_f (void)
