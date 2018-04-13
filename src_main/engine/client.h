@@ -471,6 +471,7 @@ void CL_Disconnect_f (void);
 void CL_PingServers_f (void);
 void CL_Snd_Restart_f (void);
 void CL_RequestNextDownload (void);
+void CL_WriteConfiguration (void);
 
 //
 // cl_input

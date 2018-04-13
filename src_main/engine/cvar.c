@@ -162,6 +162,11 @@ cvar_t *Cvar_Get (char *var_name, char *var_value, int flags)
 		}
 	}
 
+	// if $game is the default one ("baseq2"), then use "" instead because
+	// other code assumes this behavior (e.g. FS_BuildGameSpecificSearchPath())
+	if (strcmp(var_name, "game") == 0 && strcmp(var_value, BASEDIRNAME) == 0)
+		var_value = "";
+
 	var = Z_Malloc (sizeof (*var));
 	var->name = CopyString (var_name);
 	var->string = CopyString (var_value);
@@ -203,6 +208,11 @@ cvar_t *Cvar_Set2 (char *var_name, char *value, qboolean force)
 			return var;
 		}
 	}
+
+	// if $game is the default one ("baseq2"), then use "" instead because
+	// other code assumes this behavior (e.g. FS_BuildGameSpecificSearchPath())
+	if (strcmp(var_name, "game") == 0 && strcmp(value, BASEDIRNAME) == 0)
+		value = "";
 
 	if (!force)
 	{
@@ -312,6 +322,11 @@ cvar_t *Cvar_FullSet (char *var_name, char *value, int flags)
 
 	if (var->flags & CVAR_USERINFO)
 		userinfo_modified = true;	// transmit at next oportunity
+
+	// if $game is the default one ("baseq2"), then use "" instead because
+	// other code assumes this behavior (e.g. FS_BuildGameSpecificSearchPath())
+	if (strcmp(var_name, "game") == 0 && strcmp(value, BASEDIRNAME) == 0)
+		value = "";
 
 	Z_Free (var->string);	// free the old value string
 

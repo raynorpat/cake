@@ -1610,8 +1610,12 @@ void FS_BuildGameSpecificSearchPath (char *dir)
 	fsRawPath_t *search;
 	fsSearchPath_t *next;
 
+	// empty string means base game/mod
+	if (dir[0] == '\0')
+		dir = BASEDIRNAME;
+
 	// the user may give us paths like xatrix/ or even /home/stupid/quake2/xatrix
-	if (!*dir || !strcmp(dir, ".") || strstr(dir, "..") || strstr(dir, "/") || strstr(dir, "\\"))
+	if (!strcmp(dir, ".") || strstr(dir, "..") || strstr(dir, "/") || strstr(dir, "\\"))
 	{
 		Com_Printf (S_COLOR_RED "Gamedir should be a single filename, not a path.\n");
 		return;
