@@ -32,6 +32,7 @@ cvar_t		*crosshairSize;
 cvar_t		*crosshairDot;
 cvar_t		*crosshairCircle;
 cvar_t		*crosshairCross;
+cvar_t		*crosshairAlpha;
 
 cvar_t		*cl_testparticles;
 cvar_t		*cl_testentities;
@@ -453,6 +454,8 @@ SCR_DrawCrosshair
 void SCR_DrawCrosshair (void)
 {
 	float x, y, w, h;
+	vec4_t color;
+	int health;
 	char dot[MAX_QPATH], circle[MAX_QPATH], cross[MAX_QPATH];
 
 	if (!crosshair->value)
@@ -487,6 +490,44 @@ void SCR_DrawCrosshair (void)
 	y = crosshairY->integer;
 	SCR_AdjustFrom640 (&x, &y, &w, &h);
 
+	// set color based on health
+	color[0] = 1.0f;
+	color[3] = crosshairAlpha->value;
+	health = cl.frame.playerstate.stats[STAT_HEALTH];
+	if (health <= 0)
+	{
+		VectorClear(color);	// black
+		color[3] = 1.0f;
+	}
+
+	if (health >= 100)
+	{
+		color[2] = 1.0f;
+	}
+	else if (health < 66)
+	{
+		color[2] = 0;
+	}
+	else
+	{
+		color[2] = (health - 66) / 33.0f;
+	}
+
+	if (health > 60)
+	{
+		color[1] = 1.0f;
+	}
+	else if (health < 30)
+	{
+		color[1] = 0;
+	}
+	else
+	{
+		color[1] = (health - 30) / 30.0f;
+	}
+
+	RE_Draw_SetColor (color);
+
 	// put together a crosshair 
 	if (dot[0])
 		RE_Draw_StretchPicExt (x + cl.refdef.x + 0.5 * (cl.refdef.width - w), y + cl.refdef.y + 0.5 * (cl.refdef.height - h), w, h, 0, 0, 1, 1, dot);
@@ -494,6 +535,8 @@ void SCR_DrawCrosshair (void)
 		RE_Draw_StretchPicExt (x + cl.refdef.x + 0.5 * (cl.refdef.width - w), y + cl.refdef.y + 0.5 * (cl.refdef.height - h), w, h, 0, 0, 1, 1, circle);
 	if (cross[0])
 		RE_Draw_StretchPicExt (x + cl.refdef.x + 0.5 * (cl.refdef.width - w), y + cl.refdef.y + 0.5 * (cl.refdef.height - h), w, h, 0, 0, 1, 1, cross);
+
+	RE_Draw_SetColor (NULL);
 }
 
 /*
@@ -645,6 +688,7 @@ void V_Init (void)
 	crosshairDot = Cvar_Get("crosshairDot", "0", CVAR_ARCHIVE);
 	crosshairCircle = Cvar_Get("crosshairCircle", "0", CVAR_ARCHIVE);
 	crosshairCross = Cvar_Get("crosshairCross", "3", CVAR_ARCHIVE);
+	crosshairAlpha = Cvar_Get("crosshairAlpha", "1.0", CVAR_ARCHIVE);
 	
 	cl_testblend = Cvar_Get ("cl_testblend", "0", 0);
 	cl_testparticles = Cvar_Get ("cl_testparticles", "0", 0);
