@@ -68,16 +68,15 @@ static void ScreenAspectFunc(void *unused)
 
 static void ScreenSetMenuItemValues (void)
 {
-	Cvar_SetValue ("crosshair", Q_Clamp (0, 1, crosshair->value));
 	s_options_crosshair_box.curvalue = crosshair->value;
 
-	Cvar_SetValue("crosshairDot", Q_Clamp(0, 10, Cvar_VariableValue("crosshairDot")));
+	Cvar_SetValue("crosshairDot", Q_Clamp(0, 1, Cvar_VariableValue("crosshairDot")));
 	s_options_screen_crosshairdot_slider.curvalue = Cvar_VariableValue("crosshairDot");
 
-	Cvar_SetValue("crosshairCircle", Q_Clamp(0, 10, Cvar_VariableValue("crosshairCircle")));
+	Cvar_SetValue("crosshairCircle", Q_Clamp(0, 4, Cvar_VariableValue("crosshairCircle")));
 	s_options_screen_crosshaircircle_slider.curvalue = Cvar_VariableValue("crosshairCircle");
 
-	Cvar_SetValue("crosshairCross", Q_Clamp(0, 10, Cvar_VariableValue("crosshairCross")));
+	Cvar_SetValue("crosshairCross", Q_Clamp(0, 7, Cvar_VariableValue("crosshairCross")));
 	s_options_screen_crosshaircross_slider.curvalue = Cvar_VariableValue("crosshairCross");
 
 	Cvar_SetValue("crosshairSize", Q_Clamp(8, 32, Cvar_VariableValue("crosshairSize")));
@@ -125,7 +124,7 @@ void Screen_MenuInit (void)
 	s_options_screen_crosshairdot_slider.generic.name = "crosshair dot";
 	s_options_screen_crosshairdot_slider.generic.callback = CrosshairDotFunc;
 	s_options_screen_crosshairdot_slider.minvalue = 0;
-	s_options_screen_crosshairdot_slider.maxvalue = 10;
+	s_options_screen_crosshairdot_slider.maxvalue = 1;
 	s_options_screen_crosshairdot_slider.generic.statusbar = "changes the crosshair dot";
 
 	s_options_screen_crosshaircircle_slider.generic.type = MTYPE_SLIDER;
@@ -134,7 +133,7 @@ void Screen_MenuInit (void)
 	s_options_screen_crosshaircircle_slider.generic.name = "crosshair circle";
 	s_options_screen_crosshaircircle_slider.generic.callback = CrosshairCircleFunc;
 	s_options_screen_crosshaircircle_slider.minvalue = 0;
-	s_options_screen_crosshaircircle_slider.maxvalue = 10;
+	s_options_screen_crosshaircircle_slider.maxvalue = 4;
 	s_options_screen_crosshaircircle_slider.generic.statusbar = "changes the crosshair circle";
 
 	s_options_screen_crosshaircross_slider.generic.type = MTYPE_SLIDER;
@@ -143,7 +142,7 @@ void Screen_MenuInit (void)
 	s_options_screen_crosshaircross_slider.generic.name = "crosshair cross";
 	s_options_screen_crosshaircross_slider.generic.callback = CrosshairCrossFunc;
 	s_options_screen_crosshaircross_slider.minvalue = 0;
-	s_options_screen_crosshaircross_slider.maxvalue = 10;
+	s_options_screen_crosshaircross_slider.maxvalue = 7;
 	s_options_screen_crosshaircross_slider.generic.statusbar = "changes the crosshair cross";
 
 	s_options_screen_crosshairscale_slider.generic.type = MTYPE_SLIDER;
