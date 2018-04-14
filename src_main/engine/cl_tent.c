@@ -61,7 +61,6 @@ typedef struct
 } laser_t;
 laser_t		cl_lasers[MAX_LASERS];
 
-extern void CL_TeleportParticles (vec3_t org);
 void CL_BlasterParticles (vec3_t org, vec3_t dir, unsigned int color);
 void CL_ExplosionParticles (vec3_t org);
 void CL_BFGExplosionParticles (vec3_t org);

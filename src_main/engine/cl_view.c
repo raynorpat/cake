@@ -586,24 +586,15 @@ void V_RenderView (float stereo_separation)
 
 		cl.refdef.areabits = cl.frame.areabits;
 
-		if (!cl_add_entities->value)
-			r_numentities = 0;
-
-		if (!cl_add_particles->value)
-			r_numparticles = 0;
-
-		if (!cl_add_lights->value)
-			r_numdlights = 0;
-
-		if (!cl_add_blend->value)
-			VectorClear (cl.refdef.blend);
-
 		cl.refdef.num_entities = r_numentities;
 		cl.refdef.entities = r_entities;
+
 		cl.refdef.num_particles = r_numparticles;
 		cl.refdef.particles = r_particles;
+
 		cl.refdef.num_dlights = r_numdlights;
 		cl.refdef.dlights = r_dlights;
+
 		cl.refdef.lightstyles = r_lightstyles;
 
 		cl.refdef.rdflags = cl.frame.playerstate.rdflags;
