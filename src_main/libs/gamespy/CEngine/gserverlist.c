@@ -680,7 +680,7 @@ static GError ServerListQueryLoop(GServerList serverlist)
 	{ //we are done!!
 		if(!serverlist->abortupdate) /* FS: Don't print that the scan is complete if this was a forced abort */
 		{
-			gspyi.print("\x02Server scan complete!\n");
+			gspyi.print("Server scan complete!\n");
 			gspyi.play_sound ("gamespy/complete.wav");
 		}
 		gspyi.update_numservers(ArrayLength(serverlist->servers));
