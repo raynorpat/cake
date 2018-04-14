@@ -779,7 +779,7 @@ void SCR_PlayCinematic (char *arg)
 	roq_chunk_t *chunk = &cin->chunk;
 
 	// make sure we clear all key states
-	Key_ClearStates ();
+	In_FlushQueue ();
 
 	// make sure music isn't playing
 #ifdef USE_CODEC_OGG
