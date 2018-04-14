@@ -30,6 +30,45 @@ extern	struct model_s	*cl_mod_smoke;
 extern	struct model_s	*cl_mod_flash;
 
 /*
+==============
+CL_EntityEvent
+
+An entity has just been parsed that has an event value
+
+the female events are there for backwards compatability
+==============
+*/
+extern struct sfx_s	*cl_sfx_footsteps[4];
+void CL_TeleportParticles(vec3_t org);
+void CL_EntityEvent(entity_state_t *ent)
+{
+	switch (ent->event)
+	{
+		case EV_ITEM_RESPAWN:
+			S_StartSound(NULL, ent->number, CHAN_WEAPON, S_RegisterSound("items/respawn1.wav"), 1, ATTN_IDLE, 0);
+			CL_ItemRespawnParticles(ent->origin);
+			break;
+		case EV_PLAYER_TELEPORT:
+			S_StartSound(NULL, ent->number, CHAN_WEAPON, S_RegisterSound("misc/tele1.wav"), 1, ATTN_IDLE, 0);
+			CL_TeleportParticles(ent->origin);
+			break;
+		case EV_FOOTSTEP:
+			if (cl_footsteps->value)
+				S_StartSound(NULL, ent->number, CHAN_BODY, cl_sfx_footsteps[rand() & 3], 1, ATTN_NORM, 0);
+			break;
+		case EV_FALLSHORT:
+			S_StartSound(NULL, ent->number, CHAN_AUTO, S_RegisterSound("player/land1.wav"), 1, ATTN_NORM, 0);
+			break;
+		case EV_FALL:
+			S_StartSound(NULL, ent->number, CHAN_AUTO, S_RegisterSound("*fall2.wav"), 1, ATTN_NORM, 0);
+			break;
+		case EV_FALLFAR:
+			S_StartSound(NULL, ent->number, CHAN_AUTO, S_RegisterSound("*fall1.wav"), 1, ATTN_NORM, 0);
+			break;
+	}
+}
+
+/*
 ==============================================================
 
 LIGHT STYLE MANAGEMENT
@@ -714,7 +753,6 @@ typedef struct particle_s
 	float		alphavel;
 } cparticle_t;
 
-
 #define	PARTICLE_GRAVITY	40
 */
 
@@ -722,7 +760,6 @@ cparticle_t	*active_particles, *free_particles;
 
 cparticle_t	particles[MAX_PARTICLES];
 int			cl_numparticles = MAX_PARTICLES;
-
 
 /*
 ===============
@@ -733,6 +770,8 @@ void CL_ClearParticles (void)
 {
 	int		i;
 
+	memset(particles, 0, sizeof(particles));
+
 	free_particles = &particles[0];
 	active_particles = NULL;
 
@@ -742,6 +781,16 @@ void CL_ClearParticles (void)
 	particles[cl_numparticles-1].next = NULL;
 }
 
+/*
+===============
+CL_FreeParticle
+===============
+*/
+void CL_FreeParticle(cparticle_t * p)
+{
+	p->next = free_particles;
+	free_particles = p;
+}
 
 /*
 ===============
@@ -784,7 +833,6 @@ void CL_ParticleEffect (vec3_t org, vec3_t dir, int color, int count)
 		p->alphavel = -1.0 / (0.5 + frand () * 0.3);
 	}
 }
-
 
 /*
 ===============
@@ -866,11 +914,9 @@ void CL_TeleporterParticles (entity_state_t *ent)
 	}
 }
 
-
 /*
 ===============
 CL_LogoutEffect
-
 ===============
 */
 void CL_LogoutEffect (vec3_t org, int type)
@@ -912,11 +958,9 @@ void CL_LogoutEffect (vec3_t org, int type)
 	}
 }
 
-
 /*
 ===============
 CL_ItemRespawnParticles
-
 ===============
 */
 void CL_ItemRespawnParticles (vec3_t org)
@@ -952,7 +996,6 @@ void CL_ItemRespawnParticles (vec3_t org)
 		p->alphavel = -1.0 / (1.0 + frand () * 0.3);
 	}
 }
-
 
 /*
 ===============
@@ -990,7 +1033,6 @@ void CL_ExplosionParticles (vec3_t org)
 		p->alphavel = -0.8 / (0.5 + frand () * 0.3);
 	}
 }
-
 
 /*
 ===============
@@ -1039,7 +1081,6 @@ void CL_BigTeleportParticles (vec3_t org)
 	}
 }
 
-
 /*
 ===============
 CL_BlasterParticles
@@ -1084,7 +1125,6 @@ void CL_BlasterParticles (vec3_t org, vec3_t dir, unsigned int color)
 		p->alphavel = -1.0 / (0.5 + frand () * 0.3);
 	}
 }
-
 
 /*
 ===============
@@ -1141,7 +1181,6 @@ void CL_BlasterTrail (vec3_t start, vec3_t end, float color)
 /*
 ===============
 CL_QuadTrail
-
 ===============
 */
 void CL_QuadTrail (vec3_t start, vec3_t end)
@@ -1193,7 +1232,6 @@ void CL_QuadTrail (vec3_t start, vec3_t end)
 /*
 ===============
 CL_FlagTrail
-
 ===============
 */
 void CL_FlagTrail (vec3_t start, vec3_t end, float color)
@@ -1245,7 +1283,6 @@ void CL_FlagTrail (vec3_t start, vec3_t end, float color)
 /*
 ===============
 CL_DiminishingTrail
-
 ===============
 */
 void CL_DiminishingTrail (vec3_t start, vec3_t end, centity_t *old, int flags)
@@ -1340,7 +1377,7 @@ void CL_DiminishingTrail (vec3_t start, vec3_t end, centity_t *old, int flags)
 	}
 }
 
-void MakeNormalVectors (vec3_t forward, vec3_t right, vec3_t up)
+static void MakeNormalVectors (vec3_t forward, vec3_t right, vec3_t up)
 {
 	float		d;
 
@@ -1359,7 +1396,6 @@ void MakeNormalVectors (vec3_t forward, vec3_t right, vec3_t up)
 /*
 ===============
 CL_RocketTrail
-
 ===============
 */
 void CL_RocketTrail (vec3_t start, vec3_t end, centity_t *old)
@@ -1419,7 +1455,6 @@ void CL_RocketTrail (vec3_t start, vec3_t end, centity_t *old)
 /*
 ===============
 CL_RailTrail
-
 ===============
 */
 void CL_RailTrail (vec3_t start, vec3_t end)
@@ -1559,14 +1594,13 @@ void CL_BubbleTrail (vec3_t start, vec3_t end)
 	}
 }
 
-
 /*
 ===============
 CL_FlyParticles
 ===============
 */
 
-#define	BEAMLENGTH			16
+#define	BEAMLENGTH 16
 void CL_FlyParticles (vec3_t origin, int count)
 {
 	int			i;
@@ -1586,7 +1620,6 @@ void CL_FlyParticles (vec3_t origin, int count)
 		for (i = 0; i < NUMVERTEXNORMALS * 3; i++)
 			avelocities[0][i] = (rand () & 255) * 0.01;
 	}
-
 
 	ltime = (float) cl.time / 1000.0;
 
@@ -1664,14 +1697,12 @@ void CL_FlyEffect (centity_t *ent, vec3_t origin)
 	CL_FlyParticles (origin, count);
 }
 
-
 /*
 ===============
 CL_BfgParticles
 ===============
 */
-
-#define	BEAMLENGTH			16
+#define	BEAMLENGTH 16
 void CL_BfgParticles (entity_t *ent)
 {
 	int			i;
@@ -1688,7 +1719,6 @@ void CL_BfgParticles (entity_t *ent)
 		for (i = 0; i < NUMVERTEXNORMALS * 3; i++)
 			avelocities[0][i] = (rand () & 255) * 0.01;
 	}
-
 
 	ltime = (float) cl.time / 1000.0;
 
@@ -1773,11 +1803,9 @@ void CL_BFGExplosionParticles (vec3_t org)
 	}
 }
 
-
 /*
 ===============
 CL_TeleportParticles
-
 ===============
 */
 void CL_TeleportParticles (vec3_t org)
@@ -1822,7 +1850,6 @@ void CL_TeleportParticles (vec3_t org)
 			}
 }
 
-
 /*
 ===============
 CL_AddParticles
@@ -1840,6 +1867,9 @@ void CL_AddParticles (void)
 	active = NULL;
 	tail = NULL;
 
+	if (!cl_drawParticles->integer)
+		return;
+
 	for (p = active_particles; p; p = next)
 	{
 		next = p->next;
@@ -1853,8 +1883,7 @@ void CL_AddParticles (void)
 			if (alpha <= 0)
 			{
 				// faded out
-				p->next = free_particles;
-				free_particles = p;
+				CL_FreeParticle (p);
 				continue;
 			}
 		}
@@ -1863,27 +1892,35 @@ void CL_AddParticles (void)
 			alpha = p->alpha;
 		}
 
-		p->next = NULL;
-
-		if (!tail)
-			active = tail = p;
-		else
-		{
-			tail->next = p;
-			tail = p;
-		}
-
 		if (alpha > 1.0)
 			alpha = 1;
 
 		color = p->color;
 
+		// calculate new position
 		time2 = time * time;
 
 		org[0] = p->org[0] + p->vel[0] * time + p->accel[0] * time2;
 		org[1] = p->org[1] + p->vel[1] * time + p->accel[1] * time2;
 		org[2] = p->org[2] + p->vel[2] * time + p->accel[2] * time2;
 
+		// TODO: gravity modulation by sv_gravity?
+
+		// TODO: particle collision test
+
+		// have this always below CL_FreeParticle(p); !
+		p->next = NULL;
+		if (!tail)
+		{
+			active = tail = p;
+		}
+		else
+		{
+			tail->next = p;
+			tail = p;
+		}
+
+		// add to scene
 		V_AddParticle (org, color, alpha);
 
 		// PMM
@@ -1897,53 +1934,11 @@ void CL_AddParticles (void)
 	active_particles = active;
 }
 
-
-/*
-==============
-CL_EntityEvent
-
-An entity has just been parsed that has an event value
-
-the female events are there for backwards compatability
-==============
-*/
-extern struct sfx_s	*cl_sfx_footsteps[4];
-
-void CL_EntityEvent (entity_state_t *ent)
-{
-	switch (ent->event)
-	{
-	case EV_ITEM_RESPAWN:
-		S_StartSound (NULL, ent->number, CHAN_WEAPON, S_RegisterSound ("items/respawn1.wav"), 1, ATTN_IDLE, 0);
-		CL_ItemRespawnParticles (ent->origin);
-		break;
-	case EV_PLAYER_TELEPORT:
-		S_StartSound (NULL, ent->number, CHAN_WEAPON, S_RegisterSound ("misc/tele1.wav"), 1, ATTN_IDLE, 0);
-		CL_TeleportParticles (ent->origin);
-		break;
-	case EV_FOOTSTEP:
-
-		if (cl_footsteps->value)
-			S_StartSound (NULL, ent->number, CHAN_BODY, cl_sfx_footsteps[rand () &3], 1, ATTN_NORM, 0);
-
-		break;
-	case EV_FALLSHORT:
-		S_StartSound (NULL, ent->number, CHAN_AUTO, S_RegisterSound ("player/land1.wav"), 1, ATTN_NORM, 0);
-		break;
-	case EV_FALL:
-		S_StartSound (NULL, ent->number, CHAN_AUTO, S_RegisterSound ("*fall2.wav"), 1, ATTN_NORM, 0);
-		break;
-	case EV_FALLFAR:
-		S_StartSound (NULL, ent->number, CHAN_AUTO, S_RegisterSound ("*fall1.wav"), 1, ATTN_NORM, 0);
-		break;
-	}
-}
-
+//============================================================================================
 
 /*
 ==============
 CL_ClearEffects
-
 ==============
 */
 void CL_ClearEffects (void)
