@@ -1863,6 +1863,7 @@ void CL_AddParticles (void)
 	vec3_t			org;
 	int				color;
 	cparticle_t		*active, *tail;
+	int             contents;
 
 	active = NULL;
 	tail = NULL;
@@ -1907,6 +1908,15 @@ void CL_AddParticles (void)
 		// TODO: gravity modulation by sv_gravity?
 
 		// TODO: particle collision test
+
+		contents = CM_PointContents(org, 0);
+
+		// kill all particles in solid
+		if (contents & MASK_SOLID)
+		{
+			CL_FreeParticle (p);
+			continue;
+		}
 
 		// have this always below CL_FreeParticle(p); !
 		p->next = NULL;
