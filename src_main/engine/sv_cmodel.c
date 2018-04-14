@@ -959,24 +959,60 @@ int	CM_BoxLeafnums (vec3_t mins, vec3_t maxs, int *list, int listsize, int *topn
 									listsize, map_cmodels[0].headnode, topnode);
 }
 
-
-
 /*
 ==================
 CM_PointContents
-
 ==================
 */
 int CM_PointContents (vec3_t p, int headnode)
 {
-	int		l;
+	int	leafnum;
+	cleaf_t *leaf;
+	int i, k;
+	int contents;
+	float d;
+	int brushnum;
+	cbrush_t *b;
+	cplane_t *plane;
+	cbrushside_t *side;
 
-	if (!numnodes)	// map not loaded
+	if (!numnodes) // map not loaded
 		return 0;
 
-	l = CM_PointLeafnum_r (p, headnode);
+	leafnum = CM_PointLeafnum_r (p, headnode);
+	leaf = &map_leafs[leafnum];
 
-	return map_leafs[l].contents;
+	if (leaf->area == -1)
+	{
+		// p is in the void and we should return solid so particles can be removed from the void
+		return CONTENTS_SOLID;
+	}
+
+	contents = 0;
+	for (k = 0; k < leaf->numleafbrushes; k++)
+	{
+		brushnum = map_leafbrushes[leaf->firstleafbrush + k];
+		b = &map_brushes[brushnum];
+
+		// see if the point is in the brush
+		for (i = 0; i < b->numsides; i++)
+		{
+			side = &map_brushsides[b->firstbrushside + i];
+			plane = side->plane;
+
+			d = DotProduct(p, plane->normal);
+			if (d > plane->dist)
+				break;
+		}
+
+		if (i == b->numsides)
+		{
+			contents |= b->contents;
+		}
+	}
+
+	return contents;
+	//return leaf->contents;
 }
 
 /*

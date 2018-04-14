@@ -37,7 +37,7 @@ qboolean bselected = false;
 //=============================================================================
 
 /*
-* These crappy functions maintaine a stack of opened menus.
+* These crappy functions maintain a stack of opened menus.
 * The steps in this horrible mess are:
 *
 * 1. Put the game into pause if a menu is opened
