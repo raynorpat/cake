@@ -37,8 +37,7 @@ char *M_Quit_Key (menuframework_s *self, int key)
 	{
 	case K_ESCAPE:
 	case K_MOUSE2:
-	case K_GAMEPAD_B:
-	case K_GAMEPAD_BACK:
+	case K_JOY_BACK:
 	case 'n':
 	case 'N':
 		M_PopMenu();
@@ -48,7 +47,6 @@ char *M_Quit_Key (menuframework_s *self, int key)
 	case K_MOUSE1:
 	case 'Y':
 	case 'y':
-	case K_GAMEPAD_A:
 		cls.key_dest = key_console;
 		CL_Quit_f();
 		break;

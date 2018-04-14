@@ -201,7 +201,6 @@ static char *Keys_MenuKey (menuframework_s *self, int key)
 	{
 	case K_KP_ENTER:
 	case K_ENTER:
-	case K_GAMEPAD_A:
 	case K_MOUSE1:
 		KeyBindingFunc (item);
 		return menu_in_sound;
@@ -209,7 +208,6 @@ static char *Keys_MenuKey (menuframework_s *self, int key)
 	case K_BACKSPACE:		// delete bindings
 	case K_DEL:				// delete bindings
 	case K_KP_DEL:
-	case K_GAMEPAD_BACK:
 		M_UnbindCommand (bindnames[item->generic.localdata[0]][0]);
 		return menu_out_sound;
 

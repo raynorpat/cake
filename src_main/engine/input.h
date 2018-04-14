@@ -42,11 +42,6 @@ void IN_Shutdown(void);
 void IN_Update(void);
 
 /*
-* Emit haptic feedback for controllers based on sound name
-*/
-void Haptic_Feedback(char *name);
-
-/*
 * Removes all pending events from SDLs queue.
 */
 void In_FlushQueue(void);

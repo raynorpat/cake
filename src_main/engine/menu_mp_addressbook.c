@@ -33,7 +33,7 @@ static menufield_s		s_addressbook_fields[NUM_ADDRESSBOOK_ENTRIES];
 
 static char *AddressBook_MenuKey(menuframework_s *self, int key)
 {
-	if ((key == K_ESCAPE) || (key == K_GAMEPAD_B))
+	if (key == K_ESCAPE)
 	{
 		int index;
 		char buffer[20];

@@ -194,7 +194,6 @@ char *M_Credits_Key (menuframework_s *self, int key)
 	{
 	case K_ESCAPE:
 	case K_MOUSE2:
-	case K_GAMEPAD_B:
 		M_PopMenu ();
 		break;
 	}

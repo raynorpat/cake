@@ -321,7 +321,7 @@ char *PlayerConfig_MenuKey (menuframework_s *self, int key)
 {
 	int i;
 
-	if ((key == K_ESCAPE) || (key == K_GAMEPAD_B))
+	if ((key == K_ESCAPE) || (key == K_JOY_BACK))
 	{
 		char scratch[1024];
 

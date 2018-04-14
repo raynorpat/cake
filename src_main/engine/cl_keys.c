@@ -93,6 +93,47 @@ keyname_t keynames[] =
 	{ "MOUSE4", K_MOUSE4 },
 	{ "MOUSE5", K_MOUSE5 },
 
+	{ "JOY1", K_JOY1 },
+	{ "JOY2", K_JOY2 },
+	{ "JOY3", K_JOY3 },
+	{ "JOY4", K_JOY4 },
+	{ "JOY5", K_JOY5 },
+	{ "JOY6", K_JOY6 },
+	{ "JOY7", K_JOY7 },
+	{ "JOY8", K_JOY8 },
+	{ "JOY9", K_JOY9 },
+	{ "JOY10", K_JOY10 },
+	{ "JOY11", K_JOY11 },
+	{ "JOY12", K_JOY12 },
+	{ "JOY13", K_JOY13 },
+	{ "JOY14", K_JOY14 },
+	{ "JOY15", K_JOY15 },
+	{ "JOY16", K_JOY16 },
+	{ "JOY17", K_JOY17 },
+	{ "JOY18", K_JOY18 },
+	{ "JOY19", K_JOY19 },
+	{ "JOY20", K_JOY20 },
+	{ "JOY21", K_JOY21 },
+	{ "JOY22", K_JOY22 },
+	{ "JOY23", K_JOY23 },
+	{ "JOY24", K_JOY24 },
+	{ "JOY25", K_JOY25 },
+	{ "JOY26", K_JOY26 },
+	{ "JOY27", K_JOY27 },
+	{ "JOY28", K_JOY28 },
+	{ "JOY29", K_JOY29 },
+	{ "JOY30", K_JOY30 },
+	{ "JOY31", K_JOY31 },
+	{ "JOY32", K_JOY32 },
+
+	{ "HAT_UP", K_HAT_UP },
+	{ "HAT_RIGHT", K_HAT_RIGHT },
+	{ "HAT_DOWN", K_HAT_DOWN },
+	{ "HAT_LEFT", K_HAT_LEFT },
+
+	{ "TRIG_LEFT", K_TRIG_LEFT },
+	{ "TRIG_RIGHT", K_TRIG_RIGHT },
+
 	{ "AUX1", K_AUX1 },
 	{ "AUX2", K_AUX2 },
 	{ "AUX3", K_AUX3 },
@@ -148,23 +189,6 @@ keyname_t keynames[] =
 	{ "PAUSE", K_PAUSE },
 
 	{ "SEMICOLON", ';' }, // because a raw semicolon seperates commands
-
-	{ "GAMEPAD_UP", K_GAMEPAD_UP },
-	{ "GAMEPAD_DOWN", K_GAMEPAD_DOWN },
-	{ "GAMEPAD_LEFT", K_GAMEPAD_LEFT },
-	{ "GAMEPAD_RIGHT", K_GAMEPAD_RIGHT },
-	{ "GAMEPAD_START", K_GAMEPAD_START },
-	{ "GAMEPAD_BACK", K_GAMEPAD_BACK },
-	{ "GAMEPAD_LSTICK", K_GAMEPAD_LEFT_STICK },
-	{ "GAMEPAD_RSTICK", K_GAMEPAD_RIGHT_STICK },
-	{ "GAMEPAD_LB", K_GAMEPAD_LS },
-	{ "GAMEPAD_RB", K_GAMEPAD_RS },
-	{ "GAMEPAD_A", K_GAMEPAD_A },
-	{ "GAMEPAD_B", K_GAMEPAD_B },
-	{ "GAMEPAD_X", K_GAMEPAD_X },
-	{ "GAMEPAD_Y", K_GAMEPAD_Y },
-	{ "GAMEPAD_LT", K_GAMEPAD_LT },
-	{ "GAMEPAD_RT", K_GAMEPAD_RT },
 
 	{ NULL, 0 }
 };
@@ -438,7 +462,7 @@ void Key_Message (int key)
 		return;
 	}
 
-	if ((key == K_ESCAPE) || (key == K_GAMEPAD_BACK) || (key == K_GAMEPAD_START))
+	if ((key == K_ESCAPE) || (key == K_JOY_BACK))
 	{
 		cls.key_dest = key_game;
 		chat_cursorpos = 0;
@@ -532,25 +556,31 @@ Key_GetMenuKey
 Redirects button presses for the menu system
 ===================
 */
-int Key_GetMenuKey(int key)
+int Key_GetMenuKey (int key)
 {
 	switch (key)
 	{
 		case K_KP_UPARROW:
 		case K_UPARROW:
+		case K_HAT_UP:
 			return K_UPARROW;
 
 		case K_TAB:
 		case K_KP_DOWNARROW:
 		case K_DOWNARROW:
+		case K_HAT_DOWN:
 			return K_DOWNARROW;
 
 		case K_KP_LEFTARROW:
 		case K_LEFTARROW:
+		case K_HAT_LEFT:
+		case K_TRIG_LEFT:
 			return K_LEFTARROW;
 
 		case K_KP_RIGHTARROW:
 		case K_RIGHTARROW:
+		case K_HAT_RIGHT:
+		case K_TRIG_RIGHT:
 			return K_RIGHTARROW;
 
 		case K_MOUSE1:
@@ -629,7 +659,7 @@ int Key_GetMenuKey(int key)
 
 		case K_MOUSE2:
 		case K_ESCAPE:
-		case K_GAMEPAD_BACK:
+		case K_JOY_BACK:
 			return K_ESCAPE;
 	}
 
@@ -791,7 +821,7 @@ void Key_Bind_f (void)
 	}
 
 	// don't allow binding escape or the special console keys
-	if (b == K_ESCAPE || b == '`' || b == '~')
+	if (b == K_ESCAPE || b == '`' || b == '~' || b == K_JOY_BACK)
 	{
 		if (doneWithDefaultCfg)
 		{
@@ -915,7 +945,6 @@ void Key_Init (void)
 	consolekeys['^'] = false;
 
 	menubound[K_ESCAPE] = true;
-	menubound[K_GAMEPAD_START] = true;
 
 	for (i = 0; i < 12; i++)
 		menubound[K_F1 + i] = true;
@@ -1008,7 +1037,6 @@ void Key_Event (int key, qboolean down, qboolean special)
 			(key != K_KP_PGUP) &&
 			(key != K_PGDN) &&
 			(key != K_KP_PGDN) &&
-			!(key >= K_GAMEPAD_LSTICK_UP && key <= K_GAMEPAD_RIGHT) &&
 			(key_repeats[key] > 1))
 		{
 			return;
@@ -1048,7 +1076,7 @@ void Key_Event (int key, qboolean down, qboolean special)
 	// menu key is hardcoded, so the user can never unbind it
 	if (!cls.disable_screen)
 	{
-		if ((key == K_ESCAPE) || (key == K_GAMEPAD_START) || (key == K_GAMEPAD_BACK))
+		if ((key == K_ESCAPE) || (key == K_JOY_BACK))
 		{
 			if (!down)
 				return;
@@ -1081,7 +1109,7 @@ void Key_Event (int key, qboolean down, qboolean special)
 	}
 
 	// key is unbound
-	if ((key >= 200) && !keybindings[key] && (cls.key_dest != key_console))
+	if ((key >= K_MOUSE1 && key != K_JOY_BACK) && !keybindings[key] && (cls.key_dest != key_console))
 		Com_Printf("%s is unbound, hit F4 to set.\n", Key_KeynumToString(key));
 
 	// track if any key is down for BUTTON_ANY
