@@ -314,7 +314,7 @@ void SV_BeginDownload_f (void)
 	extern	cvar_t *allow_download_models;
 	extern	cvar_t *allow_download_sounds;
 	extern	cvar_t *allow_download_maps;
-	extern	int		file_from_pak; // ZOID did file come from pak?
+	extern	qboolean file_from_pak; // did file come from pak?
 	int offset = 0;
 
 	name = Cmd_Argv (1);
@@ -345,7 +345,6 @@ void SV_BeginDownload_f (void)
 		MSG_WriteByte (&sv_client->netchan.message, 0);
 		return;
 	}
-
 
 	if (sv_client->download)
 		FS_FreeFile (sv_client->download);

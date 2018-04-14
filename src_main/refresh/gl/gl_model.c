@@ -1041,8 +1041,8 @@ void Mod_LoadAliasModel (model_t *mod, void *buffer)
 	for (i = 0; i < sizeof (dmdl_t) / 4; i++)
 		((int *) pheader) [i] = LittleLong (((int *) buffer) [i]);
 
-	if (pheader->skinheight > MAX_LBM_HEIGHT)
-		VID_Error (ERR_DROP, "model %s has a skin taller than %d", mod->name, MAX_LBM_HEIGHT);
+//	if (pheader->skinheight > MAX_LBM_HEIGHT)
+//		VID_Error (ERR_DROP, "model %s has a skin taller than %d", mod->name, MAX_LBM_HEIGHT);
 
 	if (pheader->num_xyz <= 0)
 		VID_Error (ERR_DROP, "model %s has no vertices", mod->name);

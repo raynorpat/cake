@@ -101,6 +101,13 @@ static void R_GetGlyphInfo(FT_GlyphSlot glyph, int *left, int *right, int *width
 	*pitch = (true ? (*width + 3) & -4 : (*width + 7) >> 3);
 }
 
+/*
+===============
+R_RenderGlyph
+
+renders out a font glyph as a bitmap image
+===============
+*/
 static FT_Bitmap *R_RenderGlyph(FT_GlyphSlot glyph, glyphInfo_t * glyphOut)
 {
 
@@ -143,6 +150,13 @@ static FT_Bitmap *R_RenderGlyph(FT_GlyphSlot glyph, glyphInfo_t * glyphOut)
 	return NULL;
 }
 
+/*
+===============
+RE_ConstructGlyphInfo
+
+constructs a font glyph
+===============
+*/
 static glyphInfo_t *RE_ConstructGlyphInfo(unsigned char *imageOut, int *xOut, int *yOut, int *maxHeight, FT_Face face, const unsigned char c, qboolean calcHeight)
 {
 	int             i;
@@ -310,7 +324,14 @@ static float readFloat(void)
 	return me.ffred;
 }
 
-void RE_RegisterFont(char *fontName, int pointSize, fontInfo_t *font)
+/*
+===============
+RE_RegisterFont
+
+Loads specified font and converts that into usable form
+===============
+*/
+void RE_GL_RegisterFont (char *fontName, int pointSize, fontInfo_t *font)
 {
 #ifdef USE_FREETYPE
 	FT_Face         face;
@@ -497,7 +518,13 @@ void RE_RegisterFont(char *fontName, int pointSize, fontInfo_t *font)
 #endif
 }
 
+/*
+===============
+R_InitFreeType
 
+init's FreeType library
+===============
+*/
 void R_InitFreeType (void)
 {
 #ifdef USE_FREETYPE
@@ -508,7 +535,13 @@ void R_InitFreeType (void)
 	registeredFontCount = 0;
 }
 
+/*
+===============
+R_DoneFreeType
 
+cleans up FreeType library
+===============
+*/
 void R_DoneFreeType (void)
 {
 #ifdef USE_FREETYPE

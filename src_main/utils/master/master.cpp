@@ -2298,10 +2298,7 @@ void Gamespy_Send_MOTD(char *gamename, struct sockaddr_in *from)
 	addr.sin_port = htons(motdPort);
 	memset (&addr.sin_zero, 0, sizeof(addr.sin_zero));
 
-	if(gamename && gamename[0] != 0 && !stricmp(gamename, "quake2")) /* FS: Green Text special for Quake 2*/
-		Com_sprintf(motd, sizeof(motd), OOB_SEQ"print\n\x02%s", fileBuffer);
-	else
-		Com_sprintf(motd, sizeof(motd), OOB_SEQ"print\n%s", fileBuffer);
+	Com_sprintf(motd, sizeof(motd), OOB_SEQ"print\n%s", fileBuffer);
 
 	sendto(motdSocket, motd, DG_strlen(motd), 0, (struct sockaddr *)&addr, sizeof(addr));
 

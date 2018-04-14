@@ -156,7 +156,7 @@ static void VID_DetectAvailableModes(void)
 	{
 		buf[strlen(buf) - 1] = 0;
 		VID_Printf(PRINT_ALL, "Available modes: '%s'\n", buf);
-		Cvar_Set("r_availableModes", buf);
+		Cvar_ForceSet ("r_availableModes", buf);
 	}
 	SDL_free(modes);
 }
@@ -229,9 +229,7 @@ vidrserr_t VID_InitWindow(int mode, int fullscreen)
 	{
 		display = SDL_GetWindowDisplayIndex(window);
 		if (display < 0)
-		{
 			VID_Printf(PRINT_DEVELOPER, S_COLOR_RED "SDL_GetWindowDisplayIndex() failed: %s\n", SDL_GetError());
-		}
 	}
 
 	if (display >= 0 && SDL_GetDesktopDisplayMode(display, &desktopMode) == 0)
@@ -316,6 +314,7 @@ vidrserr_t VID_InitWindow(int mode, int fullscreen)
 	for (i = 0; i < 16; i++)
 	{
 		int testColorBits, testDepthBits, testStencilBits;
+		int realColorBits[3];
 
 		// 0 - default
 		// 1 - minus colorBits
@@ -522,7 +521,15 @@ vidrserr_t VID_InitWindow(int mode, int fullscreen)
 			viddef.vsyncActive = SDL_GL_GetSwapInterval() != 0;
 		}
 
-		VID_Printf(PRINT_ALL, "Using %d color bits, %d depth, %d stencil display.\n", testColorBits, testDepthBits, testStencilBits);
+		SDL_GL_GetAttribute (SDL_GL_RED_SIZE, &realColorBits[0]);
+		SDL_GL_GetAttribute (SDL_GL_GREEN_SIZE, &realColorBits[1]);
+		SDL_GL_GetAttribute (SDL_GL_BLUE_SIZE, &realColorBits[2]);
+		SDL_GL_GetAttribute (SDL_GL_DEPTH_SIZE, &depthBits);
+		SDL_GL_GetAttribute (SDL_GL_STENCIL_SIZE, &stencilBits);
+		
+		colorBits = realColorBits[0] + realColorBits[1] + realColorBits[2];
+
+		VID_Printf(PRINT_ALL, "Using %d color bits, %d depth, %d stencil display.\n", colorBits, depthBits, stencilBits);
 		break;
 	}
 

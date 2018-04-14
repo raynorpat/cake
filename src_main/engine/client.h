@@ -319,11 +319,10 @@ extern client_static_t	cls;
 extern	cvar_t	*cl_stereo_separation;
 extern	cvar_t	*cl_stereo;
 
+extern	cvar_t	*cl_drawParticles;
+extern	cvar_t	*cl_particleCollision;
+
 extern	cvar_t	*cl_gun;
-extern	cvar_t	*cl_add_blend;
-extern	cvar_t	*cl_add_lights;
-extern	cvar_t	*cl_add_particles;
-extern	cvar_t	*cl_add_entities;
 extern	cvar_t	*cl_predict;
 extern	cvar_t	*cl_footsteps;
 extern	cvar_t	*cl_noskins;
@@ -363,8 +362,6 @@ extern	cvar_t	*cl_timedemo;
 extern	cvar_t	*cl_aviFrameRate;
 
 extern	cvar_t	*cl_vwep;
-
-extern  cvar_t	*cl_menuscale;
 
 extern	cvar_t	*cl_http_downloads;
 extern	cvar_t	*cl_http_filelists;
@@ -409,12 +406,15 @@ typedef struct particle_s
 	float		time;
 
 	vec3_t		org;
+	vec3_t		oldOrg;
 	vec3_t		vel;
 	vec3_t		accel;
 	float		color;
 	float		colorvel;
 	float		alpha;
 	float		alphavel;
+	float		bounceFactor;
+	qboolean	ignoreGrav;
 } cparticle_t;
 
 #define	PARTICLE_GRAVITY	40
@@ -471,6 +471,7 @@ void CL_Disconnect_f (void);
 void CL_PingServers_f (void);
 void CL_Snd_Restart_f (void);
 void CL_RequestNextDownload (void);
+void CL_WriteConfiguration (void);
 
 //
 // cl_input
@@ -619,9 +620,7 @@ void M_Draw (void);
 
 char *Default_MenuKey (struct _tag_menuframework *m, int key);
 
-void M_DrawCharacter (int cx, int cy, int num);
 void M_Print (int x, int y, char *str);
-void M_DrawPic (int x, int y, char *pic);
 void M_DrawTextBox (int x, int y, int width, int lines);
 void M_Banner (char *name);
 void M_Popup (void);
@@ -633,6 +632,27 @@ void M_PopMenu (void);
 void M_PushMenu (struct _tag_menuframework *menu);
 
 void M_AddToServerList (netadr_t adr, char *info);
+
+void M_Menu_Main_f(void);
+	void M_Menu_Game_f(void);
+		void M_Menu_LoadGame_f(void);
+		void M_Menu_SaveGame_f(void);
+		void M_Menu_Credits_f(void);
+	void M_Menu_Multiplayer_f(void);
+		void M_Menu_JoinGamespyServer_f(void);
+		void M_Menu_JoinServer_f(void);
+			void M_Menu_AddressBook_f(void);
+		void M_Menu_StartServer_f(void);
+			void M_Menu_DMOptions_f(void);
+		void M_Menu_PlayerConfig_f(void);
+		void M_Menu_DownloadOptions_f(void);
+	void M_Menu_Options_f(void);
+		void M_Menu_Options_Sound_f(void);
+		void M_Menu_Options_Controls_f(void);
+			void M_Menu_Keys_f(void);
+		void M_Menu_Options_Screen_f(void);
+	void M_Menu_Video_f(void);
+	void M_Menu_Quit_f(void);
 
 //
 // cl_inv.c

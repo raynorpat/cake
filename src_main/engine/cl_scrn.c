@@ -50,10 +50,11 @@ cvar_t		*scr_graphheight;
 cvar_t		*scr_graphscale;
 cvar_t		*scr_graphshift;
 
-cvar_t		*cl_menuscale;
+cvar_t		*scr_keepVidAspect;
 
-char		crosshair_pic[MAX_QPATH];
-int			crosshair_width, crosshair_height;
+char		*crosshairDotPic[NUM_CROSSHAIRS][MAX_QPATH];
+char		*crosshairCirclePic[NUM_CROSSHAIRS][MAX_QPATH];
+char		*crosshairCrossPic[NUM_CROSSHAIRS][MAX_QPATH];
 
 void SCR_Loading_f (void);
 
@@ -76,18 +77,19 @@ void SCR_AdjustFrom640 (float *x, float *y, float *w, float *h)
 	// adjust for wide screens
 	xscale = viddef.width / 640.0f;
 	yscale = viddef.height / 480.0f;
-#if 0
-	if (viddef.width * 480 > viddef.height * 640)
+	if (scr_keepVidAspect->integer)
 	{
-		xbias = 0.5f * (viddef.width - (viddef.height * 640.0f / 480.0f));
-		xscale = yscale;
+		if (viddef.width * 480 > viddef.height * 640)
+		{
+			xbias = 0.5f * (viddef.width - (viddef.height * 640.0f / 480.0f));
+			xscale = yscale;
+		}
+		else if (viddef.width * 480 < viddef.height * 640)
+		{
+			ybias = 0.5f * (viddef.height - (viddef.width * 480.0f / 640.0f));
+			yscale = xscale;
+		}
 	}
-	else if (viddef.width * 480 < viddef.height * 640)
-	{
-		ybias = 0.5f * (viddef.height - (viddef.width * 480.0f / 640.0f));
-		yscale = xscale;
-	}
-#endif
 
 	// scale for screen sizes
 	if (x)
@@ -132,6 +134,35 @@ void SCR_DrawPic (float x, float y, float width, float height, char *pic)
 
 /*
 ================
+SCR_DrawChar
+
+Coordinates are 640*480 virtual values
+=================
+*/
+void SCR_DrawChar (float x, float y, int num)
+{
+	float frow, fcol, size, w, h;
+
+	num &= 255;
+
+	if ((num & 127) == 32)
+		return; // space
+	if (y <= -8)
+		return; // totally off screen
+
+	frow = (num >> 4) * 0.0625;
+	fcol = (num & 15) * 0.0625;
+	size = 0.0625;
+
+	w = 8;
+	h = 8;
+
+	SCR_AdjustFrom640 (&x, &y, &w, &h);
+	RE_Draw_StretchPicExt (x, y, w, h, fcol, frow, fcol + size, frow + size, "pics/charset.png");
+}
+
+/*
+================
 SCR_FadeColor
 ================
 */
@@ -172,7 +203,7 @@ FONT PRINTING
 SCR_Text_PaintChar
 ==============
 */
-void SCR_Text_PaintChar(float x, float y, float width, float height, float scale, float s, float t, float s2, float t2, char *name)
+void SCR_Text_PaintChar (float x, float y, float width, float height, float scale, float s, float t, float s2, float t2, char *name)
 {
 	float w, h;
 
@@ -643,8 +674,7 @@ void SCR_Init (void)
 	scr_graphheight = Cvar_Get ("graphheight", "32", 0);
 	scr_graphscale = Cvar_Get ("graphscale", "1", 0);
 	scr_graphshift = Cvar_Get ("graphshift", "0", 0);
-
-	cl_menuscale = Cvar_Get("cl_menuscale", "-1", CVAR_ARCHIVE);
+	scr_keepVidAspect = Cvar_Get ("scr_keepVidAspect", "0", CVAR_ARCHIVE);
 
 	// register our commands
 	Cmd_AddCommand ("loading", SCR_Loading_f);
@@ -856,6 +886,81 @@ void SCR_Loading_f (void)
 	SCR_BeginLoadingPlaque ();
 }
 
+/*
+================
+SCR_DrawDownloadBar
+
+download progress bar
+================
+*/
+void SCR_DrawDownloadBar (void)
+{
+	char	*text;
+	char	dlbar[1024];
+	int		j, n, x, y, i, w, h;
+
+	// skip if we are not downloading any files
+	if (!(cls.downloadname[0] && (cls.download || cls.downloadposition)))
+		return;
+
+	if ((text = strrchr(cls.downloadname, '/')) != NULL)
+		text++;
+	else
+		text = cls.downloadname;
+
+	// figure out width
+	x = 64;
+	y = x - strlen(text) - 16;
+	i = 26; // 26 characters ought to be enough
+
+	if (strlen(text) > i)
+	{
+		y = x - i - 11;
+		memcpy(dlbar, text, i);
+		dlbar[i] = 0;
+		strcat(dlbar, "...");
+	}
+	else
+	{
+		strcpy(dlbar, text);
+	}
+
+	strcat(dlbar, ": ");
+	i = strlen(dlbar);
+	dlbar[i++] = '_';
+
+	// where's the dot go?
+	if (cls.downloadpercent == 0)
+		n = 0;
+	else
+		n = y * cls.downloadpercent / 100;
+
+	for (j = 0; j < y; j++)
+	{
+		if (j == n)
+			dlbar[i++] = 'X';
+		else
+			dlbar[i++] = '_';
+	}
+
+	dlbar[i++] = '!';
+	dlbar[i] = 0;
+
+	if (cls.download)
+		cls.downloadposition = ftell(cls.download);
+
+	sprintf(dlbar + i, " %02d%% (%.02f KB)", cls.downloadpercent, (float)cls.downloadposition / 1024.0);
+
+	// draw the loading plaque
+	RE_Draw_GetPicSize(&w, &h, "loading");
+	SCR_DrawPic((SCREEN_WIDTH - w) / 2, (SCREEN_HEIGHT - h) / 2, w, h, "loading");
+
+	// draw the download bar
+	y = 470;
+	for (i = 0; i < strlen(dlbar); i++)
+		SCR_Text_PaintSingleChar(((i + 1) << 3) + 32, y, 0.2f, colorGreen, dlbar[i], 0, 0, 0, &cls.consoleBoldFont);
+}
+
 //===============================================================
 
 #define STAT_MINUS 10	// num frame for '-' stats digit
@@ -988,22 +1093,27 @@ void SCR_TouchPics (void)
 {
 	int		i, j;
 
+	// cache status bar
 	for (i = 0; i < 2; i++)
 	{
 		for (j = 0; j < 11; j++)
 			RE_Draw_RegisterPic (sb_nums[i][j]);
 	}
 
+	// cache crosshairs
 	if (crosshair->value)
 	{
-		if (crosshair->value > 3 || crosshair->value < 0)
-			crosshair->value = 3;
+		for (i = 0; i < NUM_CROSSHAIRS; i++)
+		{
+			Com_sprintf((char *)crosshairDotPic[i], sizeof(crosshairDotPic[i]), "pics/crosshairs/dot%i.png", i + 1);
+			RE_Draw_RegisterPic ((char *)crosshairDotPic[i]);
 
-		Com_sprintf (crosshair_pic, sizeof (crosshair_pic), "ch%i", (int) (crosshair->value));
-		RE_Draw_GetPicSize (&crosshair_width, &crosshair_height, crosshair_pic);
+			Com_sprintf((char *)crosshairCirclePic[i], sizeof(crosshairCirclePic[i]), "pics/crosshairs/circle%i.png", i + 1);
+			RE_Draw_RegisterPic ((char *)crosshairCirclePic[i]);
 
-		if (!crosshair_width)
-			crosshair_pic[0] = 0;
+			Com_sprintf((char *)crosshairCrossPic[i], sizeof(crosshairCrossPic[i]), "pics/crosshairs/cross%i.png", i + 1);
+			RE_Draw_RegisterPic ((char *)crosshairCrossPic[i]);
+		}
 	}
 }
 
@@ -1500,6 +1610,7 @@ void SCR_UpdateScreen (void)
 				CL_DrawInventory ();
 
 			SCR_DrawNet ();
+
 			SCR_DrawCenterString ();
 
 			if (scr_timegraph->value)
@@ -1512,50 +1623,15 @@ void SCR_UpdateScreen (void)
 
 			M_Draw ();
 
-			SCR_DrawConsole ();
-
 			SCR_DrawLoading ();
+
+			SCR_DrawDownloadBar ();
+
+			SCR_DrawConsole ();
 		}
 	}
 
 	SCR_DrawFPS ();
 
 	RE_EndFrame ();
-}
-
-static float SCR_GetScale(void)
-{
-	int i = round((float)viddef.width / 640);
-	int j = round((float)viddef.height / 480);
-
-	if (i > j)
-	{
-		i = j;
-	}
-	if (i < 1)
-	{
-		i = 1;
-	}
-
-	return i;
-}
-
-float SCR_GetMenuScale(void)
-{
-	float scale;
-
-	if (!scr_initialized)
-	{
-		scale = 1;
-	}
-	else if (cl_menuscale->value < 0)
-	{
-		scale = SCR_GetScale();
-	}
-	else
-	{
-		scale = cl_menuscale->value;
-	}
-
-	return scale;
 }

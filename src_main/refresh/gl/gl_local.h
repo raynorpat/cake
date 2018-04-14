@@ -375,7 +375,7 @@ void GL_FreeUnusedImages (void);
 
 void R_InitFreeType (void);
 void R_DoneFreeType (void);
-void RE_RegisterFont (char *fontName, int pointSize, fontInfo_t * font);
+void RE_GL_RegisterFont (char *fontName, int pointSize, fontInfo_t * font);
 
 typedef struct
 {
@@ -451,7 +451,6 @@ typedef struct cubeface_s
 
 GLuint GL_UploadTexture (byte *data, int width, int height, qboolean mipmap, int bits);
 GLuint GL_LoadCubeMap (cubeface_t *faces);
-void GL_Image8To32 (byte *data8, unsigned *data32, int size, unsigned *palette);
 
 void *Img_Alloc (int size);
 void Img_Free (void);

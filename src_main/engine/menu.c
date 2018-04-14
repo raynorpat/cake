@@ -25,24 +25,6 @@ char *menu_in_sound		= "misc/menu1.wav";
 char *menu_move_sound	= "misc/menu2.wav";
 char *menu_out_sound	= "misc/menu3.wav";
 
-void M_Menu_Main_f (void);
-void M_Menu_Game_f (void);
-void M_Menu_LoadGame_f (void);
-void M_Menu_SaveGame_f (void);
-void M_Menu_PlayerConfig_f (void);
-void M_Menu_DownloadOptions_f (void);
-void M_Menu_Credits_f (void);
-void M_Menu_Multiplayer_f (void);
-void M_Menu_JoinServer_f (void);
-void M_Menu_JoinGamespyServer_f (void);
-void M_Menu_AddressBook_f (void);
-void M_Menu_StartServer_f (void);
-void M_Menu_DMOptions_f (void);
-void M_Menu_Video_f (void);
-void M_Menu_Options_f (void);
-void M_Menu_Keys_f (void);
-void M_Menu_Quit_f (void);
-
 qboolean m_entersound; // play after drawing a frame, so caching won't disrupt the sound
 
 static menuframework_s *m_active;
@@ -55,7 +37,7 @@ qboolean bselected = false;
 //=============================================================================
 
 /*
-* These crappy functions maintaine a stack of opened menus.
+* These crappy functions maintain a stack of opened menus.
 * The steps in this horrible mess are:
 *
 * 1. Put the game into pause if a menu is opened
@@ -87,8 +69,8 @@ void M_PopMenu (void)
 		S_StartLocalSound( menu_out_sound );
 
 	m_menudepth--;
-
-	if (!m_menudepth) {
+	if (!m_menudepth)
+	{
 		M_ForceMenuOff ();
 		return;
 	}
@@ -100,17 +82,14 @@ void M_PushMenu ( menuframework_s *menu )
 {
 	int		i;
 
-	if ((Cvar_VariableValue ("maxclients") == 1) && Com_ServerState ())
+	if ((Cvar_VariableValue ("maxclients") == 1) && Com_ServerState())
 		Cvar_Set ("paused", "1");
 
-	// if this menu is already present, drop back to that level
-	// to avoid stacking menus by hotkeys
+	// if this menu is already present, drop back to that level to avoid stacking menus by hotkeys
 	for (i = 0; i < m_menudepth; i++)
 	{
 		if( m_layers[i] == menu )
-		{
             break;
-		}
 	}
 
 	// menu was already opened further down the stack
@@ -126,9 +105,7 @@ void M_PushMenu ( menuframework_s *menu )
 	}
 
 	m_active = menu;
-
 	m_entersound = true;
-
 	cls.key_dest = key_menu;
 }
 
@@ -163,9 +140,11 @@ char *Default_MenuKey (menuframework_s *m, int key)
 	char *sound = NULL;
 	menucommon_s *item = NULL;
 	int index;
+	int menu_key = Key_GetMenuKey (key);
 
 	if (m)
 	{
+		// check for click hit
 		if (key == K_MOUSE1)
 		{
 			index = Menu_ClickHit(m, m_mouse[0], m_mouse[1]);
@@ -188,7 +167,7 @@ char *Default_MenuKey (menuframework_s *m, int key)
 		}
 	}
 
-	// HACK
+	// HACK: make the mouse click work correctly on slider and spin controls
 	if(item && (item->type == MTYPE_SLIDER || item->type == MTYPE_SPINCONTROL))
 	{
 		if(key == K_MOUSE1)
@@ -197,139 +176,63 @@ char *Default_MenuKey (menuframework_s *m, int key)
 			key = K_LEFTARROW;
 	}
 
-	switch (key)
+	switch (menu_key)
 	{
-	case K_MOUSE2:
-	case K_ESCAPE:
-	case K_GAMEPAD_START:
-	case K_GAMEPAD_B:
-	case K_GAMEPAD_BACK:
-		M_PopMenu ();
-		return menu_out_sound;
+		case K_ESCAPE:
+			M_PopMenu ();
+			return menu_out_sound;
 
-	case K_GAMEPAD_UP:
-	case K_GAMEPAD_LSTICK_UP:
-	case K_GAMEPAD_RSTICK_UP:
-	case K_KP_UPARROW:
-	case K_UPARROW:
-		if (m)
-		{
-			m->cursor--;
-			Menu_AdjustCursor (m, -1);
-			sound = menu_move_sound;
-		}
-		break;
+		case K_UPARROW:
+			if (m)
+			{
+				m->cursor--;
+				Menu_AdjustCursor (m, -1);
+				sound = menu_move_sound;
+			}
+			break;
 
-	case K_TAB:
-		if ( m )
-		{
-			m->cursor++;
-			Menu_AdjustCursor( m, 1 );
-			sound = menu_move_sound;
-		}
-		break;
-	case K_KP_DOWNARROW:
-	case K_DOWNARROW:
-	case K_GAMEPAD_DOWN:
-	case K_GAMEPAD_LSTICK_DOWN:
-	case K_GAMEPAD_RSTICK_DOWN:
-		if (m)
-		{
-			m->cursor++;
-			Menu_AdjustCursor (m, 1);
-			sound = menu_move_sound;
-		}
-		break;
+		case K_TAB:
+			if ( m )
+			{
+				m->cursor++;
+				Menu_AdjustCursor( m, 1 );
+				sound = menu_move_sound;
+			}
+			break;
 
-	case K_GAMEPAD_LEFT:
-	case K_GAMEPAD_LSTICK_LEFT:
-	case K_GAMEPAD_RSTICK_LEFT:
-	case K_KP_LEFTARROW:
-	case K_LEFTARROW:
-		if (m)
-		{
-			Menu_SlideItem (m, -1);
-			sound = menu_move_sound;
-		}
-		break;
+		case K_DOWNARROW:
+			if (m)
+			{
+				m->cursor++;
+				Menu_AdjustCursor (m, 1);
+				sound = menu_move_sound;
+			}
+			break;
 
-	case K_GAMEPAD_RIGHT:
-	case K_GAMEPAD_LSTICK_RIGHT:
-	case K_GAMEPAD_RSTICK_RIGHT:
-	case K_KP_RIGHTARROW:
-	case K_RIGHTARROW:
-		if (m)
-		{
-			Menu_SlideItem (m, 1);
-			sound = menu_move_sound;
-		}
-		break;
+		case K_LEFTARROW:
+			if (m)
+			{
+				Menu_SlideItem (m, -1);
+				sound = menu_move_sound;
+			}
+			break;
 
-	case K_MOUSE1:
-	case K_MOUSE3:
-    case K_MOUSE4:
-    case K_MOUSE5:
-	case K_JOY1:
-	case K_JOY2:
-	case K_JOY3:
-	case K_JOY4:
-	case K_AUX1:
-	case K_AUX2:
-	case K_AUX3:
-	case K_AUX4:
-	case K_AUX5:
-	case K_AUX6:
-	case K_AUX7:
-	case K_AUX8:
-	case K_AUX9:
-	case K_AUX10:
-	case K_AUX11:
-	case K_AUX12:
-	case K_AUX13:
-	case K_AUX14:
-	case K_AUX15:
-	case K_AUX16:
-	case K_AUX17:
-	case K_AUX18:
-	case K_AUX19:
-	case K_AUX20:
-	case K_AUX21:
-	case K_AUX22:
-	case K_AUX23:
-	case K_AUX24:
-	case K_AUX25:
-	case K_AUX26:
-	case K_AUX27:
-	case K_AUX28:
-	case K_AUX29:
-	case K_AUX30:
-	case K_AUX31:
-	case K_AUX32:
-	case K_KP_ENTER:
-	case K_ENTER:
-	case K_GAMEPAD_A:
-		if (m)
-			Menu_SelectItem (m);
-		sound = menu_move_sound;
-		break;
+		case K_RIGHTARROW:
+			if (m)
+			{
+				Menu_SlideItem (m, 1);
+				sound = menu_move_sound;
+			}
+			break;
+
+		case K_ENTER:
+			if (m)
+				Menu_SelectItem (m);
+			sound = menu_move_sound;
+			break;
 	}
 
 	return sound;
-}
-
-/*
-================
-M_DrawCharacter
-
-Draws one solid graphics character
-cx and cy are in 320*240 coordinates, and will be centered on
-higher res screens.
-================
-*/
-void M_DrawCharacter (int cx, int cy, int num)
-{
-	float scale = SCR_GetMenuScale();
-	RE_Draw_Char (cx + ((int)(viddef.width - 320 * scale) >> 1), cy + ((int)(viddef.height - 240 * scale) >> 1), num, scale);
 }
 
 /*
@@ -342,38 +245,34 @@ Draws an entire string
 void M_Print (int x, int y, char *str)
 {
     int cx, cy;
-	float scale = SCR_GetMenuScale();
 
     cx = x;
     cy = y;
-	while (*str)
+	
+	while (1)
 	{
-        if (*str == '\n')
-        {
-            cx = x;
-            cy += 8;
-        }
-        else
-        {
-			M_DrawCharacter (cx * scale, cy * scale, (*str) + 128);
-			cx += 8;
+		char linebuffer[1024];
+		int	l, h;
+
+		// scan the width of the line
+		for (l = 0; l < 64; l++)
+		{
+			if (!str[l] || str[l] == '\n')
+				break;
+			linebuffer[l] = str[l];
 		}
-        str++;
+		linebuffer[l] = 0;
+
+		h = SCR_Text_Height (linebuffer, 0.25f, 0, &cls.consoleBoldFont);
+		SCR_Text_Paint (cx, cy + h, 0.25f, colorGreen, linebuffer, 0, 0, UI_DROPSHADOW, &cls.consoleBoldFont);
+		cy += h;
+
+		while (*str && (*str != '\n'))
+			str++;
+		if (!*str)
+			break;
+		str++; // skip the \n
 	}
-}
-
-/*
-================
-M_DrawPic
-
-Draws a pic
-================
-*/
-void M_DrawPic (int x, int y, char *pic)
-{
-	float scale = SCR_GetMenuScale();
-
-	RE_Draw_Pic ((x + ((viddef.width - 320) >> 1)) * scale, (y + ((viddef.height - 240) >> 1)) * scale, pic, scale);
 }
 
 /*
@@ -387,20 +286,19 @@ void M_DrawTextBox (int x, int y, int width, int lines)
 {
 	int		cx, cy;
 	int		n;
-	float	scale = SCR_GetMenuScale();
 
 	// draw left side
 	cx = x;
 	cy = y;
-	M_DrawCharacter (cx * scale, cy * scale, 1);
+	SCR_DrawChar (cx, cy, 1);
 
 	for (n = 0; n < lines; n++)
 	{
 		cy += 8;
-		M_DrawCharacter (cx * scale, cy * scale, 4);
+		SCR_DrawChar (cx, cy, 4);
 	}
 
-    M_DrawCharacter(cx * scale, cy * scale + 8 * scale, 7);
+	SCR_DrawChar (cx, cy + 8, 7);
 
 	// draw middle
 	cx += 8;
@@ -408,30 +306,30 @@ void M_DrawTextBox (int x, int y, int width, int lines)
 	while (width > 0)
 	{
 		cy = y;
-		M_DrawCharacter (cx * scale, cy * scale, 2);
+		SCR_DrawChar (cx, cy, 2);
 
 		for (n = 0; n < lines; n++)
 		{
 			cy += 8;
-			M_DrawCharacter (cx * scale, cy * scale, 10);
+			SCR_DrawChar (cx, cy, 10);
 		}
 
-        M_DrawCharacter(cx * scale, cy *scale + 8 * scale, 8);
+		SCR_DrawChar (cx, cy + 8, 8);
 		width -= 1;
 		cx += 8;
 	}
 
 	// draw right side
 	cy = y;
-	M_DrawCharacter (cx * scale, cy * scale, 3);
+	SCR_DrawChar (cx, cy, 3);
 
 	for (n = 0; n < lines; n++)
 	{
 		cy += 8;
-		M_DrawCharacter (cx * scale, cy * scale, 6);
+		SCR_DrawChar (cx, cy, 6);
 	}
 
-    M_DrawCharacter(cx * scale, cy * scale + 8 * scale, 9);
+    SCR_DrawChar (cx, cy + 8, 9);
 }
 
 /*
@@ -451,9 +349,7 @@ void M_Popup(void)
     char *str;
 
     if (!m_popup_string)
-    {
         return;
-    }
 
     if (m_popup_endtime && m_popup_endtime < cls.realtime)
     {
@@ -473,25 +369,28 @@ void M_Popup(void)
         {
             n++;
             if (n > width)
-            {
                 width = n;
-            }
         }
     }
-    if (n)
-    {
+
+	if (n)
         lines++;
-    }
 
     if (width)
     {
         width += 2;
 
-        x = (320 - (width + 2) * 8) / 2;
-        y = (240 - (lines + 2) * 8) / 3;
+        x = (SCREEN_WIDTH - (width + 2) * 8) / 2;
+        y = (SCREEN_HEIGHT - (lines + 2) * 8) / 3 + 64;
 
-        M_DrawTextBox(x, y, width, lines);
-        M_Print(x + 16, y + 8, m_popup_string);
+		// fade the screen
+		RE_Draw_FadeScreen ();
+
+		// then draw the box
+        M_DrawTextBox (x, y, width, lines + 1);
+
+		// then finally the text on top
+        M_Print (x + 16, y + 8, m_popup_string);
     }
 }
 
@@ -505,10 +404,9 @@ Draws a picture banner overhead
 void M_Banner(char *name)
 {
 	int w, h;
-	float scale = SCR_GetMenuScale();
 
-	RE_Draw_GetPicSize(&w, &h, name);
-	RE_Draw_Pic (viddef.width / 2 - (w * scale) / 2, viddef.height / 2 - (110 * scale), name, scale);
+	RE_Draw_GetPicSize (&w, &h, name);
+	SCR_DrawPic (SCREEN_WIDTH / 2 - w / 2, SCREEN_HEIGHT / 2 - 110, w, h, name);
 }
 
 //=============================================================================
@@ -577,6 +475,35 @@ void M_MouseMove (int mx, int my)
 
 /*
 =================
+M_Draw_Cursor
+=================
+*/
+void M_Draw_Cursor (void)
+{
+	int		w, h;
+	float	ofs_x, ofs_y, ofs_scale = 2.5f;
+	float	scale[3];
+	char	*cur_img = "ch1";
+
+	// if no mouse movement, get out of here
+	if (!m_mouse[0] && !m_mouse[1])
+		return;
+
+	scale[0] = viddef.width / SCREEN_WIDTH;
+	scale[1] = viddef.height / SCREEN_HEIGHT;
+	scale[2] = min (scale[0], scale[1]);
+
+	// get sizing vars
+	RE_Draw_GetPicSize (&w, &h, cur_img);
+	ofs_scale *= scale[2];
+	ofs_x = (scale[2] * w) * ofs_scale * 0.5f;
+	ofs_y = (scale[2] * h) * ofs_scale * 0.5f;
+
+	RE_Draw_Pic (m_mouse[0] - ofs_x, m_mouse[1] - ofs_y, cur_img, ofs_scale);
+}
+
+/*
+=================
 M_Draw
 =================
 */
@@ -591,15 +518,21 @@ void M_Draw (void)
 		return;
 
 	// dim everything behind it down
-	if (SCR_GetCinematicTime() > 0 || (cls.state == ca_disconnected || cls.state == ca_connecting)) // if cinematic or in full screen console, all black please
+	if (SCR_GetCinematicTime() > 0 || (cls.state == ca_disconnected || cls.state == ca_connecting))
+	{
+		// if cinematic or in full screen console, all black please
 		RE_Draw_Fill (0, 0, viddef.width, viddef.height, 0);
+	}
 	else
-		RE_Draw_FadeScreen (); // draw fade screen post effect in-game or in attract loop
+	{
+		// draw post effect when ingame or in attract loop
+		RE_Draw_FadeScreen ();
+	}
 
 	// see if the mouse is hitting anything
 	if(!bselected)
 	{
-		index = Menu_HitTest(m_active, m_mouse[0], m_mouse[1]);
+		index = Menu_HitTest (m_active, m_mouse[0], m_mouse[1]);
 		if( prev != index )
 		{
 			if( index != -1 )
@@ -615,11 +548,10 @@ void M_Draw (void)
 		Menu_Draw(m_active);
 
 	// draw the mouse cursor
-	RE_Draw_Pic (m_mouse[0], m_mouse[1], "ch1", SCR_GetMenuScale());
+	M_Draw_Cursor ();
 
 	// delay playing the enter sound until after the
-	// menu has been drawn, to avoid delay while
-	// caching images
+	// menu has been drawn, to avoid delay while caching images
 	if (m_entersound)
 	{
 		S_StartLocalSound (menu_in_sound);

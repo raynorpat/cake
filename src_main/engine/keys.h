@@ -134,6 +134,16 @@ typedef enum {
 	K_JOY31,
 	K_JOY32,
 
+	K_HAT_UP,
+	K_HAT_RIGHT,
+	K_HAT_DOWN,
+	K_HAT_LEFT,
+
+	K_TRIG_LEFT,
+	K_TRIG_RIGHT,
+
+	K_JOY_BACK,
+
 	K_AUX1,
 	K_AUX2,
 	K_AUX3,
@@ -177,36 +187,6 @@ typedef enum {
 	K_MENU,
 	K_UNDO,
 
-	// SDL2 game controller keys
-	K_GAMEPAD_LSTICK_UP,
-	K_GAMEPAD_LSTICK_DOWN,
-	K_GAMEPAD_LSTICK_LEFT,
-	K_GAMEPAD_LSTICK_RIGHT,
-	K_GAMEPAD_RSTICK_UP,
-	K_GAMEPAD_RSTICK_DOWN,
-	K_GAMEPAD_RSTICK_LEFT,
-	K_GAMEPAD_RSTICK_RIGHT,
-	
-	K_GAMEPAD_LT,
-	K_GAMEPAD_RT,
-	
-	K_GAMEPAD_A,
-	K_GAMEPAD_B,
-	K_GAMEPAD_X,
-	K_GAMEPAD_Y,
-	K_GAMEPAD_BACK,
-	K_GAMEPAD_GUIDE,
-	K_GAMEPAD_START,
-	K_GAMEPAD_LEFT_STICK,
-	K_GAMEPAD_RIGHT_STICK,
-	K_GAMEPAD_LS,
-	K_GAMEPAD_RS,
-	
-	K_GAMEPAD_UP,
-	K_GAMEPAD_DOWN,
-	K_GAMEPAD_LEFT,
-	K_GAMEPAD_RIGHT,
-
 	K_LAST
 } keynum_t;
 
@@ -220,7 +200,10 @@ extern	qboolean	chat_team;
 
 void Char_Event(int key);
 void Key_Event (int key, qboolean down, qboolean special);
+int Key_GetMenuKey (int key);
 void Key_Init (void);
 void Key_WriteBindings (FILE *f);
 void Key_SetBinding (int keynum, char *binding);
 void Key_ClearStates (void);
+
+void Haptic_Feedback (char *name, int effect_volume, vec3_t dir);

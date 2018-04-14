@@ -28,10 +28,6 @@ GAME MENU
 =============================================================================
 */
 
-void M_Menu_LoadGame_f (void);
-void M_Menu_SaveGame_f (void);
-void M_Menu_Credits_f (void);
-
 static int				m_game_cursor;
 
 static menuframework_s	s_game_menu;
@@ -48,9 +44,7 @@ static void StartGame (void)
 {
 	// if we are already connected to a server, disconnect
 	if (cls.state != ca_disconnected && cls.state != ca_uninitialized)
-	{
 		CL_Disconnect();
-	}
 
 	// disable updates and start the cinematic going
 	cl.servercount = -1;
@@ -110,59 +104,72 @@ void Game_MenuDraw (menuframework_s *self)
 
 void Game_MenuInit (void)
 {
+	int y;
+
 	memset (&s_game_menu, 0, sizeof(s_game_menu));
-	s_game_menu.x = (int)(viddef.width * 0.50f);
+	s_game_menu.x = (int)(SCREEN_WIDTH * 0.50f);
 	s_game_menu.nitems = 0;
 
+	y = 0;
 	s_easy_game_action.generic.type	= MTYPE_ACTION;
 	s_easy_game_action.generic.flags = QMF_LEFT_JUSTIFY;
-	s_easy_game_action.generic.x		= 0;
-	s_easy_game_action.generic.y		= 0;
+	s_easy_game_action.generic.x = 0;
+	s_easy_game_action.generic.y = y;
 	s_easy_game_action.generic.name	= "easy";
 	s_easy_game_action.generic.callback = EasyGameFunc;
 
+	y += 10;
 	s_medium_game_action.generic.type	= MTYPE_ACTION;
 	s_medium_game_action.generic.flags = QMF_LEFT_JUSTIFY;
-	s_medium_game_action.generic.x		= 0;
-	s_medium_game_action.generic.y		= 10;
-	s_medium_game_action.generic.name	= "medium";
+	s_medium_game_action.generic.x = 0;
+	s_medium_game_action.generic.y = y;
+	s_medium_game_action.generic.name = "medium";
 	s_medium_game_action.generic.callback = MediumGameFunc;
 
+	y += 10;
 	s_hard_game_action.generic.type	= MTYPE_ACTION;
 	s_hard_game_action.generic.flags = QMF_LEFT_JUSTIFY;
-	s_hard_game_action.generic.x		= 0;
-	s_hard_game_action.generic.y		= 20;
+	s_hard_game_action.generic.x = 0;
+	s_hard_game_action.generic.y = y;
 	s_hard_game_action.generic.name	= "hard";
 	s_hard_game_action.generic.callback = HardGameFunc;
 
+	y += 10;
     s_hardp_game_action.generic.type = MTYPE_ACTION;
     s_hardp_game_action.generic.flags = QMF_LEFT_JUSTIFY;
     s_hardp_game_action.generic.x = 0;
-    s_hardp_game_action.generic.y = 30;
+    s_hardp_game_action.generic.y = y;
     s_hardp_game_action.generic.name = "nightmare";
     s_hardp_game_action.generic.callback = HardpGameFunc;
 
+	y += 20;
 	s_blankline.generic.type = MTYPE_SEPARATOR;
 
+	y += 10;
 	s_load_game_action.generic.type	= MTYPE_ACTION;
 	s_load_game_action.generic.flags = QMF_LEFT_JUSTIFY;
-	s_load_game_action.generic.x		= 0;
-    s_load_game_action.generic.y = 50;
+	s_load_game_action.generic.x = 0;
+    s_load_game_action.generic.y = y;
 	s_load_game_action.generic.name	= "load game";
 	s_load_game_action.generic.callback = LoadGameFunc;
 
+	y += 10;
 	s_save_game_action.generic.type	= MTYPE_ACTION;
 	s_save_game_action.generic.flags = QMF_LEFT_JUSTIFY;
-	s_save_game_action.generic.x		= 0;
-    s_save_game_action.generic.y = 60;
+	s_save_game_action.generic.x = 0;
+    s_save_game_action.generic.y = y;
 	s_save_game_action.generic.name	= "save game";
 	s_save_game_action.generic.callback = SaveGameFunc;
 
-	s_credits_action.generic.type	= MTYPE_ACTION;
+	y += 20;
+	// another blank line
+
+	y += 10;
+	s_credits_action.generic.type = MTYPE_ACTION;
 	s_credits_action.generic.flags = QMF_LEFT_JUSTIFY;
-	s_credits_action.generic.x		= 0;
-    s_credits_action.generic.y = 70;
-	s_credits_action.generic.name	= "credits";
+	s_credits_action.generic.x = 0;
+    s_credits_action.generic.y = y;
+	s_credits_action.generic.name = "credits";
 	s_credits_action.generic.callback = CreditsFunc;
 
 	s_game_menu.draw = Game_MenuDraw;
@@ -186,538 +193,4 @@ void M_Menu_Game_f (void)
 	Game_MenuInit ();
 	M_PushMenu (&s_game_menu);
 	m_game_cursor = 1;
-}
-
-/*
-=============================================================================
-
-LOADGAME MENU
-
-=============================================================================
-*/
-
-void LoadGame_MenuInit(void);
-
-#define MAX_SAVESLOTS 16
-#define MAX_SAVEPAGES 2
-
-static char m_savestrings[MAX_SAVESLOTS][32];
-static qboolean m_savevalid[MAX_SAVESLOTS];
-
-static int m_loadsave_page;
-static char m_loadsave_statusbar[32];
-
-static menuframework_s	s_loadgame_menu;
-static menuaction_s s_loadgame_actions[MAX_SAVESLOTS];
-
-static menuframework_s s_savegame_menu;
-static menuaction_s s_savegame_actions[MAX_SAVESLOTS];
-
-void Create_Savestrings (void)
-{
-	int				i;
-	fileHandle_t	*f;
-	char			name[MAX_OSPATH];
-
-	for (i = 0; i < MAX_SAVESLOTS; i++)
-	{
-		Com_sprintf (name, sizeof (name), "%s/save/save%i/server.ssv", FS_Gamedir(), m_loadsave_page * MAX_SAVESLOTS + i);
-		FS_FOpenFile(name, (fileHandle_t *)&f, FS_READ, true);
-		if (!f)
-		{
-			strcpy (m_savestrings[i], "<empty>");
-			m_savevalid[i] = false;
-		}
-		else
-		{
-			FS_Read (m_savestrings[i], sizeof (m_savestrings[i]), (fileHandle_t)f);
-			FS_FCloseFile((fileHandle_t)f);
-			m_savevalid[i] = true;
-		}
-	}
-}
-
-void LoadSave_AdjustPage(int dir)
-{
-	int i;
-	char *str;
-
-	m_loadsave_page += dir;
-	
-	if (m_loadsave_page >= MAX_SAVEPAGES)
-	{
-		m_loadsave_page = 0;
-	}
-	else if (m_loadsave_page < 0)
-	{
-		m_loadsave_page = MAX_SAVEPAGES - 1;
-	}
-	
-	strcpy(m_loadsave_statusbar, "pages: ");
-
-	for (i = 0; i < MAX_SAVEPAGES; i++)
-	{
-		str = va("%c%d%c",
-			i == m_loadsave_page ? '[' : ' ',
-			i + 1,
-			i == m_loadsave_page ? ']' : ' ');
-
-		if (strlen(m_loadsave_statusbar) + strlen(str) >= sizeof(m_loadsave_statusbar))
-		{
-			break;
-		}
-		
-		strcat(m_loadsave_statusbar, str);
-	}
-}
-
-void LoadGameCallback (void *self)
-{
-	menuaction_s *a = (menuaction_s *) self;
-
-	Cbuf_AddText(va("load save%i\n", a->generic.localdata[0]));
-	M_ForceMenuOff ();
-}
-
-void LoadGame_MenuDraw (menuframework_s *self)
-{
-	M_Banner ("m_banner_load_game");
-	Menu_AdjustCursor (self, 1);
-	Menu_Draw (self);
-}
-
-char *LoadGame_MenuKey (menuframework_s *self, int key)
-{
-	switch (key)
-	{
-		case K_KP_UPARROW:
-		case K_UPARROW:
-			if (self->cursor == 0)
-			{
-				LoadSave_AdjustPage(-1);
-				LoadGame_MenuInit();
-			}
-			break;
-		case K_TAB:
-		case K_KP_DOWNARROW:
-		case K_DOWNARROW:
-			if (self->cursor == self->nitems - 1)
-			{
-				LoadSave_AdjustPage(1);
-				LoadGame_MenuInit();
-			}
-			break;
-		case K_KP_LEFTARROW:
-		case K_LEFTARROW:
-			LoadSave_AdjustPage(-1);
-			LoadGame_MenuInit();
-			return menu_move_sound;
-		case K_KP_RIGHTARROW:
-		case K_RIGHTARROW:
-			LoadSave_AdjustPage(1);
-			LoadGame_MenuInit();
-			return menu_move_sound;
-		default:
-			s_savegame_menu.cursor = s_loadgame_menu.cursor;
-			break;
-	}
-
-	return Default_MenuKey (self, key);
-}
-
-void LoadGame_MenuInit (void)
-{
-	int i;
-	float scale = SCR_GetMenuScale();
-
-	memset(&s_loadgame_menu, 0, sizeof(s_loadgame_menu));
-	s_loadgame_menu.x = viddef.width / 2 - (120 * scale);
-	s_loadgame_menu.y = viddef.height / (2 * scale) - 58;
-	s_loadgame_menu.nitems = 0;
-
-	s_loadgame_menu.draw = LoadGame_MenuDraw;
-	s_loadgame_menu.key = LoadGame_MenuKey;
-
-	Create_Savestrings ();
-
-	for (i = 0; i < MAX_SAVESLOTS; i++)
-	{
-		s_loadgame_actions[i].generic.type = MTYPE_ACTION;
-		s_loadgame_actions[i].generic.name = m_savestrings[i];
-
-		s_loadgame_actions[i].generic.x = 0;
-
-		s_loadgame_actions[i].generic.y = i * 10;
-		s_loadgame_actions[i].generic.localdata[0] = i + m_loadsave_page * MAX_SAVESLOTS;
-		s_loadgame_actions[i].generic.flags = QMF_LEFT_JUSTIFY;
-		if (!m_savevalid[i])
-		{
-			s_loadgame_actions[i].generic.callback = NULL;
-		}
-		else
-		{
-			s_loadgame_actions[i].generic.callback = LoadGameCallback;
-		}
-
-		Menu_AddItem (&s_loadgame_menu, &s_loadgame_actions[i]);
-	}
-
-	Menu_SetStatusBar (&s_loadgame_menu, m_loadsave_statusbar);
-}
-
-void M_Menu_LoadGame_f (void)
-{
-	LoadSave_AdjustPage(0);
-	LoadGame_MenuInit ();
-	M_PushMenu (&s_loadgame_menu);
-}
-
-/*
-=============================================================================
-
-SAVEGAME MENU
-
-=============================================================================
-*/
-
-void SaveGame_MenuInit(void);
-
-void SaveGameCallback (void *self)
-{
-	menuaction_s *a = (menuaction_s *) self;
-
-	if (a->generic.localdata[0] == 0)
-	{
-		m_popup_string = "This slot is reserved for\n"
-						 "autosaving, so please select\n"
-						 "another one.";
-		m_popup_endtime = cls.realtime + 2000;
-		M_Popup();
-		return;
-	}
-
-	Cbuf_AddText (va("save save%i\n", a->generic.localdata[0]));
-	M_ForceMenuOff ();
-}
-
-void SaveGame_MenuDraw (menuframework_s *self)
-{
-	M_Banner ("m_banner_save_game");
-	Menu_AdjustCursor (self, 1);
-	Menu_Draw (self);
-	M_Popup();
-}
-
-char *SaveGame_MenuKey (menuframework_s *self, int key)
-{
-	if (m_popup_string)
-	{
-		m_popup_string = NULL;
-		return NULL;
-	}
-
-	switch (key)
-	{
-		case K_KP_UPARROW:
-		case K_UPARROW:
-			if (self->cursor == 0)
-			{
-				LoadSave_AdjustPage(-1);
-				SaveGame_MenuInit();
-			}
-			break;
-		case K_TAB:
-		case K_KP_DOWNARROW:
-		case K_DOWNARROW:
-			if (self->cursor == self->nitems - 1)
-			{
-				LoadSave_AdjustPage(1);
-				SaveGame_MenuInit();
-			}
-			break;
-		case K_KP_LEFTARROW:
-		case K_LEFTARROW:
-			LoadSave_AdjustPage(-1);
-			SaveGame_MenuInit();
-			return menu_move_sound;
-		case K_KP_RIGHTARROW:
-		case K_RIGHTARROW:
-			LoadSave_AdjustPage(1);
-			SaveGame_MenuInit();
-			return menu_move_sound;
-		default:
-			s_loadgame_menu.cursor = s_savegame_menu.cursor;
-			break;
-	}
-
-	return Default_MenuKey (self, key);
-}
-
-void SaveGame_MenuInit (void)
-{
-	int i;
-	float scale = SCR_GetMenuScale();
-
-	memset(&s_savegame_menu, 0, sizeof(s_savegame_menu));
-	s_savegame_menu.x = viddef.width / 2 - (120 * scale);
-	s_savegame_menu.y = viddef.height / (2 * scale) - 58;
-	s_savegame_menu.nitems = 0;
-
-	s_savegame_menu.draw = SaveGame_MenuDraw;
-	s_savegame_menu.key = SaveGame_MenuKey;
-
-	Create_Savestrings ();
-
-	// don't include the autosave slot
-	for (i = 0; i < MAX_SAVESLOTS; i++)
-	{
-		s_savegame_actions[i].generic.type = MTYPE_ACTION;
-		s_savegame_actions[i].generic.name = m_savestrings[i];
-		s_savegame_actions[i].generic.x = 0;
-		s_savegame_actions[i].generic.y = i * 10;
-		s_savegame_actions[i].generic.localdata[0] = i + m_loadsave_page * MAX_SAVESLOTS;
-		s_savegame_actions[i].generic.flags = QMF_LEFT_JUSTIFY;
-		s_savegame_actions[i].generic.callback = SaveGameCallback;
-
-		Menu_AddItem (&s_savegame_menu, &s_savegame_actions[i]);
-	}
-
-	Menu_SetStatusBar(&s_savegame_menu, m_loadsave_statusbar);
-}
-
-void M_Menu_SaveGame_f (void)
-{
-	if (!Com_ServerState())
-		return;		// not playing a game
-
-	LoadSave_AdjustPage(0);
-	SaveGame_MenuInit ();
-	M_PushMenu (&s_savegame_menu);
-}
-
-
-/*
-=============================================================================
-
-CREDITS MENU
-
-=============================================================================
-*/
-
-static int credits_start_time;
-static const char **credits;
-static char *creditsIndex[256];
-static char *creditsBuffer;
-
-static const char *idcredits[] =
-{
-	"+QUAKE II BY ID SOFTWARE",
-	"",
-	"+PROGRAMMING",
-	"John Carmack",
-	"John Cash",
-	"Brian Hook",
-	"",
-	"+ART",
-	"Adrian Carmack",
-	"Kevin Cloud",
-	"Paul Steed",
-	"",
-	"+LEVEL DESIGN",
-	"Tim Willits",
-	"American McGee",
-	"Christian Antkow",
-	"Paul Jaquays",
-	"Brandon James",
-	"",
-	"+BIZ",
-	"Todd Hollenshead",
-	"Barrett (Bear) Alexander",
-	"Donna Jackson",
-	"",
-	"",
-	"+SPECIAL THANKS",
-	"Ben Donges for beta testing",
-	"",
-	"",
-	"",
-	"",
-	"",
-	"",
-	"+ADDITIONAL SUPPORT",
-	"",
-	"+LINUX PORT AND CTF",
-	"Dave \"Zoid\" Kirsch",
-	"",
-	"+CINEMATIC SEQUENCES",
-	"Ending Cinematic by Blur Studio - ",
-	"Venice, CA",
-	"",
-	"Environment models for Introduction",
-	"Cinematic by Karl Dolgener",
-	"",
-	"Assistance with environment design",
-	"by Cliff Iwai",
-	"",
-	"+SOUND EFFECTS AND MUSIC",
-	"Sound Design by Soundelux Media Labs.",
-	"Music Composed and Produced by",
-	"Soundelux Media Labs. Special thanks",
-	"to Bill Brown, Tom Ozanich, Brian",
-	"Celano, Jeff Eisner, and The Soundelux",
-	"Players.",
-	"",
-	"\"Level Music\" by Sonic Mayhem",
-	"www.sonicmayhem.com",
-	"",
-	"\"Quake II Theme Song\"",
-	"(C) 1997 Rob Zombie. All Rights",
-	"Reserved.",
-	"",
-	"Track 10 (\"Climb\") by Jer Sypult",
-	"",
-	"Voice of computers by",
-	"Carly Staehlin-Taylor",
-	"",
-	"+THANKS TO ACTIVISION",
-	"+IN PARTICULAR:",
-	"",
-	"John Tam",
-	"Steve Rosenthal",
-	"Marty Stratton",
-	"Henk Hartong",
-	"",
-	"Quake II(tm) (C)1997 Id Software, Inc.",
-	"All Rights Reserved. Distributed by",
-	"Activision, Inc. under license.",
-	"Quake II(tm), the Id Software name,",
-	"the \"Q II\"(tm) logo and id(tm)",
-	"logo are trademarks of Id Software,",
-	"Inc. Activision(R) is a registered",
-	"trademark of Activision, Inc. All",
-	"other trademarks and trade names are",
-	"properties of their respective owners.",
-	0
-};
-
-void M_Credits_MenuDraw (menuframework_s *self)
-{
-	int i, y;
-	float scale = SCR_GetMenuScale();
-
-	// draw the credits
-	for (i = 0, y = (int)(viddef.height / scale - ((cls.realtime - credits_start_time) / 40.0f)); credits[i] && y < viddef.height / scale; y += 10, i++)
-	{
-		int j, stringoffset = 0;
-		int bold = false;
-
-		if (y <= -8)
-			continue;
-
-		if (credits[i][0] == '+')
-		{
-			bold = true;
-			stringoffset = 1;
-		}
-		else
-		{
-			bold = false;
-			stringoffset = 0;
-		}
-
-		for (j = 0; credits[i][j+stringoffset]; j++)
-		{
-			int x;
-
-			x = (viddef.width / scale - strlen (credits[i]) * 8 - stringoffset * 8) / 2 + (j + stringoffset) * 8;
-
-			if (bold)
-				RE_Draw_Char (x * scale, y * scale, credits[i][j + stringoffset] + 128, scale);
-			else
-				RE_Draw_Char (x * scale, y * scale, credits[i][j + stringoffset], scale);
-		}
-	}
-
-	if (y < 0)
-		credits_start_time = cls.realtime;
-}
-
-char *M_Credits_Key (menuframework_s *self, int key)
-{
-	switch (key)
-	{
-	case K_ESCAPE:
-	case K_MOUSE2:
-	case K_GAMEPAD_B:
-		if (creditsBuffer)
-			FS_FreeFile (creditsBuffer);
-		M_PopMenu ();
-		break;
-	}
-
-	return menu_out_sound;
-}
-
-static menuframework_s	m_creditsMenu;
-
-static void Credits_MenuInit (void)
-{
-	memset (&m_creditsMenu, 0, sizeof(m_creditsMenu));
-	m_creditsMenu.draw = M_Credits_MenuDraw;
-	m_creditsMenu.key = M_Credits_Key;
-}
-
-
-void M_Menu_Credits_f (void)
-{
-	int		n;
-	int		count;
-	char	*p;
-	int		isdeveloper = 0;
-
-	creditsBuffer = NULL;
-	count = FS_LoadFile ("credits", &creditsBuffer);
-
-	if (count != -1)
-	{
-		p = creditsBuffer;
-
-		for (n = 0; n < 255; n++)
-		{
-			creditsIndex[n] = p;
-
-			while (*p != '\r' && *p != '\n')
-			{
-				p++;
-
-				if (--count == 0)
-					break;
-			}
-
-			if (*p == '\r')
-			{
-				*p++ = 0;
-
-				if (--count == 0)
-					break;
-			}
-
-			*p++ = 0;
-
-			if (--count == 0)
-				break;
-		}
-
-		creditsIndex[++n] = 0;
-		credits = creditsIndex;
-	}
-	else
-	{
-		credits = idcredits;
-	}
-
-	credits_start_time = cls.realtime;
-
-	Credits_MenuInit ();
-	M_PushMenu (&m_creditsMenu);
 }

@@ -153,9 +153,23 @@ set(MENU_SOURCES
 	qmenu.c
 	menu.c
 	menu_main.c
+	menu_quit.c
 	menu_multiplayer.c
+	menu_mp_addressbook.c
+	menu_mp_dmoptions.c
+	menu_mp_download.c
+	menu_mp_joingamespy.c
+	menu_mp_joinserver.c
+	menu_mp_playersetup.c
+	menu_mp_startserver.c
 	menu_singleplayer.c
+	menu_sp_saveload.c
+	menu_sp_credits.c
 	menu_options.c
+	menu_options_sound.c
+	menu_options_controls.c
+	menu_options_keys.c
+	menu_options_screen.c
 	menu_vid.c
 	)
 source_group("client\\menu" FILES ${MENU_INCLUDES})
@@ -234,6 +248,7 @@ set(SHARED_INCLUDES
 	../shared/game.h
 	../shared/q_platform.h
 	../shared/q_shared.h
+	../shared/q_gitbuild.h
 	../shared/qfiles.h
 	)
 set(SHARED_SOURCES
@@ -333,6 +348,9 @@ file(GLOB GAMESPY_SOURCES ../libs/gamespy/*.c ../libs/gamespy/CEngine/*.c)
 source_group("libs\\gamespy" FILES ${GAMESPY_INCLUDES})
 source_group("libs\\gamespy" FILES ${GAMESPY_SOURCES})
 
+# git info
+configure_file("../shared/q_gitbuild.c.in" "${CMAKE_CURRENT_BINARY_DIR}/q_gitbuild.c" @ONLY)
+list(APPEND SHARED_SOURCES "${CMAKE_CURRENT_BINARY_DIR}/q_gitbuild.c")
 
 #
 # Engine Executable

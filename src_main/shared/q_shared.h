@@ -212,6 +212,17 @@ void Q_sincos (float angradians, float *angsin, float *angcos);
 #define VectorClear(a)			(a[0]=a[1]=a[2]=0)
 #define VectorNegate(src,dst)	(dst[0]=-src[0],dst[1]=-src[1],dst[2]=-src[2])
 
+static void VectorReflect(const vec3_t v, const vec3_t normal, vec3_t out)
+{
+	float           d;
+
+	d = 2.0 * (v[0] * normal[0] + v[1] * normal[1] + v[2] * normal[2]);
+
+	out[0] = v[0] - normal[0] * d;
+	out[1] = v[1] - normal[1] * d;
+	out[2] = v[2] - normal[2] * d;
+}
+
 #define Vector2Set(v, x, y)		(v[0]=(x), v[1]=(y))
 
 #define Vector3Set(v, x, y, z)	(v[0]=(x), v[1]=(y), v[2]=(z))
@@ -237,6 +248,7 @@ void _VectorCopy (vec3_t in, vec3_t out);
 void ClearBounds (vec3_t mins, vec3_t maxs);
 void AddPointToBounds (vec3_t v, vec3_t mins, vec3_t maxs);
 int VectorCompare (vec3_t v1, vec3_t v2);
+int Vector4Compare (vec4_t v1, vec4_t v2);
 vec_t VectorLength (vec3_t v);
 void CrossProduct (vec3_t v1, vec3_t v2, vec3_t cross);
 vec_t VectorNormalize (vec3_t v);		// returns vector length

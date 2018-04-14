@@ -46,10 +46,8 @@ cvar_t	*cl_timeout;
 cvar_t	*cl_predict;
 cvar_t	*cl_gun;
 
-cvar_t	*cl_add_particles;
-cvar_t	*cl_add_lights;
-cvar_t	*cl_add_entities;
-cvar_t	*cl_add_blend;
+cvar_t	*cl_drawParticles;
+cvar_t	*cl_particleCollision;
 
 cvar_t	*cl_shownet;
 cvar_t	*cl_showmiss;
@@ -683,6 +681,12 @@ void CL_Disconnect (void)
 
 	cls.servername[0] = '\0';
 	cls.state = ca_disconnected;
+
+	// save config for old game/mod
+	CL_WriteConfiguration ();
+	
+	// we disconnected, so revert to default game/mod (might have been a different mod on MP server)
+	Cvar_Set ("game", userGivenGame);
 }
 
 void CL_Disconnect_f (void)
@@ -701,8 +705,8 @@ drop to full console
 */
 void CL_Changing_f (void)
 {
-	//ZOID
-	//if we are downloading, we don't change! This so we don't suddenly stop downloading a map
+	// if we are downloading, we don't change!
+	// this is so we don't suddenly stop downloading a map
 	if (cls.download)
 		return;
 
@@ -1581,10 +1585,9 @@ void CL_InitLocal (void)
 	cl_stereo_separation = Cvar_Get ("cl_stereo_separation", "0.4", CVAR_ARCHIVE);
 	cl_stereo = Cvar_Get ("cl_stereo", "0", 0);
 
-	cl_add_blend = Cvar_Get ("cl_blend", "1", 0);
-	cl_add_lights = Cvar_Get ("cl_lights", "1", 0);
-	cl_add_particles = Cvar_Get ("cl_particles", "1", 0);
-	cl_add_entities = Cvar_Get ("cl_entities", "1", 0);
+	cl_drawParticles = Cvar_Get ("cl_drawParticles", "1", CVAR_ARCHIVE);
+	cl_particleCollision = Cvar_Get("cl_particleCollision", "1", CVAR_ARCHIVE);
+
 	cl_gun = Cvar_Get ("cl_gun", "1", 0);
 	cl_footsteps = Cvar_Get ("cl_footsteps", "1", 0);
 	cl_noskins = Cvar_Get ("cl_noskins", "0", 0);
@@ -1695,8 +1698,8 @@ void CL_InitLocal (void)
 	Cmd_AddCommand ("weapprev", NULL);
 
 	// true type fonts
-	RE_RegisterFont("fonts/VeraMono.ttf", 24, &cls.consoleFont);
-	RE_RegisterFont("fonts/VeraMoBd.ttf", 24, &cls.consoleBoldFont);
+	RE_RegisterFont ("fonts/VeraMono.ttf", 24, &cls.consoleFont);
+	RE_RegisterFont ("fonts/VeraMoBd.ttf", 24, &cls.consoleBoldFont);
 }
 
 /*

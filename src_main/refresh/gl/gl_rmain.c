@@ -279,17 +279,6 @@ static void R_SetupFrame (void)
 
 	c_brush_polys = 0;
 	c_alias_polys = 0;
-
-	// clear out the portion of the screen that the NOWORLDMODEL defines
-	if (r_newrefdef.rdflags & RDF_NOWORLDMODEL)
-	{
-		GL_Enable (gl_state.statebits | SCISSOR_BIT);
-		glClearColor (0.3, 0.3, 0.3, 1);
-		glScissor (r_newrefdef.x, vid.height - r_newrefdef.height - r_newrefdef.y, r_newrefdef.width, r_newrefdef.height);
-		GL_Clear (GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-		glClearColor (1, 0, 0.5, 0.5);
-		GL_Enable (gl_state.statebits & ~SCISSOR_BIT);
-	}
 }
 
 
@@ -1103,6 +1092,7 @@ void GL_GFX_CoreInit(void)
 	RE_Draw_RegisterPic = RE_GL_Draw_RegisterPic;
 	RE_SetSky = RE_GL_SetSky;
 	RE_SetFog = RE_GL_SetFog;
+	RE_RegisterFont = RE_GL_RegisterFont;
 	RE_EndRegistration = RE_GL_EndRegistration;
 }
 

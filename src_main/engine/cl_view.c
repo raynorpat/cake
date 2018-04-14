@@ -29,6 +29,9 @@ cvar_t		*crosshair;
 cvar_t		*crosshairX;
 cvar_t		*crosshairY;
 cvar_t		*crosshairSize;
+cvar_t		*crosshairDot;
+cvar_t		*crosshairCircle;
+cvar_t		*crosshairCross;
 
 cvar_t		*cl_testparticles;
 cvar_t		*cl_testentities;
@@ -450,27 +453,47 @@ SCR_DrawCrosshair
 void SCR_DrawCrosshair (void)
 {
 	float x, y, w, h;
+	char dot[MAX_QPATH], circle[MAX_QPATH], cross[MAX_QPATH];
 
 	if (!crosshair->value)
 		return;
 
+	// cache pics if we just turned on crosshair
 	if (crosshair->modified)
 	{
 		crosshair->modified = false;
 		SCR_TouchPics ();
 	}
 
-	if (!crosshair_pic[0])
-		return;
+	if (crosshairDot->integer <= 0) // no dot
+		dot[0] = 0;
+	else
+		Com_sprintf(dot, sizeof(dot), (char *)crosshairDotPic[crosshairDot->integer - 1]);
 
+	if (crosshairCircle->integer <= 0) // no circle
+		circle[0] = 0;
+	else
+		Com_sprintf(circle, sizeof(circle), (char *)crosshairCirclePic[crosshairCircle->integer - 1]);
+
+	if (crosshairCross->integer <= 0) // no cross
+		cross[0] = 0;
+	else
+		Com_sprintf(cross, sizeof(cross), (char *)crosshairCrossPic[crosshairCross->integer - 1]);
+
+	// set size
 	w = h = crosshairSize->value;
 
 	x = crosshairX->integer;
 	y = crosshairY->integer;
-
 	SCR_AdjustFrom640 (&x, &y, &w, &h);
 
-	RE_Draw_StretchPicExt (x + cl.refdef.x + 0.5 * (cl.refdef.width - w), y + cl.refdef.y + 0.5 * (cl.refdef.height - h), w, h, 0, 0, 1, 1, crosshair_pic);
+	// put together a crosshair 
+	if (dot[0])
+		RE_Draw_StretchPicExt (x + cl.refdef.x + 0.5 * (cl.refdef.width - w), y + cl.refdef.y + 0.5 * (cl.refdef.height - h), w, h, 0, 0, 1, 1, dot);
+	if (circle[0])
+		RE_Draw_StretchPicExt (x + cl.refdef.x + 0.5 * (cl.refdef.width - w), y + cl.refdef.y + 0.5 * (cl.refdef.height - h), w, h, 0, 0, 1, 1, circle);
+	if (cross[0])
+		RE_Draw_StretchPicExt (x + cl.refdef.x + 0.5 * (cl.refdef.width - w), y + cl.refdef.y + 0.5 * (cl.refdef.height - h), w, h, 0, 0, 1, 1, cross);
 }
 
 /*
@@ -563,24 +586,15 @@ void V_RenderView (float stereo_separation)
 
 		cl.refdef.areabits = cl.frame.areabits;
 
-		if (!cl_add_entities->value)
-			r_numentities = 0;
-
-		if (!cl_add_particles->value)
-			r_numparticles = 0;
-
-		if (!cl_add_lights->value)
-			r_numdlights = 0;
-
-		if (!cl_add_blend->value)
-			VectorClear (cl.refdef.blend);
-
 		cl.refdef.num_entities = r_numentities;
 		cl.refdef.entities = r_entities;
+
 		cl.refdef.num_particles = r_numparticles;
 		cl.refdef.particles = r_particles;
+
 		cl.refdef.num_dlights = r_numdlights;
 		cl.refdef.dlights = r_dlights;
+
 		cl.refdef.lightstyles = r_lightstyles;
 
 		cl.refdef.rdflags = cl.frame.playerstate.rdflags;
@@ -627,8 +641,11 @@ void V_Init (void)
 	crosshair = Cvar_Get ("crosshair", "0", CVAR_ARCHIVE);
 	crosshairX = Cvar_Get ("crosshairX", "0", CVAR_ARCHIVE);
 	crosshairY = Cvar_Get ("crosshairY", "0", CVAR_ARCHIVE);
-	crosshairSize = Cvar_Get ("crosshairSize", "12", CVAR_ARCHIVE);
-
+	crosshairSize = Cvar_Get ("crosshairSize", "24", CVAR_ARCHIVE);
+	crosshairDot = Cvar_Get("crosshairDot", "0", CVAR_ARCHIVE);
+	crosshairCircle = Cvar_Get("crosshairCircle", "0", CVAR_ARCHIVE);
+	crosshairCross = Cvar_Get("crosshairCross", "3", CVAR_ARCHIVE);
+	
 	cl_testblend = Cvar_Get ("cl_testblend", "0", 0);
 	cl_testparticles = Cvar_Get ("cl_testparticles", "0", 0);
 	cl_testentities = Cvar_Get ("cl_testentities", "0", 0);

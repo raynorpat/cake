@@ -104,6 +104,22 @@ char *Cvar_VariableString (char *var_name)
 	return var->string;
 }
 
+/*
+============
+Cvar_VariableStringBuffer
+============
+*/
+void Cvar_VariableStringBuffer(char *var_name, char *buffer, int bufsize)
+{
+	cvar_t *var;
+
+	var = Cvar_FindVar (var_name);
+
+	if (!var)
+		*buffer = 0;
+	else
+		Q_strlcpy (buffer, var->string, bufsize);
+}
 
 /*
 ============
@@ -162,6 +178,11 @@ cvar_t *Cvar_Get (char *var_name, char *var_value, int flags)
 		}
 	}
 
+	// if $game is the default one ("baseq2"), then use "" instead because
+	// other code assumes this behavior (e.g. FS_BuildGameSpecificSearchPath())
+	if (strcmp(var_name, "game") == 0 && strcmp(var_value, BASEDIRNAME) == 0)
+		var_value = "";
+
 	var = Z_Malloc (sizeof (*var));
 	var->name = CopyString (var_name);
 	var->string = CopyString (var_value);
@@ -204,6 +225,11 @@ cvar_t *Cvar_Set2 (char *var_name, char *value, qboolean force)
 		}
 	}
 
+	// if $game is the default one ("baseq2"), then use "" instead because
+	// other code assumes this behavior (e.g. FS_BuildGameSpecificSearchPath())
+	if (strcmp(var_name, "game") == 0 && strcmp(value, BASEDIRNAME) == 0)
+		value = "";
+
 	if (!force)
 	{
 		if (var->flags & CVAR_NOSET)
@@ -220,6 +246,7 @@ cvar_t *Cvar_Set2 (char *var_name, char *value, qboolean force)
 					return var;
 
 				Z_Free (var->latched_string);
+				var->latched_string = NULL;
 			}
 			else
 			{
@@ -239,9 +266,7 @@ cvar_t *Cvar_Set2 (char *var_name, char *value, qboolean force)
 				var->integer = atoi (var->string);
 
 				if (!strcmp (var->name, "game"))
-				{
-					FS_SetGamedir (var->string);
-				}
+					FS_BuildGameSpecificSearchPath (var->string);
 			}
 
 			return var;
@@ -315,6 +340,11 @@ cvar_t *Cvar_FullSet (char *var_name, char *value, int flags)
 	if (var->flags & CVAR_USERINFO)
 		userinfo_modified = true;	// transmit at next oportunity
 
+	// if $game is the default one ("baseq2"), then use "" instead because
+	// other code assumes this behavior (e.g. FS_BuildGameSpecificSearchPath())
+	if (strcmp(var_name, "game") == 0 && strcmp(value, BASEDIRNAME) == 0)
+		value = "";
+
 	Z_Free (var->string);	// free the old value string
 
 	var->string = CopyString (value);
@@ -366,9 +396,7 @@ void Cvar_GetLatchedVars (void)
 		var->integer = atoi (var->string);
 
 		if (!strcmp (var->name, "game"))
-		{
-			FS_SetGamedir (var->string);
-		}
+			FS_BuildGameSpecificSearchPath (var->string);
 	}
 }
 
@@ -395,6 +423,11 @@ qboolean Cvar_Command (void)
 		Com_Printf ("\"%s\" is \"%s\"\n", v->name, v->string);
 		return true;
 	}
+
+	// HACK: The user has just changed 'game' through the console.
+	// We reset userGivenGame to that value, otherwise we would revert to the initialy given game at disconnect.
+	if (strcmp(v->name, "game") == 0)
+		Q_strlcpy (userGivenGame, Cmd_Argv(1), sizeof(userGivenGame));
 
 	Cvar_Set (v->name, Cmd_Argv (1));
 	return true;

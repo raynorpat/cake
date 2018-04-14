@@ -23,8 +23,6 @@ void	SCR_Init (void);
 
 void	SCR_UpdateScreen (void);
 
-float	SCR_GetMenuScale (void);
-
 void	SCR_CenterPrint (char *str);
 
 void	SCR_BeginLoadingPlaque (void);
@@ -40,6 +38,7 @@ void	SCR_FillRect (float x, float y, float width, float height, float *color);
 float	*SCR_FadeColor (int startMsec, int totalMsec);
 
 void	SCR_DrawPic (float x, float y, float width, float height, char *pic);
+void	SCR_DrawChar (float x, float y, int num);
 
 int		SCR_Text_Width (char *text, float scale, int limit, fontInfo_t * font);
 int		SCR_Text_Height (char *text, float scale, int limit, fontInfo_t * font);
@@ -50,9 +49,17 @@ void	SCR_Text_PaintSingleChar (float x, float y, float scale, vec4_t color, int 
 extern	int			sb_lines;
 
 extern	cvar_t		*crosshair;
+extern	cvar_t		*crosshairDot;
+extern	cvar_t		*crosshairCircle;
+extern	cvar_t		*crosshairCross;
 
-extern	char		crosshair_pic[MAX_QPATH];
-extern	int			crosshair_width, crosshair_height;
+extern  cvar_t		*scr_keepVidAspect;
+
+#define	NUM_CROSSHAIRS 10
+
+extern char	*crosshairDotPic[NUM_CROSSHAIRS][MAX_QPATH];
+extern char	*crosshairCirclePic[NUM_CROSSHAIRS][MAX_QPATH];
+extern char	*crosshairCrossPic[NUM_CROSSHAIRS][MAX_QPATH];
 
 //
 // cl_cin.c

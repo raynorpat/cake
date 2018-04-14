@@ -435,6 +435,9 @@ int		Cvar_VariableInteger(char *var_name);
 char	*Cvar_VariableString (char *var_name);
 // returns an empty string if not defined
 
+void	Cvar_VariableStringBuffer (char *var_name, char *buffer, int bufsize);
+// puts an empty string in buffer if not defined
+
 void	Cvar_CommandCompletion(void(*callback)(char *s));
 // attempts to match a partial variable name for command line completion
 
@@ -638,7 +641,7 @@ FILESYSTEM
 ==============================================================
 */
 
-extern int file_from_pak;
+extern qboolean file_from_pak;
 
 typedef int	fileHandle_t;
 
@@ -681,7 +684,7 @@ char        **FS_ListFiles2(char *findname, int *numfiles);
 void		FS_FreeFileList(char **list, int nfiles);
 
 void		FS_InitFilesystem(void);
-void		FS_SetGamedir(char *dir);
+void		FS_BuildGameSpecificSearchPath(char *dir);
 char		*FS_Gamedir(void);
 char        *FS_NextPath(char *prevpath);
 
@@ -787,6 +790,10 @@ void Z_Free (void *ptr);
 void *Z_Malloc (int size);			// returns 0 filled memory
 void *Z_TagMalloc (int size, int tag);
 void Z_FreeTags (int tag);
+
+void Qcommon_ExecConfigs (qboolean addEarlyCmds);
+
+extern char userGivenGame[MAX_QPATH]; // HACK: for 'game' cmd
 
 void Qcommon_Init (int argc, char **argv);
 void Qcommon_Frame (int msec);

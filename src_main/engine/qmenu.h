@@ -22,6 +22,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
 #define MAXMENUITEMS		64
 
+#define MENU_FONT_SIZE		16
+#define MENU_LINE_SIZE		10
+
 #define MTYPE_SLIDER		0
 #define MTYPE_LIST			1
 #define MTYPE_ACTION		2
@@ -35,8 +38,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #define MLIST_SSIZE 		16
 
 #define QMF_LEFT_JUSTIFY	0x00000001
-#define QMF_GRAYED			0x00000002
-#define QMF_NUMBERSONLY		0x00000004
+#define QMF_RIGHT2LEFT		0x00000002
+#define QMF_GRAYED			0x00000004
+#define QMF_NUMBERSONLY		0x00000006
 
 typedef struct mrect_s
 {
@@ -147,10 +151,5 @@ void	Menu_SetStatusBar (menuframework_s *s, const char *string);
 void	Menu_SlideItem (menuframework_s *s, int dir);
 
 void 	MenuList_Init (menulist_s *l);
-
-void	Menu_DrawString (int, int, const char *);
-void	Menu_DrawStringDark (int, int, const char *);
-void	Menu_DrawStringR2L (int, int, const char *);
-void	Menu_DrawStringR2LDark (int, int, const char *);
 
 #endif

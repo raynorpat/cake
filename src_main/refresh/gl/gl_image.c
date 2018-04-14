@@ -59,7 +59,12 @@ void Img_Free (void)
 
 void GL_ResampleTexture (unsigned *in, int inwidth, int inheight, unsigned *out, int outwidth, int outheight);
 
-void GL_Image8To32 (byte *data8, unsigned *data32, int size, unsigned *palette)
+/*
+=============
+GL_Image8To32
+=============
+*/
+static void GL_Image8To32 (byte *data8, unsigned *data32, int size, unsigned *palette)
 {
 	int i;
 
@@ -79,6 +84,27 @@ void GL_Image8To32 (byte *data8, unsigned *data32, int size, unsigned *palette)
 			data32[2] = palette[data8[2]];
 			data32[3] = palette[data8[3]];
 		}
+	}
+}
+
+/*
+=============
+GL_SwapBlueRed
+=============
+*/
+static void GL_SwapBlueRed (byte *data, int width, int height, int samples)
+{
+	int i, j, size;
+
+	size = width * height;
+	for (i = 0; i < size; i++, data += samples)
+	{
+		j = data[0];
+		data[0] = data[2];
+		data[2] = j;
+		// data[0] ^= data[2];
+		// data[2] = data[0] ^ data[2];
+		// data[0] ^= data[2];
 	}
 }
 
@@ -403,7 +429,9 @@ static void LoadPCX (char *filename, byte **pic, byte **palette, int *width, int
 	byte	*raw;
 	pcx_t	*pcx;
 	int		x, y;
-	int		len;
+	int		len, full_size;
+	int		pcx_width, pcx_height;
+	qboolean image_issues = false;
 	int		dataByte, runLength;
 	byte	*out, *pix;
 
@@ -412,8 +440,7 @@ static void LoadPCX (char *filename, byte **pic, byte **palette, int *width, int
 
 	// load the file
 	len = FS_LoadFile (filename, (void **) &raw);
-
-	if (!raw)
+	if (!raw || len < sizeof(pcx_t))
 	{
 		VID_Printf (PRINT_DEVELOPER, S_COLOR_RED "Bad pcx file %s\n", filename);
 		return;
@@ -434,53 +461,89 @@ static void LoadPCX (char *filename, byte **pic, byte **palette, int *width, int
 
 	raw = &pcx->data;
 
+	pcx_width = pcx->xmax - pcx->xmin;
+	pcx_height = pcx->ymax - pcx->ymin;
+
 	if (pcx->manufacturer != 0x0a ||
 		pcx->version != 5 ||
 		pcx->encoding != 1 ||
 		pcx->bits_per_pixel != 8 ||
-		pcx->xmax >= 640 ||
-		pcx->ymax >= 480)
+		(pcx_width >= 4096) || (pcx_height >= 4096))
 	{
 		VID_Printf (PRINT_ALL, S_COLOR_RED "Bad pcx file %s\n", filename);
 		return;
 	}
 
-	out = Img_Alloc ((pcx->ymax + 1) * (pcx->xmax + 1));
+	full_size = (pcx_height + 1) * (pcx_width + 1);
+	out = Img_Alloc (full_size);
+
 	*pic = out;
 	pix = out;
 
 	if (palette)
 	{
 		*palette = Img_Alloc (768);
-		memcpy (*palette, (byte *) pcx + len - 768, 768);
+		if (len > 768)
+			memcpy (*palette, (byte *) pcx + len - 768, 768);
+		else
+			image_issues = true;
 	}
 
-	if (width) *width = pcx->xmax + 1;
-	if (height) *height = pcx->ymax + 1;
+	if (width) *width = pcx_width + 1;
+	if (height) *height = pcx_height + 1;
 
-	for (y = 0; y <= pcx->ymax; y++, pix += pcx->xmax + 1)
+	for (y = 0; y <= pcx_height; y++, pix += pcx_width + 1)
 	{
-		for (x = 0; x <= pcx->xmax ;)
+		for (x = 0; x <= pcx_width;)
 		{
+			if (raw - (byte *)pcx > len)
+			{
+				// no place for read
+				image_issues = true;
+				x = pcx_width;
+				break;
+			}
 			dataByte = *raw++;
 
 			if ((dataByte & 0xC0) == 0xC0)
 			{
 				runLength = dataByte & 0x3F;
+				if (raw - (byte *)pcx > len)
+				{
+					// no place for read
+					image_issues = true;
+					x = pcx_width;
+					break;
+				}
 				dataByte = *raw++;
 			}
 			else runLength = 1;
 
 			while (runLength-- > 0)
-				pix[x++] = dataByte;
+			{
+				if ((*pic + full_size) <= (pix + x))
+				{
+					// no place for write
+					image_issues = true;
+					x += runLength;
+					runLength = 0;
+				}
+				else
+				{
+					pix[x++] = dataByte;
+				}
+			}
 		}
 	}
 
 	if (raw - (byte *) pcx > len)
 	{
-		VID_Printf (PRINT_DEVELOPER, S_COLOR_RED "PCX file %s was malformed", filename);
+		VID_Printf (PRINT_DEVELOPER, S_COLOR_RED "PCX file %s was malformed.\n", filename);
 		*pic = NULL;
 	}
+
+	if (image_issues)
+		VID_Printf (PRINT_ALL, S_COLOR_YELLOW "PCX file %s has possible size issues.\n", filename);
 
 	FS_FreeFile (pcx);
 }
@@ -596,6 +659,7 @@ qboolean LoadImageThruSTB (char *origname, char* type, byte **pic, int *width, i
 	}
 
 	*pic = NULL;
+	*width = *height = 0;
 
 	byte* rawdata = NULL;
 	int rawsize = FS_LoadFile (filename, (void **)&rawdata);
@@ -612,12 +676,13 @@ qboolean LoadImageThruSTB (char *origname, char* type, byte **pic, int *width, i
 		FS_FreeFile (rawdata);
 		return false;
 	}
-
+	
 	FS_FreeFile (rawdata);
 
 	*pic = data;
 	*width = w;
 	*height = h;
+
 	return true;
 }
 
@@ -843,7 +908,10 @@ GLuint GL_UploadTexture (byte *data, int width, int height, qboolean mipmap, int
 		GL_Image8To32 (data, trans, width * height, d_8to24table_bgra);
 	}
 	else
+	{
 		trans = (unsigned *) data;
+		GL_SwapBlueRed (data, width, height, 4);
+	}
 
 	// it's assumed that our hardware can handle Q2 texture sizes
 	upload_width = width;

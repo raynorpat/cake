@@ -776,13 +776,34 @@ void S_StartSound (vec3_t origin, int entnum, int entchannel, sfx_t *sfx, float 
 		ps->fixed_origin = false;
 	}
 
-	if (sfx->name)
+	if (sfx->name[0])
 	{
+		vec3_t orientation, direction;
+		vec_t distance_direction;
+		vec3_t dir;
+		
+		VectorSubtract(listener_forward, listener_up, orientation);
+
 		// with !fixed we have all sounds related directly to player, e.g. players fire, pain, menu
 		if (!ps->fixed_origin)
 		{
-			Haptic_Feedback(sfx->name);
+			VectorCopy(orientation, direction);
+			distance_direction = 0;
 		}
+		else
+		{
+			VectorSubtract(listener_origin, ps->origin, direction);
+			distance_direction = VectorLength(direction);
+		}
+
+		VectorNormalize(direction);
+		VectorNormalize(orientation);
+		
+		dir[0] = 16 * orientation[0] * direction[0];
+		dir[1] = 16 * orientation[1] * direction[1];
+		dir[2] = 16 * orientation[2] * direction[2];
+
+		Haptic_Feedback(sfx->name, 16 - distance_direction / 32, dir);
 	}
 
 	ps->entnum = entnum;

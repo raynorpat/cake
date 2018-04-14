@@ -4,6 +4,10 @@ cmake_minimum_required(VERSION 3.0)
 set(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake)
 set(CMAKE_INSTALL_PREFIX "${CMAKE_SOURCE_DIR}/..")
 
+# grab our git info
+include(GetGitRevisionDescription)
+git_describe(GIT_SHA1 --match=NeVeRmAtCh --always --abbrev=8)
+
 # set the USE_FOLDERS global property, this puts the targets into a CMakePredefinedTargets folder
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 

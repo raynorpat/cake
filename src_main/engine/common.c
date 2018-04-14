@@ -1462,9 +1462,35 @@ float	crand (void)
 	return (rand () & 32767) * (2.0 / 32767) - 1;
 }
 
+/*
+=================
+Qcommon_ExecConfigs
+=================
+*/
+void Qcommon_ExecConfigs (qboolean gameStartUp)
+{
+	// only when the game is first started we execute defaults.cfg
+	if (gameStartUp)
+		Cbuf_AddText ("exec defaults.cfg\n");
+
+	// add in the game/mod config
+	Cbuf_AddText ("exec config.cfg\n");
+
+	if (gameStartUp)
+	{
+		// only when the game is first started we execute autoexec.cfg and set the cvars from commandline
+		Cbuf_AddText ("exec autoexec.cfg\n");
+		Cbuf_AddEarlyCommands (true);
+	}
+
+	Cbuf_Execute ();
+}
+
+// game given by user
+char userGivenGame[MAX_QPATH];
+
 void Key_Init (void);
 void SCR_EndLoadingPlaque (void);
-
 
 /*
 =================
@@ -1499,14 +1525,18 @@ void Qcommon_Init (int argc, char **argv)
 	Cbuf_AddEarlyCommands (false);
 	Cbuf_Execute ();
 
+	// remember the initial game name that might have been set on commandline
+	{
+		cvar_t * gameCvar = Cvar_Get("game", "", CVAR_LATCH | CVAR_SERVERINFO);
+		char* game = "";
+		if (gameCvar->string && gameCvar->string[0])
+			game = gameCvar->string;
+		Q_strlcpy (userGivenGame, game, sizeof(userGivenGame));
+	}
+
 	FS_InitFilesystem ();
 
-	Cbuf_AddText ("exec default.cfg\n");
-	Cbuf_AddText ("exec config.cfg\n");
-	Cbuf_AddText ("exec autoexec.cfg\n");
-
-	Cbuf_AddEarlyCommands (true);
-	Cbuf_Execute ();
+	Qcommon_ExecConfigs (true);
 
 	// init commands and vars
 	Cmd_AddCommand ("z_stats", Z_Stats_f);
@@ -1551,7 +1581,8 @@ void Qcommon_Init (int argc, char **argv)
 		// if the user didn't give any commands, run default action
 		if (!dedicated->value)
 			Cbuf_AddText ("d1\n");
-		else Cbuf_AddText ("dedicated_start\n");
+		else
+			Cbuf_AddText ("dedicated_start\n");
 
 		Cbuf_Execute ();
 	}

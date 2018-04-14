@@ -38,7 +38,8 @@ extern void Update_Gamespy_Menu(void);
 
 static void CL_Gamespy_Check_Error(GServerList lst, int error)
 {
-	if (error != GE_NOERROR) /* FS: Grab the error code */
+	// FS: Grab the error code
+	if (error != GE_NOERROR) 
 	{
 		Com_Printf(S_COLOR_RED "\nGameSpy Error: ");
 		Com_Printf(S_COLOR_RED "%s.\n", gspye->ServerListErrorDesc(lst, error));
@@ -56,20 +57,17 @@ void CL_GameSpy_Async_Think (void)
 
 	if (gspye->ServerListState(serverlist) == sl_idle && cls.gamespyupdate)
 	{
-		if (cls.key_dest != key_menu) /* FS: Only print this from an slist2 command, not the server browser. */
-		{
-			Com_Printf("Found %i active servers out of %i in %i seconds.\n", gspyCur, cls.gamespytotalservers, (((int)Sys_Milliseconds() - cls.gamespystarttime) / 1000));
-		}
+		// FS: Only print this from an slist2 command, not the server browser.
+		if (cls.key_dest != key_menu) 
+			Com_Printf(S_COLOR_GREEN "Found %i active servers out of %i in %i seconds.\n", gspyCur, cls.gamespytotalservers, (((int)Sys_Milliseconds() - cls.gamespystarttime) / 1000));
 		else
-		{
 			Update_Gamespy_Menu();
-		}
 
 		cls.gamespyupdate = 0;
 		cls.gamespypercent = 0;
 		gspye->ServerListClear(serverlist);
 		gspye->ServerListFree(serverlist);
-		serverlist = NULL; /* FS: This is on purpose so future ctrl+c's won't try to close empty serverlists */
+		serverlist = NULL; // FS: This is on purpose so future ctrl+c's won't try to close empty serverlists
 		if (cls.state == ca_disconnected)
 			NET_Config(false);
 	}
@@ -82,7 +80,8 @@ void CL_GameSpy_Async_Think (void)
 
 static void CL_Gspystop_f(void)
 {
-	if (serverlist != NULL && cls.gamespyupdate) /* FS: Immediately abort gspy scans */
+	// FS: Immediately abort gspy scans
+	if (serverlist != NULL && cls.gamespyupdate) 
 	{
 		Com_Printf(S_COLOR_RED "\nServer scan aborted!\n");
 		S_StartLocalSound("gamespy/abort.wav");
@@ -107,14 +106,15 @@ static void CL_PrintBrowserList_f(void)
 		{
 			if (browserList[i].curPlayers > 0)
 			{
-				Com_Printf("%02d:  %s:%d [%d] %s ", num_active_servers + 1, browserList[i].ip, browserList[i].port, browserList[i].ping, browserList[i].hostname);
-				Com_Printf("\x02%d", browserList[i].curPlayers); /* FS: Show the current players number in the green font */
-				Com_Printf("/%d %s\n", browserList[i].maxPlayers, browserList[i].mapname);
+				Com_Printf(S_COLOR_WHITE "%02d:  %s:%d [%d] %s ", num_active_servers + 1, browserList[i].ip, browserList[i].port, browserList[i].ping, browserList[i].hostname);
+				Com_Printf(S_COLOR_GREEN "%d", browserList[i].curPlayers);
+				Com_Printf(S_COLOR_WHITE "/%d %s\n", browserList[i].maxPlayers, browserList[i].mapname);
 				num_active_servers++;
 			}
 		}
-		else /* FS: if theres nothing there the rest of the list is old garbage, bye. */
+		else 
 		{
+			// FS: if theres nothing there the rest of the list is old garbage, bye.
 			break;
 		}
 	}
@@ -127,10 +127,12 @@ static void CL_PrintBrowserList_f(void)
 		{
 			if (browserListAll[i].hostname[0] != 0)
 			{
-				Com_Printf("%02d:  %s:%d [%d] %s %d/%d %s\n", (i + num_active_servers + 1) - (skip), browserListAll[i].ip, browserListAll[i].port, browserListAll[i].ping, browserListAll[i].hostname, browserListAll[i].curPlayers, browserListAll[i].maxPlayers, browserListAll[i].mapname);
+				Com_Printf(S_COLOR_WHITE "%02d:  %s:%d [%d] %s %d/%d %s\n", (i + num_active_servers + 1) - (skip), browserListAll[i].ip, browserListAll[i].port, browserListAll[i].ping, browserListAll[i].hostname, browserListAll[i].curPlayers, browserListAll[i].maxPlayers, browserListAll[i].mapname);
 			}
-			else /* FS: The next one could be 0 if we skipped over it previously in GameSpy_Sort_By_Ping.  So increment the number of skips counter so the server number shows sequentially */
+			else
 			{
+				// FS: The next one could be 0 if we skipped over it previously in GameSpy_Sort_By_Ping.
+				// So increment the number of skips counter so the server number shows sequentially
 				skip++;
 				continue;
 			}
@@ -172,15 +174,13 @@ static void GameSpy_Sort_By_Ping(GServerList lst)
 
 		if (server)
 		{
-			if (gspye->ServerGetIntValue(server, "numplayers", 0) > 0) /* FS: We already added this so skip it */
-			{
+			// FS: We already added this so skip it
+			if (gspye->ServerGetIntValue(server, "numplayers", 0) > 0) 
 				continue;
-			}
 
-			if (strncmp(gspye->ServerGetStringValue(server, "hostname", "(NONE)"), "(NONE)", 6) == 0) /* FS: A server that timed-out or we aborted early */
-			{
+			// FS: A server that timed-out or we aborted early
+			if (strncmp(gspye->ServerGetStringValue(server, "hostname", "(NONE)"), "(NONE)", 6) == 0) 
 				continue;
-			}
 
 			if (i == MAX_SERVERS)
 				break;
@@ -206,21 +206,20 @@ static void ListCallBack(GServerList lst, int msg, void *instance, void *param1,
 		server = (GServer)param1;
 		numplayers = gspye->ServerGetIntValue(server, "numplayers", 0);
 
-		if (numplayers > 0) /* FS: Only show populated servers */
+		// FS: Only show populated servers
+		if (numplayers > 0) 
 		{
-			if (cls.key_dest != key_menu) /* FS: Only print this from an slist2 command, not the server browser. */
+			if (cls.key_dest != key_menu) // FS: Only print this from an slist2 command, not the server browser.
 			{
-				Com_Printf("%s:%d [%d] %s ", gspye->ServerGetAddress(server), gspye->ServerGetQueryPort(server), gspye->ServerGetPing(server), gspye->ServerGetStringValue(server, "hostname", "(NONE)"));
-				Com_Printf("\x02%d", numplayers); /* FS: Show the current players number in the green font */
-				Com_Printf("/%d %s\n", gspye->ServerGetIntValue(server, "maxclients", 0), gspye->ServerGetStringValue(server, "mapname", "(NO MAP)"));
+				Com_Printf(S_COLOR_WHITE "%s:%d [%d] %s ", gspye->ServerGetAddress(server), gspye->ServerGetQueryPort(server), gspye->ServerGetPing(server), gspye->ServerGetStringValue(server, "hostname", "(NONE)"));
+				Com_Printf(S_COLOR_GREEN "%d", numplayers);
+				Com_Printf(S_COLOR_WHITE "/%d %s\n", gspye->ServerGetIntValue(server, "maxclients", 0), gspye->ServerGetStringValue(server, "mapname", "(NO MAP)"));
 			}
 		}
 		else if (cls.gamespyupdate == SHOW_ALL_SERVERS)
 		{
-			if (cls.key_dest != key_menu) /* FS: Only print this from an slist2 command, not the server browser. */
-			{
-				Com_Printf("%s:%d [%d] %s %d/%d %s\n", gspye->ServerGetAddress(server), gspye->ServerGetQueryPort(server), gspye->ServerGetPing(server), gspye->ServerGetStringValue(server, "hostname", "(NONE)"), gspye->ServerGetIntValue(server, "numplayers", 0), gspye->ServerGetIntValue(server, "maxclients", 0), gspye->ServerGetStringValue(server, "mapname", "(NO MAP)"));
-			}
+			if (cls.key_dest != key_menu) // FS: Only print this from an slist2 command, not the server browser.
+				Com_Printf(S_COLOR_WHITE "%s:%d [%d] %s %d/%d %s\n", gspye->ServerGetAddress(server), gspye->ServerGetQueryPort(server), gspye->ServerGetPing(server), gspye->ServerGetStringValue(server, "hostname", "(NONE)"), gspye->ServerGetIntValue(server, "numplayers", 0), gspye->ServerGetIntValue(server, "maxclients", 0), gspye->ServerGetStringValue(server, "mapname", "(NO MAP)"));
 		}
 
 		if (param2)
@@ -232,12 +231,12 @@ static void ListCallBack(GServerList lst, int msg, void *instance, void *param1,
 	{
 		switch (gspye->ServerListState(lst))
 		{
-		case sl_idle:
-			gspye->ServerListSort(lst, true, "ping", cm_int);
-			GameSpy_Sort_By_Ping(lst);
-			break;
-		default:
-			break;
+			case sl_idle:
+				gspye->ServerListSort(lst, true, "ping", cm_int);
+				GameSpy_Sort_By_Ping(lst);
+				break;
+			default:
+				break;
 		}
 	}
 }
@@ -260,7 +259,8 @@ void CL_GameSpy_PingServers_f (void)
 		return;
 	}
 
-	NET_Config(true); /* FS: Retrieve a MOTD.  This is reset again later if we error out, abort, or if the server completes, as long as we are disconnected */
+	// FS: Retrieve a MOTD.  This is reset again later if we error out, abort, or if the server completes, as long as we are disconnected
+	NET_Config(true); 
 
 	gspyCur = 0;
 	memset(&browserList, 0, sizeof(browserList));
@@ -272,17 +272,17 @@ void CL_GameSpy_PingServers_f (void)
 	goa_secret_key[3] = '0';
 	goa_secret_key[4] = 'x';
 	goa_secret_key[5] = 'g';
-	goa_secret_key[6] = '\0'; /* FS: Gamespy requires a null terminator at the end of the secret key */
+	goa_secret_key[6] = '\0'; // FS: Gamespy requires a null terminator at the end of the secret key
 
 	if ((Cmd_Argc() == 1) || (cls.key_dest == key_menu))
 	{
 		cls.gamespyupdate = SHOW_POPULATED_SERVERS;;
-		Com_Printf("\x02Grabbing populated server list from GameSpy master. . .\n");
+		Com_Printf(S_COLOR_YELLOW "Grabbing populated server list from GameSpy master. . .\n");
 	}
 	else
 	{
 		cls.gamespyupdate = SHOW_ALL_SERVERS;
-		Com_Printf("\x02Grabbing all servers from GameSpy master. . .\n");
+		Com_Printf(S_COLOR_YELLOW "Grabbing all servers from GameSpy master. . .\n");
 	}
 
 	cls.gamespypercent = 0;
@@ -291,10 +291,11 @@ void CL_GameSpy_PingServers_f (void)
 
 	allocatedSockets = bound(5, cl_master_server_queries->value, 40);
 
-	SCR_UpdateScreen(); /* FS: Force an update so the percentage bar shows some progress */
+	// FS: Force an update so the percentage bar shows some progress
+	SCR_UpdateScreen();
 
 	serverlist = gspye->ServerListNew("quake2", "quake2", goa_secret_key, allocatedSockets, ListCallBack, GSPYCALLBACK_FUNCTION, NULL);
-	error = gspye->ServerListUpdate(serverlist, true); /* FS: Use Async now! */
+	error = gspye->ServerListUpdate(serverlist, true); // FS: Use Async now!
 	CL_Gamespy_Check_Error(serverlist, error);
 }
 
