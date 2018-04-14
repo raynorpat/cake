@@ -130,7 +130,6 @@ void CL_RunLightStyles (void)
 	}
 }
 
-
 void CL_SetLightstyle (int i)
 {
 	char	*s;

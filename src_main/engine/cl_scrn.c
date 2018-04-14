@@ -41,7 +41,7 @@ int			scr_draw_loading;
 cvar_t		*scr_centertime;
 cvar_t		*scr_showturtle;
 cvar_t		*scr_showpause;
-cvar_t		*scr_printspeed;
+cvar_t		*scr_hudAlpha;
 
 cvar_t		*scr_netgraph;
 cvar_t		*scr_timegraph;
@@ -667,7 +667,7 @@ void SCR_Init (void)
 	scr_showturtle = Cvar_Get ("scr_showturtle", "0", 0);
 	scr_showpause = Cvar_Get ("scr_showpause", "1", 0);
 	scr_centertime = Cvar_Get ("scr_centertime", "2.5", 0);
-	scr_printspeed = Cvar_Get ("scr_printspeed", "8", 0);
+	scr_hudAlpha = Cvar_Get ("scr_hudAlpha", "1.0", CVAR_ARCHIVE);
 	scr_netgraph = Cvar_Get ("netgraph", "0", 0);
 	scr_timegraph = Cvar_Get ("timegraph", "0", 0);
 	scr_debuggraph = Cvar_Get ("debuggraph", "0", 0);
@@ -1130,7 +1130,8 @@ void SCR_ExecuteLayoutString (char *s)
 	char	*token;
 	int		width;
 	int		index;
-	clientinfo_t	*ci;
+	clientinfo_t *ci;
+	vec4_t mainHUDColor;
 
 	static int lastitem = -1;
 	static int itemtime = 0;
@@ -1146,6 +1147,8 @@ void SCR_ExecuteLayoutString (char *s)
 	w = 0;
 	h = 0;
 	width = 3;
+
+	Vector4Set (mainHUDColor, 1.0, 1.0, 1.0, 0.7);
 
 	while (s)
 	{
@@ -1207,6 +1210,8 @@ void SCR_ExecuteLayoutString (char *s)
 
 			if (value >= MAX_IMAGES) Com_Error (ERR_DROP, "Pic >= MAX_IMAGES");
 
+			RE_Draw_SetColor (mainHUDColor);
+
 			// draw pic
 			statpic = cl.configstrings[CS_IMAGES + value];
 			if (statpic)
@@ -1214,6 +1219,8 @@ void SCR_ExecuteLayoutString (char *s)
 				RE_Draw_GetPicSize (&w, &h, statpic);
 				SCR_DrawPic (x, y, w, h, statpic);
 			}
+
+			RE_Draw_SetColor (NULL);
 
 			// draw selected item name
 			if (statnum == STAT_SELECTED_ICON)
@@ -1324,8 +1331,10 @@ void SCR_ExecuteLayoutString (char *s)
 		{
 			// draw a pic from a name
 			token = COM_Parse (&s);
+			RE_Draw_SetColor (mainHUDColor);
 			RE_Draw_GetPicSize (&w, &h, token);
 			SCR_DrawPic (x, y, w, h, token);
+			RE_Draw_SetColor (NULL);
 			continue;
 		}
 
@@ -1336,7 +1345,9 @@ void SCR_ExecuteLayoutString (char *s)
 			width = atoi (token);
 			token = COM_Parse (&s);
 			value = cl.frame.playerstate.stats[atoi (token)];
+			RE_Draw_SetColor (mainHUDColor);
 			SCR_DrawField (x, y, 0, width, value);
+			RE_Draw_SetColor (NULL);
 			continue;
 		}
 
@@ -1355,6 +1366,8 @@ void SCR_ExecuteLayoutString (char *s)
 			else
 				color = 1;
 
+			RE_Draw_SetColor (mainHUDColor);
+
 			if (cl.frame.playerstate.stats[STAT_FLASHES] & 1)
 			{
 				RE_Draw_GetPicSize (&w, &h, "field_3");
@@ -1362,6 +1375,8 @@ void SCR_ExecuteLayoutString (char *s)
 			}
 
 			SCR_DrawField (x, y, color, width, value);
+
+			RE_Draw_SetColor (NULL);
 			continue;
 		}
 
@@ -1380,6 +1395,8 @@ void SCR_ExecuteLayoutString (char *s)
 			else
 				continue; // negative number = don't show
 
+			RE_Draw_SetColor (mainHUDColor);
+
 			if (cl.frame.playerstate.stats[STAT_FLASHES] & 4)
 			{
 				RE_Draw_GetPicSize (&w, &h, "field_3");
@@ -1387,6 +1404,8 @@ void SCR_ExecuteLayoutString (char *s)
 			}
 
 			SCR_DrawField (x, y, color, width, value);
+
+			RE_Draw_SetColor (NULL);
 			continue;
 		}
 
@@ -1403,6 +1422,8 @@ void SCR_ExecuteLayoutString (char *s)
 
 			color = 0; // green
 
+			RE_Draw_SetColor (mainHUDColor);
+
 			if (cl.frame.playerstate.stats[STAT_FLASHES] & 2)
 			{
 				RE_Draw_GetPicSize (&w, &h, "field_3");
@@ -1410,6 +1431,8 @@ void SCR_ExecuteLayoutString (char *s)
 			}
 
 			SCR_DrawField (x, y, color, width, value);
+
+			RE_Draw_SetColor (NULL);
 			continue;
 		}
 
