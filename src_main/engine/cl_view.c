@@ -548,13 +548,9 @@ static int entitycmpfnc(const entity_t *a, const entity_t *b)
 {
 	// all other models are sorted by model then skin
 	if (a->model == b->model)
-	{
 		return ((int)a->skin - (int)b->skin);
-	}
 	else
-	{
 		return ((int)a->model - (int)b->model);
-	}
 }
 
 void V_RenderView (float stereo_separation)
@@ -685,10 +681,10 @@ void V_Init (void)
 	crosshairX = Cvar_Get ("crosshairX", "0", CVAR_ARCHIVE);
 	crosshairY = Cvar_Get ("crosshairY", "0", CVAR_ARCHIVE);
 	crosshairSize = Cvar_Get ("crosshairSize", "24", CVAR_ARCHIVE);
-	crosshairDot = Cvar_Get("crosshairDot", "0", CVAR_ARCHIVE);
-	crosshairCircle = Cvar_Get("crosshairCircle", "0", CVAR_ARCHIVE);
-	crosshairCross = Cvar_Get("crosshairCross", "3", CVAR_ARCHIVE);
-	crosshairAlpha = Cvar_Get("crosshairAlpha", "1.0", CVAR_ARCHIVE);
+	crosshairDot = Cvar_Get ("crosshairDot", "0", CVAR_ARCHIVE);
+	crosshairCircle = Cvar_Get ("crosshairCircle", "0", CVAR_ARCHIVE);
+	crosshairCross = Cvar_Get ("crosshairCross", "3", CVAR_ARCHIVE);
+	crosshairAlpha = Cvar_Get ("crosshairAlpha", "1.0", CVAR_ARCHIVE);
 	
 	cl_testblend = Cvar_Get ("cl_testblend", "0", 0);
 	cl_testparticles = Cvar_Get ("cl_testparticles", "0", 0);

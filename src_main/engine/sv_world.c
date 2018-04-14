@@ -622,6 +622,7 @@ trace_t SV_Trace (vec3_t start, vec3_t mins, vec3_t maxs, vec3_t end, edict_t *p
 
 	// clip to world
 	clip.trace = CM_BoxTrace (start, end, mins, maxs, 0, contentmask);
+	if (!ge) return clip.trace;
 	clip.trace.ent = ge->edicts;
 
 	if (clip.trace.fraction == 0)
@@ -645,4 +646,3 @@ trace_t SV_Trace (vec3_t start, vec3_t mins, vec3_t maxs, vec3_t end, edict_t *p
 
 	return clip.trace;
 }
-
