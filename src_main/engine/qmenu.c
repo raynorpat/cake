@@ -242,7 +242,6 @@ qboolean Field_Key (menufield_s *f, int key)
 				f->visible_offset--;
 			}
 		}
-
 		break;
 
 	case K_KP_DEL:

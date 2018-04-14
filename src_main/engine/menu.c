@@ -248,19 +248,30 @@ void M_Print (int x, int y, char *str)
 
     cx = x;
     cy = y;
-	while (*str)
+	
+	while (1)
 	{
-        if (*str == '\n')
-        {
-            cx = x;
-            cy += 8;
-        }
-        else
-        {
-			SCR_DrawChar (cx, cy, (*str) + 128);
-			cx += 8;
+		char linebuffer[1024];
+		int	l, h;
+
+		// scan the width of the line
+		for (l = 0; l < 64; l++)
+		{
+			if (!str[l] || str[l] == '\n')
+				break;
+			linebuffer[l] = str[l];
 		}
-        str++;
+		linebuffer[l] = 0;
+
+		h = SCR_Text_Height (linebuffer, 0.25f, 0, &cls.consoleBoldFont);
+		SCR_Text_Paint (cx, cy + h, 0.25f, colorGreen, linebuffer, 0, 0, UI_DROPSHADOW, &cls.consoleBoldFont);
+		cy += h;
+
+		while (*str && (*str != '\n'))
+			str++;
+		if (!*str)
+			break;
+		str++; // skip the \n
 	}
 }
 
@@ -376,7 +387,7 @@ void M_Popup(void)
 		RE_Draw_FadeScreen ();
 
 		// then draw the box
-        M_DrawTextBox (x, y, width, lines);
+        M_DrawTextBox (x, y, width, lines + 1);
 
 		// then finally the text on top
         M_Print (x + 16, y + 8, m_popup_string);

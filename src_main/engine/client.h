@@ -618,7 +618,6 @@ void M_Draw (void);
 
 char *Default_MenuKey (struct _tag_menuframework *m, int key);
 
-void M_DrawCharacter (int cx, int cy, int num);
 void M_Print (int x, int y, char *str);
 void M_DrawTextBox (int x, int y, int width, int lines);
 void M_Banner (char *name);
