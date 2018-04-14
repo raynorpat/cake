@@ -134,6 +134,13 @@ typedef struct
 
 typedef struct
 {
+	int			numPoints;
+	int			firstPoint;
+	struct mnode_s *node;
+} markFragment_t;
+
+typedef struct
+{
 	float		rgb[3];			// 0.0 - 2.0
 	float		white;			// highest of rgb
 } lightstyle_t;
@@ -196,6 +203,8 @@ extern void(*RE_Draw_StretchPic)(int x, int y, int w, int h, char *pic);
 extern void(*RE_Draw_StretchPicExt)(float x, float y, float w, float h, float sl, float tl, float sh, float th, char *pic);
 extern void(*RE_Draw_Pic)(int x, int y, char *pic, float scale);
 extern void(*RE_Draw_GetPicSize)(int *w, int *h, char *pic);
+
+extern int(*RE_MarkFragments)(vec3_t origin, vec3_t axis[3], float radius, int maxPoints, vec3_t *points, int maxFragments, markFragment_t *fragments);
 
 extern void(*RE_BeginRegistration)(char *model);
 extern struct model_s * (*RE_RegisterModel)(char *name);

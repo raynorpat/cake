@@ -1086,6 +1086,8 @@ void GL_GFX_CoreInit(void)
 	RE_Draw_Pic = RE_GL_Draw_Pic;
 	RE_Draw_GetPicSize = RE_GL_Draw_GetPicSize;
 
+	RE_MarkFragments = RE_GL_MarkFragments;
+
 	RE_BeginRegistration = RE_GL_BeginRegistration;
 	RE_RegisterModel = RE_GL_RegisterModel;
 	RE_RegisterSkin = RE_GL_RegisterSkin;

@@ -41,6 +41,8 @@ void			(* RE_Draw_StretchPicExt)( float x, float y, float w, float h, float sl, 
 void            (* RE_Draw_Pic)( int x, int y, char *pic, float scale ) = NULL;
 void            (* RE_Draw_GetPicSize)( int *w, int *h, char *pic ) = NULL;
 
+int				(* RE_MarkFragments)( vec3_t origin, vec3_t axis[3], float radius, int maxPoints, vec3_t *points, int maxFragments, markFragment_t *fragments ) = NULL;
+
 void            (* RE_BeginRegistration)( char *model ) = NULL;
 struct model_s * (* RE_RegisterModel)( char *name ) = NULL;
 struct image_s * (* RE_RegisterSkin)( char *name ) = NULL;

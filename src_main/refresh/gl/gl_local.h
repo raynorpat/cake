@@ -377,6 +377,8 @@ void R_InitFreeType (void);
 void R_DoneFreeType (void);
 void RE_GL_RegisterFont (char *fontName, int pointSize, fontInfo_t * font);
 
+int RE_GL_MarkFragments (vec3_t origin, vec3_t axis[3], float radius, int maxPoints, vec3_t *points, int maxFragments, markFragment_t *fragments);
+
 typedef struct
 {
 	const char *renderer_string;
