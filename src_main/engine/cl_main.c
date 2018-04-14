@@ -47,6 +47,7 @@ cvar_t	*cl_predict;
 cvar_t	*cl_gun;
 
 cvar_t	*cl_drawParticles;
+cvar_t	*cl_particleCollision;
 
 cvar_t	*cl_shownet;
 cvar_t	*cl_showmiss;
@@ -1584,7 +1585,8 @@ void CL_InitLocal (void)
 	cl_stereo_separation = Cvar_Get ("cl_stereo_separation", "0.4", CVAR_ARCHIVE);
 	cl_stereo = Cvar_Get ("cl_stereo", "0", 0);
 
-	cl_drawParticles = Cvar_Get ("cl_drawParticles", "1", 0);
+	cl_drawParticles = Cvar_Get ("cl_drawParticles", "1", CVAR_ARCHIVE);
+	cl_particleCollision = Cvar_Get("cl_particleCollision", "1", CVAR_ARCHIVE);
 
 	cl_gun = Cvar_Get ("cl_gun", "1", 0);
 	cl_footsteps = Cvar_Get ("cl_footsteps", "1", 0);

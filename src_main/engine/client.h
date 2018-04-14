@@ -319,8 +319,10 @@ extern client_static_t	cls;
 extern	cvar_t	*cl_stereo_separation;
 extern	cvar_t	*cl_stereo;
 
-extern	cvar_t	*cl_gun;
 extern	cvar_t	*cl_drawParticles;
+extern	cvar_t	*cl_particleCollision;
+
+extern	cvar_t	*cl_gun;
 extern	cvar_t	*cl_predict;
 extern	cvar_t	*cl_footsteps;
 extern	cvar_t	*cl_noskins;
@@ -404,12 +406,15 @@ typedef struct particle_s
 	float		time;
 
 	vec3_t		org;
+	vec3_t		oldOrg;
 	vec3_t		vel;
 	vec3_t		accel;
 	float		color;
 	float		colorvel;
 	float		alpha;
 	float		alphavel;
+	float		bounceFactor;
+	qboolean	ignoreGrav;
 } cparticle_t;
 
 #define	PARTICLE_GRAVITY	40

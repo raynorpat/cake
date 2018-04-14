@@ -736,26 +736,6 @@ PARTICLE MANAGEMENT
 ==============================================================
 */
 
-/*
-// THIS HAS BEEN RELOCATED TO CLIENT.H
-typedef struct particle_s
-{
-	struct particle_s	*next;
-
-	float		time;
-
-	vec3_t		org;
-	vec3_t		vel;
-	vec3_t		accel;
-	float		color;
-	float		colorvel;
-	float		alpha;
-	float		alphavel;
-} cparticle_t;
-
-#define	PARTICLE_GRAVITY	40
-*/
-
 cparticle_t	*active_particles, *free_particles;
 
 cparticle_t	particles[MAX_PARTICLES];
@@ -831,6 +811,14 @@ void CL_ParticleEffect (vec3_t org, vec3_t dir, int color, int count)
 		p->alpha = 1.0;
 
 		p->alphavel = -1.0 / (0.5 + frand () * 0.3);
+
+		// no particle bounce for wall impacts
+		if((color == 0) || (color == 0xe0))
+			p->bounceFactor = 0.0f;
+		else
+			p->bounceFactor = 0.1f;
+
+		p->ignoreGrav = false;
 	}
 }
 
@@ -871,6 +859,10 @@ void CL_ParticleEffect2 (vec3_t org, vec3_t dir, int color, int count)
 		p->alpha = 1.0;
 
 		p->alphavel = -1.0 / (0.5 + frand () * 0.3);
+
+		p->bounceFactor = 0.1f;
+
+		p->ignoreGrav = false;
 	}
 }
 
@@ -911,6 +903,11 @@ void CL_TeleporterParticles (entity_state_t *ent)
 		p->alpha = 1.0;
 
 		p->alphavel = -0.5;
+
+		p->bounceFactor = 0.6f;
+		VectorCopy(p->org, p->oldOrg);
+
+		p->ignoreGrav = false;
 	}
 }
 
@@ -955,6 +952,11 @@ void CL_LogoutEffect (vec3_t org, int type)
 		p->alpha = 1.0;
 
 		p->alphavel = -1.0 / (1.0 + frand () * 0.3);
+
+		p->bounceFactor = 0.6f;
+		VectorCopy(p->org, p->oldOrg);
+
+		p->ignoreGrav = false;
 	}
 }
 
@@ -994,6 +996,10 @@ void CL_ItemRespawnParticles (vec3_t org)
 		p->alpha = 1.0;
 
 		p->alphavel = -1.0 / (1.0 + frand () * 0.3);
+
+		p->bounceFactor = 0.1f;
+
+		p->ignoreGrav = false;
 	}
 }
 
@@ -1031,6 +1037,10 @@ void CL_ExplosionParticles (vec3_t org)
 		p->alpha = 1.0;
 
 		p->alphavel = -0.8 / (0.5 + frand () * 0.3);
+
+		p->bounceFactor = 0.6f;
+
+		p->ignoreGrav = false;
 	}
 }
 
@@ -1078,6 +1088,10 @@ void CL_BigTeleportParticles (vec3_t org)
 		p->alpha = 1.0;
 
 		p->alphavel = -0.3 / (0.5 + frand () * 0.3);
+
+		p->bounceFactor = 0.7f;
+
+		p->ignoreGrav = false;
 	}
 }
 
@@ -1123,6 +1137,10 @@ void CL_BlasterParticles (vec3_t org, vec3_t dir, unsigned int color)
 		p->alpha = 1.0;
 
 		p->alphavel = -1.0 / (0.5 + frand () * 0.3);
+
+		p->bounceFactor = 0.3f;
+
+		p->ignoreGrav = false;
 	}
 }
 
@@ -1175,6 +1193,10 @@ void CL_BlasterTrail (vec3_t start, vec3_t end, float color)
 		}
 
 		VectorAdd (move, vec, move);
+
+		p->bounceFactor = 0.1f;
+
+		p->ignoreGrav = false;
 	}
 }
 
@@ -1226,6 +1248,10 @@ void CL_QuadTrail (vec3_t start, vec3_t end)
 		}
 
 		VectorAdd (move, vec, move);
+
+		p->bounceFactor = 0.1f;
+
+		p->ignoreGrav = false;
 	}
 }
 
@@ -1277,6 +1303,10 @@ void CL_FlagTrail (vec3_t start, vec3_t end, float color)
 		}
 
 		VectorAdd (move, vec, move);
+
+		p->bounceFactor = 0.1f;
+
+		p->ignoreGrav = false;
 	}
 }
 
@@ -1351,6 +1381,10 @@ void CL_DiminishingTrail (vec3_t start, vec3_t end, centity_t *old, int flags)
 				}
 
 				p->vel[2] -= PARTICLE_GRAVITY;
+
+				p->bounceFactor = 0.3f;
+
+				p->ignoreGrav = false;
 			}
 			else
 			{
@@ -1365,6 +1399,10 @@ void CL_DiminishingTrail (vec3_t start, vec3_t end, centity_t *old, int flags)
 				}
 
 				p->accel[2] = 20;
+
+				p->bounceFactor = 0.0f;
+
+				p->ignoreGrav = false;
 			}
 		}
 
@@ -1446,6 +1484,10 @@ void CL_RocketTrail (vec3_t start, vec3_t end, centity_t *old)
 			}
 
 			p->accel[2] = -PARTICLE_GRAVITY;
+
+			p->bounceFactor = 0.25f;
+
+			p->ignoreGrav = false;
 		}
 
 		VectorAdd (move, vec, move);
@@ -1508,6 +1550,9 @@ void CL_RailTrail (vec3_t start, vec3_t end)
 		}
 
 		VectorAdd (move, vec, move);
+
+		p->bounceFactor = 0.1f;
+		p->ignoreGrav = true;
 	}
 
 	dec = 0.75;
@@ -1541,6 +1586,9 @@ void CL_RailTrail (vec3_t start, vec3_t end)
 		}
 
 		VectorAdd (move, vec, move);
+
+		p->bounceFactor = 0.1f;
+		p->ignoreGrav = true;
 	}
 }
 
@@ -1591,6 +1639,10 @@ void CL_BubbleTrail (vec3_t start, vec3_t end)
 		p->vel[2] += 6;
 
 		VectorAdd (move, vec, move);
+
+		p->bounceFactor = 0.0f;
+
+		p->ignoreGrav = true;
 	}
 }
 
@@ -1599,7 +1651,6 @@ void CL_BubbleTrail (vec3_t start, vec3_t end)
 CL_FlyParticles
 ===============
 */
-
 #define	BEAMLENGTH 16
 void CL_FlyParticles (vec3_t origin, int count)
 {
@@ -1610,7 +1661,6 @@ void CL_FlyParticles (vec3_t origin, int count)
 	vec3_t		forward;
 	float		dist = 64;
 	float		ltime;
-
 
 	if (count > NUMVERTEXNORMALS)
 		count = NUMVERTEXNORMALS;
@@ -1661,6 +1711,10 @@ void CL_FlyParticles (vec3_t origin, int count)
 
 		p->alpha = 1;
 		p->alphavel = -100;
+
+		p->bounceFactor = 0.0f;
+
+		p->ignoreGrav = true;
 	}
 }
 
@@ -1762,6 +1816,10 @@ void CL_BfgParticles (entity_t *ent)
 
 		p->alpha = 1.0 - dist;
 		p->alphavel = -100;
+
+		p->bounceFactor = 0.3f;
+
+		p->ignoreGrav = false;
 	}
 }
 
@@ -1800,6 +1858,10 @@ void CL_BFGExplosionParticles (vec3_t org)
 		p->alpha = 1.0;
 
 		p->alphavel = -0.8 / (0.5 + frand () * 0.3);
+
+		p->bounceFactor = 0.6f;
+
+		p->ignoreGrav = false;
 	}
 }
 
@@ -1847,6 +1909,11 @@ void CL_TeleportParticles (vec3_t org)
 
 				p->accel[0] = p->accel[1] = 0;
 				p->accel[2] = -PARTICLE_GRAVITY;
+
+				p->bounceFactor = 0.6f;
+				VectorCopy (p->org, p->oldOrg);
+
+				p->ignoreGrav = false;
 			}
 }
 
@@ -1864,6 +1931,7 @@ void CL_AddParticles (void)
 	int				color;
 	cparticle_t		*active, *tail;
 	int             contents;
+	float			grav;
 
 	active = NULL;
 	tail = NULL;
@@ -1871,10 +1939,18 @@ void CL_AddParticles (void)
 	if (!cl_drawParticles->integer)
 		return;
 
+	// allow gravity tweaks by the server
+	grav = Cvar_VariableValue("sv_gravity");
+	if (!grav)
+		grav = 1;
+	else
+		grav /= 800;
+
 	for (p = active_particles; p; p = next)
 	{
 		next = p->next;
 
+		// set alpha
 		// PMM - added INSTANT_PARTICLE handling
 		if (p->alphavel != INSTANT_PARTICLE)
 		{
@@ -1896,7 +1972,11 @@ void CL_AddParticles (void)
 		if (alpha > 1.0)
 			alpha = 1;
 
+		// set color
 		color = p->color;
+
+		// backup old position
+		VectorCopy (p->org, p->oldOrg);
 
 		// calculate new position
 		time2 = time * time;
@@ -1905,13 +1985,54 @@ void CL_AddParticles (void)
 		org[1] = p->org[1] + p->vel[1] * time + p->accel[1] * time2;
 		org[2] = p->org[2] + p->vel[2] * time + p->accel[2] * time2;
 
-		// TODO: gravity modulation by sv_gravity?
+		// gravity modulation
+		if (!p->ignoreGrav)
+			org[2] -= 0.5 * ( Cvar_VariableValue("sv_gravity") / 4 ) * time2;
 
-		// TODO: particle collision test
+		// collision test
+		if (cl_particleCollision->integer)
+		{
+			if (p->bounceFactor)
+			{
+				extern trace_t SV_Trace(vec3_t start, vec3_t mins, vec3_t maxs, vec3_t end, struct edict_s *passedict, int contentmask);
+				trace_t trace;
+				vec3_t vel;
+				int hitTime;
+				float time;
 
-		contents = CM_PointContents(org, 0);
+				trace = SV_Trace(p->oldOrg, NULL, NULL, org, NULL, CONTENTS_SOLID);
+				if (trace.fraction > 0 && trace.fraction < 1)
+				{
+					// reflect the velocity on the trace plane
+					hitTime = cl.time - cls.rframetime + cls.rframetime * trace.fraction;
+
+					time = ((float)hitTime - p->time) * 0.001;
+
+					Vector3Set (vel, p->vel[0], p->vel[1], p->vel[2] + p->accel[2] * time * grav);
+					VectorReflect (vel, trace.plane.normal, p->vel);
+					VectorScale (p->vel, p->bounceFactor, p->vel);
+
+					// check for stop, making sure that even on low FPS systems it doesn't bobble
+					if (trace.allsolid || (trace.plane.normal[2] > 0 && (p->vel[2] < 40 || p->vel[2] < -cls.rframetime * p->vel[2])))
+					{
+						VectorClear(p->vel);
+						VectorClear(p->accel);
+
+						p->bounceFactor = 0.0f;
+					}
+
+					VectorCopy (trace.endpos, org);
+
+					// reset particle
+					p->time = cl.time;
+
+					VectorCopy (org, p->org);
+				}
+			}
+		}
 
 		// kill all particles in solid
+		contents = CM_PointContents (org, 0);
 		if (contents & MASK_SOLID)
 		{
 			CL_FreeParticle (p);
