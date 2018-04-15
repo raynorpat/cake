@@ -44,7 +44,6 @@ static cvar_t *r_postprocessing;
 static menuframework_s	s_video_menu;
 
 static menulist_s		s_mode_list;
-static menulist_s		s_aspect_list;
 static menuslider_s		s_brightness_slider;
 static menuslider_s		s_contrast_slider;
 static menuslider_s		s_fov_slider;
@@ -87,23 +86,7 @@ static char *builtinResolutions[] = {
 	NULL
 };
 
-static char *knownRatios[][2] = {
-	{ "1.25:1", "5:4" },
-	{ "1.33:1", "4:3" },
-	{ "1.50:1", "3:2" },
-	{ "1.56:1", "14:9" },
-	{ "1.60:1", "16:10" },
-	{ "1.67:1", "5:3" },
-	{ "1.78:1", "16:9" },
-	{ NULL, NULL }
-};
-
 #define MAX_RESOLUTIONS	32
-
-static char		*ratios[MAX_RESOLUTIONS];
-static char     ratioBuf[MAX_RESOLUTIONS][8];
-static int      ratioToRes[MAX_RESOLUTIONS];
-static int      resToRatio[MAX_RESOLUTIONS];
 
 static char     resbuf[MAX_STRING_CHARS];
 static char		*detectedResolutions[MAX_RESOLUTIONS];
@@ -157,59 +140,6 @@ static int VID_Menu_FindDetectedResolution(int mode)
 	}
 
 	return -1;
-}
-
-/*
-=================
-VID_Menu_GetAspectRatios
-=================
-*/
-static void VID_Menu_GetAspectRatios(void)
-{
-	int i, r;
-
-	// build ratio list from resolutions
-	for (r = 0; resolutions[r]; r++)
-	{
-		int w, h;
-		char *x;
-		char str[sizeof(ratioBuf[0])];
-
-		// calculate resolution's aspect ratio
-		x = strchr (resolutions[r], 'x') + 1;
-		Q_strlcpy (str, resolutions[r], x - resolutions[r]);
-		w = atoi (str);
-		h = atoi (x);
-		Com_sprintf (str, sizeof(str), "%.2f:1", (float)w / (float)h);
-
-		// rename common ratios ("1.33:1" -> "4:3")
-		for (i = 0; knownRatios[i][0]; i++)
-		{
-			if (!Q_stricmp(str, knownRatios[i][0]))
-			{
-				Q_strlcpy (str, knownRatios[i][1], sizeof(str));
-				break;
-			}
-		}
-
-		// add ratio to list if it is new
-		// establish res/ratio relationship
-		for (i = 0; ratioBuf[i][0]; i++)
-		{
-			if (!Q_stricmp(str, ratioBuf[i]))
-				break;
-		}
-		if (!ratioBuf[i][0])
-		{
-			Q_strlcpy (ratioBuf[i], str, sizeof(ratioBuf[i]));
-			ratioToRes[i] = r;
-		}
-
-		ratios[r] = ratioBuf[r];
-		resToRatio[r] = i;
-	}
-
-	ratios[r] = NULL;
 }
 
 /*
@@ -308,13 +238,32 @@ static void AnisotropicCallback(void *s)
 
 static void VideoModeCallback(void *s)
 {
-	s_mode_list.curvalue = resToRatio[s_mode_list.curvalue];
-}
-
-static void VideoAspectCallback(void *s)
-{
-	s_mode_list.curvalue = ratioToRes[s_aspect_list.curvalue];
-	s_aspect_list.curvalue = resToRatio[s_mode_list.curvalue];
+	if (s_mode_list.curvalue < 0)
+	{
+		if (resolutionsDetected)
+		{
+			int i;
+			char buf[MAX_STRING_CHARS];
+			Cvar_VariableStringBuffer("gl_customwidth", buf, sizeof(buf) - 2);
+			buf[strlen(buf) + 1] = 0;
+			buf[strlen(buf)] = 'x';
+			Cvar_VariableStringBuffer("gl_customheight", buf + strlen(buf), sizeof(buf) - strlen(buf));
+			for (i = 0; detectedResolutions[i]; ++i)
+			{
+				if (!Q_stricmp(buf, detectedResolutions[i]))
+				{
+					s_mode_list.curvalue = i;
+					break;
+				}
+			}
+			if (s_mode_list.curvalue < 0)
+				s_mode_list.curvalue = 0;
+		}
+		else
+		{
+			s_mode_list.curvalue = 10;
+		}
+	}
 }
 
 static void ResetDefaults (void *unused)
@@ -326,6 +275,7 @@ static void ApplyChanges (void *unused)
 {
 	qboolean restart = false;
 
+	// video mode
 	if (resolutionsDetected)
 	{
 		// search for builtin mode that matches the detected mode
@@ -346,16 +296,14 @@ static void ApplyChanges (void *unused)
 			Cvar_Set ("gl_customheight", h);
 		}
 
-		// Restarts automatically
 		Cvar_SetValue ("gl_mode", mode);
 	}
 	else
 	{
-		// Restarts automatically
 		Cvar_SetValue ("gl_mode", s_mode_list.curvalue);
 	}
 
-	// fullscreen restarts automatically
+	// fullscreen
 	Cvar_SetValue ("vid_fullscreen", s_fs_box.curvalue);
 
 	// vertical sync
@@ -380,9 +328,7 @@ static void ApplyChanges (void *unused)
 
 	// issue the restart if neccessary
 	if (restart)
-	{
 		Cbuf_AddText("vid_restart\n");
-	}
 
 	M_ForceMenuOff ();
 }
@@ -437,7 +383,6 @@ void VID_MenuInit (void)
 
 	VID_Menu_InitCvars ();
 	VID_Menu_GetResolutions ();
-	VID_Menu_GetAspectRatios ();
 
 	memset(&s_video_menu, 0, sizeof(s_video_menu));
 	s_video_menu.x = (int)(SCREEN_WIDTH * 0.50f);
@@ -453,42 +398,6 @@ void VID_MenuInit (void)
 	s_mode_list.generic.callback = VideoModeCallback;
 	s_mode_list.itemnames = resolutions;
 	s_mode_list.curvalue = VID_Menu_FindDetectedResolution(Cvar_VariableValue("gl_mode"));
-	if (s_mode_list.curvalue < 0)
-	{
-		if (resolutionsDetected)
-		{
-			int i;
-			char buf[MAX_STRING_CHARS];
-			Cvar_VariableStringBuffer("gl_customwidth", buf, sizeof(buf) - 2);
-			buf[strlen(buf) + 1] = 0;
-			buf[strlen(buf)] = 'x';
-			Cvar_VariableStringBuffer("gl_customheight", buf + strlen(buf), sizeof(buf) - strlen(buf));
-
-			for (i = 0; detectedResolutions[i]; ++i)
-			{
-				if (!Q_stricmp(buf, detectedResolutions[i]))
-				{
-					s_mode_list.curvalue = i;
-					break;
-				}
-			}
-			if (s_mode_list.curvalue < 0)
-				s_mode_list.curvalue = 0;
-		}
-		else
-		{
-			s_mode_list.curvalue = 10;
-		}
-	}
-
-	// video mode aspect ratio
-	s_aspect_list.generic.type = MTYPE_SPINCONTROL;
-	s_aspect_list.generic.name = "aspect ratio";
-	s_aspect_list.generic.x = 0;
-	s_aspect_list.generic.y = y += MENU_LINE_SIZE;
-	s_aspect_list.generic.callback = VideoAspectCallback;
-	s_aspect_list.itemnames = ratios;
-	s_aspect_list.curvalue = resToRatio[s_mode_list.curvalue];
 
 	// fullscreen
 	s_fs_box.generic.type = MTYPE_SPINCONTROL;
@@ -595,7 +504,6 @@ void VID_MenuInit (void)
 	s_video_menu.key = NULL;
 
 	Menu_AddItem (&s_video_menu, (void *)&s_mode_list);
-	Menu_AddItem (&s_video_menu, (void *)&s_aspect_list);
 	Menu_AddItem (&s_video_menu, (void *)&s_fs_box);
 	Menu_AddItem (&s_video_menu, (void *)&s_brightness_slider);
 	Menu_AddItem (&s_video_menu, (void *)&s_contrast_slider);
