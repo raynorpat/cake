@@ -1148,7 +1148,7 @@ void SCR_ExecuteLayoutString (char *s)
 	h = 0;
 	width = 3;
 
-	Vector4Set (mainHUDColor, 1.0, 1.0, 1.0, 0.7);
+	Vector4Set (mainHUDColor, 1.0, 1.0, 1.0, scr_hudAlpha->value);
 
 	while (s)
 	{

@@ -1101,9 +1101,9 @@ void CL_AddViewWeapon (player_state_t *ps, player_state_t *ops)
 
 	gun.flags = RF_MINLIGHT | RF_DEPTHHACK | RF_WEAPONMODEL;
 
-	if (cl_gunalpha->value != 1)
+	if (cl_gunAlpha->value != 1)
 	{
-		gun.alpha = Q_Clamp(0.1f, 1.0f, Cvar_VariableValue("cl_gunalpha"));
+		gun.alpha = Q_Clamp(0.1f, 1.0f, Cvar_VariableValue("cl_gunAlpha"));
 		gun.flags |= RF_TRANSLUCENT;
 	}
 
@@ -1113,7 +1113,7 @@ void CL_AddViewWeapon (player_state_t *ps, player_state_t *ops)
 	flags = CL_ShellEffect_ViewWeapon ();
 	if (flags)
 	{
-		gun.alpha = 0.30f * cl_gunalpha->value;
+		gun.alpha = 0.30f * cl_gunAlpha->value;
 		gun.flags |= flags | RF_TRANSLUCENT;
 		V_AddEntity (&gun);
 	}

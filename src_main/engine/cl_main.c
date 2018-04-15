@@ -45,7 +45,7 @@ cvar_t	*cl_footsteps;
 cvar_t	*cl_timeout;
 cvar_t	*cl_predict;
 cvar_t	*cl_gun;
-cvar_t	*cl_gunalpha;
+cvar_t	*cl_gunAlpha;
 
 cvar_t	*cl_drawParticles;
 cvar_t	*cl_particleCollision;
@@ -1590,7 +1590,7 @@ void CL_InitLocal (void)
 	cl_particleCollision = Cvar_Get("cl_particleCollision", "1", CVAR_ARCHIVE);
 
 	cl_gun = Cvar_Get ("cl_gun", "1", 0);
-	cl_gunalpha = Cvar_Get("cl_gunalpha", "1.0", CVAR_ARCHIVE);
+	cl_gunAlpha = Cvar_Get("cl_gunAlpha", "1.0", CVAR_ARCHIVE);
 	cl_footsteps = Cvar_Get ("cl_footsteps", "1", 0);
 	cl_noskins = Cvar_Get ("cl_noskins", "0", 0);
 	cl_autoskins = Cvar_Get ("cl_autoskins", "0", 0);

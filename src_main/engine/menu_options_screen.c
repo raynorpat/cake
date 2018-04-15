@@ -36,6 +36,8 @@ static menuslider_s		s_options_screen_crosshaircross_slider;
 static menuslider_s		s_options_screen_crosshairscale_slider;
 static menuslider_s		s_options_screen_crosshairalpha_slider;
 static menulist_s		s_options_screen_screenvidaspect_box;
+static menuslider_s		s_options_screen_hudalpha_slider;
+static menuslider_s		s_options_screen_gunalpha_slider;
 
 static void CrosshairFunc (void *unused)
 {
@@ -64,12 +66,22 @@ static void CrosshairCrossFunc(void *unused)
 
 static void CrosshairAlphaFunc(void *unused)
 {
-	Cvar_SetValue("crosshairAlpha", s_options_screen_crosshaircross_slider.curvalue / 10);
+	Cvar_SetValue("crosshairAlpha", s_options_screen_crosshairalpha_slider.curvalue / 10);
 }
 
 static void ScreenAspectFunc(void *unused)
 {
 	Cvar_SetValue("scr_keepVidAspect", s_options_screen_screenvidaspect_box.curvalue);
+}
+
+static void HUDAlphaFunc(void *unused)
+{
+	Cvar_SetValue("scr_hudAlpha", s_options_screen_hudalpha_slider.curvalue / 10);
+}
+
+static void GunAlphaFunc(void *unused)
+{
+	Cvar_SetValue("cl_gunAlpha", s_options_screen_gunalpha_slider.curvalue / 10);
 }
 
 static void ScreenSetMenuItemValues (void)
@@ -91,6 +103,9 @@ static void ScreenSetMenuItemValues (void)
 	s_options_screen_crosshairalpha_slider.curvalue = Cvar_VariableValue("crosshairAlpha") * 10;
 
 	s_options_screen_screenvidaspect_box.curvalue = scr_keepVidAspect->value;
+
+	s_options_screen_hudalpha_slider.curvalue = Cvar_VariableValue("scr_hudAlpha") * 10;
+	s_options_screen_gunalpha_slider.curvalue = Cvar_VariableValue("cl_gunAlpha") * 10;
 }
 
 static void Screen_MenuDraw (menuframework_s *self)
@@ -179,6 +194,26 @@ void Screen_MenuInit (void)
 	s_options_screen_screenvidaspect_box.itemnames = yesno_names;
 	s_options_screen_screenvidaspect_box.generic.statusbar = "enables or disables 4:3 screen aspect resizing";
 
+	s_options_screen_hudalpha_slider.generic.type = MTYPE_SLIDER;
+	s_options_screen_hudalpha_slider.generic.x = 0;
+	s_options_screen_hudalpha_slider.generic.y = y += 2 * MENU_LINE_SIZE;
+	s_options_screen_hudalpha_slider.generic.name = "HUD transparency";
+	s_options_screen_hudalpha_slider.generic.callback = HUDAlphaFunc;
+	s_options_screen_hudalpha_slider.minvalue = 0;
+	s_options_screen_hudalpha_slider.maxvalue = 10;
+	s_options_screen_hudalpha_slider.curvalue = Cvar_VariableValue("scr_hudAlpha") * 10;
+	s_options_screen_hudalpha_slider.generic.statusbar = "changes transparency of HUD";
+
+	s_options_screen_gunalpha_slider.generic.type = MTYPE_SLIDER;
+	s_options_screen_gunalpha_slider.generic.x = 0;
+	s_options_screen_gunalpha_slider.generic.y = y += 2 * MENU_LINE_SIZE;
+	s_options_screen_gunalpha_slider.generic.name = "View weapon transparency";
+	s_options_screen_gunalpha_slider.generic.callback = GunAlphaFunc;
+	s_options_screen_gunalpha_slider.minvalue = 0;
+	s_options_screen_gunalpha_slider.maxvalue = 10;
+	s_options_screen_gunalpha_slider.curvalue = Cvar_VariableValue("cl_gunAlpha") * 10;
+	s_options_screen_gunalpha_slider.generic.statusbar = "changes transparency of view weapon";
+
 	ScreenSetMenuItemValues ();
 
 	s_screens_menu.draw = Screen_MenuDraw;
@@ -191,6 +226,8 @@ void Screen_MenuInit (void)
 	Menu_AddItem (&s_screens_menu, (void *) &s_options_screen_crosshairscale_slider);
 	Menu_AddItem (&s_screens_menu, (void *) &s_options_screen_crosshairalpha_slider);
 	Menu_AddItem (&s_screens_menu, (void *) &s_options_screen_screenvidaspect_box);
+	Menu_AddItem (&s_screens_menu, (void *) &s_options_screen_hudalpha_slider);
+	Menu_AddItem (&s_screens_menu, (void *) &s_options_screen_gunalpha_slider);
 }
 
 void M_Menu_Options_Screen_f (void)
