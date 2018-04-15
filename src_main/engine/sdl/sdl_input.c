@@ -843,122 +843,113 @@ void IN_ControllerInit(void)
 	if (!in_controller->value)
 		return;
 
-	if (!SDL_WasInit(SDL_INIT_GAMECONTROLLER | SDL_INIT_HAPTIC))
+	if (SDL_Init(SDL_INIT_GAMECONTROLLER | SDL_INIT_HAPTIC) != 0)
 	{
-		if (SDL_Init(SDL_INIT_GAMECONTROLLER | SDL_INIT_HAPTIC) == -1)
-		{
-			Com_Printf("Couldn't init SDL joystick: %s.\n", SDL_GetError());
-		}
-		else
-		{
-			// load additional controller bindings
-			// this will attempt to load them from 'controllers.cfg' and 'gamecontrollerdb.txt'
-			// to add new bindings, the user will have to add a copy of the gamecontrollerdb.txt to the baseq2 dir
-			// see https://github.com/gabomdq/SDL_GameControllerDB for info
-			for (int j = 0; name[j] != NULL; j++)
-			{
-				void *buffer = NULL;
-				SDL_RWops *rw;
-				p = name[j];
-
-				Com_DPrintf("Loading controller mappings from '%s':\n", p);
-				size = FS_LoadFile(p, &buffer);
-				if (buffer)
-				{
-					int results;
-					rw = SDL_RWFromMem(buffer, size);
-					results = SDL_GameControllerAddMappingsFromRW(rw, 1);
-					if (results >= 0)
-						Com_DPrintf(S_COLOR_GREEN "...loaded %d additional mappings\n", results);
-					else
-						Com_DPrintf(S_COLOR_RED "...error: %s\n", SDL_GetError());
-					free(buffer);
-				}
-			}
-
-			// this device is invalid, don't use it
-			if (SDL_JoystickNumButtons(joystick) > 255 || SDL_JoystickNumAxes(joystick) > 255 || SDL_JoystickNumHats(joystick) > 255 || SDL_JoystickNumBalls(joystick) > 255)
-			{
-				// some crazy devices (HP webcam 2100) end up as HID devices
-				return;
-			}
-
-			Com_Printf("%i joysticks were found.\n", SDL_NumJoysticks());
-			if (SDL_NumJoysticks() > 0)
-			{
-				int i;
-				for (i = 0; i < SDL_NumJoysticks(); i++)
-				{
-					joystick = SDL_JoystickOpen(i);
-					Com_DPrintf("The name of the joystick is '%s'\n", SDL_JoystickName(joystick));
-					Com_DPrintf("Number of Axes: %d\n", SDL_JoystickNumAxes(joystick));
-					Com_DPrintf("Number of Buttons: %d\n", SDL_JoystickNumButtons(joystick));
-					Com_DPrintf("Number of Balls: %d\n", SDL_JoystickNumBalls(joystick));
-					Com_DPrintf("Number of Hats: %d\n", SDL_JoystickNumHats(joystick));
-
-					joystick_haptic = SDL_HapticOpenFromJoystick(joystick);
-					if (!joystick_haptic)
-					{
-						Com_Printf(S_COLOR_RED "SDL_HapticOpenFromJoystick failed: %s\n", SDL_GetError());
-					}
-					else
-					{
-						// init haptic rumble support if no sine support
-						if ((SDL_HapticQuery(joystick_haptic) & SDL_HAPTIC_SINE) == 0)
-							SDL_HapticRumbleInit(joystick_haptic);
-
-						IN_Haptic_Effects_Info();
-					}
-
-					if (SDL_IsGameController(i))
-					{
-						SDL_GameControllerButtonBind backBind;
-						controller = SDL_GameControllerOpen(i);
-						Com_DPrintf("Controller settings: %s\n", SDL_GameControllerMapping(controller));
-						Com_DPrintf("Controller axis: \n");
-						Com_DPrintf(" * leftx = %s\n", joy_axis_leftx->string);
-						Com_DPrintf(" * lefty = %s\n", joy_axis_lefty->string);
-						Com_DPrintf(" * rightx = %s\n", joy_axis_rightx->string);
-						Com_DPrintf(" * righty = %s\n", joy_axis_righty->string);
-						Com_DPrintf(" * triggerleft = %s\n", joy_axis_triggerleft->string);
-						Com_DPrintf(" * triggerright = %s\n", joy_axis_triggerright->string);
-
-						Com_DPrintf("Controller thresholds: \n");
-						Com_DPrintf(" * leftx = %f\n", joy_axis_leftx_threshold->value);
-						Com_DPrintf(" * lefty = %f\n", joy_axis_lefty_threshold->value);
-						Com_DPrintf(" * rightx = %f\n", joy_axis_rightx_threshold->value);
-						Com_DPrintf(" * righty = %f\n", joy_axis_righty_threshold->value);
-						Com_DPrintf(" * triggerleft = %f\n", joy_axis_triggerleft_threshold->value);
-						Com_DPrintf(" * triggerright = %f\n", joy_axis_triggerright_threshold->value);
-
-						backBind = SDL_GameControllerGetBindForButton(controller, SDL_CONTROLLER_BUTTON_BACK);
-						if (backBind.bindType == SDL_CONTROLLER_BINDTYPE_BUTTON)
-						{
-							back_button_id = backBind.value.button;
-							Com_DPrintf("\nBack button JOY%d will be unbindable.\n", back_button_id + 1);
-						}
-						break;
-					}
-					else
-					{
-						char joystick_guid[256] = { 0 };
-						SDL_JoystickGUID guid;
-						guid = SDL_JoystickGetDeviceGUID(i);
-						SDL_JoystickGetGUIDString(guid, joystick_guid, 255);
-						Com_Printf("For using joystick as game contoller please set SDL_GAMECONTROLLERCONFIG:\n");
-						Com_Printf("e.g.: SDL_GAMECONTROLLERCONFIG='%s,%s,leftx:a0,lefty:a1,rightx:a2,righty:a3,back:b1,...\n", joystick_guid, SDL_JoystickName(joystick));
-					}
-				}
-			}
-		}
+		Com_Printf("Couldn't init SDL joystick: %s.\n", SDL_GetError());
 	}
 	else
 	{
-		joystick_haptic = SDL_HapticOpenFromMouse();
-		if (joystick_haptic == NULL)
-			Com_Printf ("Most likely mouse isn't haptic\n");
+		// load additional controller bindings
+		// this will attempt to load them from 'controllers.cfg' and 'gamecontrollerdb.txt'
+		// to add new bindings, the user will have to add a copy of the gamecontrollerdb.txt to the baseq2 dir
+		// see https://github.com/gabomdq/SDL_GameControllerDB for info
+		for (int j = 0; name[j] != NULL; j++)
+		{
+			void *buffer = NULL;
+			SDL_RWops *rw;
+			p = name[j];
+
+			Com_DPrintf("Loading controller mappings from '%s':\n", p);
+			size = FS_LoadFile(p, &buffer);
+			if (buffer)
+			{
+				int results;
+				rw = SDL_RWFromMem(buffer, size);
+				results = SDL_GameControllerAddMappingsFromRW(rw, 1);
+				if (results >= 0)
+					Com_DPrintf(S_COLOR_GREEN "...loaded %d additional mappings\n", results);
+				else
+					Com_DPrintf(S_COLOR_RED "...error: %s\n", SDL_GetError());
+				free(buffer);
+			}
+		}
+
+		// this device is invalid, don't use it
+		if (SDL_JoystickNumButtons(joystick) > 255 || SDL_JoystickNumAxes(joystick) > 255 || SDL_JoystickNumHats(joystick) > 255 || SDL_JoystickNumBalls(joystick) > 255)
+		{
+			// some crazy devices (HP webcam 2100) end up as HID devices
+			return;
+		}
+
+		Com_Printf("%i joysticks were found.\n", SDL_NumJoysticks());
+		if (SDL_NumJoysticks() > 0)
+		{
+			int i;
+			for (i = 0; i < SDL_NumJoysticks(); i++)
+			{
+				joystick = SDL_JoystickOpen(i);
+				Com_DPrintf("The name of the joystick is '%s'\n", SDL_JoystickName(joystick));
+				Com_DPrintf("Number of Axes: %d\n", SDL_JoystickNumAxes(joystick));
+				Com_DPrintf("Number of Buttons: %d\n", SDL_JoystickNumButtons(joystick));
+				Com_DPrintf("Number of Balls: %d\n", SDL_JoystickNumBalls(joystick));
+				Com_DPrintf("Number of Hats: %d\n", SDL_JoystickNumHats(joystick));
+
+				joystick_haptic = SDL_HapticOpenFromJoystick(joystick);
+				if (joystick_haptic)
+				{
+					// init haptic rumble support if no sine support
+					if ((SDL_HapticQuery(joystick_haptic) & SDL_HAPTIC_SINE) == 0)
+						SDL_HapticRumbleInit(joystick_haptic);
+
+					IN_Haptic_Effects_Info();
+				}
+
+				if (SDL_IsGameController(i))
+				{
+					SDL_GameControllerButtonBind backBind;
+					controller = SDL_GameControllerOpen(i);
+					Com_DPrintf("Controller settings: %s\n", SDL_GameControllerMapping(controller));
+					Com_DPrintf("Controller axis: \n");
+					Com_DPrintf(" * leftx = %s\n", joy_axis_leftx->string);
+					Com_DPrintf(" * lefty = %s\n", joy_axis_lefty->string);
+					Com_DPrintf(" * rightx = %s\n", joy_axis_rightx->string);
+					Com_DPrintf(" * righty = %s\n", joy_axis_righty->string);
+					Com_DPrintf(" * triggerleft = %s\n", joy_axis_triggerleft->string);
+					Com_DPrintf(" * triggerright = %s\n", joy_axis_triggerright->string);
+
+					Com_DPrintf("Controller thresholds: \n");
+					Com_DPrintf(" * leftx = %f\n", joy_axis_leftx_threshold->value);
+					Com_DPrintf(" * lefty = %f\n", joy_axis_lefty_threshold->value);
+					Com_DPrintf(" * rightx = %f\n", joy_axis_rightx_threshold->value);
+					Com_DPrintf(" * righty = %f\n", joy_axis_righty_threshold->value);
+					Com_DPrintf(" * triggerleft = %f\n", joy_axis_triggerleft_threshold->value);
+					Com_DPrintf(" * triggerright = %f\n", joy_axis_triggerright_threshold->value);
+
+					backBind = SDL_GameControllerGetBindForButton(controller, SDL_CONTROLLER_BUTTON_BACK);
+					if (backBind.bindType == SDL_CONTROLLER_BINDTYPE_BUTTON)
+					{
+						back_button_id = backBind.value.button;
+						Com_DPrintf("\nBack button JOY%d will be unbindable.\n", back_button_id + 1);
+					}
+					break;
+				}
+				else
+				{
+					char joystick_guid[256] = { 0 };
+					SDL_JoystickGUID guid;
+					guid = SDL_JoystickGetDeviceGUID(i);
+					SDL_JoystickGetGUIDString(guid, joystick_guid, 255);
+					Com_Printf("For using joystick as game contoller please set SDL_GAMECONTROLLERCONFIG:\n");
+					Com_Printf("e.g.: SDL_GAMECONTROLLERCONFIG='%s,%s,leftx:a0,lefty:a1,rightx:a2,righty:a3,back:b1,...\n", joystick_guid, SDL_JoystickName(joystick));
+				}
+			}
+		}
 		else
-			IN_Haptic_Effects_Info ();
+		{
+			joystick_haptic = SDL_HapticOpenFromMouse();
+			if (joystick_haptic)
+				IN_Haptic_Effects_Info();
+		}
 	}
 }
 
