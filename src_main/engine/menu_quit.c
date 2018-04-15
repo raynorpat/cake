@@ -33,26 +33,25 @@ static menuframework_s m_quitMenu;
 
 char *M_Quit_Key (menuframework_s *self, int key)
 {
-	switch (key)
+	int menu_key = Key_GetMenuKey(key);
+
+	switch (menu_key)
 	{
-	case K_ESCAPE:
-	case K_MOUSE2:
-	case K_JOY_BACK:
-	case 'n':
-	case 'N':
-		M_PopMenu();
-		break;
+		case K_ESCAPE:
+		case 'n':
+		case 'N':
+			M_PopMenu();
+			break;
 
-	case K_ENTER:
-	case K_MOUSE1:
-	case 'Y':
-	case 'y':
-		cls.key_dest = key_console;
-		CL_Quit_f();
-		break;
+		case K_ENTER:
+		case 'Y':
+		case 'y':
+			cls.key_dest = key_console;
+			CL_Quit_f();
+			break;
 
-	default:
-		break;
+		default:
+			break;
 	}
 
 	return NULL;
