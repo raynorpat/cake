@@ -1009,6 +1009,33 @@ void CL_AddPacketEntities (frame_t *frame)
 	}
 }
 
+/*
+==============
+CL_ShellEffect_ViewWeapon
+==============
+*/
+static int CL_ShellEffect_ViewWeapon (void)
+{
+	centity_t   *ent;
+	int         flags = 0;
+
+	if (cl.playernum == -1)
+		return 0;
+
+	ent = &cl_entities[cl.playernum + 1];
+	if (ent->serverframe != cl.frame.serverframe)
+		return 0;
+
+	if (!ent->current.modelindex)
+		return 0;
+
+	if (ent->current.effects & EF_PENT)
+		flags |= RF_SHELL_RED;
+	if (ent->current.effects & EF_QUAD)
+		flags |= RF_SHELL_BLUE;
+
+	return flags;
+}
 
 /*
 ==============
@@ -1018,7 +1045,7 @@ CL_AddViewWeapon
 void CL_AddViewWeapon (player_state_t *ps, player_state_t *ops)
 {
 	entity_t	gun;		// view model
-	int			i;
+	int			i, flags;
 
 	// allow the gun to be completely removed
 	if (!cl_gun->value)
@@ -1074,7 +1101,22 @@ void CL_AddViewWeapon (player_state_t *ps, player_state_t *ops)
 
 	gun.flags = RF_MINLIGHT | RF_DEPTHHACK | RF_WEAPONMODEL;
 
+	if (cl_gunalpha->value != 1)
+	{
+		gun.alpha = Q_Clamp(0.1f, 1.0f, Cvar_VariableValue("cl_gunalpha"));
+		gun.flags |= RF_TRANSLUCENT;
+	}
+
 	V_AddEntity (&gun);
+
+	// add shell effect from player entity
+	flags = CL_ShellEffect_ViewWeapon ();
+	if (flags)
+	{
+		gun.alpha = 0.30f * cl_gunalpha->value;
+		gun.flags |= flags | RF_TRANSLUCENT;
+		V_AddEntity (&gun);
+	}
 }
 
 /*

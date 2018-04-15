@@ -73,6 +73,7 @@ void GL_TransformPoint (glmatrix *m, float *in, float *out);
 #define	MAX_LIGHTSTYLES		256
 
 #define POWERSUIT_SCALE		4.0f
+#define WEAPONSHELL_SCALE   0.5f
 
 #define SHELL_RED_COLOR		0xF2
 #define SHELL_GREEN_COLOR	0xD0

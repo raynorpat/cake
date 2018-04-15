@@ -159,7 +159,9 @@ void GL_DrawAliasFrameLerp (entity_t *e, dmdl_t *hdr, float backlerp)
 	}
 	else
 	{
-		gl_meshuboupdate.powersuitscale = POWERSUIT_SCALE;
+		float scale = (e->flags & RF_WEAPONMODEL) ? WEAPONSHELL_SCALE : POWERSUIT_SCALE;
+
+		gl_meshuboupdate.powersuitscale = scale;
 		gl_meshuboupdate.shellmix = 1.0f;
 	}
 
