@@ -148,14 +148,10 @@ qboolean SNDDMA_Init(void)
 #endif
 
 	Com_Printf("Starting SDL audio callback.\n");
-
-	if (!SDL_WasInit(SDL_INIT_AUDIO))
+	if (SDL_Init(SDL_INIT_AUDIO) != 0)
 	{
-		if (SDL_Init(SDL_INIT_AUDIO) == -1)
-		{
-			Com_Printf(S_COLOR_RED "Couldn't init SDL audio: %s.\n", SDL_GetError());
-			return 0;
-		}
+		Com_Printf(S_COLOR_RED "Couldn't init SDL audio: %s.\n", SDL_GetError());
+		return 0;
 	}
 
 	const char* drivername = SDL_GetCurrentAudioDriver();
@@ -306,7 +302,7 @@ Reset the sound device for exiting
 void SNDDMA_Shutdown (void)
 {
 	Com_Printf("Closing SDL audio device...\n");
-	SDL_PauseAudio(1);
+
 	SDL_CloseAudio();
 	
 	SDL_QuitSubSystem(SDL_INIT_AUDIO);
