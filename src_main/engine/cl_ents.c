@@ -810,7 +810,7 @@ void CL_AddPacketEntities (frame_t *frame)
 		}
 
 		// only used for black hole model right now, FIXME: do better
-		if (renderfx == RF_TRANSLUCENT)
+		if ((renderfx & RF_TRANSLUCENT) && !(renderfx & RF_BEAM))
 			ent.alpha = 0.70;
 
 		// render effects (fullbright, translucent, etc)
