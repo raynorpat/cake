@@ -226,7 +226,8 @@ qboolean SNDDMA_Init(void)
 	dmabackend = &dma;
 
 	dmapos = 0;
-	dmabackend->samplebits = obtained.format & 0xFF;
+	dmabackend->samplebits = SDL_AUDIO_BITSIZE(obtained.format);
+	dmabackend->isfloat = SDL_AUDIO_ISFLOAT(obtained.format);
 	dmabackend->channels = obtained.channels;
 
 	tmp = (obtained.samples * obtained.channels) * 10;
