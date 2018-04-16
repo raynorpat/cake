@@ -479,31 +479,6 @@ qboolean CL_PendingHTTPDownloads (void)
 	return pendingCount + handleCount;
 }
 
-void StripHighBits (char *string, int highbits)
-{
-	byte		high;
-	byte		c;
-	char		*p;
-
-	p = string;
-
-	if (highbits)
-		high = 127;
-	else
-		high = 255;
-
-	while (*string)
-	{
-		c = *(string++);
-
-		if (c >= 32 && c <= high)
-			*p++ = c;
-	}
-
-	*p = '\0';
-}
-
-
 /*
 ===============
 CL_ParseFileList
@@ -519,7 +494,7 @@ static void CL_CheckAndQueueDownload (char *path)
 	qboolean	pak;
 	qboolean	gameLocal;
 
-	StripHighBits (path, 1);
+	COM_StripHighBits (path, 1);
 
 	length = strlen(path);
 

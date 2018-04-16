@@ -300,6 +300,8 @@ void COM_FileBase (char *in, char *out);
 void COM_FilePath (const char* in, char* out, size_t size);
 void COM_DefaultExtension (char *path, char *extension);
 
+void COM_StripHighBits (char *string, int highbits);
+
 char *COM_Parse (char **data_p);
 // data is an in/out parm, returns a parsed out token
 

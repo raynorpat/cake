@@ -1018,6 +1018,30 @@ void COM_DefaultExtension (char *path, char *extension)
 	strcat (path, extension);
 }
 
+void COM_StripHighBits (char *string, int highbits)
+{
+	byte		high;
+	byte		c;
+	char		*p;
+
+	p = string;
+
+	if (highbits)
+		high = 127;
+	else
+		high = 255;
+
+	while (*string)
+	{
+		c = *(string++);
+
+		if (c >= 32 && c <= high)
+			*p++ = c;
+	}
+
+	*p = '\0';
+}
+
 /*
 ============================================================================
 
