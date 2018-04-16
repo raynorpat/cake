@@ -661,6 +661,7 @@ void CL_DrawInventory (void);
 //
 // cl_download.c
 //
+qboolean CL_CheckDownloadExtension (char *ext);
 void CL_Download_f (void);
 void CL_HandleDownload (byte *data, int size, int percent);
 void CL_RequestNextDownload (void);

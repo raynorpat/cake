@@ -28,6 +28,32 @@ extern cvar_t *allow_download_maps;
 
 /*
 ===============
+CL_CheckDownloadExtension
+
+Only predefined set of filename extensions is allowed,
+to prevent the server from uploading arbitrary files.
+===============
+*/
+qboolean CL_CheckDownloadExtension(char *ext)
+{
+	static char allowed[][4] = {
+		"pcx", "wal", "wav", "md2", "sp2", "tga", "png",
+		"jpg", "bsp", "ent", "txt", "dm2", "loc"
+	};
+	static int total = sizeof(allowed) / sizeof(allowed[0]);
+	int i;
+	
+	for (i = 0; i < total; i++)
+	{
+		if (!Q_stricmp(ext, allowed[i]))
+			return true;
+	}
+	
+	return false;
+}
+
+/*
+===============
 CL_CheckOrDownloadFile
 
 Returns true if the file exists, otherwise it attempts
@@ -39,6 +65,7 @@ qboolean CL_CheckOrDownloadFile (char *filename)
 	FILE 	*fp;
 	char	*p;
 	char	name[MAX_OSPATH];
+	char	*ext;
 
 	// fix backslashes
 	while ((p = strchr(filename, '\\')))
@@ -54,6 +81,14 @@ qboolean CL_CheckOrDownloadFile (char *filename)
 	if (strstr(filename, "..") || strstr(filename, ":") || (*filename == '.') || (*filename == '/'))
 	{
 		Com_Printf(S_COLOR_RED "Refusing to download a path with ..: %s\n", filename);
+		return true;
+	}
+
+	// make sure extension is valid
+	ext = COM_FileExtension(filename);
+	if (*ext != '.' || !CL_CheckDownloadExtension(ext + 1))
+	{
+		Com_Printf(S_COLOR_RED "Refusing to download file with invalid extension.\n");
 		return true;
 	}
 
@@ -435,7 +470,7 @@ void CL_RequestNextDownload (void)
 			if (*picname == '/' || *picname == '\\')
 				Q_strlcpy (fn, picname + 1, sizeof(fn));
 			else
-				Q_concat(fn, sizeof(fn), "pics/", picname, ".pcx", NULL);
+				Q_concat (fn, sizeof(fn), "pics/", picname, ".pcx", NULL);
 
 			if (!CL_CheckOrDownloadFile (fn))
 				return; // started a download

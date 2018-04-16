@@ -546,15 +546,11 @@ static void CL_CheckAndQueueDownload (char *path)
 	else
 	{
 		pak = false;
-	}
-
-	if (!pak && strcmp (ext, "pcx") && strcmp (ext, "wal") && strcmp (ext, "wav") && strcmp (ext, "md2") &&
-		strcmp (ext, "sp2") && strcmp (ext, "tga") && strcmp (ext, "png") && strcmp (ext, "jpg") &&
-		strcmp (ext, "bsp") && strcmp (ext, "ent") && strcmp (ext, "txt") && strcmp (ext, "dm2") &&
-		strcmp (ext, "loc"))
-	{
-		Com_Printf (S_COLOR_YELLOW "WARNING: Illegal file type '%s' in filelist.\n", path);
-		return;
+		if (!CL_CheckDownloadExtension(ext))
+		{
+			Com_Printf (S_COLOR_YELLOW "NOTICE: Illegal file type '%s' in filelist.\n", path);
+			return;
+		}
 	}
 
 	if (path[0] == '@')
