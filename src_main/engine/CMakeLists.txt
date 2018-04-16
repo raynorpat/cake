@@ -129,6 +129,7 @@ set(CLIENT_SOURCES
 	cl_avi.c
 	cl_cin.c
 	cl_console.c
+	cl_download.c
 	cl_ents.c
 	cl_fx.c
 	cl_gamespy.c

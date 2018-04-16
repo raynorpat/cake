@@ -364,7 +364,6 @@ CL_CancelHTTPDownloads
 Cancel all downloads and nuke the queue.
 ===============
 */
-void CL_ResetPrecacheCheck (void);
 void CL_CancelHTTPDownloads (void)
 {
 	dlqueue_t	*q;

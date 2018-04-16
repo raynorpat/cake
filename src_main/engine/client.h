@@ -394,8 +394,6 @@ extern	entity_state_t	cl_parse_entities[MAX_PARSE_ENTITIES];
 extern	netadr_t	net_from;
 extern	sizebuf_t	net_message;
 
-qboolean CL_CheckOrDownloadFile (char *filename);
-
 void CL_AddNetgraph (void);
 
 //=============================================================================
@@ -471,8 +469,8 @@ void CL_Disconnect (void);
 void CL_Disconnect_f (void);
 void CL_PingServers_f (void);
 void CL_Snd_Restart_f (void);
-void CL_RequestNextDownload (void);
 void CL_WriteConfiguration (void);
+void CL_Begin (void);
 
 //
 // cl_input
@@ -539,7 +537,6 @@ void CL_ParseServerMessage (void);
 void CL_LoadClientinfo (clientinfo_t *ci, char *s);
 void SHOWNET (char *s);
 void CL_ParseClientinfo (int player);
-void CL_Download_f (void);
 
 //
 // cl_view.c
@@ -660,6 +657,15 @@ void M_Menu_Main_f(void);
 //
 void CL_ParseInventory (void);
 void CL_DrawInventory (void);
+
+//
+// cl_download.c
+//
+void CL_Download_f (void);
+void CL_HandleDownload (byte *data, int size, int percent);
+void CL_RequestNextDownload (void);
+void CL_ResetPrecacheCheck (void);
+qboolean CL_CheckOrDownloadFile (char *filename);
 
 //
 // cl_http.c
