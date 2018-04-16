@@ -325,6 +325,7 @@ int Q_strncasecmp (char *s1, char *s2, int n);
 char *Q_strlwr (char *s);
 int Q_strlcpy (char *dst, const char *src, int size);
 int Q_strlcat (char *dst, const char *src, int size);
+size_t Q_concat (char *dest, size_t size, ...);
 
 // strlen that discounts Quake color sequences
 int Q_PrintStrlen (const char *string);
