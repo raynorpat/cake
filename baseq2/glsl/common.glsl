@@ -49,3 +49,41 @@ vec3 ACESFilmRec2020_Tonemap( vec3 x )
     return ( x * ( a * x + b ) ) / ( x * ( c * x + d ) + e );
 }
 
+// phong BRDF for specular highlights
+vec3 Phong(vec3 viewDir, vec3 lightDir, vec3 normal, vec3 lightColor, float specIntensity, float specPower)
+{
+	vec3 reflection = reflect(lightDir, normal);
+	float RdotV = max(-dot(viewDir, reflection), 0.0);
+	return lightColor * specIntensity * pow(RdotV, 16.0 * specPower);
+}
+
+// blinn-phong BRDF for specular highlights
+vec3 Blinn(vec3 viewDir, vec3 lightDir, vec3 normal, vec3 lightColor, float specIntensity, float specPower)
+{
+	const float exponent = 16.0 * 4.0; // try to roughly match phong highlight
+	vec3 halfAngle = normalize(lightDir + viewDir);
+	float NdotH = max(dot(normal, halfAngle), 0.0);
+	return lightColor * specIntensity * pow(NdotH, exponent * specPower);
+}
+
+// lambert BRDF for diffuse lighting
+vec3 Lambert(vec3 lightDir, vec3 normal, vec3 lightColor)
+{
+	return lightColor * max(dot(lightDir, normal), 0.0);
+}
+
+// lambert BRDF with fill light for diffuse lighting
+vec3 LambertFill(vec3 lightDir, vec3 normal, float fillStrength, vec3 lightColor)
+{
+	// base
+	float NdotL = dot(normal, lightDir);
+
+	// half-lambert soft lighting
+	float fill = 1.0 - (NdotL * 0.5 + 0.5);
+
+	// lambert hard lighting
+	float direct = max(NdotL, 0.0);
+
+	// hard + soft lighting
+	return lightColor * (fill * fillStrength + direct);
+}
