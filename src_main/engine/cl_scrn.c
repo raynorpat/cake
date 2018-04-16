@@ -596,6 +596,8 @@ void SCR_DrawCenterString (void)
 		}
 		linebuffer[l] = 0;
 
+		COM_StripHighBits (linebuffer, 128); // strip out any quake 2 highbit colors
+
 		w = SCR_Text_Width (linebuffer, 0.5f, 0, &cls.consoleBoldFont);
 		h = SCR_Text_Height (linebuffer, 0.5f, 0, &cls.consoleBoldFont);
 		x = (SCREEN_WIDTH - w) / 2;
