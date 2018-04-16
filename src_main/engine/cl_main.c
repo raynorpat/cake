@@ -674,7 +674,7 @@ void CL_Disconnect (void)
 		cls.download = NULL;
 	}
 
-	CL_CancelHTTPDownloads(true);
+	CL_CancelHTTPDownloads ();
 	cls.downloadReferer[0] = 0;
 
 	cls.downloadname[0] = 0;

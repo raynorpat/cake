@@ -664,7 +664,7 @@ void CL_DrawInventory (void);
 //
 // cl_http.c
 //
-void CL_CancelHTTPDownloads (qboolean permKill);
+void CL_CancelHTTPDownloads (void);
 void CL_InitHTTPDownloads (void);
 qboolean CL_QueueHTTPDownload (char *quakePath);
 void CL_RunHTTPDownloads (void);
