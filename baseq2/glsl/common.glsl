@@ -36,3 +36,16 @@ vec3 doBrightnessAndContrast(vec3 value, float brightnessValue, float contrastVa
 	vec3 color = value.rgb * contrastValue;
 	return vec3(pow(abs(color.rgb), vec3(brightnessValue)));
 }
+
+// ACES color system default tonemapper
+vec3 ACESFilmRec2020_Tonemap( vec3 x )
+{
+    float a = 15.8f;
+    float b = 2.12f;
+    float c = 1.2f;
+    float d = 5.92f;
+    float e = 1.9f;
+
+    return ( x * ( a * x + b ) ) / ( x * ( c * x + d ) + e );
+}
+

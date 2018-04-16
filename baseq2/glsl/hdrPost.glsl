@@ -37,17 +37,6 @@ uniform vec2 texScale;
 
 #define USE_TONEMAP						1
 float Uncharted2WhitePoint = 11.2; // linear white point
-vec3 ACESFilmRec2020( vec3 x )
-{
-    float a = 15.8f;
-    float b = 2.12f;
-    float c = 1.2f;
-    float d = 5.92f;
-    float e = 1.9f;
-
-    return ( x * ( a * x + b ) ) / ( x * ( c * x + d ) + e );
-}
-
 vec3 ToneMap(vec3 c, float avglum)
 {
 	// calculation from: Perceptual Effects in Real-time Tone Mapping - Krawczyk et al.
@@ -62,8 +51,8 @@ vec3 ToneMap(vec3 c, float avglum)
 	vec3 exposedColor = exp2( newExposure ) * c.rgb;
 
 	float exposureBias = 1.0;
-	vec3 curr = ACESFilmRec2020( exposedColor * exposureBias );
-	vec3 whiteScale = 1.0 / ACESFilmRec2020( vec3( Uncharted2WhitePoint ) );
+	vec3 curr = ACESFilmRec2020_Tonemap( exposedColor * exposureBias );
+	vec3 whiteScale = 1.0 / ACESFilmRec2020_Tonemap( vec3( Uncharted2WhitePoint ) );
 
 	return curr * whiteScale;
 }
