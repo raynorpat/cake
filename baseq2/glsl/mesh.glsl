@@ -1,6 +1,6 @@
 
-INOUTTYPE vec2 texcoords;
-INOUTTYPE vec3 normals;
+INOUTTYPE vec2 vtx_texcoords;
+INOUTTYPE vec3 vtx_normals;
 
 layout(std140) uniform MeshUniforms
 {
@@ -34,8 +34,9 @@ void MeshVS ()
 		(lerpnormal * vec4 (powersuit_scale, powersuit_scale, powersuit_scale, 0.0))
 	);
 
-	texcoords = texcoord.st;
-	normals = lerpnormal.xyz;
+	vtx_texcoords = texcoord.st;
+	
+	vtx_normals = lerpnormal.xyz;
 }
 #endif
 
@@ -47,11 +48,21 @@ out vec4 fragColor;
 
 void MeshFS ()
 {
-	vec4 diff = texture (diffuse, texcoords);
-	float shadedot = dot (normalize (normals), shadevector);
-	vec4 finalColor = diff * (max (shadedot + 1.0, (shadedot * 0.2954545) + 1.0) * shadelight);
+	// get vertex normal
+	vec3 normal = normalize (vtx_normals);
+	
+	// get flat diffuse color
+	vec4 diffAlbedo = vec4(1.0);
+	diffAlbedo = texture (diffuse, vtx_texcoords);
+	
+	// get shade dots for shading
+	float shadedot = dot (normal, shadevector);
+	vec4 shade = max (shadedot + 1.0, (shadedot * 0.2954545) + 1.0) * shadelight;
 
-	fragColor = mix (finalColor, shadelight, meshshellmix);
+	// set diffuse
+	vec4 diffuseTerm = vec4(diffAlbedo.rgb, 1.0) * shade;
+
+	fragColor = mix (diffuseTerm, shadelight, meshshellmix);
 }
 #endif
 
