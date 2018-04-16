@@ -243,6 +243,9 @@ set(SYSTEM_SOURCES
 source_group("system\\sdl" FILES ${SYSTEM_INCLUDES})
 source_group("system\\sdl" FILES ${SYSTEM_SOURCES})
 
+# git info
+configure_file("../shared/q_gitbuild.c.in" "${CMAKE_CURRENT_BINARY_DIR}/q_gitbuild.c" @ONLY)
+
 # shared code
 set(SHARED_INCLUDES
 	../shared/game.h
@@ -255,6 +258,7 @@ set(SHARED_SOURCES
 	../shared/m_flash.c
 	../shared/q_shared.c
 	)
+list(APPEND SHARED_SOURCES "${CMAKE_CURRENT_BINARY_DIR}/q_gitbuild.c")	
 source_group("shared" FILES ${SHARED_INCLUDES})
 source_group("shared" FILES ${SHARED_SOURCES})
 
@@ -347,10 +351,6 @@ file(GLOB GAMESPY_INCLUDES ../libs/gamespy/*.h ../libs/gamespy/CEngine/*.h)
 file(GLOB GAMESPY_SOURCES ../libs/gamespy/*.c ../libs/gamespy/CEngine/*.c)
 source_group("libs\\gamespy" FILES ${GAMESPY_INCLUDES})
 source_group("libs\\gamespy" FILES ${GAMESPY_SOURCES})
-
-# git info
-configure_file("../shared/q_gitbuild.c.in" "${CMAKE_CURRENT_BINARY_DIR}/q_gitbuild.c" @ONLY)
-list(APPEND SHARED_SOURCES "${CMAKE_CURRENT_BINARY_DIR}/q_gitbuild.c")
 
 #
 # Engine Executable
