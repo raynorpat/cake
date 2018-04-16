@@ -2,9 +2,9 @@
 // common
 uniform float scroll;
 
-INOUTTYPE vec4 texcoords[2];
-INOUTTYPE vec4 world;
-INOUTTYPE vec4 normal;
+INOUTTYPE vec4 vtx_texcoords[2];
+INOUTTYPE vec4 vtx_world;
+INOUTTYPE vec4 vtx_normal;
 
 #ifdef VERTEXSHADER
 uniform mat4 localMatrix;
@@ -18,14 +18,14 @@ layout(location = 3) in vec4 normals;
 void LightmappedVS ()
 {
 	gl_Position = localMatrix * position;
-	texcoords[0] = diffuse + (vec4 (scroll, 0, 0, 0) * diffuse.z);
-	texcoords[1] = lightmap;
+	vtx_texcoords[0] = diffuse + (vec4 (scroll, 0, 0, 0) * diffuse.z);
+	vtx_texcoords[1] = lightmap;
 	
 	vec4 worldCoord = lightMatrix * vec4(position.xyz, 1.0);
-	world = worldCoord;
+	vtx_world = worldCoord;
 	
 	vec4 worldNormal = lightMatrix * vec4(normals.xyz, 0.0f);
-	normal = normalize(worldNormal);
+	vtx_normal = normalize(worldNormal);
 }
 #endif
 
@@ -48,64 +48,88 @@ uniform vec4 debugParams; // x = gl_showlightmaps, y = gl_shownormals, z = , w =
 
 out vec4 fragColor;
 
-void LightmappedFS ()
+// lighting accumulator for diffuse
+vec3 diffLight = vec3(0.0);
+
+// iterate dynamic lights
+void DynamicLighting(vec3 normal)
 {
-	vec4 lmap = texture2DArray(lightmap, texcoords[1].xyz);
-	vec4 albedo = texture(diffuse, texcoords[0].st);
-	
-	// calculate dynamic light sources
-	vec4 light = vec4(0.0);
+	// check light bit
 	if(lightBit != 0)
 	{
 		for (int i = 0; i < maxLights; ++i)
-		{
-			// light does not affect this plane, just skip it
-			// FIXME: this kills a ton of otherwise correct lights
-			//if((lightBit & (1 << i)) == 0)
-			//	continue;
-			
+		{	
 			// light has no radius, just skip it
 			if(Lights.radius[i] == 0.0)
 				continue;
 			
-			vec3 lightToPos = Lights.origin[i] - world.xyz;
-			float distLightToPos = length(lightToPos);
-			if (distLightToPos < Lights.radius[i])
-			{
-				float lambert = dot(normal.xyz, normalize(lightToPos));
-				if (lambert > 0.0)
-				{
-					// clamped inverse square falloff
-					float dist = distLightToPos / Lights.radius[i];
-					float falloff = clamp(1.0 - dist * dist * dist * dist, 0.0, 1.0);
-					falloff *= falloff;
-					falloff /= (dist * dist + 1.0);
-					
-					light += vec4(Lights.color[i] * falloff * lambert, 1.0);
-				}
-			}
+			vec3 delta = Lights.origin[i] - vtx_world.xyz;
+			float distance = length(delta);
+			
+			// don't shade points outside of the radius
+			if (distance > Lights.radius[i])
+				continue;
+				
+			// get angle
+			vec3 lightDir = normalize(delta);
+			
+			// make distance relative to radius
+			distance = 1.0 - distance / Lights.radius[i];
+		
+			// calculate diffuse light
+			diffLight.rgb += Lambert(lightDir, normal, Lights.color[i]) * distance * distance;
 		}
 	}
+}
+
+void LightmappedFS ()
+{
+	// get alpha
+	float alpha = surfalpha;
 	
-	// output final color
-	vec4 final = vec4(0.0);
-	vec4 finalLightMap = colormatrix * ((lmap / lmap.a) + light);
+	// get vertex normal
+	vec3 normal = normalize (vtx_normal.xyz);
+
+	// get flat diffuse color
+	vec4 diffAlbedo = vec4(1.0);
+	diffAlbedo = texture (diffuse, vtx_texcoords[0].st);
+
+	// get lightmap
+	vec4 lightmap = texture2DArray (lightmap, vtx_texcoords[1].xyz);
+	lightmap /= lightmap.a;
+	lightmap *= colormatrix;
+
+	// add static lighting
+	float lightMask = 1.0;
+	diffLight += lightmap.rgb * (lightMask * 0.5 + 0.5);
+
+	// add dynamic lighting
+	if (maxLights > 0)
+		DynamicLighting (normal);
+	
+	// set diffuse
+	vec3 diffuseTerm = diffAlbedo.rgb * diffLight;
+	
+	// debug parameters
 	if (debugParams.x == 1)
 	{
 		// lightmaps only
-		final = finalLightMap;
+		fragColor.rgb = lightmap.rgb;
 	}
 	else if (debugParams.y == 1)
 	{
 		// normals only
-		final = normal;
+		fragColor.rgb = normal.xyz;
 	}
 	else
-	{		
-		// multiply diffuse albedo with lightmap
-		final = albedo * finalLightMap;
+	{
+		// diffuse term
+		fragColor.rgb = diffuseTerm.rgb;
+		
+		// tonemap
+		fragColor.rgb = ACESFilmRec2020_Tonemap (fragColor.rgb);
 	}
-	fragColor = vec4(final.rgb, surfalpha);
+	fragColor.a = alpha;
 }
 #endif
 
