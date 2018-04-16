@@ -62,7 +62,11 @@ void MeshFS ()
 	// set diffuse
 	vec4 diffuseTerm = vec4(diffAlbedo.rgb, 1.0) * shade;
 
+	// output final color
 	fragColor = mix (diffuseTerm, shadelight, meshshellmix);
+	
+	// tonemap final color
+	fragColor.rgb = ACESFilmRec2020_Tonemap (fragColor.rgb);
 }
 #endif
 
