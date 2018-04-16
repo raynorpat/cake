@@ -323,6 +323,7 @@ extern	cvar_t	*cl_drawParticles;
 extern	cvar_t	*cl_particleCollision;
 
 extern	cvar_t	*cl_gun;
+extern	cvar_t	*cl_gunAlpha;
 extern	cvar_t	*cl_predict;
 extern	cvar_t	*cl_footsteps;
 extern	cvar_t	*cl_noskins;
