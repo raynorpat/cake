@@ -562,11 +562,11 @@ void CL_ParseServerMessage (void)
 		case svc_reconnect:
 			Com_Printf ("Server disconnected, reconnecting\n");
 
-			if (cls.download)
+			if (cls.download.file)
 			{
-				//ZOID, close download
-				fclose (cls.download);
-				cls.download = NULL;
+				// close download file
+				fclose (cls.download.file);
+				cls.download.file = NULL;
 			}
 
 			cls.state = ca_connecting;

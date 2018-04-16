@@ -85,20 +85,31 @@ extern int num_cl_weaponmodels;
 
 #define	CMD_BACKUP		64	// allow a lot of command backups for very fast systems
 
+typedef enum
+{
+	// generic types
+	DL_OTHER,
+	DL_MAP,
+	DL_MODEL,
+	DL_LIST,
+	DL_PAK
+} dltype_t;
+
 // download queue state
 typedef enum
 {
-	DLQ_STATE_NOT_STARTED,
-	DLQ_STATE_RUNNING,
-	DLQ_STATE_DONE
-} dlq_state;
+	DL_PENDING,
+	DL_RUNNING,
+	DL_DONE
+} dlstate_t;
 
 // download queue
 typedef struct dlqueue_s
 {
 	struct dlqueue_s	*next;
+	dltype_t			type;
+	dlstate_t			state;
 	char				quakePath[MAX_QPATH];
-	dlq_state			state;
 } dlqueue_t;
 
 // download handle
@@ -280,12 +291,16 @@ typedef struct
 	netadr_t	last_rcon_to;		// last destination client sent an rcon to
 
 	// file transfer from server
-	FILE		*download;			
-	char		downloadtempname[MAX_OSPATH];
-	char		downloadname[MAX_OSPATH];
-	int			downloadpercent;
-	size_t		downloadposition;
-	qboolean	failed_download;
+	struct {
+		dlqueue_t	queue; // path being downloaded
+		int         pending; // number of non-finished entries in queue
+		char		tempname[MAX_OSPATH + 4]; // account 4 bytes for .tmp suffix
+		char		name[MAX_OSPATH];
+		FILE		*file; // UDP file transfer from server
+		int			percent; // how much downloaded
+		size_t		position;
+		qboolean	failed;
+	} download;
 
 	// for gamespy
 	int			gamespypercent;
@@ -297,12 +312,6 @@ typedef struct
 	qboolean	demorecording;
 	qboolean	demowaiting;	// don't record until a non-delta message is received
 	FILE		*demofile;
-
-	// for curl downloading
-	dlqueue_t	downloadQueue;	// queue of paths we need
-	dlhandle_t	HTTPHandles[4];	// actual download handles
-	char		downloadServer[512]; // base url prefix to download from
-	char		downloadReferer[32]; // libcurl requires a static string for referers...
 
 	// true type fonts
 	fontInfo_t	consoleFont;
@@ -673,7 +682,7 @@ qboolean CL_CheckOrDownloadFile (char *filename);
 //
 void CL_CancelHTTPDownloads (void);
 void CL_InitHTTPDownloads (void);
-qboolean CL_QueueHTTPDownload (char *quakePath);
+qboolean CL_QueueHTTPDownload (char *quakePath, dltype_t type);
 void CL_RunHTTPDownloads (void);
 qboolean CL_PendingHTTPDownloads (void);
 void CL_SetHTTPServer (const char *URL);

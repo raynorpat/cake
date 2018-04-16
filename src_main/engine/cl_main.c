@@ -661,17 +661,16 @@ void CL_Disconnect (void)
 	CL_ClearState ();
 
 	// stop download
-	if (cls.download)
+	if (cls.download.file)
 	{
-		fclose (cls.download);
-		cls.download = NULL;
+		fclose (cls.download.file);
+		cls.download.file = NULL;
 	}
 
 	CL_CancelHTTPDownloads ();
-	cls.downloadReferer[0] = 0;
 
-	cls.downloadname[0] = 0;
-	cls.downloadposition = 0;
+	cls.download.name[0] = 0;
+	cls.download.position = 0;
 
 	cls.servername[0] = '\0';
 	cls.state = ca_disconnected;
@@ -701,7 +700,7 @@ void CL_Changing_f (void)
 {
 	// if we are downloading, we don't change!
 	// this is so we don't suddenly stop downloading a map
-	if (cls.download)
+	if (cls.download.file)
 		return;
 
 	SCR_BeginLoadingPlaque ();
@@ -721,7 +720,7 @@ void CL_Reconnect_f (void)
 {
 	// if we are downloading, we don't change!
 	// this is so we don't suddenly stop downloading a map
-	if (cls.download)
+	if (cls.download.file)
 		return;
 
 	S_StopAllSounds ();
@@ -886,6 +885,7 @@ void CL_ConnectionlessPacket (void)
 	{
 		int i;
 		char *p;
+		qboolean got_server = false;
 
 		if (cls.state == ca_connected)
 		{
@@ -916,16 +916,16 @@ void CL_ConnectionlessPacket (void)
 			// check for dlserver url for HTTP download support
 			if (!strncmp(p, "dlserver=", 9))
 			{
-				p += 9;
-				if (strlen(p) > 2)
+				if (!got_server)
 				{
-					Com_sprintf(cls.downloadReferer, sizeof(cls.downloadReferer), "quake2://%s", NET_AdrToString(cls.netchan.remote_address));
-					CL_SetHTTPServer(p);
-					if (cls.downloadServer[0])
-						Com_Printf("HTTP downloading enabled, URL: %s\n", cls.downloadServer);
+					CL_SetHTTPServer(p + 9);
+					got_server = true;
 				}
 			}
 		}
+
+		if (!got_server)
+			CL_SetHTTPServer (NULL);
 
 		MSG_WriteChar (&cls.netchan.message, clc_stringcmd);
 		MSG_WriteString (&cls.netchan.message, "new");

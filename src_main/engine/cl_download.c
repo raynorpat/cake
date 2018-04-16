@@ -86,13 +86,13 @@ qboolean CL_CheckOrDownloadFile (char *filename)
 
 	// make sure extension is valid
 	ext = COM_FileExtension(filename);
-	if (*ext != '.' || !CL_CheckDownloadExtension(ext + 1))
+	if (!CL_CheckDownloadExtension(ext))
 	{
 		Com_Printf(S_COLOR_RED "Refusing to download file with invalid extension.\n");
 		return true;
 	}
 
-	if (CL_QueueHTTPDownload(filename))
+	if (CL_QueueHTTPDownload(filename, DL_OTHER))
 	{
 		// we return true so that the precache check keeps feeding us more files.
 		// Since we have multiple HTTP connections we want to minimize latency
@@ -100,17 +100,17 @@ qboolean CL_CheckOrDownloadFile (char *filename)
 		return true;
 	}
 
-	strncpy (cls.downloadname, filename, sizeof(cls.downloadname) - 1);
+	strncpy (cls.download.name, filename, sizeof(cls.download.name) - 1);
 
 	// download to a temp name, and only rename
 	// to the real name when done, so if interrupted
 	// a runt file wont be left
-	COM_StripExtension (cls.downloadname, cls.downloadtempname);
-	strcat (cls.downloadtempname, ".tmp");
+	COM_StripExtension (cls.download.name, cls.download.tempname);
+	strcat (cls.download.tempname, ".tmp");
 
 	// check to see if we already have a tmp for this file, if so, try to resume
 	// open the file if not opened yet
-	Com_sprintf (name, sizeof (name), "%s/%s", FS_Gamedir(), cls.downloadtempname);
+	Com_sprintf (name, sizeof (name), "%s/%s", FS_Gamedir(), cls.download.tempname);
 	fp = fopen (name, "r+b");
 	if (fp) // it exists
 	{
@@ -118,18 +118,18 @@ qboolean CL_CheckOrDownloadFile (char *filename)
 		fseek (fp, 0, SEEK_END);
 		len = ftell (fp);
 
-		cls.download = fp;
+		cls.download.file = fp;
 
 		// give the server an offset to start the download
-		Com_Printf ("Resuming %s\n", cls.downloadname);
+		Com_Printf ("Resuming %s\n", cls.download.name);
 		MSG_WriteByte (&cls.netchan.message, clc_stringcmd);
-		MSG_WriteString (&cls.netchan.message, va ("download %s %i", cls.downloadname, len));
+		MSG_WriteString (&cls.netchan.message, va ("download %s %i", cls.download.name, len));
 	}
 	else
 	{
-		Com_Printf ("Downloading %s\n", cls.downloadname);
+		Com_Printf ("Downloading %s\n", cls.download.name);
 		MSG_WriteByte (&cls.netchan.message, clc_stringcmd);
-		MSG_WriteString (&cls.netchan.message, va ("download %s", cls.downloadname));
+		MSG_WriteString (&cls.netchan.message, va ("download %s", cls.download.name));
 	}
 
 	cls.forcePacket = true;
@@ -178,19 +178,19 @@ void CL_Download_f (void)
 		return;
 	}
 
-	strncpy (cls.downloadname, filename, sizeof(cls.downloadname)-1);
-	while ((p = strstr(cls.downloadname, "\\")))
+	strncpy (cls.download.name, filename, sizeof(cls.download.name)-1);
+	while ((p = strstr(cls.download.name, "\\")))
 		*p = '/';
 
 	// download to a temp name, and only rename
 	// to the real name when done, so if interrupted
 	// a runt file wont be left
-	COM_StripExtension (cls.downloadname, cls.downloadtempname);
-	strcat (cls.downloadtempname, ".tmp");
+	COM_StripExtension (cls.download.name, cls.download.tempname);
+	strcat (cls.download.tempname, ".tmp");
 
 	// check to see if we already have a tmp for this file, if so, try to resume
 	// open the file if not opened yet
-	Com_sprintf(name, sizeof(name), "%s/%s", FS_Gamedir(), cls.downloadtempname);
+	Com_sprintf(name, sizeof(name), "%s/%s", FS_Gamedir(), cls.download.tempname);
 	fp = fopen (name, "r+b");
 	if (fp) // it exists
 	{
@@ -198,19 +198,19 @@ void CL_Download_f (void)
 		fseek(fp, 0, SEEK_END);
 		len = ftell(fp);
 
-		cls.download = fp;
+		cls.download.file = fp;
 
 		// give the server an offset to start the download
-		Com_Printf ("Resuming %s\n", cls.downloadname);
+		Com_Printf ("Resuming %s\n", cls.download.name);
 		MSG_WriteByte (&cls.netchan.message, clc_stringcmd);
-		MSG_WriteString (&cls.netchan.message, va("download %s %i", cls.downloadname, len));
+		MSG_WriteString (&cls.netchan.message, va("download %s %i", cls.download.name, len));
 	}
 	else
 	{
-		Com_Printf ("Downloading %s\n", cls.downloadname);
+		Com_Printf ("Downloading %s\n", cls.download.name);
 
 		MSG_WriteByte (&cls.netchan.message, clc_stringcmd);
-		MSG_WriteString (&cls.netchan.message, va ("download %s", cls.downloadname));
+		MSG_WriteString (&cls.netchan.message, va ("download %s", cls.download.name));
 	}
 }
 
@@ -232,35 +232,35 @@ void CL_HandleDownload (byte *data, int size, int percent)
 		else
 			Com_Printf ("Server stopped the download.\n");
 		
-		if (cls.download)
+		if (cls.download.file)
 		{
 			// if here, we tried to resume a file but the server said no
-			fclose (cls.download);
+			fclose (cls.download.file);
 		}
 		goto another;
 	}
 	
 	// open the file if not opened yet
-	if (!cls.download)
+	if (!cls.download.file)
 	{
-		Com_sprintf (name, sizeof(name), "%s/%s", FS_Gamedir(), cls.downloadtempname);
+		Com_sprintf (name, sizeof(name), "%s/%s", FS_Gamedir(), cls.download.tempname);
 
 		FS_CreatePath (name);
 
-		cls.download = fopen(name, "wb");
-		if (!cls.download)
+		cls.download.file = fopen(name, "wb");
+		if (!cls.download.file)
 		{
-			Com_Printf ("Couldn't open %s for writing.\n", cls.downloadtempname);
+			Com_Printf ("Couldn't open %s for writing.\n", cls.download.tempname);
 			goto another;
 		}
 	}
 
-	fwrite (data, 1, size, cls.download);
+	fwrite (data, 1, size, cls.download.file);
 	
 	if (percent != 100)
 	{
 		// request next block
-		cls.downloadpercent = percent;
+		cls.download.percent = percent;
 
 		MSG_WriteByte (&cls.netchan.message, clc_stringcmd);
 		SZ_Print (&cls.netchan.message, "nextdl");
@@ -271,20 +271,20 @@ void CL_HandleDownload (byte *data, int size, int percent)
 		char oldn[MAX_OSPATH];
 		char newn[MAX_OSPATH];
 
-		fclose (cls.download);
+		fclose (cls.download.file);
 
-		Com_sprintf(oldn, sizeof(oldn), "%s/%s", FS_Gamedir(), cls.downloadtempname);
-		Com_sprintf(newn, sizeof(newn), "%s/%s", FS_Gamedir(), cls.downloadname);
+		Com_sprintf(oldn, sizeof(oldn), "%s/%s", FS_Gamedir(), cls.download.tempname);
+		Com_sprintf(newn, sizeof(newn), "%s/%s", FS_Gamedir(), cls.download.name);
 
 		// rename the temp file to it's final name
 		FS_RenameFile (oldn, newn);
 
 another:
 		// get another file if needed
-		cls.failed_download = false;
-		cls.download = NULL;
-		cls.downloadpercent = 0;
-		cls.downloadposition = 0;
+		cls.download.failed = false;
+		cls.download.file = NULL;
+		cls.download.percent = 0;
+		cls.download.position = 0;
 		CL_RequestNextDownload ();
 	}
 }

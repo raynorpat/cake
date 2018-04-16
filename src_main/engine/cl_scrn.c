@@ -902,13 +902,13 @@ void SCR_DrawDownloadBar (void)
 	int		j, n, x, y, i, w, h;
 
 	// skip if we are not downloading any files
-	if (!(cls.downloadname[0] && (cls.download || cls.downloadposition)))
+	if (!(cls.download.name[0] && (cls.download.file || cls.download.position)))
 		return;
 
-	if ((text = strrchr(cls.downloadname, '/')) != NULL)
+	if ((text = strrchr(cls.download.name, '/')) != NULL)
 		text++;
 	else
-		text = cls.downloadname;
+		text = cls.download.name;
 
 	// figure out width
 	x = 64;
@@ -932,10 +932,10 @@ void SCR_DrawDownloadBar (void)
 	dlbar[i++] = '_';
 
 	// where's the dot go?
-	if (cls.downloadpercent == 0)
+	if (cls.download.percent == 0)
 		n = 0;
 	else
-		n = y * cls.downloadpercent / 100;
+		n = y * cls.download.percent / 100;
 
 	for (j = 0; j < y; j++)
 	{
@@ -948,10 +948,10 @@ void SCR_DrawDownloadBar (void)
 	dlbar[i++] = '!';
 	dlbar[i] = 0;
 
-	if (cls.download)
-		cls.downloadposition = ftell(cls.download);
+	if (cls.download.file)
+		cls.download.position = ftell(cls.download.file);
 
-	sprintf(dlbar + i, " %02d%% (%.02f KB)", cls.downloadpercent, (float)cls.downloadposition / 1024.0);
+	sprintf(dlbar + i, " %02d%% (%.02f KB)", cls.download.percent, (float)cls.download.position / 1024.0);
 
 	// draw the loading plaque
 	RE_Draw_GetPicSize(&w, &h, "loading");
