@@ -1126,7 +1126,11 @@ static const char *env_suf[6] = {"rt", "bk", "lf", "ft", "up", "dn"};
 void CL_ResetPrecacheCheck(void)
 {
 	precache_check = CS_MODELS;
-	precache_model = 0;
+	if (precache_model)
+	{
+		FS_FreeFile (precache_model);
+		precache_model = NULL;
+	}
 	precache_model_skin = -1;
 }
 
@@ -1155,23 +1159,40 @@ void CL_RequestNextDownload (void)
 	{
 		if (allow_download_models->value)
 		{
+			if (precache_model_skin == -1)
+			{
+				// checking for models
+				while (precache_check < CS_MODELS + MAX_MODELS && cl.configstrings[precache_check][0])
+				{
+					if (cl.configstrings[precache_check][0] == '*' || cl.configstrings[precache_check][0] == '#')
+					{
+						precache_check++;
+						continue;
+					}
+
+					if (!CL_CheckOrDownloadFile(cl.configstrings[precache_check]))
+					{
+						precache_check++;
+						return; // started a download
+					}
+					precache_check++;
+				}
+
+				precache_model_skin = 0;
+				precache_check = CS_MODELS + 2; // 0 isn't used
+												 
+				// pending downloads (models), let's wait here before we continue
+				if (CL_PendingHTTPDownloads())
+					return;
+			}
+
+			// checking for skins
 			while (precache_check < CS_MODELS + MAX_MODELS && cl.configstrings[precache_check][0])
 			{
 				if (cl.configstrings[precache_check][0] == '*' || cl.configstrings[precache_check][0] == '#')
 				{
 					precache_check++;
 					continue;
-				}
-
-				if (precache_model_skin == 0)
-				{
-					if (!CL_CheckOrDownloadFile (cl.configstrings[precache_check]))
-					{
-						precache_model_skin = 1;
-						return; // started a download
-					}
-
-					precache_model_skin = 1;
 				}
 
 				// checking for skins in the model
@@ -1208,9 +1229,9 @@ void CL_RequestNextDownload (void)
 
 				pheader = (dmdl_t *) precache_model;
 
-				while (precache_model_skin - 1 < LittleLong (pheader->num_skins))
+				while (precache_model_skin < LittleLong (pheader->num_skins))
 				{
-					if (!CL_CheckOrDownloadFile ((char *) precache_model + LittleLong (pheader->ofs_skins) + (precache_model_skin - 1) * MAX_SKINNAME))
+					if (!CL_CheckOrDownloadFile ((char *) precache_model + LittleLong (pheader->ofs_skins) + (precache_model_skin) * MAX_SKINNAME))
 					{
 						precache_model_skin++;
 						return; // started a download
@@ -1484,10 +1505,8 @@ void CL_Precache_f (void)
 		return;
 	}
 
-	precache_check = CS_MODELS;
 	precache_spawncount = atoi (Cmd_Argv (1));
-	precache_model = 0;
-	precache_model_skin = 0;
+	CL_ResetPrecacheCheck ();
 
 	CL_RequestNextDownload ();
 }
