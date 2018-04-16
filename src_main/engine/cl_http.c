@@ -45,8 +45,6 @@ cvar_t	*cl_http_max_connections;
 
 static CURLM	*multi = NULL;
 static int		handleCount = 0;
-static int		pendingCount = 0;
-static qboolean abortDownloads = false;
 static qboolean	downloading_pak = false;
 static qboolean	httpDown = false;
 
@@ -71,18 +69,15 @@ static int CL_HTTP_Progress (void *clientp, double dltotal, double dlnow, double
 	dl->position = (unsigned)dlnow;
 
 	// don't care which download shows as long as something does :)
-	if (!abortDownloads)
-	{
-		strcpy (cls.download.name, dl->queueEntry->quakePath);
-		cls.download.position = dl->position;
+	strcpy (cls.download.name, dl->queueEntry->quakePath);
+	cls.download.position = dl->position;
 
-		if (dltotal)
-			cls.download.percent = (int)((dlnow / dltotal) * 100.0f);
-		else
-			cls.download.percent = 0;
-	}
+	if (dltotal)
+		cls.download.percent = (int)((dlnow / dltotal) * 100.0f);
+	else
+		cls.download.percent = 0;
 
-	return abortDownloads;
+	return 0;
 }
 
 
@@ -293,7 +288,7 @@ static void CL_StartHTTPDownload (dlqueue_t *entry, dlhandle_t *dl)
 		Com_Printf (S_COLOR_GREEN "[HTTP]" S_COLOR_RED " curl_multi_add_handle: error\n");
 fail:
 		dl->queueEntry->state = DL_DONE;
-		pendingCount--;
+		cls.download.pending--;
 
 		// done current batch, see if we have more to dl
 		if (!CL_PendingHTTPDownloads())
@@ -335,6 +330,10 @@ void CL_SetHTTPServer (const char *url)
 	if (!url)
 		return;
 
+	// ignore if HTTP downloads are disabled
+	if (cl_http_downloads->integer == 0)
+		return;
+
 	if (strncmp(url, "http://", 7))
 	{
 		Com_Printf(S_COLOR_GREEN "[HTTP]" S_COLOR_WHITE " Ignoring download server URL with non-HTTP schema.\n");
@@ -365,8 +364,7 @@ void CL_SetHTTPServer (const char *url)
 	
 	memset (&cls.download.queue, 0, sizeof(cls.download.queue));
 
-	abortDownloads = false;
-	handleCount = pendingCount = 0;
+	handleCount = cls.download.pending = 0;
 
 	Q_strlcpy (downloadServer, url, sizeof(downloadServer));
 	Com_sprintf (downloadReferer, sizeof(downloadReferer), "quake2://%s", NET_AdrToString(cls.netchan.remote_address));
@@ -387,10 +385,8 @@ void CL_CancelHTTPDownloads (void)
 
 	// reset precache state
 	CL_ResetPrecacheCheck ();
-	abortDownloads = true;
 
 	q = &cls.download.queue;
-
 	while (q->next)
 	{
 		q = q->next;
@@ -398,10 +394,47 @@ void CL_CancelHTTPDownloads (void)
 			q->state = DL_DONE;
 	}
 
-	if (!pendingCount && !handleCount)
+	if (!cls.download.pending && !handleCount)
 		downloadServer[0] = 0;
 
-	pendingCount = 0;
+	cls.download.pending = 0;
+}
+
+/*
+===============
+CL_AbortHTTPDownloads
+
+fatal HTTP error occured
+remove any special entries from queue and fall back to UDP downloading
+===============
+*/
+void CL_AbortHTTPDownloads (void)
+{
+	dlqueue_t *q;
+
+	CL_CancelHTTPDownloads ();
+
+	cls.download.percent = 0;
+
+	downloadServer[0] = 0;
+	downloadReferer[0] = 0;
+
+	q = &cls.download.queue;
+	while (q->next)
+	{
+		q = q->next;
+		if (q->state != DL_DONE && q->type >= DL_LIST)
+		{
+			q->state = DL_DONE;
+			cls.download.pending--;
+		}
+		else if (q->state == DL_RUNNING)
+		{
+			q->state = DL_PENDING;
+		}
+	}
+
+	CL_RequestNextDownload ();
 }
 
 /*
@@ -419,7 +452,7 @@ qboolean CL_QueueHTTPDownload (char *quakePath, dltype_t type)
 	qboolean	needList;
 
 	// no http server (or we got booted)
-	if (!downloadServer[0] || abortDownloads || !cl_http_downloads->integer)
+	if (!downloadServer[0] || !cl_http_downloads->integer)
 		return false;
 
 	needList = false;
@@ -473,7 +506,7 @@ qboolean CL_QueueHTTPDownload (char *quakePath, dltype_t type)
 	}
 
 	// if a download entry has made it this far, CL_FinishHTTPDownload is guaranteed to be called.
-	pendingCount++;
+	cls.download.pending++;
 
 	return true;
 }
@@ -493,12 +526,12 @@ qboolean CL_PendingHTTPDownloads (void)
 	if (!downloadServer[0])
 		return false;
 
-	return pendingCount + handleCount;
+	return cls.download.pending + handleCount;
 }
 
 /*
 ===============
-CL_ParseFileList
+CL_CheckAndQueueDownload
 
 Validate a path supplied by a filelist.
 TODO: This is some ugly shit
@@ -642,7 +675,7 @@ static void CL_ParseFileList (dlhandle_t *dl)
 	char	 *list;
 	char	*p;
 
-	if (!cl_http_filelists->integer && !abortDownloads)
+	if (!cl_http_filelists->integer)
 		return;
 
 	list = dl->tempBuffer;
@@ -681,13 +714,9 @@ static void CL_ReVerifyHTTPQueue (void)
 {
 	dlqueue_t	*q;
 
+	cls.download.pending = 0;
+
 	q = &cls.download.queue;
-
-	pendingCount = 0;
-
-	if (abortDownloads)
-		return;
-
 	while (q->next)
 	{
 		q = q->next;
@@ -696,7 +725,7 @@ static void CL_ReVerifyHTTPQueue (void)
 			if (FS_LoadFile (q->quakePath, NULL) != -1)
 				q->state = DL_DONE;
 			else
-				pendingCount++;
+				cls.download.pending++;
 		}
 	}
 }
@@ -776,6 +805,7 @@ static void CL_FinishHTTPDownload (void)
 	double		fileSize;
 	char		tempName[MAX_OSPATH];
 	qboolean	isFile;
+	qboolean    fatalError = false;
 
 	do
 	{
@@ -824,8 +854,8 @@ static void CL_FinishHTTPDownload (void)
 		}
 
 		// might be aborted
-		if (pendingCount)
-			pendingCount--;
+		if (cls.download.pending)
+			cls.download.pending--;
 		handleCount--;
 
 		cls.download.name[0] = 0;
@@ -847,7 +877,8 @@ static void CL_FinishHTTPDownload (void)
 
 					if (isFile)
 						remove (dl->filePath);
-					Com_Printf (S_COLOR_GREEN "[HTTP]" S_COLOR_RED " (%s): 404 File Not Found [%d remaining files]\n", dl->queueEntry->quakePath, pendingCount);
+					Com_Printf (S_COLOR_GREEN "[HTTP]" S_COLOR_RED " (%s): 404 File Not Found [%d remaining files]\n", dl->queueEntry->quakePath, cls.download.pending);
+					
 					curl_easy_getinfo (curl, CURLINFO_SIZE_DOWNLOAD, &fileSize);
 					if (fileSize > 512)
 					{
@@ -855,39 +886,46 @@ static void CL_FinishHTTPDownload (void)
 						isFile = false;
 						result = CURLE_FILESIZE_EXCEEDED;
 						Com_Printf (S_COLOR_GREEN "[HTTP]" S_COLOR_RED " Oversized 404 body received (%d bytes), aborting HTTP downloading.\n", (int)fileSize);
+						goto fatal2;
 					}
-					else
-					{
-						curl_multi_remove_handle (multi, dl->curl);
-						continue;
-					}
+					curl_multi_remove_handle (multi, dl->curl);
+					continue;
 				}
 				else if (responseCode == 200)
 				{
-					if (!isFile && !abortDownloads)
+					if (!isFile && !fatalError)
 						CL_ParseFileList (dl);
 					break;
 				}
-
-				// every other code is treated as fatal, fall through here
+				else
+				{
+					// every other code is treated as fatal
+					Com_Printf(S_COLOR_GREEN "[HTTP]" S_COLOR_RED " Unexpected response code received (%d).\n", (int)responseCode);
+					goto fatal1;
+				}
 
 			// fatal error, disable http
 			case CURLE_COULDNT_RESOLVE_HOST:
 			case CURLE_COULDNT_CONNECT:
 			case CURLE_COULDNT_RESOLVE_PROXY:
+				Com_Printf (S_COLOR_GREEN "[HTTP]" S_COLOR_RED " Fatal HTTP error: %s\n", curl_easy_strerror(result));
+
+fatal1:
 				if (isFile)
 					remove (dl->filePath);
-				Com_Printf (S_COLOR_GREEN "[HTTP]" S_COLOR_RED " Fatal HTTP error: %s\n", curl_easy_strerror (result));
+
+fatal2:
 				curl_multi_remove_handle (multi, dl->curl);
-				if (!abortDownloads)
-					CL_CancelHTTPDownloads ();
+				fatalError = true;
 				continue;
 			default:
 				i = strlen (dl->queueEntry->quakePath);
 				if (!strcmp (dl->queueEntry->quakePath + i - 4, ".pak") || !strcmp(dl->queueEntry->quakePath + i - 4, ".pkz"))
 					downloading_pak = false;
+
 				if (isFile)
 					remove (dl->filePath);
+
 				Com_Printf (S_COLOR_GREEN "[HTTP]" S_COLOR_RED " HTTP download failed: %s\n", curl_easy_strerror (result));
 				curl_multi_remove_handle (multi, dl->curl);
 				continue;
@@ -921,11 +959,15 @@ static void CL_FinishHTTPDownload (void)
 		// out why, please let me know.
 		curl_multi_remove_handle (multi, dl->curl);
 
-		Com_Printf (S_COLOR_GREEN "[HTTP]" S_COLOR_WHITE " (%s): %.f bytes, %.2fkB/sec [%d remaining files]\n", dl->queueEntry->quakePath, fileSize, (fileSize / 1024.0) / timeTaken, pendingCount);
+		Com_Printf (S_COLOR_GREEN "[HTTP]" S_COLOR_WHITE " (%s): %.f bytes, %.2fkB/sec [%d remaining files]\n", dl->queueEntry->quakePath, fileSize, (fileSize / 1024.0) / timeTaken, cls.download.pending);
 	} while (msgs_in_queue > 0);
 
-	if (!handleCount && abortDownloads)
-		downloadServer[0] = 0;
+	// fatal error occured, disable HTTP
+	if (fatalError)
+	{
+		CL_AbortHTTPDownloads ();
+		return;
+	}
 
 	// done with current batch, see if we have more to download
 	if (cls.state == ca_connected && !CL_PendingHTTPDownloads())
@@ -965,7 +1007,7 @@ static void CL_StartNextHTTPDownload (void)
 {
 	dlqueue_t	*q;
 
-	if (!pendingCount || abortDownloads || handleCount >= cl_http_max_connections->integer)
+	if (!cls.download.pending || handleCount >= cl_http_max_connections->integer)
 		return;
 
 	// not enough downloads running, queue some more!
@@ -1027,7 +1069,7 @@ void CL_RunHTTPDownloads (void)
 	if (ret != CURLM_OK)
 	{
 		Com_Printf (S_COLOR_GREEN "[HTTP]" S_COLOR_RED " curl_multi_perform error. Aborting HTTP downloads.\n");
-		CL_CancelHTTPDownloads ();
+		CL_AbortHTTPDownloads ();
 		return;
 	}
 

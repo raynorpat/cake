@@ -661,16 +661,7 @@ void CL_Disconnect (void)
 	CL_ClearState ();
 
 	// stop download
-	if (cls.download.file)
-	{
-		fclose (cls.download.file);
-		cls.download.file = NULL;
-	}
-
-	CL_CancelHTTPDownloads ();
-
-	cls.download.name[0] = 0;
-	cls.download.position = 0;
+	CL_CleanupDownloads ();
 
 	cls.servername[0] = '\0';
 	cls.state = ca_disconnected;

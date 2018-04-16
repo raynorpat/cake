@@ -28,6 +28,31 @@ extern cvar_t *allow_download_maps;
 
 /*
 ===============
+CL_CleanupDownloads
+
+Disconnected from server, clean up.
+===============
+*/
+void CL_CleanupDownloads (void)
+{
+	// cancel any http downloads
+	CL_CancelHTTPDownloads ();
+
+	cls.download.pending = 0;
+	cls.download.percent = 0;
+
+	if (cls.download.file)
+	{
+		fclose (cls.download.file);
+		cls.download.file = 0;
+	}
+
+	cls.download.name[0] = 0;
+	cls.download.tempname[0] = 0;
+}
+
+/*
+===============
 CL_CheckDownloadExtension
 
 Only predefined set of filename extensions is allowed,
@@ -146,10 +171,13 @@ Request a download from the server
 */
 void CL_Download_f (void)
 {
-	char	name[MAX_OSPATH];
-	FILE	*fp;
-	char	*p;
 	char 	filename[MAX_OSPATH];
+
+	if (cls.state <= ca_connecting)
+	{
+		Com_Printf("Not connected.\n");
+		return;
+	}
 
 	if (Cmd_Argc() != 2)
 	{
@@ -159,59 +187,7 @@ void CL_Download_f (void)
 
 	Com_sprintf (filename, sizeof (filename), "%s", Cmd_Argv (1));
 
-	if (strstr (filename, ".."))
-	{
-		Com_Printf ("Refusing to download a path with .. (%s)\n", filename);
-		return;
-	}
-
-	if (cls.state <= ca_connecting)
-	{
-		Com_Printf ("Not connected.\n");
-		return;
-	}
-
-	if (FS_LoadFile (filename, NULL) != -1)
-	{
-		// it exists, no need to download
-		Com_Printf ("File already exists.\n");
-		return;
-	}
-
-	strncpy (cls.download.name, filename, sizeof(cls.download.name)-1);
-	while ((p = strstr(cls.download.name, "\\")))
-		*p = '/';
-
-	// download to a temp name, and only rename
-	// to the real name when done, so if interrupted
-	// a runt file wont be left
-	COM_StripExtension (cls.download.name, cls.download.tempname);
-	strcat (cls.download.tempname, ".tmp");
-
-	// check to see if we already have a tmp for this file, if so, try to resume
-	// open the file if not opened yet
-	Com_sprintf(name, sizeof(name), "%s/%s", FS_Gamedir(), cls.download.tempname);
-	fp = fopen (name, "r+b");
-	if (fp) // it exists
-	{
-		int len;		
-		fseek(fp, 0, SEEK_END);
-		len = ftell(fp);
-
-		cls.download.file = fp;
-
-		// give the server an offset to start the download
-		Com_Printf ("Resuming %s\n", cls.download.name);
-		MSG_WriteByte (&cls.netchan.message, clc_stringcmd);
-		MSG_WriteString (&cls.netchan.message, va("download %s %i", cls.download.name, len));
-	}
-	else
-	{
-		Com_Printf ("Downloading %s\n", cls.download.name);
-
-		MSG_WriteByte (&cls.netchan.message, clc_stringcmd);
-		MSG_WriteString (&cls.netchan.message, va ("download %s", cls.download.name));
-	}
+	CL_CheckOrDownloadFile(filename);
 }
 
 /*
