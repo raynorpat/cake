@@ -175,10 +175,11 @@ Save the console contents out to a file
 */
 void Con_Dump_f (void)
 {
-	int		l, x;
+	int		i, l, x;
 	short	*line;
 	FILE	*f;
-	char	buffer[1024];
+	char	*buffer;
+	int		bufferlen;
 	char	name[MAX_OSPATH];
 
 	if (Cmd_Argc() != 2)
@@ -187,18 +188,10 @@ void Con_Dump_f (void)
 		return;
 	}
 
-	if (con.linewidth >= 1024)
-	{
-		Com_Printf(S_COLOR_RED "con.linewidth too large!\n");
-		return;
-	}
-
 	Com_sprintf (name, sizeof (name), "%s/%s.txt", FS_Gamedir(), Cmd_Argv (1));
 
-	Com_Printf ("Dumped console text to %s.\n", name);
 	FS_CreatePath (name);
 	f = fopen (name, "w");
-
 	if (!f)
 	{
 		Com_Printf (S_COLOR_RED "ERROR: couldn't open.\n");
@@ -211,20 +204,30 @@ void Con_Dump_f (void)
 		line = con.text + (l % con.totallines) * con.linewidth;
 
 		for (x = 0; x < con.linewidth; x++)
-			if (line[x] != ' ')
+		{
+			if ((line[x] & 0xff) != ' ')
 				break;
+		}
 
 		if (x != con.linewidth)
 			break;
 	}
 
-	// write the remaining lines
-	buffer[con.linewidth] = 0;
+	// bufferlen leaves room for line breaks
+#ifdef _WIN32
+	bufferlen = con.linewidth + 3 * sizeof(char);
+#else
+	bufferlen = con.linewidth + 2 * sizeof(char);
+#endif
+	buffer = Z_Malloc (bufferlen);
 
+	// write the remaining lines
+	buffer[bufferlen - 1] = 0;
 	for (; l <= con.current; l++)
 	{
 		line = con.text + (l % con.totallines) * con.linewidth;
-		memcpy (buffer, line, con.linewidth);
+		for (i = 0; i < con.linewidth; i++)
+			buffer[i] = line[i] & 0xff;
 
 		for (x = con.linewidth - 1; x >= 0; x--)
 		{
@@ -234,13 +237,21 @@ void Con_Dump_f (void)
 				break;
 		}
 
-		for (x = 0; buffer[x]; x++)
-			buffer[x] &= 0x7f;
+		// line break
+#ifdef _WIN32
+		strncat (buffer, "\r\n", bufferlen);
+#else
+		strncat (buffer, "\n", bufferlen);
+#endif
 
+		// write out
 		fprintf (f, "%s\n", buffer);
 	}
 
+	Z_Free (buffer);
 	fclose (f);
+
+	Com_Printf ("Dumped console text to %s.\n", name);
 }
 
 
