@@ -235,13 +235,13 @@ vidrserr_t VID_InitWindow(int mode, int fullscreen)
 	if (display >= 0 && SDL_GetDesktopDisplayMode(display, &desktopMode) == 0)
 	{
 		viddef.displayAspect = (float)desktopMode.w / (float)desktopMode.h;
-		VID_Printf(PRINT_ALL, "Display aspect: %.3f\n", viddef.displayAspect);
+		VID_Printf(PRINT_DEVELOPER, "Display aspect: %.3f\n", viddef.displayAspect);
 	}
 	else
 	{
 		memset(&desktopMode, 0, sizeof(SDL_DisplayMode));
 		viddef.displayAspect = 1.333f;
-		VID_Printf(PRINT_ALL, S_COLOR_RED "Cannot determine display aspect, assuming 1.333\n");
+		VID_Printf(PRINT_DEVELOPER, S_COLOR_RED "Cannot determine display aspect, assuming 1.333\n");
 	}
 
 	VID_Printf(PRINT_ALL, "...setting mode %d:", mode);
@@ -434,7 +434,7 @@ vidrserr_t VID_InitWindow(int mode, int fullscreen)
 			SDL_GL_GetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, &majorVersion);
 			SDL_GL_GetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, &minorVersion);
 
-			VID_Printf(PRINT_ALL, "Trying to get an OpenGL 3.3 core context\n");
+			VID_Printf(PRINT_DEVELOPER, "Trying to get an OpenGL 3.3 core context\n");
 			SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
 			SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
 			SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
@@ -445,8 +445,8 @@ vidrserr_t VID_InitWindow(int mode, int fullscreen)
 
 			if ((context = SDL_GL_CreateContext(window)) == NULL)
 			{
-				VID_Printf(PRINT_ALL, S_COLOR_RED "SDL_GL_CreateContext failed: %s\n", SDL_GetError());
-				VID_Printf(PRINT_ALL, S_COLOR_RED "Reverting to default context\n");
+				VID_Printf(PRINT_DEVELOPER, S_COLOR_RED "SDL_GL_CreateContext failed: %s\n", SDL_GetError());
+				VID_Printf(PRINT_DEVELOPER, S_COLOR_RED "Reverting to default context\n");
 				SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, profileMask);
 				SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, majorVersion);
 				SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, minorVersion);
@@ -455,20 +455,20 @@ vidrserr_t VID_InitWindow(int mode, int fullscreen)
 			{
 				const char *renderer;
 
-				VID_Printf(PRINT_ALL, "SDL_GL_CreateContext succeeded.\n");
+				VID_Printf(PRINT_DEVELOPER, S_COLOR_GREEN " ...SDL_GL_CreateContext succeeded.\n");
 
 				err = glewInit();
 				if (GLEW_OK == err) {
 					renderer = (const char *)glGetString(GL_RENDERER);
 				} else {
-					VID_Printf(PRINT_ALL, S_COLOR_RED "glewInit() core context failed: %s\n", glewGetErrorString(err));
+					VID_Printf(PRINT_DEVELOPER, S_COLOR_RED "glewInit() core context failed: %s\n", glewGetErrorString(err));
 					renderer = NULL;
 				}
 								
 				if (!renderer || (strstr(renderer, "Software Renderer") || strstr(renderer, "Software Rasterizer")))
 				{
 					if (renderer)
-						VID_Printf(PRINT_ALL, S_COLOR_RED "GL_RENDERER is %s, rejecting context\n", renderer);
+						VID_Printf(PRINT_DEVELOPER, S_COLOR_RED "GL_RENDERER is %s, rejecting context\n", renderer);
 
 					SDL_GL_DeleteContext(context);
 					context = NULL;
@@ -592,17 +592,14 @@ This routine is responsible for initializing the OS specific portions of OpenGL.
 */
 qboolean VID_Init_GL (void)
 {
-	if (!SDL_WasInit(SDL_INIT_VIDEO))
+	if (SDL_Init(SDL_INIT_VIDEO) != 0)
 	{
-		if (SDL_Init(SDL_INIT_VIDEO) == -1)
-		{
-			Com_Printf("Couldn't init SDL video: %s.\n", SDL_GetError());
-			return false;
-		}
-
-		const char* driverName = SDL_GetCurrentVideoDriver();
-		Com_Printf("SDL video driver is \"%s\".\n", driverName);
+		Com_Printf("Couldn't init SDL video: %s.\n", SDL_GetError());
+		return false;
 	}
+
+	const char* driverName = SDL_GetCurrentVideoDriver();
+	Com_DPrintf("SDL video driver is \"%s\".\n", driverName);
 
 	return true;
 }
