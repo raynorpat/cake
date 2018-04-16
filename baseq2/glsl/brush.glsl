@@ -125,10 +125,10 @@ void LightmappedFS ()
 	{
 		// diffuse term
 		fragColor.rgb = diffuseTerm.rgb;
-		
-		// tonemap
-		fragColor.rgb = ACESFilmRec2020_Tonemap (fragColor.rgb);
 	}
+	
+	// output tonemapped colors
+	fragColor.rgb = ACESFilmRec2020_Tonemap (fragColor.rgb);
 	fragColor.a = alpha;
 }
 #endif
