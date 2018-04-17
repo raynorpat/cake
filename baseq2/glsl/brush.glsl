@@ -43,7 +43,6 @@ struct LightParameters {
 };
 uniform LightParameters Lights;
 uniform int maxLights;
-uniform int lightBit;
 uniform vec4 debugParams; // x = gl_showlightmaps, y = gl_shownormals, z = , w =
 
 out vec4 fragColor;
@@ -54,31 +53,27 @@ vec3 diffLight = vec3(0.0);
 // iterate dynamic lights
 void DynamicLighting(vec3 normal)
 {
-	// check light bit
-	if(lightBit != 0)
-	{
-		for (int i = 0; i < maxLights; ++i)
-		{	
-			// light has no radius, just skip it
-			if(Lights.radius[i] == 0.0)
-				continue;
+	for (int i = 0; i < maxLights; ++i)
+	{	
+		// light has no radius, just skip it
+		if(Lights.radius[i] == 0.0)
+			continue;
 			
-			vec3 delta = Lights.origin[i] - vtx_world.xyz;
-			float distance = length(delta);
+		vec3 delta = Lights.origin[i] - vtx_world.xyz;
+		float distance = length(delta);
 			
-			// don't shade points outside of the radius
-			if (distance > Lights.radius[i])
-				continue;
+		// don't shade points outside of the radius
+		if (distance > Lights.radius[i])
+			continue;
 				
-			// get angle
-			vec3 lightDir = normalize(delta);
+		// get angle
+		vec3 lightDir = normalize(delta);
 			
-			// make distance relative to radius
-			distance = 1.0 - distance / Lights.radius[i];
+		// make distance relative to radius
+		distance = 1.0 - distance / Lights.radius[i];
 		
-			// calculate diffuse light
-			diffLight.rgb += Lambert(lightDir, normal, Lights.color[i]) * distance * distance;
-		}
+		// calculate diffuse light
+		diffLight.rgb += Lambert(lightDir, normal, Lights.color[i]) * distance * distance;
 	}
 }
 

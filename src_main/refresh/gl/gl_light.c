@@ -31,7 +31,6 @@ DYNAMIC LIGHTS
 
 extern GLuint gl_lightmappedsurfprog;
 extern GLuint u_brushMaxLights;
-extern GLuint u_brushlightBit;
 extern GLuint u_brushlightMatrix;
 extern GLuint u_brushLightPos[MAX_LIGHTS];
 extern GLuint u_brushLightColor[MAX_LIGHTS];
@@ -138,8 +137,8 @@ void R_EnableLights (int framecount, int bitmask)
 	if (framecount != r_dlightframecount)
 		return;
 
-	// send bitmask to shader
-	glProgramUniform1i (gl_lightmappedsurfprog, u_brushlightBit, bitmask);
+	if (!bitmask)
+		return;
 
 	// send light source information to shader
 	for (i = 0, l = r_newrefdef.dlights; i < r_newrefdef.num_dlights; i++, l++)

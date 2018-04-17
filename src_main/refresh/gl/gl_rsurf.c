@@ -70,7 +70,6 @@ GLuint u_brushsurfalpha;
 GLuint u_brushdebugParams;
 GLuint u_brushscroll;
 GLuint u_brushMaxLights;
-GLuint u_brushlightBit;
 GLuint u_brushlightMatrix;
 GLuint u_brushLightPos[MAX_LIGHTS];
 GLuint u_brushLightColor[MAX_LIGHTS];
@@ -99,7 +98,6 @@ void RSurf_CreatePrograms (void)
 	u_brushdebugParams = glGetUniformLocation (gl_lightmappedsurfprog, "debugParams");
 	u_brushscroll = glGetUniformLocation (gl_lightmappedsurfprog, "scroll");
 	u_brushMaxLights = glGetUniformLocation (gl_lightmappedsurfprog, "maxLights");
-	u_brushlightBit = glGetUniformLocation (gl_lightmappedsurfprog, "lightBit");
 	u_brushlightMatrix = glGetUniformLocation (gl_lightmappedsurfprog, "lightMatrix");
 	for (int i = 0; i < MAX_LIGHTS; ++i)
 	{
