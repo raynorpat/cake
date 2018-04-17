@@ -336,6 +336,9 @@ int Q_PrintStrlen (const char *string);
 // removes color sequences from string
 char *Q_CleanStr (char *string);
 
+// copies no more than 'size' bytes stopping when 'c' character is found
+void *Q_memccpy (void *dst, const void *src, int c, size_t size);
+
 int glob_match (char *pattern, char *text);
 
 //=============================================
