@@ -36,6 +36,8 @@ static menulist_s	s_allow_download_maps_box;
 static menulist_s	s_allow_download_models_box;
 static menulist_s	s_allow_download_players_box;
 static menulist_s	s_allow_download_sounds_box;
+static menulist_s	s_allow_download_pics_box;
+static menulist_s	s_allow_download_textures_box;
 
 static void DownloadCallback (void *self)
 {
@@ -60,6 +62,14 @@ static void DownloadCallback (void *self)
 	else if (f == &s_allow_download_sounds_box)
 	{
 		Cvar_SetValue ("allow_download_sounds", f->curvalue);
+	}
+	else if (f == &s_allow_download_pics_box)
+	{
+		Cvar_SetValue("allow_download_pics", f->curvalue);
+	}
+	else if (f == &s_allow_download_textures_box)
+	{
+		Cvar_SetValue("allow_download_textures", f->curvalue);
 	}
 }
 
@@ -120,6 +130,22 @@ void DownloadOptions_MenuInit (void)
 	s_allow_download_sounds_box.itemnames = yes_no_names;
 	s_allow_download_sounds_box.curvalue = (Cvar_VariableValue ("allow_download_sounds") != 0);
 
+	s_allow_download_pics_box.generic.type = MTYPE_SPINCONTROL;
+	s_allow_download_pics_box.generic.x = 0;
+	s_allow_download_pics_box.generic.y = y += MENU_LINE_SIZE;
+	s_allow_download_pics_box.generic.name = "pics";
+	s_allow_download_pics_box.generic.callback = DownloadCallback;
+	s_allow_download_pics_box.itemnames = yes_no_names;
+	s_allow_download_pics_box.curvalue = (Cvar_VariableValue("allow_download_pics") != 0);
+
+	s_allow_download_textures_box.generic.type = MTYPE_SPINCONTROL;
+	s_allow_download_textures_box.generic.x = 0;
+	s_allow_download_textures_box.generic.y = y += MENU_LINE_SIZE;
+	s_allow_download_textures_box.generic.name = "textures";
+	s_allow_download_textures_box.generic.callback = DownloadCallback;
+	s_allow_download_textures_box.itemnames = yes_no_names;
+	s_allow_download_textures_box.curvalue = (Cvar_VariableValue("allow_download_textures") != 0);
+
 	s_downloadoptions_menu.draw = NULL;
 	s_downloadoptions_menu.key = NULL;
 
@@ -128,6 +154,8 @@ void DownloadOptions_MenuInit (void)
 	Menu_AddItem (&s_downloadoptions_menu, &s_allow_download_maps_box);
 	Menu_AddItem (&s_downloadoptions_menu, &s_allow_download_players_box);
 	Menu_AddItem (&s_downloadoptions_menu, &s_allow_download_models_box);
+	Menu_AddItem (&s_downloadoptions_menu, &s_allow_download_sounds_box);
+	Menu_AddItem (&s_downloadoptions_menu, &s_allow_download_pics_box);
 	Menu_AddItem (&s_downloadoptions_menu, &s_allow_download_sounds_box);
 
 	Menu_Center (&s_downloadoptions_menu);

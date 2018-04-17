@@ -314,6 +314,8 @@ void SV_BeginDownload_f (void)
 	extern	cvar_t *allow_download_models;
 	extern	cvar_t *allow_download_sounds;
 	extern	cvar_t *allow_download_maps;
+	extern  cvar_t *allow_download_pics;
+	extern  cvar_t *allow_download_textures;
 	extern	qboolean file_from_pak; // did file come from pak?
 	int offset = 0;
 
@@ -336,6 +338,11 @@ void SV_BeginDownload_f (void)
 			|| (strncmp (name, "sound/", 6) == 0 && !allow_download_sounds->value)
 			// now maps (note special case for maps, must not be in pak)
 			|| (strncmp (name, "maps/", 6) == 0 && !allow_download_maps->value)
+			// now pics
+			|| (strncmp(name, "pics/", 6) == 0 && !allow_download_pics->value)
+			// now textures
+			|| (strncmp(name, "env/", 6) == 0 && !allow_download_textures->value)
+			|| (strncmp(name, "textures/", 6) == 0 && !allow_download_textures->value)
 			// MUST be in a subdirectory
 			|| !strstr (name, "/"))
 	{
