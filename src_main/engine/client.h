@@ -109,22 +109,8 @@ typedef struct dlqueue_s
 	struct dlqueue_s	*next;
 	dltype_t			type;
 	dlstate_t			state;
-	char				quakePath[MAX_QPATH];
+	char				path[MAX_QPATH];
 } dlqueue_t;
-
-// download handle
-typedef struct dlhandle_s
-{
-	CURL		*curl;
-	char		filePath[MAX_OSPATH];
-	FILE		*file;
-	dlqueue_t	*queueEntry;
-	size_t		fileSize;
-	size_t		position;
-	double		speed;
-	char		URL[576];
-	char		*tempBuffer;
-} dlhandle_t;
 
 // cinematics
 typedef struct

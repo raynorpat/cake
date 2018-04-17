@@ -43,14 +43,29 @@ cvar_t	*cl_http_filelists;
 cvar_t	*cl_http_proxy;
 cvar_t	*cl_http_max_connections;
 
-static CURLM	*multi = NULL;
-static int		handleCount = 0;
-static qboolean	downloading_pak = false;
-static qboolean	httpDown = false;
+// download handle
+typedef struct dlhandle_s
+{
+	CURL		*curl;
+	char		filePath[MAX_OSPATH];
+	FILE		*file;
+	dlqueue_t	*queueEntry;
+	size_t		fileSize;
+	size_t		position;
+	double		speed;
+	char		url[576];
+	char		*tempBuffer;
+} dlhandle_t;
 
-dlhandle_t		HTTPHandles[4];	// actual download handles
+dlhandle_t		downloadHandles[4];	// actual download handles
 char			downloadServer[512]; // base url prefix to download from
 char			downloadReferer[32]; // libcurl requires a static string for referers...
+
+static CURLM	*multi = NULL;
+static int		handleCount = 0;
+
+static qboolean	downloading_pak = false;
+static qboolean	httpDown = false;
 
 /*
 ===============
@@ -69,7 +84,7 @@ static int CL_HTTP_Progress (void *clientp, double dltotal, double dlnow, double
 	dl->position = (unsigned)dlnow;
 
 	// don't care which download shows as long as something does :)
-	strcpy (cls.download.name, dl->queueEntry->quakePath);
+	strcpy (cls.download.name, dl->queueEntry->path);
 	cls.download.position = dl->position;
 
 	if (dltotal)
@@ -224,13 +239,13 @@ static void CL_StartHTTPDownload (dlqueue_t *entry, dlhandle_t *dl)
 	{
 		dl->file = NULL;
 		dl->filePath[0] = 0;
-		CL_EscapeHTTPPath (entry->quakePath, escapedFilePath);
+		CL_EscapeHTTPPath (entry->path, escapedFilePath);
 	}
 	else
 	{
-		Com_sprintf (dl->filePath, sizeof(dl->filePath), "%s/%s", FS_Gamedir(), entry->quakePath);
+		Com_sprintf (dl->filePath, sizeof(dl->filePath), "%s/%s", FS_Gamedir(), entry->path);
 
-		Com_sprintf (tempFile, sizeof(tempFile), "%s/%s", cl.gamedir, entry->quakePath);
+		Com_sprintf (tempFile, sizeof(tempFile), "%s/%s", cl.gamedir, entry->path);
 		CL_EscapeHTTPPath (dl->filePath, escapedFilePath);
 
 		strcat (dl->filePath, ".tmp");
@@ -255,7 +270,7 @@ static void CL_StartHTTPDownload (dlqueue_t *entry, dlhandle_t *dl)
 	if (!dl->curl)
 		dl->curl = curl_easy_init ();
 
-	Com_sprintf (dl->URL, sizeof(dl->URL), "%s%s", downloadServer, escapedFilePath);
+	Com_sprintf (dl->url, sizeof(dl->url), "%s%s", downloadServer, escapedFilePath);
 
 	curl_easy_setopt (dl->curl, CURLOPT_ENCODING, "");
 	curl_easy_setopt (dl->curl, CURLOPT_NOPROGRESS, 0);
@@ -279,7 +294,7 @@ static void CL_StartHTTPDownload (dlqueue_t *entry, dlhandle_t *dl)
 	curl_easy_setopt (dl->curl, CURLOPT_PROGRESSDATA, dl);
 	curl_easy_setopt (dl->curl, CURLOPT_USERAGENT, Cvar_VariableString ("version"));
 	curl_easy_setopt (dl->curl, CURLOPT_REFERER, downloadReferer);
-	curl_easy_setopt (dl->curl, CURLOPT_URL, dl->URL);
+	curl_easy_setopt (dl->curl, CURLOPT_URL, dl->url);
 	curl_easy_setopt (dl->curl, CURLOPT_PROTOCOLS, CURLPROTO_HTTP | CURLPROTO_HTTPS | CURLPROTO_FTP | CURLPROTO_FTPS);
 	curl_easy_setopt (dl->curl, CURLOPT_BUFFERSIZE, CURL_MAX_READ_SIZE);
 
@@ -296,7 +311,7 @@ fail:
 		return;
 	}
 
-	Com_DPrintf  (S_COLOR_GREEN "[HTTP]" S_COLOR_WHITE " Fetching %s...\n", dl->URL);
+	Com_DPrintf  (S_COLOR_GREEN "[HTTP]" S_COLOR_WHITE " Fetching %s...\n", dl->url);
 	dl->queueEntry->state = DL_RUNNING;
 	handleCount++;
 }
@@ -468,7 +483,7 @@ qboolean CL_QueueHTTPDownload (char *quakePath, dltype_t type)
 		q = q->next;
 
 		// avoid sending duplicate requests
-		if (!strcmp (quakePath, q->quakePath))
+		if (!strcmp (quakePath, q->path))
 			return true;
 	}
 
@@ -477,7 +492,7 @@ qboolean CL_QueueHTTPDownload (char *quakePath, dltype_t type)
 
 	q->next = NULL;
 	q->state = DL_PENDING;
-	Q_strlcpy (q->quakePath, quakePath, sizeof(q->quakePath));
+	Q_strlcpy (q->path, quakePath, sizeof(q->path));
 
 	if (needList)
 	{
@@ -722,7 +737,7 @@ static void CL_ReVerifyHTTPQueue (void)
 		q = q->next;
 		if (q->state == DL_PENDING)
 		{
-			if (FS_LoadFile (q->quakePath, NULL) != -1)
+			if (FS_LoadFile (q->path, NULL) != -1)
 				q->state = DL_DONE;
 			else
 				cls.download.pending++;
@@ -747,7 +762,7 @@ void CL_HTTP_Cleanup (qboolean fullShutdown)
 
 	for (i = 0; i < 4; i++)
 	{
-		dl = &HTTPHandles[i];
+		dl = &downloadHandles[i];
 
 		if (dl->file)
 		{
@@ -828,9 +843,9 @@ static void CL_FinishHTTPDownload (void)
 		// curl doesn't provide reverse-lookup of the void * ptr, so search for it
 		for (i = 0; i < 4; i++)
 		{
-			if (HTTPHandles[i].curl == curl)
+			if (downloadHandles[i].curl == curl)
 			{
-				dl = &HTTPHandles[i];
+				dl = &downloadHandles[i];
 				break;
 			}
 		}
@@ -871,13 +886,13 @@ static void CL_FinishHTTPDownload (void)
 				curl_easy_getinfo (curl, CURLINFO_RESPONSE_CODE, &responseCode);
 				if (responseCode == 404)
 				{
-					i = strlen (dl->queueEntry->quakePath);
-					if (!strcmp (dl->queueEntry->quakePath + i - 4, ".pak") || !strcmp(dl->queueEntry->quakePath + i - 4, ".pkz"))
+					i = strlen (dl->queueEntry->path);
+					if (!strcmp (dl->queueEntry->path + i - 4, ".pak") || !strcmp(dl->queueEntry->path + i - 4, ".pkz"))
 						downloading_pak = false;
 
 					if (isFile)
 						remove (dl->filePath);
-					Com_Printf (S_COLOR_GREEN "[HTTP]" S_COLOR_RED " (%s): 404 File Not Found [%d remaining files]\n", dl->queueEntry->quakePath, cls.download.pending);
+					Com_Printf (S_COLOR_GREEN "[HTTP]" S_COLOR_RED " (%s): 404 File Not Found [%d remaining files]\n", dl->queueEntry->path, cls.download.pending);
 					
 					curl_easy_getinfo (curl, CURLINFO_SIZE_DOWNLOAD, &fileSize);
 					if (fileSize > 512)
@@ -919,8 +934,8 @@ fatal2:
 				fatalError = true;
 				continue;
 			default:
-				i = strlen (dl->queueEntry->quakePath);
-				if (!strcmp (dl->queueEntry->quakePath + i - 4, ".pak") || !strcmp(dl->queueEntry->quakePath + i - 4, ".pkz"))
+				i = strlen (dl->queueEntry->path);
+				if (!strcmp (dl->queueEntry->path + i - 4, ".pak") || !strcmp(dl->queueEntry->path + i - 4, ".pkz"))
 					downloading_pak = false;
 
 				if (isFile)
@@ -934,7 +949,7 @@ fatal2:
 		if (isFile)
 		{
 			// rename the temp file
-			Com_sprintf (tempName, sizeof(tempName), "%s/%s", FS_Gamedir(), dl->queueEntry->quakePath);
+			Com_sprintf (tempName, sizeof(tempName), "%s/%s", FS_Gamedir(), dl->queueEntry->path);
 
 			if (rename (dl->filePath, tempName))
 				Com_Printf (S_COLOR_GREEN "[HTTP]" S_COLOR_RED " Failed to rename %s for some odd reason...", dl->filePath);
@@ -959,7 +974,7 @@ fatal2:
 		// out why, please let me know.
 		curl_multi_remove_handle (multi, dl->curl);
 
-		Com_Printf (S_COLOR_GREEN "[HTTP]" S_COLOR_WHITE " (%s): %.f bytes, %.2fkB/sec [%d remaining files]\n", dl->queueEntry->quakePath, fileSize, (fileSize / 1024.0) / timeTaken, cls.download.pending);
+		Com_Printf (S_COLOR_GREEN "[HTTP]" S_COLOR_WHITE " (%s): %.f bytes, %.2fkB/sec [%d remaining files]\n", dl->queueEntry->path, fileSize, (fileSize / 1024.0) / timeTaken, cls.download.pending);
 	} while (msgs_in_queue > 0);
 
 	// fatal error occured, disable HTTP
@@ -988,7 +1003,7 @@ static dlhandle_t *CL_GetFreeDLHandle (void)
 
 	for (i = 0; i < 4; i++)
 	{
-		dl = &HTTPHandles[i];
+		dl = &downloadHandles[i];
 		if (!dl->queueEntry || dl->queueEntry->state == DL_DONE)
 			return dl;
 	}
