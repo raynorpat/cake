@@ -566,8 +566,8 @@ void CL_ParseServerMessage (void)
 			{
 				// close download file
 				fclose (cls.download.file);
-				cls.download.file = NULL;
 			}
+			memset (&cls.download, 0, sizeof(cls.download));
 
 			cls.state = ca_connecting;
 			cls.connect_time = -99999;	// CL_CheckForResend() will fire immediately
