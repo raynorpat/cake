@@ -6,7 +6,7 @@
 
 ## Overview
 
-Cake is a modified Quake 2 based game engine built on top of the Quake 2 source code released by id Software.
+_Cake_ is a modified Quake 2 based game engine built on top of the Quake 2 source code released by id Software.
 
 Some of the major features currently implemented are:
 
@@ -14,10 +14,10 @@ Some of the major features currently implemented are:
   * SDL 2 backend
   * OpenAL audio backend
   * OGG Vorbis background music support
-  * RoQ cinematic video encoder/decoder
+  * RoQ cinematic video encoder / decoder
   * Brand new OpenGL 3.x renderer
-  * UI improvemnts - mouse and controller support and TrueType font rendering
-  * HTTP/FTP download redirection (using cURL)
+  * UI improvements - mouse / controller support and TrueType font rendering
+  * HTTP/FTP download redirection (using cURL) and improved UDP downloading
   * Portable content creation tools (q2map, bake)
   * Master server and dedicated server tool
   * Many, many, many bug fixes
