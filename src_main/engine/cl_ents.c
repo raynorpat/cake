@@ -1304,12 +1304,12 @@ void CL_GetEntitySoundVelocity (int entnum, vec3_t vel)
 {
 	centity_t *old;
 
-	if ((ent < 0) || (ent >= MAX_EDICTS))
+	if ((entnum < 0) || (entnum >= MAX_EDICTS))
 	{
 		Com_Error(ERR_DROP, "CL_GetEntitySoundVelocity: bad ent");
 	}
 
-	old = &cl_entities[ent];
+	old = &cl_entities[entnum];
 	VectorSubtract(old->current.origin, old->prev.origin, vel);
 }
 
