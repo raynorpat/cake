@@ -214,6 +214,8 @@ typedef struct
 // little-endian "IDS2"
 #define SPRITE_VERSION	2
 
+#define SP2_MAX_FRAMES  32
+
 typedef struct
 {
 	int		width, height;
