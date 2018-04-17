@@ -77,11 +77,11 @@ a way to cancel the transfer if required.
 */
 static int CL_HTTP_Progress (void *clientp, double dltotal, double dlnow, double ultotal, double ulnow)
 {
-	dlhandle_t *dl;
-
-	dl = (dlhandle_t *)clientp;
+	dlhandle_t *dl = (dlhandle_t *)clientp;
 
 	dl->position = (unsigned)dlnow;
+
+	cls.download.current = dl->queueEntry;
 
 	// don't care which download shows as long as something does :)
 	strcpy (cls.download.name, dl->queueEntry->path);
@@ -302,12 +302,10 @@ static void CL_StartHTTPDownload (dlqueue_t *entry, dlhandle_t *dl)
 	{
 		Com_Printf (S_COLOR_GREEN "[HTTP]" S_COLOR_RED " curl_multi_add_handle: error\n");
 fail:
-		dl->queueEntry->state = DL_DONE;
-		cls.download.pending--;
+		CL_FinishDownload (dl->queueEntry);
 
 		// done current batch, see if we have more to dl
-		if (!CL_PendingHTTPDownloads())
-			CL_RequestNextDownload();
+		CL_RequestNextDownload ();
 		return;
 	}
 
@@ -429,7 +427,9 @@ void CL_AbortHTTPDownloads (void)
 
 	CL_CancelHTTPDownloads ();
 
+	cls.download.current = NULL;
 	cls.download.percent = 0;
+	cls.download.position = 0;
 
 	downloadServer[0] = 0;
 	downloadReferer[0] = 0;
@@ -439,14 +439,9 @@ void CL_AbortHTTPDownloads (void)
 	{
 		q = q->next;
 		if (q->state != DL_DONE && q->type >= DL_LIST)
-		{
-			q->state = DL_DONE;
-			cls.download.pending--;
-		}
+			CL_FinishDownload (q);
 		else if (q->state == DL_RUNNING)
-		{
 			q->state = DL_PENDING;
-		}
 	}
 
 	CL_RequestNextDownload ();
@@ -524,24 +519,6 @@ qboolean CL_QueueHTTPDownload (char *quakePath, dltype_t type)
 	cls.download.pending++;
 
 	return true;
-}
-
-/*
-===============
-CL_PendingHTTPDownloads
-
-See if we're still busy with some downloads. Called by precache just
-before it loads the map since we could be downloading the map. If we're
-busy still, it'll wait and CL_FinishHTTPDownload will pick up from where
-it left.
-===============
-*/
-qboolean CL_PendingHTTPDownloads (void)
-{
-	if (!downloadServer[0])
-		return false;
-
-	return cls.download.pending + handleCount;
 }
 
 /*
@@ -674,7 +651,7 @@ static void CL_CheckAndQueueDownload (char *path)
 	}
 	else
 	{
-		CL_CheckOrDownloadFile (path);
+		CL_CheckOrDownloadFile (path, type);
 	}
 }
 
@@ -854,7 +831,7 @@ static void CL_FinishHTTPDownload (void)
 			Com_Error (ERR_DROP, "[HTTP] CL_FinishHTTPDownload: Handle not found");
 
 		// we mark everything as done, even if it errored to prevent multiple attempts.
-		dl->queueEntry->state = DL_DONE;
+		CL_FinishDownload (dl->queueEntry);
 
 		// filelist processing is done on read
 		if (dl->file)
@@ -873,7 +850,9 @@ static void CL_FinishHTTPDownload (void)
 			cls.download.pending--;
 		handleCount--;
 
+		cls.download.current = NULL;
 		cls.download.name[0] = 0;
+		cls.download.percent = 0;
 		cls.download.position = 0;
 
 		result = msg->data.result;
@@ -985,8 +964,7 @@ fatal2:
 	}
 
 	// done with current batch, see if we have more to download
-	if (cls.state == ca_connected && !CL_PendingHTTPDownloads())
-		CL_RequestNextDownload ();
+	CL_RequestNextDownload ();
 }
 
 /*
@@ -1032,10 +1010,7 @@ static void CL_StartNextHTTPDownload (void)
 		q = q->next;
 		if (q->state == DL_PENDING)
 		{
-			dlhandle_t	*dl;
-
-			dl = CL_GetFreeDLHandle();
-
+			dlhandle_t	*dl = CL_GetFreeDLHandle();
 			if (!dl)
 				return;
 

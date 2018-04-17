@@ -28,6 +28,59 @@ extern cvar_t *allow_download_maps;
 
 /*
 ===============
+CL_QueueDownload
+
+Called from the precache check to queue a download
+===============
+*/
+qboolean CL_QueueDownload (char *quakePath, dltype_t type)
+{
+	size_t		len;
+	dlqueue_t	*q;
+
+	q = &cls.download.queue;
+	while (q->next)
+	{
+		q = q->next;
+
+		// avoid sending duplicate requests
+		if (!strcmp(quakePath, q->path))
+			return true;
+	}
+
+	len = strlen(quakePath);
+	if (len >= MAX_QPATH)
+		Com_Error(ERR_DROP, "%s: oversize quake path", __func__);
+
+	q->next = Z_TagMalloc(sizeof(*q), 0);
+	q = q->next;
+
+	q->next = NULL;
+	memcpy(q->path, quakePath, len + 1);
+	q->type = type;
+	q->state = DL_PENDING;
+
+	// if a download entry has made it this far, CL_FinishDownload is guaranteed to be called.
+	cls.download.pending++;
+
+	return true;
+}
+
+/*
+===============
+CL_FinishDownload
+
+Mark the queue entry as done, decrementing pending count.
+===============
+*/
+void CL_FinishDownload (dlqueue_t *q)
+{
+	q->state = DL_DONE;
+	cls.download.pending--;
+}
+
+/*
+===============
 CL_CleanupDownloads
 
 Disconnected from server, clean up.
@@ -39,7 +92,10 @@ void CL_CleanupDownloads (void)
 	CL_CancelHTTPDownloads ();
 
 	cls.download.pending = 0;
+
+	cls.download.current = NULL;
 	cls.download.percent = 0;
+	cls.download.position = 0;
 
 	if (cls.download.file)
 	{
@@ -51,6 +107,196 @@ void CL_CleanupDownloads (void)
 	cls.download.tempname[0] = 0;
 }
 
+static qboolean CL_StartUDPDownload (dlqueue_t *q)
+{
+	char name[MAX_OSPATH];
+	size_t len;
+	FILE *fp;
+
+	len = strlen(q->path);
+	if (len >= MAX_QPATH)
+		Com_Error(ERR_DROP, "%s: oversize quake path", __func__);
+
+	// download to a temp name, and only rename
+	// to the real name when done, so if interrupted
+	// a runt file wont be left
+	memcpy(cls.download.tempname, q->path, len);
+	memcpy(cls.download.tempname + len, ".tmp", 5);
+
+	strcpy(cls.download.name, q->path);
+
+	// check to see if we already have a tmp for this file, if so, try to resume
+	// open the file if not opened yet
+	Com_sprintf(name, sizeof(name), "%s/%s", FS_Gamedir(), cls.download.tempname);
+	fp = fopen(name, "r+b");
+	if (fp) // it exists
+	{
+		int len;
+		fseek (fp, 0, SEEK_END);
+		len = ftell (fp);
+
+		cls.download.file = fp;
+		cls.download.position = len;
+
+		// give the server an offset to start the download
+		Com_Printf ("[UDP] Resuming %s\n", q->path);
+		MSG_WriteByte (&cls.netchan.message, clc_stringcmd);
+		MSG_WriteString (&cls.netchan.message, va("download %s %i", q->path, len));
+	}
+	else
+	{
+		Com_Printf ("[UDP] Downloading %s\n", q->path);
+		MSG_WriteByte (&cls.netchan.message, clc_stringcmd);
+		MSG_WriteString (&cls.netchan.message, va("download %s", q->path));
+	}
+
+	cls.forcePacket = true;
+
+	q->state = DL_RUNNING;
+	cls.download.current = q;
+	return true;
+}
+
+/*
+===============
+CL_StartNextDownload
+
+Start another UDP download if possible
+===============
+*/
+void CL_StartNextDownload (void)
+{
+	dlqueue_t *q;
+
+	if (!cls.download.pending || cls.download.current)
+		return;
+
+	q = &cls.download.queue;
+	while (q->next)
+	{
+		q = q->next;
+		if (q->state == DL_PENDING)
+		{
+			if (CL_StartUDPDownload(q))
+				break;
+		}
+	}
+}
+
+static void CL_FinishUDPDownload (char *msg)
+{
+	dlqueue_t *q = cls.download.current;
+
+	// finished with current path
+	CL_FinishDownload (q);
+
+	cls.download.current = NULL;
+	cls.download.percent = 0;
+	cls.download.position = 0;
+
+	if (cls.download.file)
+	{
+		fclose (cls.download.file);
+		cls.download.file = 0;
+	}
+
+	cls.download.name[0] = 0;
+	cls.download.tempname[0] = 0;
+
+	if (msg)
+		Com_Printf("[UDP] %s [%s] [%d remaining file%s]\n", q->path, msg, cls.download.pending,	cls.download.pending == 1 ? "" : "s");
+
+	// get another file if needed
+	CL_RequestNextDownload ();
+	CL_StartNextDownload ();
+}
+
+static int CL_WriteUDPDownload (byte *data, int size)
+{
+	size_t ret;
+
+	ret = fwrite(data, 1, size, cls.download.file);
+	if (ret != size)
+	{
+		Com_Printf("[UDP] Couldn't write %s.\n", cls.download.tempname);
+		CL_FinishUDPDownload (NULL);
+		return -1;
+	}
+
+	return 0;
+}
+
+/*
+=====================
+CL_HandleDownload
+
+A download data packet has been received from the server
+=====================
+*/
+void CL_HandleDownload (byte *data, int size, int percent)
+{
+	char name[MAX_OSPATH];
+	dlqueue_t *q = cls.download.current;
+
+	if (!q)
+		Com_Error(ERR_DROP, "%s: no download requested", __func__);
+
+	if (size == -1)
+	{
+		if (!percent)
+			CL_FinishUDPDownload ("FAIL");
+		else
+			CL_FinishUDPDownload ("STOP");
+		return;
+	}
+	
+	// open the file if not opened yet
+	if (!cls.download.file)
+	{
+		Com_sprintf (name, sizeof(name), "%s/%s", FS_Gamedir(), cls.download.tempname);
+
+		FS_CreatePath (name);
+
+		cls.download.file = fopen(name, "wb");
+		if (!cls.download.file)
+		{
+			CL_FinishUDPDownload (NULL);
+			return;
+		}
+	}
+
+	if (CL_WriteUDPDownload(data, size))
+		return;
+	
+	if (percent != 100)
+	{
+		// request next block
+		cls.download.percent = percent;
+		cls.download.position += size;
+
+		MSG_WriteByte (&cls.netchan.message, clc_stringcmd);
+		SZ_Print (&cls.netchan.message, "nextdl");
+		cls.forcePacket = true;
+	}
+	else
+	{
+		char oldn[MAX_OSPATH];
+		char newn[MAX_OSPATH];
+
+		// close the file before renaming
+		fclose (cls.download.file);
+		cls.download.file = 0;
+
+		Com_sprintf(oldn, sizeof(oldn), "%s/%s", FS_Gamedir(), cls.download.tempname);
+		Com_sprintf(newn, sizeof(newn), "%s/%s", FS_Gamedir(), q->path);
+
+		// rename the temp file to it's final name
+		FS_RenameFile (oldn, newn);
+
+		CL_FinishUDPDownload ("DONE");
+	}
+}
+
 /*
 ===============
 CL_CheckDownloadExtension
@@ -59,7 +305,7 @@ Only predefined set of filename extensions is allowed,
 to prevent the server from uploading arbitrary files.
 ===============
 */
-qboolean CL_CheckDownloadExtension(char *ext)
+qboolean CL_CheckDownloadExtension (char *ext)
 {
 	static char allowed[][4] = {
 		"pcx", "wal", "wav", "md2", "sp2", "tga", "png",
@@ -67,13 +313,13 @@ qboolean CL_CheckDownloadExtension(char *ext)
 	};
 	static int total = sizeof(allowed) / sizeof(allowed[0]);
 	int i;
-	
+
 	for (i = 0; i < total; i++)
 	{
 		if (!Q_stricmp(ext, allowed[i]))
 			return true;
 	}
-	
+
 	return false;
 }
 
@@ -85,18 +331,16 @@ Returns true if the file exists, otherwise it attempts
 to start a download from the server.
 ===============
 */
-qboolean CL_CheckOrDownloadFile (char *filename)
+qboolean CL_CheckOrDownloadFile(char *filename, dltype_t type)
 {
-	FILE 	*fp;
 	char	*p;
-	char	name[MAX_OSPATH];
 	char	*ext;
 
 	// fix backslashes
 	while ((p = strchr(filename, '\\')))
 		*p = '/';
 
-	if (FS_LoadFile (filename, NULL) != -1)
+	if (FS_LoadFile(filename, NULL) != -1)
 	{
 		// it exists, no need to download
 		return true;
@@ -117,7 +361,7 @@ qboolean CL_CheckOrDownloadFile (char *filename)
 		return true;
 	}
 
-	if (CL_QueueHTTPDownload(filename, DL_OTHER))
+	if (CL_QueueHTTPDownload(filename, type))
 	{
 		// we return true so that the precache check keeps feeding us more files.
 		// Since we have multiple HTTP connections we want to minimize latency
@@ -125,152 +369,47 @@ qboolean CL_CheckOrDownloadFile (char *filename)
 		return true;
 	}
 
-	strncpy (cls.download.name, filename, sizeof(cls.download.name) - 1);
-
-	// download to a temp name, and only rename
-	// to the real name when done, so if interrupted
-	// a runt file wont be left
-	COM_StripExtension (cls.download.name, cls.download.tempname);
-	strcat (cls.download.tempname, ".tmp");
-
-	// check to see if we already have a tmp for this file, if so, try to resume
-	// open the file if not opened yet
-	Com_sprintf (name, sizeof (name), "%s/%s", FS_Gamedir(), cls.download.tempname);
-	fp = fopen (name, "r+b");
-	if (fp) // it exists
-	{
-		int len;
-		fseek (fp, 0, SEEK_END);
-		len = ftell (fp);
-
-		cls.download.file = fp;
-
-		// give the server an offset to start the download
-		Com_Printf ("Resuming %s\n", cls.download.name);
-		MSG_WriteByte (&cls.netchan.message, clc_stringcmd);
-		MSG_WriteString (&cls.netchan.message, va ("download %s %i", cls.download.name, len));
-	}
-	else
-	{
-		Com_Printf ("Downloading %s\n", cls.download.name);
-		MSG_WriteByte (&cls.netchan.message, clc_stringcmd);
-		MSG_WriteString (&cls.netchan.message, va ("download %s", cls.download.name));
-	}
-
-	cls.forcePacket = true;
+	// queue and start legacy UDP download
+	if (CL_QueueDownload(filename, type))
+		CL_StartNextDownload();
 
 	return false;
 }
 
 /*
-===============
-CL_Download_f
+=================
+CL_DownloadsPending
 
-Request a download from the server
-===============
+for precaching dependencies
+=================
 */
-void CL_Download_f (void)
+static qboolean CL_DownloadsPending (dltype_t type)
 {
-	char 	filename[MAX_OSPATH];
+	dlqueue_t *q;
 
-	if (cls.state <= ca_connecting)
+	// DL_OTHER just checks for any download
+	if (type == DL_OTHER)
+		return !!cls.download.pending;
+
+	// see if there are pending downloads of the given type
+	q = &cls.download.queue;
+	while (q->next)
 	{
-		Com_Printf("Not connected.\n");
-		return;
+		q = q->next;
+		if (q->state != DL_DONE && q->type == type)
+			return true;
 	}
 
-	if (Cmd_Argc() != 2)
-	{
-		Com_Printf ("Usage: download <filename>\n");
-		return;
-	}
-
-	Com_sprintf (filename, sizeof (filename), "%s", Cmd_Argv (1));
-
-	CL_CheckOrDownloadFile(filename);
-}
-
-/*
-=====================
-CL_HandleDownload
-
-A download data packet has been received from the server
-=====================
-*/
-void CL_HandleDownload (byte *data, int size, int percent)
-{
-	char name[MAX_OSPATH];
-
-	if (size == -1)
-	{
-		if (!percent)
-			Com_Printf ("Server was unable to send this file.\n");
-		else
-			Com_Printf ("Server stopped the download.\n");
-		
-		if (cls.download.file)
-		{
-			// if here, we tried to resume a file but the server said no
-			fclose (cls.download.file);
-		}
-		goto another;
-	}
-	
-	// open the file if not opened yet
-	if (!cls.download.file)
-	{
-		Com_sprintf (name, sizeof(name), "%s/%s", FS_Gamedir(), cls.download.tempname);
-
-		FS_CreatePath (name);
-
-		cls.download.file = fopen(name, "wb");
-		if (!cls.download.file)
-		{
-			Com_Printf ("Couldn't open %s for writing.\n", cls.download.tempname);
-			goto another;
-		}
-	}
-
-	fwrite (data, 1, size, cls.download.file);
-	
-	if (percent != 100)
-	{
-		// request next block
-		cls.download.percent = percent;
-
-		MSG_WriteByte (&cls.netchan.message, clc_stringcmd);
-		SZ_Print (&cls.netchan.message, "nextdl");
-		cls.forcePacket = true;
-	}
-	else
-	{
-		char oldn[MAX_OSPATH];
-		char newn[MAX_OSPATH];
-
-		fclose (cls.download.file);
-
-		Com_sprintf(oldn, sizeof(oldn), "%s/%s", FS_Gamedir(), cls.download.tempname);
-		Com_sprintf(newn, sizeof(newn), "%s/%s", FS_Gamedir(), cls.download.name);
-
-		// rename the temp file to it's final name
-		FS_RenameFile (oldn, newn);
-
-another:
-		// get another file if needed
-		cls.download.failed = false;
-		cls.download.file = NULL;
-		cls.download.percent = 0;
-		cls.download.position = 0;
-		CL_RequestNextDownload ();
-	}
+	return false;
 }
 
 /*
 =================
 CL_RequestNextDownload
+
+Runs precache check and dispatches downloads
 =================
 */
-
 int precache_check; // for autodownload of precache items
 int precache_tex;
 int precache_model_skin;
@@ -302,7 +441,7 @@ void CL_RequestNextDownload (void)
 		precache_check = CS_MODELS + 2; // 0 isn't used
 
 		if (allow_download_maps->value)
-			if (!CL_CheckOrDownloadFile (cl.configstrings[CS_MODELS+1]))
+			if (!CL_CheckOrDownloadFile (cl.configstrings[CS_MODELS+1], DL_MAP))
 				return; // started a download
 	}
 
@@ -321,7 +460,7 @@ void CL_RequestNextDownload (void)
 						continue;
 					}
 
-					if (!CL_CheckOrDownloadFile(cl.configstrings[precache_check]))
+					if (!CL_CheckOrDownloadFile(cl.configstrings[precache_check], DL_MODEL))
 					{
 						precache_check++;
 						return; // started a download
@@ -332,9 +471,12 @@ void CL_RequestNextDownload (void)
 				precache_model_skin = 0;
 				precache_check = CS_MODELS + 2; // 0 isn't used
 												 
-				// pending downloads (models), let's wait here before we continue
-				if (CL_PendingHTTPDownloads())
+				if (CL_DownloadsPending(DL_MODEL))
+				{
+					// pending downloads (models), let's wait here before we can check skins.
+					Com_DPrintf("%s: waiting for models...\n", __func__);
 					return;
+				}
 			}
 
 			// checking for skins
@@ -382,7 +524,7 @@ void CL_RequestNextDownload (void)
 
 				while (precache_model_skin < LittleLong (pheader->num_skins))
 				{
-					if (!CL_CheckOrDownloadFile ((char *) precache_model + LittleLong (pheader->ofs_skins) + (precache_model_skin) * MAX_SKINNAME))
+					if (!CL_CheckOrDownloadFile ((char *) precache_model + LittleLong (pheader->ofs_skins) + (precache_model_skin) * MAX_SKINNAME, DL_OTHER))
 					{
 						precache_model_skin++;
 						return; // started a download
@@ -402,9 +544,12 @@ void CL_RequestNextDownload (void)
 			}
 		}
 
-		// pending downloads (models), let's wait here before we continue
-		if (CL_PendingHTTPDownloads())
+		if (CL_DownloadsPending(DL_MODEL))
+		{
+			// pending downloads (models), let's wait here before we can check skins.
+			Com_DPrintf("%s: waiting for models...\n", __func__);
 			return;
+		}
 
 		precache_check = CS_SOUNDS;
 	}
@@ -426,7 +571,7 @@ void CL_RequestNextDownload (void)
 
 				Com_sprintf (fn, sizeof (fn), "sound/%s", cl.configstrings[precache_check++]);
 
-				if (!CL_CheckOrDownloadFile (fn))
+				if (!CL_CheckOrDownloadFile (fn, DL_OTHER))
 					return; // started a download
 			}
 		}
@@ -448,7 +593,7 @@ void CL_RequestNextDownload (void)
 			else
 				Q_concat (fn, sizeof(fn), "pics/", picname, ".pcx", NULL);
 
-			if (!CL_CheckOrDownloadFile (fn))
+			if (!CL_CheckOrDownloadFile (fn, DL_OTHER))
 				return; // started a download
 		}
 
@@ -498,7 +643,7 @@ void CL_RequestNextDownload (void)
 				case 0: // model
 					Com_sprintf (fn, sizeof (fn), "players/%s/tris.md2", model);
 
-					if (!CL_CheckOrDownloadFile (fn))
+					if (!CL_CheckOrDownloadFile (fn, DL_MODEL))
 					{
 						precache_check = CS_PLAYERSKINS + i * PLAYER_MULT + 1;
 						return; // started a download
@@ -510,7 +655,7 @@ void CL_RequestNextDownload (void)
 				case 1: // weapon model
 					Com_sprintf (fn, sizeof (fn), "players/%s/weapon.md2", model);
 
-					if (!CL_CheckOrDownloadFile (fn))
+					if (!CL_CheckOrDownloadFile (fn, DL_MODEL))
 					{
 						precache_check = CS_PLAYERSKINS + i * PLAYER_MULT + 2;
 						return; // started a download
@@ -522,7 +667,7 @@ void CL_RequestNextDownload (void)
 				case 2: // weapon skin
 					Com_sprintf (fn, sizeof (fn), "players/%s/weapon.pcx", model);
 
-					if (!CL_CheckOrDownloadFile (fn))
+					if (!CL_CheckOrDownloadFile (fn, DL_OTHER))
 					{
 						precache_check = CS_PLAYERSKINS + i * PLAYER_MULT + 3;
 						return; // started a download
@@ -534,7 +679,7 @@ void CL_RequestNextDownload (void)
 				case 3: // skin
 					Com_sprintf (fn, sizeof (fn), "players/%s/%s.pcx", model, skin);
 
-					if (!CL_CheckOrDownloadFile (fn))
+					if (!CL_CheckOrDownloadFile (fn, DL_OTHER))
 					{
 						precache_check = CS_PLAYERSKINS + i * PLAYER_MULT + 4;
 						return; // started a download
@@ -546,7 +691,7 @@ void CL_RequestNextDownload (void)
 				case 4: // skin_i
 					Com_sprintf (fn, sizeof (fn), "players/%s/%s_i.pcx", model, skin);
 
-					if (!CL_CheckOrDownloadFile (fn))
+					if (!CL_CheckOrDownloadFile (fn, DL_OTHER))
 					{
 						precache_check = CS_PLAYERSKINS + i * PLAYER_MULT + 5;
 						return; // started a download
@@ -574,9 +719,12 @@ void CL_RequestNextDownload (void)
 		}
 	}
 
-	// map might still be downloading, so wait up a sec
-	if (CL_PendingHTTPDownloads())
+	if (CL_DownloadsPending(DL_MAP))
+	{
+		// map might still be downloading?
+		Com_DPrintf("%s: waiting for maps...\n", __func__);
 		return;
+	}
 
 	if (precache_check > ENV_CNT && precache_check < TEXTURE_CNT)
 	{
@@ -590,7 +738,7 @@ void CL_RequestNextDownload (void)
 					Com_sprintf (fn, sizeof (fn), "env/%s%s.pcx", cl.configstrings[CS_SKY], env_suf[n / 2]);
 				else Com_sprintf (fn, sizeof (fn), "env/%s%s.tga", cl.configstrings[CS_SKY], env_suf[n / 2]);
 
-				if (!CL_CheckOrDownloadFile (fn))
+				if (!CL_CheckOrDownloadFile (fn, DL_OTHER))
 					return; // started a download
 			}
 		}
@@ -619,7 +767,7 @@ void CL_RequestNextDownload (void)
 
 				sprintf (fn, "textures/%s.wal", map_surfaces[precache_tex++].rname);
 
-				if (!CL_CheckOrDownloadFile (fn))
+				if (!CL_CheckOrDownloadFile (fn, DL_OTHER))
 					return; // started a download
 			}
 		}
@@ -627,9 +775,12 @@ void CL_RequestNextDownload (void)
 		precache_check = TEXTURE_CNT + 999;
 	}
 
-	// could be pending downloads (possibly textures), so let's wait here.
-	if (CL_PendingHTTPDownloads())
+	if (CL_DownloadsPending(DL_OTHER))
+	{
+		// pending downloads (models), let's wait here before we can check skins.
+		Com_DPrintf("%s: waiting for others...\n", __func__);
 		return;
+	}
 
 	// all done, tell server we are ready
 	CL_Begin();
@@ -651,3 +802,30 @@ void CL_ResetPrecacheCheck(void)
 	precache_model_skin = -1;
 }
 
+/*
+===============
+CL_Download_f
+
+Request a download from the server
+===============
+*/
+void CL_Download_f(void)
+{
+	char filename[MAX_OSPATH];
+
+	if (cls.state <= ca_connecting)
+	{
+		Com_Printf("Not connected.\n");
+		return;
+	}
+
+	if (Cmd_Argc() != 2)
+	{
+		Com_Printf("Usage: download <filename>\n");
+		return;
+	}
+
+	Com_sprintf(filename, sizeof(filename), "%s", Cmd_Argv(1));
+
+	CL_CheckOrDownloadFile(filename, DL_OTHER);
+}

@@ -278,13 +278,14 @@ typedef struct
 
 	// file transfer from server
 	struct {
+		dlqueue_t   *current; // current path being downloaded
 		dlqueue_t	queue; // path being downloaded
 		int         pending; // number of non-finished entries in queue
 		char		tempname[MAX_OSPATH + 4]; // account 4 bytes for .tmp suffix
 		char		name[MAX_OSPATH];
 		FILE		*file; // UDP file transfer from server
 		int			percent; // how much downloaded
-		size_t		position;
+		size_t		position; // how much downloaded (in bytes)
 		qboolean	failed;
 	} download;
 
@@ -656,13 +657,14 @@ void CL_DrawInventory (void);
 //
 // cl_download.c
 //
+void CL_FinishDownload (dlqueue_t *q);
 void CL_CleanupDownloads (void);
 qboolean CL_CheckDownloadExtension (char *ext);
 void CL_Download_f (void);
 void CL_HandleDownload (byte *data, int size, int percent);
 void CL_RequestNextDownload (void);
 void CL_ResetPrecacheCheck (void);
-qboolean CL_CheckOrDownloadFile (char *filename);
+qboolean CL_CheckOrDownloadFile (char *filename, dltype_t type);
 
 //
 // cl_http.c
@@ -671,7 +673,6 @@ void CL_CancelHTTPDownloads (void);
 void CL_InitHTTPDownloads (void);
 qboolean CL_QueueHTTPDownload (char *quakePath, dltype_t type);
 void CL_RunHTTPDownloads (void);
-qboolean CL_PendingHTTPDownloads (void);
 void CL_SetHTTPServer (const char *URL);
 void CL_HTTP_Cleanup (qboolean fullShutdown);
 
