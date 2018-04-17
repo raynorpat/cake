@@ -190,126 +190,159 @@ void CL_ParseBaseline (void)
 	CL_ParseDelta (&nullstate, es, newnum, bits);
 }
 
+/*
+================
+CL_ParsePlayerSkin
+
+Breaks up playerskin into name (optional), model and skin components.
+If model or skin are found to be invalid, replaces them with sane defaults.
+================
+*/
+void CL_ParsePlayerSkin (char *name, char *model, char *skin, char *s)
+{
+	size_t len;
+	char *t;
+
+	// configstring parsing guarantees that playerskins can never
+	// overflow, but still check the length to be entirely fool-proof
+	len = strlen (s);
+	if (len >= MAX_QPATH)
+		Com_Error(ERR_DROP, "%s: oversize playerskin", __func__);
+
+	// isolate the player's name
+	t = strchr(s, '\\');
+	if (t)
+	{
+		len = t - s;
+		strcpy(model, t + 1);
+	}
+	else
+	{
+		len = 0;
+		strcpy(model, s);
+	}
+
+	// copy the player's name
+	if (name)
+	{
+		memcpy(name, s, len);
+		name[len] = 0;
+	}
+
+	// isolate the model name
+	t = strchr (model, '/');
+	if (!t)
+		t = strchr (model, '\\');
+	if (!t)
+		t = model;
+	if (t == model)
+		goto default_model;
+	*t++ = 0;
+
+	// apply restrictions on skins
+	if (cl_noskins->integer == 2)
+		goto default_skin;
+	if (cl_noskins->integer)
+		goto default_model;
+
+	// isolate the skin name
+	strcpy (skin, t);
+	return;
+
+default_skin:
+	if (!Q_stricmp(model, "female"))
+	{
+		strcpy (model, "female");
+		strcpy (skin, "athena");
+	}
+	else
+	{
+default_model:
+		strcpy (model, "male");
+		strcpy (skin, "grunt");
+	}
+}
 
 /*
 ================
 CL_LoadClientinfo
-
 ================
 */
 void CL_LoadClientinfo (clientinfo_t *ci, char *s)
 {
 	int i;
-	char		*t;
-	char		model_name[MAX_QPATH];
-	char		skin_name[MAX_QPATH];
-	char		model_filename[MAX_QPATH];
-	char		skin_filename[MAX_QPATH];
-	char		weapon_filename[MAX_QPATH];
+	char model_name[MAX_QPATH];
+	char skin_name[MAX_QPATH];
+	char model_filename[MAX_QPATH];
+	char skin_filename[MAX_QPATH];
+	char weapon_filename[MAX_QPATH];
 
-	strncpy (ci->cinfo, s, sizeof (ci->cinfo));
-	ci->cinfo[sizeof (ci->cinfo)-1] = 0;
+	CL_ParsePlayerSkin (ci->name, model_name, skin_name, s);
 
-	// isolate the player's name
-	strncpy (ci->name, s, sizeof (ci->name));
-	ci->name[sizeof (ci->name)-1] = 0;
-	t = strstr (s, "\\");
-
-	if (t)
+	// model file
+	Q_concat (model_filename, sizeof(model_filename), "players/", model_name, "/tris.md2", NULL);
+	ci->model = RE_RegisterModel (model_filename);
+	if (!ci->model && Q_stricmp(model_name, "male"))
 	{
-		ci->name[t-s] = 0;
-		s = t + 1;
+		strcpy (model_name, "male");
+		strcpy (model_filename, "players/male/tris.md2");
+		ci->model = RE_RegisterModel (model_filename);
 	}
 
-	if (cl_noskins->value || *s == 0)
+	// skin file
+	Q_concat (skin_filename, sizeof(skin_filename), "players/", model_name, "/", skin_name, ".pcx", NULL);
+	ci->skin = RE_RegisterSkin (skin_filename);
+
+	// if we don't have the skin and the model was female,
+	// see if athena skin exists
+	if (!ci->skin && !Q_stricmp(model_name, "female"))
 	{
-		Com_sprintf (model_filename, sizeof (model_filename), "players/male/tris.md2");
-		Com_sprintf (weapon_filename, sizeof (weapon_filename), "players/male/weapon.md2");
-		Com_sprintf (skin_filename, sizeof (skin_filename), "players/male/grunt.pcx");
-		Com_sprintf (ci->iconname, sizeof (ci->iconname), "/players/male/grunt_i.pcx");
-		ci->model = RE_RegisterModel (model_filename);
-		memset (ci->weaponmodel, 0, sizeof (ci->weaponmodel));
-		ci->weaponmodel[0] = RE_RegisterModel (weapon_filename);
+		strcpy (skin_name, "athena");
+		strcpy (skin_filename, "players/female/athena.pcx");
 		ci->skin = RE_RegisterSkin (skin_filename);
-		ci->icon = RE_Draw_RegisterPic (ci->iconname);
 	}
-	else
+
+	// if we don't have the skin and the model wasn't male,
+	// see if the male has it (this is for CTF's skins)
+	if (!ci->skin && Q_stricmp(model_name, "male"))
 	{
-		// isolate the model name
-		strcpy (model_name, s);
-		t = strstr (model_name, "/");
-
-		if (!t)
-			t = strstr (model_name, "\\");
-
-		if (!t)
-			t = model_name;
-
-		*t = 0;
-
-		// isolate the skin name
-		strcpy (skin_name, s + strlen (model_name) + 1);
-
-		// model file
-		Com_sprintf (model_filename, sizeof (model_filename), "players/%s/tris.md2", model_name);
+		// change model to male
+		strcpy (model_name, "male");
+		strcpy (model_filename, "players/male/tris.md2");
 		ci->model = RE_RegisterModel (model_filename);
 
-		if (!ci->model)
-		{
-			strcpy (model_name, "male");
-			Com_sprintf (model_filename, sizeof (model_filename), "players/male/tris.md2");
-			ci->model = RE_RegisterModel (model_filename);
-		}
-
-		// skin file
-		Com_sprintf (skin_filename, sizeof (skin_filename), "players/%s/%s.pcx", model_name, skin_name);
+		// see if the skin exists for the male model
+		Q_concat (skin_filename, sizeof(skin_filename), "players/male/", skin_name, ".pcx", NULL);
 		ci->skin = RE_RegisterSkin (skin_filename);
+	}
 
-		// if we don't have the skin and the model wasn't male,
-		// see if the male has it (this is for CTF's skins)
-		if (!ci->skin && Q_stricmp (model_name, "male"))
+	// if we still don't have a skin, it means that the male model didn't have it, so default to grunt
+	if (!ci->skin)
+	{
+		// see if the skin exists for the male model
+		strcpy (skin_name, "grunt");
+		strcpy (skin_filename, "players/male/grunt.pcx");
+		ci->skin = RE_RegisterSkin (skin_filename);
+	}
+
+	// weapon file
+	for (i = 0; i < num_cl_weaponmodels; i++)
+	{
+		Q_concat (weapon_filename, sizeof(weapon_filename), "players/", model_name, "/", cl_weaponmodels[i], NULL);
+		ci->weaponmodel[i] = RE_RegisterModel (weapon_filename);
+
+		if (!ci->weaponmodel[i] && Q_stricmp(model_name, "male"))
 		{
-			// change model to male
-			strcpy (model_name, "male");
-			Com_sprintf (model_filename, sizeof (model_filename), "players/male/tris.md2");
-			ci->model = RE_RegisterModel (model_filename);
-
-			// see if the skin exists for the male model
-			Com_sprintf (skin_filename, sizeof (skin_filename), "players/%s/%s.pcx", model_name, skin_name);
-			ci->skin = RE_RegisterSkin (skin_filename);
-		}
-
-		// if we still don't have a skin, it means that the male model didn't have
-		// it, so default to grunt
-		if (!ci->skin)
-		{
-			// see if the skin exists for the male model
-			Com_sprintf (skin_filename, sizeof (skin_filename), "players/%s/grunt.pcx", model_name, skin_name);
-			ci->skin = RE_RegisterSkin (skin_filename);
-		}
-
-		// weapon file
-		for (i = 0; i < num_cl_weaponmodels; i++)
-		{
-			Com_sprintf (weapon_filename, sizeof (weapon_filename), "players/%s/%s", model_name, cl_weaponmodels[i]);
+			// try male
+			Q_concat (weapon_filename, sizeof(weapon_filename), "players/male/", cl_weaponmodels[i], NULL);
 			ci->weaponmodel[i] = RE_RegisterModel (weapon_filename);
-
-			if (!ci->weaponmodel[i] && strcmp (model_name, "cyborg") == 0)
-			{
-				// try male
-				Com_sprintf (weapon_filename, sizeof (weapon_filename), "players/male/%s", cl_weaponmodels[i]);
-				ci->weaponmodel[i] = RE_RegisterModel (weapon_filename);
-			}
-
-			if (!cl_vwep->value)
-				break; // only one when vwep is off
 		}
-
-		// icon file
-		Com_sprintf (ci->iconname, sizeof (ci->iconname), "/players/%s/%s_i.pcx", model_name, skin_name);
-		ci->icon = RE_Draw_RegisterPic (ci->iconname);
 	}
 
+	// icon file
+	Q_concat (ci->iconname, sizeof(ci->iconname), "/players/", model_name, "/", skin_name, "_i.pcx", NULL);
+	ci->icon = RE_Draw_RegisterPic (ci->iconname);
+	
 	// must have loaded all data types to be valud
 	if (!ci->skin || !ci->icon || !ci->model || !ci->weaponmodel[0])
 	{

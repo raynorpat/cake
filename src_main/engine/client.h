@@ -530,6 +530,7 @@ void CL_Record_f (void);
 extern	char *svc_strings[256];
 
 void CL_ParseServerMessage (void);
+void CL_ParsePlayerSkin (char *name, char *model, char *skin, char *s);
 void CL_LoadClientinfo (clientinfo_t *ci, char *s);
 void SHOWNET (char *s);
 void CL_ParseClientinfo (int player);
