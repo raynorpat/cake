@@ -206,6 +206,7 @@ extern long Q_ftol (float f);
 void Q_sincos (float angradians, float *angsin, float *angcos);
 
 #define DotProduct(x,y)			(x[0]*y[0]+x[1]*y[1]+x[2]*y[2])
+#define VectorAvg(a,b,c)        ((c)[0]=((a)[0]+(b)[0])*0.5f, (c)[1]=((a)[1]+(b)[1])*0.5f, (c)[2]=((a)[2]+(b)[2])*0.5f)
 #define VectorSubtract(a,b,dst)	(dst[0]=a[0]-b[0],dst[1]=a[1]-b[1],dst[2]=a[2]-b[2])
 #define VectorAdd(a,b,dst)		(dst[0]=a[0]+b[0],dst[1]=a[1]+b[1],dst[2]=a[2]+b[2])
 #define VectorCopy(src,dst)		(dst[0]=src[0],dst[1]=src[1],dst[2]=src[2])

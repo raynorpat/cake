@@ -1263,17 +1263,34 @@ CL_GetEntitySoundOrigin
 Called to get the sound spatialization origin
 ===============
 */
-void CL_GetEntitySoundOrigin (int ent, vec3_t org)
+extern vec3_t listener_origin;
+void CL_GetEntitySoundOrigin (int entnum, vec3_t org)
 {
-	centity_t	*old;
+	centity_t *ent;
+	cmodel_t *cm;
+	vec3_t mid;
 
-	if (ent < 0 || ent >= MAX_EDICTS)
-		Com_Error (ERR_DROP, "CL_GetEntitySoundOrigin: bad ent");
+	if (!entnum)
+	{
+		// should this ever happen?
+		VectorCopy (listener_origin, org);
+		return;
+	}
 
-	old = &cl_entities[ent];
-	VectorCopy (old->lerp_origin, org);
+	// interpolate origin
+	ent = &cl_entities[entnum];
+	VectorCopy (ent->lerp_origin, org);
 
-	// FIXME: bmodel issues...
+	// offset the origin for BSP models
+	if (ent->current.solid == 31) // a solid_bbox will never create this value
+	{
+		cm = cl.model_clip[ent->current.modelindex];
+		if (cm)
+		{
+			VectorAvg (cm->mins, cm->maxs, mid);
+			VectorAdd (org, mid, org);
+		}
+	}
 }
 
 /*
@@ -1283,7 +1300,7 @@ CL_GetEntitySoundVelocity
 Called to get the sound spatialization velocity
 ===============
 */
-void CL_GetEntitySoundVelocity (int ent, vec3_t vel)
+void CL_GetEntitySoundVelocity (int entnum, vec3_t vel)
 {
 	centity_t *old;
 
