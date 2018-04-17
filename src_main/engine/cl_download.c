@@ -444,8 +444,19 @@ void CL_RequestNextDownload (void)
 	if (cls.state != ca_connected)
 		return;
 
-	if (!allow_download->value && precache_check < ENV_CNT)
-		precache_check = ENV_CNT;
+	// if downloads are disabled or running locally, skip downloading
+	if (!allow_download->integer || NET_IsLocalAddress(cls.netchan.remote_address))
+	{
+		CM_LoadMap(cl.configstrings[CS_MODELS + 1], true, &map_checksum);
+		if (map_checksum != atoi(cl.configstrings[CS_MAPCHECKSUM]))
+		{
+			Com_Error(ERR_DROP, "Local map version differs from server: %i != '%s'\n", map_checksum, cl.configstrings[CS_MAPCHECKSUM]);
+			return;
+		}
+
+		CL_Begin();
+		return;
+	}
 
 	if (precache_check == CS_MODELS)  // confirm map
 	{
@@ -961,5 +972,6 @@ void CL_Download_f(void)
 
 	Com_sprintf(filename, sizeof(filename), "%s", Cmd_Argv(1));
 
-	CL_CheckOrDownloadFile(filename, DL_OTHER);
+	if (CL_CheckOrDownloadFile(filename, DL_OTHER))
+		Com_Printf(S_COLOR_RED "Couldn't download %s.\n");
 }
