@@ -286,7 +286,6 @@ typedef struct
 		FILE		*file; // UDP file transfer from server
 		int			percent; // how much downloaded
 		size_t		position; // how much downloaded (in bytes)
-		qboolean	failed;
 	} download;
 
 	// for gamespy
@@ -364,6 +363,7 @@ extern	cvar_t	*cl_http_downloads;
 extern	cvar_t	*cl_http_filelists;
 extern	cvar_t	*cl_http_proxy;
 extern	cvar_t	*cl_http_max_connections;
+extern	cvar_t	*cl_http_default_url;
 
 typedef struct
 {
@@ -657,24 +657,25 @@ void CL_DrawInventory (void);
 //
 // cl_download.c
 //
+qboolean CL_QueueDownload (char *quakePath, dltype_t type);
 void CL_FinishDownload (dlqueue_t *q);
 void CL_CleanupDownloads (void);
-qboolean CL_CheckDownloadExtension (char *ext);
-void CL_Download_f (void);
 void CL_HandleDownload (byte *data, int size, int percent);
+qboolean CL_CheckDownloadExtension (char *ext);
+void CL_StartNextDownload (void);
 void CL_RequestNextDownload (void);
 void CL_ResetPrecacheCheck (void);
-qboolean CL_CheckOrDownloadFile (char *filename, dltype_t type);
+void CL_Download_f (void);
 
 //
 // cl_http.c
 //
-void CL_CancelHTTPDownloads (void);
+void CL_CleanupHTTPDownloads (void);
 void CL_InitHTTPDownloads (void);
+void CL_ShutdownHTTPDownloads (void);
 qboolean CL_QueueHTTPDownload (char *quakePath, dltype_t type);
 void CL_RunHTTPDownloads (void);
 void CL_SetHTTPServer (const char *URL);
-void CL_HTTP_Cleanup (qboolean fullShutdown);
 
 //
 // cl_avi.c

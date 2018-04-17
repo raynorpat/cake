@@ -658,10 +658,10 @@ void CL_Disconnect (void)
 	Netchan_Transmit (&cls.netchan, strlen (final), final);
 	Netchan_Transmit (&cls.netchan, strlen (final), final);
 
-	CL_ClearState ();
-
-	// stop download
+	// stop downloads
 	CL_CleanupDownloads ();
+
+	CL_ClearState ();
 
 	cls.servername[0] = '\0';
 	cls.state = ca_disconnected;
@@ -1267,10 +1267,11 @@ void CL_InitLocal (void)
 
 	cl_lightlevel = Cvar_Get ("r_lightlevel", "0", 0);
 
-	cl_http_proxy = Cvar_Get("cl_http_proxy", "", 0);
-	cl_http_filelists = Cvar_Get("cl_http_filelists", "1", 0);
-	cl_http_downloads = Cvar_Get("cl_http_downloads", "1", 0);
-	cl_http_max_connections = Cvar_Get("cl_http_max_connections", "2", 0);
+	cl_http_proxy = Cvar_Get ("cl_http_proxy", "", 0);
+	cl_http_filelists = Cvar_Get ("cl_http_filelists", "1", 0);
+	cl_http_downloads = Cvar_Get ("cl_http_downloads", "1", 0);
+	cl_http_max_connections = Cvar_Get ("cl_http_max_connections", "2", 0);
+	cl_http_default_url = Cvar_Get ("cl_http_default_url", "", 0);
 
 	// userinfo
 	info_password = Cvar_Get ("password", "", CVAR_USERINFO);
@@ -1626,7 +1627,7 @@ void CL_Shutdown (void)
 
 	CL_WriteConfiguration ();
 
-	CL_HTTP_Cleanup(true);
+	CL_ShutdownHTTPDownloads ();
 	S_Shutdown ();
 	IN_Shutdown ();
 	VID_Shutdown ();

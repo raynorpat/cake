@@ -52,7 +52,7 @@ qboolean CL_QueueDownload (char *quakePath, dltype_t type)
 	if (len >= MAX_QPATH)
 		Com_Error(ERR_DROP, "%s: oversize quake path", __func__);
 
-	q->next = Z_TagMalloc(sizeof(*q), 0);
+	q->next = Z_TagMalloc(sizeof(*q) + len, 0);
 	q = q->next;
 
 	q->next = NULL;
@@ -88,20 +88,39 @@ Disconnected from server, clean up.
 */
 void CL_CleanupDownloads (void)
 {
-	// cancel any http downloads
-	CL_CancelHTTPDownloads ();
+//	dlqueue_t *q, *last;
+
+	// cleanup any http downloads
+	CL_CleanupHTTPDownloads ();
+
+#if 0
+	last = NULL;
+	q = &cls.download.queue;
+	while (q->next)
+	{
+		q = q->next;
+		if (last)
+			Z_Free (last);
+		last = q;
+	}
+
+	if (last)
+		Z_Free (last);
+#endif
+
+	if (cls.download.file)
+	{
+		fclose(cls.download.file);
+		cls.download.file = 0;
+	}
+
+	memset (&cls.download, 0, sizeof(cls.download));
 
 	cls.download.pending = 0;
 
 	cls.download.current = NULL;
 	cls.download.percent = 0;
 	cls.download.position = 0;
-
-	if (cls.download.file)
-	{
-		fclose (cls.download.file);
-		cls.download.file = 0;
-	}
 
 	cls.download.name[0] = 0;
 	cls.download.tempname[0] = 0;
@@ -118,8 +137,7 @@ static qboolean CL_StartUDPDownload (dlqueue_t *q)
 		Com_Error(ERR_DROP, "%s: oversize quake path", __func__);
 
 	// download to a temp name, and only rename
-	// to the real name when done, so if interrupted
-	// a runt file wont be left
+	// to the real name when done, so if interrupted a runt file wont be left
 	memcpy(cls.download.tempname, q->path, len);
 	memcpy(cls.download.tempname + len, ".tmp", 5);
 
@@ -139,13 +157,13 @@ static qboolean CL_StartUDPDownload (dlqueue_t *q)
 		cls.download.position = len;
 
 		// give the server an offset to start the download
-		Com_Printf ("[UDP] Resuming %s\n", q->path);
+		Com_Printf (S_COLOR_GREEN "[UDP]" S_COLOR_WHITE " Resuming %s\n", q->path);
 		MSG_WriteByte (&cls.netchan.message, clc_stringcmd);
 		MSG_WriteString (&cls.netchan.message, va("download %s %i", q->path, len));
 	}
 	else
 	{
-		Com_Printf ("[UDP] Downloading %s\n", q->path);
+		Com_Printf (S_COLOR_GREEN "[UDP]" S_COLOR_WHITE " Downloading %s\n", q->path);
 		MSG_WriteByte (&cls.netchan.message, clc_stringcmd);
 		MSG_WriteString (&cls.netchan.message, va("download %s", q->path));
 	}
@@ -204,7 +222,7 @@ static void CL_FinishUDPDownload (char *msg)
 	cls.download.tempname[0] = 0;
 
 	if (msg)
-		Com_Printf("[UDP] %s [%s] [%d remaining file%s]\n", q->path, msg, cls.download.pending,	cls.download.pending == 1 ? "" : "s");
+		Com_Printf(S_COLOR_GREEN "[UDP]" S_COLOR_WHITE " [%s] %s [%d remaining file%s]\n", q->path, msg, cls.download.pending,	cls.download.pending == 1 ? "" : "s");
 
 	// get another file if needed
 	CL_RequestNextDownload ();
@@ -218,7 +236,7 @@ static int CL_WriteUDPDownload (byte *data, int size)
 	ret = fwrite(data, 1, size, cls.download.file);
 	if (ret != size)
 	{
-		Com_Printf("[UDP] Couldn't write %s.\n", cls.download.tempname);
+		Com_Printf(S_COLOR_GREEN "[UDP]" S_COLOR_RED " Couldn't write %s.\n", cls.download.tempname);
 		CL_FinishUDPDownload (NULL);
 		return -1;
 	}
@@ -331,7 +349,7 @@ Returns true if the file exists, otherwise it attempts
 to start a download from the server.
 ===============
 */
-qboolean CL_CheckOrDownloadFile(char *filename, dltype_t type)
+static qboolean CL_CheckOrDownloadFile (char *filename, dltype_t type)
 {
 	char	*p;
 	char	*ext;
@@ -361,15 +379,11 @@ qboolean CL_CheckOrDownloadFile(char *filename, dltype_t type)
 		return true;
 	}
 
+	// queue and start HTTP download
 	if (CL_QueueHTTPDownload(filename, type))
-	{
-		// we return true so that the precache check keeps feeding us more files.
-		// Since we have multiple HTTP connections we want to minimize latency
-		// and be constantly sending requests, not one at a time.
 		return true;
-	}
 
-	// queue and start legacy UDP download
+	// queue and start UDP download
 	if (CL_QueueDownload(filename, type))
 		CL_StartNextDownload();
 
@@ -443,6 +457,13 @@ void CL_RequestNextDownload (void)
 		if (allow_download_maps->value)
 			if (!CL_CheckOrDownloadFile (cl.configstrings[CS_MODELS+1], DL_MAP))
 				return; // started a download
+	}
+
+	if (CL_DownloadsPending(DL_MAP))
+	{
+		// map might still be downloading?
+		Com_DPrintf("%s: waiting for maps...\n", __func__);
+		return;
 	}
 
 	if (precache_check >= CS_MODELS && precache_check < CS_MODELS + MAX_MODELS)

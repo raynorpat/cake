@@ -562,12 +562,8 @@ void CL_ParseServerMessage (void)
 		case svc_reconnect:
 			Com_Printf ("Server disconnected, reconnecting\n");
 
-			if (cls.download.file)
-			{
-				// close download file
-				fclose (cls.download.file);
-			}
-			memset (&cls.download, 0, sizeof(cls.download));
+			// stop downloads
+			CL_CleanupDownloads ();
 
 			cls.state = ca_connecting;
 			cls.connect_time = -99999;	// CL_CheckForResend() will fire immediately
