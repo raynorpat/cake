@@ -907,6 +907,7 @@ success:
 	RMain_CheckExtension("GL_ARB_seamless_cube_map ");
 	RMain_CheckExtension("GL_ARB_uniform_buffer_object ");
 	RMain_CheckExtension("GL_ARB_separate_shader_objects ");
+	RMain_CheckExtension("GL_ARB_texture_gather ");
 
 	// we have to check for direct state access separate from the others
 	// due to weird issues across GPUs

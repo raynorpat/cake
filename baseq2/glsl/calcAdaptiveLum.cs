@@ -17,4 +17,3 @@ void main()
 
 	imageStore(image1, ivec2(0, 0), vec4(newLum, newLum, newLum, newLum));
 }
-

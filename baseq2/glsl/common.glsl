@@ -1,9 +1,6 @@
 
 // common.glsl
 
-#extension GL_EXT_texture_array : enable
-#extension GL_ARB_texture_gather : require
-
 const float pi = 3.14159265;
 const float gamma = 2.2;
 const vec4 LUMINANCE_VECTOR = vec4(0.2125, 0.7154, 0.0721, 0.0);

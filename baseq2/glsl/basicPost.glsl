@@ -25,7 +25,6 @@ uniform sampler2D gradient;
 
 uniform vec4 surfcolor;
 uniform int waterwarppost;
-uniform vec2 texScale;
 uniform vec2 brightnessContrastAmount;
 uniform vec2 rescale;
 
@@ -33,7 +32,7 @@ out vec4 fragColor;
 
 void BasicPostFS ()
 {
-	vec2 st = gl_FragCoord.st * texScale;
+	vec2 st = gl_FragCoord.st * r_FBufScale;
 	vec4 scene;
 
 	// mix in water warp post effect

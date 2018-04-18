@@ -3,7 +3,6 @@
 // http://developer.download.nvidia.com/assets/gamedev/files/sdk/11/FXAA_WhitePaper.pdf
 // http://iryoku.com/aacourse/downloads/09-FXAA-3.11-in-15-Slides.pdf
 // http://horde3d.org/wiki/index.php5?title=Shading_Technique_-_FXAA
-#extension GL_ARB_gpu_shader5 : require
 
 // common
 INOUTTYPE vec4 texcoords;
@@ -25,13 +24,11 @@ void FXAAVS ()
 #ifdef FRAGMENTSHADER
 uniform sampler2D diffuse;
 
-uniform vec2 texScale;
-
 out vec4 fragColor;
 
 void FXAAFS ()
 {
-	vec2 st = gl_FragCoord.st * texScale;
+	vec2 st = gl_FragCoord.st * r_FBufScale;
 	vec3 rgbM = texture(diffuse, st).rgb;
 	
 	float u_lumaThreshold = 0.5;

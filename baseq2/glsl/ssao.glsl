@@ -26,7 +26,6 @@ void SSAOVS ()
 uniform sampler2D depthmap;
 
 uniform vec3 zFar;
-uniform vec2 texScale;
 
 const float haloCutoff = 15.0;
 
@@ -48,8 +47,8 @@ vec4 rangeTest(vec4 diff1, vec4 diff2, vec4 deltaX, vec4 deltaY) {
 
 // Based on AMD HDAO, adapted for lack of normals
 void computeOcclusionForQuad( in vec2 centerTC, in float centerDepth, in vec2 quadOffset, inout vec4 occlusion, inout vec4 total ) {
-	vec2 tc1 = centerTC + quadOffset * texScale;
-	vec2 tc2 = centerTC - quadOffset * texScale;
+	vec2 tc1 = centerTC + quadOffset * r_FBufScale;
+	vec2 tc2 = centerTC - quadOffset * r_FBufScale;
 
 	vec4 x = vec4( -0.5, 0.5, 0.5, -0.5 ) + quadOffset.x;
 	vec4 y = vec4( 0.5, 0.5, -0.5, -0.5 ) + quadOffset.y;
@@ -79,7 +78,7 @@ out vec4 fragColor;
 
 void SSAOFS ()
 {
-	vec2 st = gl_FragCoord.st * texScale;
+	vec2 st = gl_FragCoord.st * r_FBufScale;
 
 	vec4 color = vec4( 0.0 );
 	vec4 occlusion = vec4( 0.0 );

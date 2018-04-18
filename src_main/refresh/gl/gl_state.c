@@ -76,7 +76,6 @@ void GL_Clear(GLbitfield mask)
 	glClear(mask);
 }
 
-
 void GL_GetShaderInfoLog(GLuint s, char *src, qboolean isprog)
 {
 	static char infolog[4096] = { 0 };
@@ -89,62 +88,87 @@ void GL_GetShaderInfoLog(GLuint s, char *src, qboolean isprog)
 	else glGetShaderInfoLog(s, 4095, &outlen, infolog);
 
 	if (outlen && infolog[0])
-	{
 		VID_Printf(PRINT_ALL, S_COLOR_RED "%s", infolog);
-	}
 }
 
+static void GL_GetShaderHeader (GLenum shadertype, GLchar *entrypoint, char *dest, int size)
+{
+	float fbufWidthScale, fbufHeightScale;
+
+	memset (dest, 0, sizeof(dest));
+
+	// shader version string
+	Q_strlcat (dest, "#version 330 core\n", size);
+
+	// extension strings
+	Q_strlcat (dest, "#extension GL_EXT_texture_array : enable\n", size);
+	Q_strlcat (dest, "#extension GL_ARB_texture_gather : require\n", size);
+	if (gl_config.gl_ext_GPUShader5_support)
+		Q_strlcat (dest, "#extension GL_ARB_gpu_shader5 : require\n", size);
+
+	// define entry point
+	if (entrypoint)
+		Q_strlcat (dest, va("#define %s main\n", entrypoint), size);
+
+	// define shader type
+	switch (shadertype)
+	{
+		case GL_VERTEX_SHADER:
+			Q_strlcat (dest, "#define VERTEXSHADER\n#define INOUTTYPE out\n", size);
+			break;
+
+		case GL_FRAGMENT_SHADER:
+			Q_strlcat (dest, "#define FRAGMENTSHADER\n#define INOUTTYPE in\n", size);
+			break;
+	}
+
+	// framebuffer scale
+	fbufWidthScale = 1.0f / ((float)vid.width);
+	fbufHeightScale = 1.0f / ((float)vid.height);
+	Q_strlcat (dest, va("#ifndef r_FBufScale\n#define r_FBufScale vec2(%f, %f)\n#endif\n", fbufWidthScale, fbufHeightScale), size);
+
+	// load up common.glsl
+	char *commonbuf = NULL;
+	char *commonsrc;
+	int commonsize = FS_LoadFile("glsl/common.glsl", (void **)&commonbuf);
+
+	// the file doesn't have a trailing 0, so we need to copy it off
+	commonsrc = malloc (commonsize + 1);
+	memcpy (commonsrc, commonbuf, commonsize);
+	commonsrc[commonsize] = 0;
+
+	// prepend common.glsl to the header
+	strncat (dest, commonsrc, commonsize);
+	free (commonsrc);
+
+	// OK we added a lot of stuff but if we do something bad in the GLSL shaders then we want the proper line
+	// so we have to reset the line counting
+	Q_strlcat (dest, "#line 0\n", size);
+}
 
 qboolean GL_CompileShader(GLuint sh, char *src, GLenum shadertype, char *entrypoint)
 {
-	char *glslversion = "#version 330 core\n\n";
-	char *glslstrings[5];
-	char entrydefine[256] = { 0 };
-	char shaderdefine[256] = { 0 };
+	char shaderHeader[32000];
+	char *shaderFinal = NULL;
+	int sizeHeader, sizeFinal;
 	int result = 0;
 
 	if (!sh || !src) return false;
 
 	glGetError();
 
-	// define entry point
-	if (entrypoint) sprintf(entrydefine, "#define %s main\n", entrypoint);
-
-	// define shader type
-	switch (shadertype)
-	{
-	case GL_VERTEX_SHADER:
-		sprintf(shaderdefine, "#define VERTEXSHADER\n#define INOUTTYPE out\n");
-		break;
-
-	case GL_FRAGMENT_SHADER:
-		sprintf(shaderdefine, "#define FRAGMENTSHADER\n#define INOUTTYPE in\n");
-		break;
-
-	default: return false;
-	}
-
-	// load up common.glsl
-	char *commonbuf = NULL;
-	int commonlen = FS_LoadFile("glsl/common.glsl", (void **)&commonbuf);
-	char *commonsrc;
-	if (!commonlen)
-		commonsrc = NULL;
-
-	// common.glsl doesn't have a trailing 0, so we need to copy it off
-	commonsrc = malloc(commonlen + 1);
-	memcpy(commonsrc, commonbuf, commonlen);
-	commonsrc[commonlen] = 0;
+	// generate GLSL header
+	GL_GetShaderHeader (shadertype, entrypoint, shaderHeader, sizeof(shaderHeader));
+	sizeHeader = strlen(shaderHeader);
+	sizeFinal = sizeHeader + strlen(src);
 
 	// put everything together
-	glslstrings[0] = glslversion;
-	glslstrings[1] = entrydefine;
-	glslstrings[2] = shaderdefine;
-	glslstrings[3] = commonsrc;
-	glslstrings[4] = src;
+	shaderFinal = malloc(sizeFinal);
+	Q_strlcpy (shaderFinal, shaderHeader, sizeFinal);
+	Q_strlcat (shaderFinal, src, sizeFinal);
 
 	// compile into shader program
-	glShaderSource(sh, 5, glslstrings, NULL);
+	glShaderSource(sh, 1, &shaderFinal, &sizeFinal);
 	glCompileShader(sh);
 	glGetShaderiv(sh, GL_COMPILE_STATUS, &result);
 

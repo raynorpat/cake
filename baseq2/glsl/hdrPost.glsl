@@ -33,7 +33,6 @@ uniform int waterwarppost;
 uniform vec4 surfcolor;
 uniform vec4 brightnessContrastBlurSSAOAmount;
 uniform vec2 rescale;
-uniform vec2 texScale;
 
 #define USE_TONEMAP						1
 float Uncharted2WhitePoint = 11.2; // linear white point
@@ -62,7 +61,7 @@ vec3 ToneMap(vec3 c, float avglum)
 #define USE_FILMGRAIN						1
 void FilmgrainPass( inout vec4 color )
 {
-	vec2 uv = gl_FragCoord.st * texScale;
+	vec2 uv = gl_FragCoord.st * r_FBufScale;
     float strength = 16.0;
     
     float x = (uv.x + 4.0) * (uv.y + 4.0) * (waterwarpParam.x * 10.0);
@@ -76,7 +75,7 @@ out vec4 fragColor;
 
 void HDRPostFS ()
 {
-	vec2 st = gl_FragCoord.st * texScale;
+	vec2 st = gl_FragCoord.st * r_FBufScale;
 	vec4 scene;
 
 	// mix in water warp post effect

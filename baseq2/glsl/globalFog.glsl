@@ -23,7 +23,6 @@ uniform sampler2D depth;
 
 uniform mat4 unprojectmatrix;
 
-uniform vec2 texScale;
 uniform vec3 viewOrigin;
 uniform vec4 fogColorDensity;
 
@@ -31,7 +30,7 @@ out vec4 fragColor;
 
 void GlobalFogFS ()
 {
-	vec2 st = gl_FragCoord.st * texScale;
+	vec2 st = gl_FragCoord.st * r_FBufScale;
 	
 	// reconstruct vertex position in world space
 	float zdepth = texture(depth, st).r;

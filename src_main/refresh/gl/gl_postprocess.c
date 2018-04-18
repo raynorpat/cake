@@ -21,14 +21,11 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #include "gl_local.h"
 
 GLuint gl_ssaoprog = 0;
-GLuint u_ssaoTexScale = 0;
 GLuint u_ssaoZFar = 0;
 
 GLuint gl_fxaaprog = 0;
-GLuint u_fxaaTexScale = 0;
 
 GLuint gl_basicpostprog = 0;
-GLuint u_uwTexScale = 0;
 GLuint u_uwwarpparams = 0;
 GLuint u_uwsurfcolor = 0;
 GLuint u_uwgamma = 0;
@@ -41,7 +38,6 @@ GLuint u_compositeMode = 0;
 GLuint u_compositeBrightParam = 0;
 
 GLuint gl_globalfogprog = 0;
-GLuint u_globalfogTexScale = 0;
 GLuint u_globalfogViewOrigin = 0;
 GLuint u_globalfogColorDensity = 0;
 GLuint u_globalfogUnprojectMatrix = 0;
@@ -56,7 +52,6 @@ GLuint gl_hdrpostprog = 0;
 GLuint u_postsurfcolor = 0;
 GLuint u_postExposure = 0;
 GLuint u_postBrightnessContrastBlurSSAOAmount = 0;
-GLuint u_postTexScale = 0;
 GLuint u_postwaterwarpparam = 0;
 GLuint u_postwaterwarp = 0;
 
@@ -275,7 +270,6 @@ void RPostProcess_CreatePrograms(void)
 	glProgramUniform1i(gl_globalfogprog, glGetUniformLocation(gl_globalfogprog, "depth"), 1);
 	glProgramUniformMatrix4fv(gl_globalfogprog, glGetUniformLocation(gl_globalfogprog, "orthomatrix"), 1, GL_FALSE, r_drawmatrix.m[0]);
 
-	u_globalfogTexScale = glGetUniformLocation(gl_globalfogprog, "texScale");
 	u_globalfogViewOrigin = glGetUniformLocation(gl_globalfogprog, "viewOrigin");
 	u_globalfogColorDensity = glGetUniformLocation(gl_globalfogprog, "fogColorDensity");
 	u_globalfogUnprojectMatrix = glGetUniformLocation(gl_globalfogprog, "unprojectmatrix");
@@ -288,7 +282,6 @@ void RPostProcess_CreatePrograms(void)
 		u_uwwarpparams = glGetUniformLocation(gl_basicpostprog, "warpparams");
 		u_uwsurfcolor = glGetUniformLocation(gl_basicpostprog, "surfcolor");
 		u_uwwaterwarp = glGetUniformLocation(gl_basicpostprog, "waterwarppost");
-		u_uwTexScale = glGetUniformLocation(gl_basicpostprog, "texScale");
 		u_uwBrightnessContrastAmount = glGetUniformLocation(gl_basicpostprog, "brightnessContrastAmount");
 
 		glProgramUniform1i(gl_basicpostprog, glGetUniformLocation(gl_basicpostprog, "diffuse"), 0);
@@ -310,12 +303,10 @@ void RPostProcess_CreatePrograms(void)
 		u_postsurfcolor = glGetUniformLocation(gl_hdrpostprog, "surfcolor");
 		u_postBrightnessContrastBlurSSAOAmount = glGetUniformLocation(gl_hdrpostprog, "brightnessContrastBlurSSAOAmount");
 		u_postExposure = glGetUniformLocation(gl_hdrpostprog, "exposure");
-		u_postTexScale = glGetUniformLocation(gl_hdrpostprog, "texScale");
 		u_postwaterwarpparam = glGetUniformLocation(gl_hdrpostprog, "waterwarpParam");
 		u_postwaterwarp = glGetUniformLocation(gl_hdrpostprog, "waterwarppost");
 
 		u_ssaoZFar = glGetUniformLocation(gl_ssaoprog, "zFar");
-		u_ssaoTexScale = glGetUniformLocation(gl_ssaoprog, "texScale");
 
 		u_deltaTime = glGetUniformLocation(gl_calcAdaptiveLumProg, "deltaTime");
 
@@ -342,7 +333,6 @@ void RPostProcess_CreatePrograms(void)
 	if (gl_config.gl_ext_GPUShader5_support)
 	{
 		gl_fxaaprog = GL_CreateShaderFromName("glsl/fxaa.glsl", "FXAAVS", "FXAAFS");
-		u_fxaaTexScale = glGetUniformLocation(gl_fxaaprog, "texScale");
 		glProgramUniform1i(gl_fxaaprog, glGetUniformLocation(gl_fxaaprog, "diffuse"), 0);
 		glProgramUniformMatrix4fv(gl_fxaaprog, glGetUniformLocation(gl_fxaaprog, "orthomatrix"), 1, GL_FALSE, r_drawmatrix.m[0]);
 	}
@@ -400,12 +390,7 @@ static void RPostProcess_DownscaleTo64(void)
 
 static void RPostProcess_DownscaleBrightpass(void)
 {
-	vec2_t texScale;
 	vec4_t brightParam;
-
-	// set screen scale
-	texScale[0] = 1.0f / vid.width;
-	texScale[1] = 1.0f / vid.height;
 
 	R_BindFBO(brightpassRenderFBO);
 
@@ -422,7 +407,6 @@ static void RPostProcess_DownscaleBrightpass(void)
 	brightParam[2] = 0;
 	brightParam[3] = 0;
 	glProgramUniform4f(gl_compositeprog, u_compositeBrightParam, brightParam[0], brightParam[1], brightParam[2], brightParam[3]);
-	glProgramUniform2f(gl_compositeprog, u_compositeTexScale, texScale[0], texScale[1]);
 	glProgramUniform1i(gl_compositeprog, u_compositeMode, 1);
 
 	GL_BindTexture(GL_TEXTURE0, GL_TEXTURE_2D, r_drawnearestclampsampler, r_currentRenderHDRImage);
@@ -436,8 +420,8 @@ static void RPostProcess_DownscaleBrightpass(void)
 static void RPostProcess_DoBloomAndTonemap(void)
 {
 	int i, j, flip = 0;
-	vec2_t texScale;
 	vec4_t waterwarpParam;
+	vec2_t texScale;
 
 	// set screen scale
 	texScale[0] = 1.0f / vid.width;
@@ -481,10 +465,6 @@ static void RPostProcess_DoBloomAndTonemap(void)
 		glProgramUniform4f(gl_hdrpostprog, u_postsurfcolor, v_blend[0], v_blend[1], v_blend[2], v_blend[3] * 0.5);
 	else
 		glProgramUniform4f(gl_hdrpostprog, u_postsurfcolor, 0, 0, 0, 0);
-
-	texScale[0] = 1.0f / vid.width;
-	texScale[1] = 1.0f / vid.height;
-	glProgramUniform2f(gl_hdrpostprog, u_postTexScale, texScale[0], texScale[1]);
 
 	// adaptive exposure adjustment in log space
 	float newExp = r_hdrExposureCompensation->value * log(r_hdrExposureAdjust->value + 0.0001f);
@@ -551,7 +531,6 @@ void RPostProcess_SSAO(void)
 	zFarParam[1] = 2.0f * tanf(DEG2RAD(r_newrefdef.fov_y * 0.5f)) / vid.height;
 	zFarParam[2] = 4096;
 	glProgramUniform3f(gl_ssaoprog, u_ssaoZFar, zFarParam[0], zFarParam[1], zFarParam[2]);
-	glProgramUniform2f(gl_ssaoprog, u_ssaoTexScale, texScale[0], texScale[1]);
 
 	GL_BindTexture(GL_TEXTURE0, GL_TEXTURE_2D, r_drawnearestclampsampler, r_currentDepthRenderImage);
 
@@ -580,9 +559,7 @@ void RPostProcess_FXAA(void)
 	GL_Enable(!DEPTHTEST_BIT | !CULLFACE_BIT | !BLEND_BIT);
 
 	GL_UseProgram(gl_fxaaprog);
-
-	glProgramUniform2f(gl_fxaaprog, u_fxaaTexScale, texScale[0], texScale[1]);
-
+	
 	GL_BindTexture(GL_TEXTURE0, GL_TEXTURE_2D, r_drawnearestclampsampler, r_currentRenderImage);
 
 	GL_BindVertexArray(r_postvao);
@@ -616,11 +593,6 @@ void RPostProcess_MenuBackground(void)
 void RPostProcess_BasicPostProcess(void)
 {
 	float warpparams[4];
-	vec2_t texScale;
-
-	// set screen scale
-	texScale[0] = 1.0f / vid.width;
-	texScale[1] = 1.0f / vid.height;
 
 	// set warp settings
 	warpparams[0] = r_newrefdef.time * (128.0 / M_PI);
@@ -628,7 +600,6 @@ void RPostProcess_BasicPostProcess(void)
 	warpparams[2] = M_PI / 128.0;
 	warpparams[3] = 0.125f;
 
-	glProgramUniform2f(gl_basicpostprog, u_uwTexScale, texScale[0], texScale[1]);
 	glProgramUniform4fv(gl_basicpostprog, u_uwwarpparams, 1, warpparams);
 	if (r_dowaterwarppost)
 		glProgramUniform1i(gl_basicpostprog, u_uwwaterwarp, 1);
@@ -662,7 +633,6 @@ void RE_GL_SetFog(vec4_t fog)
 
 void RPostProcess_GlobalFog(void)
 {
-	vec2_t texScale;
 	glmatrix unprojectionmatrix;
 
 	if (r_nofog->integer)
@@ -674,21 +644,16 @@ void RPostProcess_GlobalFog(void)
 	if (gl_forcefog->value <= 0 && post_fogDensity <= 0)
 		return;
 
-	// set screen scale
-	texScale[0] = 1.0f / vid.width;
-	texScale[1] = 1.0f / vid.height;
-
 	// create a matrix with similar functionality like gluUnproject, project from window space to world space
 	GL_LoadMatrix(&unprojectionmatrix, &r_mvpmatrix);
 	GL_InvertMatrix(&unprojectionmatrix, NULL, &unprojectionmatrix);
 	GL_TranslateMatrix(&unprojectionmatrix, -1.0, -1.0, -1.0);
-	GL_ScaleMatrix(&unprojectionmatrix, 2.0 * texScale[0], 2.0 * texScale[1], 2.0);
+	GL_ScaleMatrix(&unprojectionmatrix, 2.0 * (1.0f / vid.width), 2.0 * (1.0f / vid.height), 2.0);
 
 	GL_Enable(!DEPTHTEST_BIT | !CULLFACE_BIT | BLEND_BIT);
 
 	GL_UseProgram(gl_globalfogprog);
 
-	glProgramUniform2f(gl_globalfogprog, u_globalfogTexScale, texScale[0], texScale[1]);
 	glProgramUniform3f(gl_globalfogprog, u_globalfogViewOrigin, r_origin[0], r_origin[1], r_origin[2]);
 	if (r_dowaterwarppost && r_fogwater)
 		glProgramUniform4f(gl_globalfogprog, u_globalfogColorDensity, 0.3, 0.55, 1.0, 0.0008);
