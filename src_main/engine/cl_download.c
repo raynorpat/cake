@@ -214,6 +214,13 @@ void CL_StartNextDownload (void)
 	}
 }
 
+/*
+=====================
+CL_FinishUDPDownload
+
+Cleans up current download and asks for more
+=====================
+*/
 static void CL_FinishUDPDownload (char *msg)
 {
 	dlqueue_t *q = cls.download.current;
@@ -242,6 +249,13 @@ static void CL_FinishUDPDownload (char *msg)
 	CL_StartNextDownload ();
 }
 
+/*
+=====================
+CL_WriteUDPDownload
+
+Writes the UDP download out via fwrite
+=====================
+*/
 static int CL_WriteUDPDownload (byte *data, int size)
 {
 	size_t ret;
@@ -433,6 +447,8 @@ static qboolean CL_DownloadsPending (dltype_t type)
 /*
 =================
 CL_Download_CheckSkins
+
+Checks models and model skins
 =================
 */
 static void CL_Download_CheckSkins (char *name)
@@ -539,6 +555,8 @@ done:
 /*
 =================
 CL_Download_CheckPlayer
+
+Checks player model, weapon models, skins, and sexed soudns
 =================
 */
 static void CL_Download_CheckPlayer (char *name)
