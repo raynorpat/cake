@@ -45,16 +45,22 @@ void BasicPostFS ()
 	}
 	else
 	{
-		scene = texture(diffuse, st);
+		scene = GammaToLinearSpace(texture(diffuse, st));
 	}
 	
-	// mix scene with possible modulation (eg item pickups, getting shot, etc)
-	scene = mix(scene, surfcolor, surfcolor.a);
-
+	// tonemap using filmic tonemapping curve
+	//scene.rgb = ToneMap_ACESFilmic (scene.rgb);
+	
 	// brightness
 	scene.rgb = doBrightnessAndContrast(scene.rgb, brightnessContrastAmount.x, brightnessContrastAmount.y);
 
-	// output
-	fragColor = scene;
+	// convert back out to gamma space
+	vec4 finalColor = LinearToGammaSpace(scene);
+	
+	// mix scene with possible modulation (eg item pickups, getting shot, etc)
+	finalColor = mix(finalColor, surfcolor, surfcolor.a);
+	
+	// send it out to the screen
+	fragColor = finalColor;
 }
 #endif

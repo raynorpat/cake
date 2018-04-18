@@ -112,7 +112,7 @@ void MeshFS ()
 	fragColor = mix (diffuseTerm, shadelight, meshshellmix);
 	
 	// tonemap final color
-	fragColor.rgb = ACESFilmRec2020_Tonemap (fragColor.rgb);
+	fragColor.rgb = ToneMap_ACESFilmic (fragColor.rgb);
 }
 #endif
 

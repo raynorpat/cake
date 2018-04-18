@@ -34,16 +34,51 @@ vec3 doBrightnessAndContrast(vec3 value, float brightnessValue, float contrastVa
 	return vec3(pow(abs(color.rgb), vec3(brightnessValue)));
 }
 
-// ACES color system default tonemapper
-vec3 ACESFilmRec2020_Tonemap( vec3 x )
-{
-    float a = 15.8f;
-    float b = 2.12f;
-    float c = 1.2f;
-    float d = 5.92f;
-    float e = 1.9f;
+float TonemapWhitePoint = 2.0; // linear white point
 
-    return ( x * ( a * x + b ) ) / ( x * ( c * x + d ) + e );
+// ACES color system tonemapper
+vec3 ToneMap_ACESFilmic (vec3 x)
+{
+    const float a = 2.51f;
+    const float b = 0.03f;
+    const float c = 2.43f;
+    const float d = 0.59f;
+    const float e = 0.14f;
+
+    return (x * (a * x + b)) / (x * (c * x + d) + e);
+}
+
+vec3 Normalized_ToneMap_ACESFilmic (vec3 x)
+{
+	return ToneMap_ACESFilmic(x) / ToneMap_ACESFilmic(vec3(TonemapWhitePoint));
+}
+
+// John Hable's Uncharted 2 tonemapper
+vec3 ToneMap_Hable (vec3 x)
+{
+    const float a = 0.22f;
+    const float b = 0.30f;
+    const float c = 0.10f;
+    const float d = 0.20f;
+    const float e = 0.01f;
+    const float f = 0.30f;
+
+    return ((x * (a * x + b * c) + d * e) / (x * (a * x + b) + d * f)) - e / f;
+}
+
+vec3 Normalized_ToneMap_Hable (vec3 x)
+{
+	return ToneMap_Hable(x) / ToneMap_Hable(vec3(TonemapWhitePoint));
+}
+
+// https://twitter.com/jimhejl/status/633777619998130176?
+vec3 ToneMap_Hejl2015 (vec3 x, float whitePt)
+{
+	vec4 vh = vec4(x, whitePt);
+	vec4 va = (1.425 * vh) + 0.05;
+	vec4 vf = ((vh * va + 0.004) / ((vh * (va + 0.55) + 0.0491))) - 0.0821;
+
+	return vf.rgb / vf.www;
 }
 
 // phong BRDF for specular highlights

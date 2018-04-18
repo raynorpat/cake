@@ -50,8 +50,8 @@ vec3 ToneMap(vec3 c, float avglum)
 	vec3 exposedColor = exp2( newExposure ) * c.rgb;
 
 	float exposureBias = 1.0;
-	vec3 curr = ACESFilmRec2020_Tonemap( exposedColor * exposureBias );
-	vec3 whiteScale = 1.0 / ACESFilmRec2020_Tonemap( vec3( Uncharted2WhitePoint ) );
+	vec3 curr = ToneMap_ACESFilmic( exposedColor * exposureBias );
+	vec3 whiteScale = 1.0 / ToneMap_ACESFilmic( vec3( Uncharted2WhitePoint ) );
 
 	return curr * whiteScale;
 }
