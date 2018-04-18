@@ -32,6 +32,7 @@ static menuframework_s	s_options_menu;
 static menuaction_s		s_options_sound_section;
 static menuaction_s		s_options_controls_section;
 static menuaction_s		s_options_screen_section;
+static menuaction_s		s_options_effects_section;
 
 static void MenuSoundFunc (void *unused)
 {
@@ -46,6 +47,11 @@ static void MenuControlsFunc (void *unused)
 static void MenuScreenFunc (void *unused)
 {
 	M_Menu_Options_Screen_f ();
+}
+
+static void MenuEffectsFunc (void *unused)
+{
+	M_Menu_Options_Effects_f ();
 }
 
 static void Options_MenuDraw (menuframework_s *self)
@@ -87,12 +93,20 @@ void Options_MenuInit (void)
 	s_options_screen_section.generic.y = y += MENU_FONT_SIZE;
 	s_options_screen_section.generic.callback = MenuScreenFunc;
 
+	s_options_effects_section.generic.type = MTYPE_ACTION;
+	s_options_effects_section.generic.flags = QMF_LEFT_JUSTIFY;
+	s_options_effects_section.generic.name = " effects";
+	s_options_effects_section.generic.x = 0;
+	s_options_effects_section.generic.y = y += MENU_FONT_SIZE;
+	s_options_effects_section.generic.callback = MenuEffectsFunc;
+
 	s_options_menu.draw = Options_MenuDraw;
 	s_options_menu.key = NULL;
 
 	Menu_AddItem (&s_options_menu, (void *)&s_options_sound_section);
 	Menu_AddItem (&s_options_menu, (void *)&s_options_controls_section);
 	Menu_AddItem (&s_options_menu, (void *)&s_options_screen_section);
+	Menu_AddItem (&s_options_menu, (void *)&s_options_effects_section);
 }
 
 void M_Menu_Options_f (void)

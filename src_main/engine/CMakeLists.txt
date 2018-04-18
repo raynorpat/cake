@@ -171,6 +171,7 @@ set(MENU_SOURCES
 	menu_options_controls.c
 	menu_options_keys.c
 	menu_options_screen.c
+	menu_options_effects.c
 	menu_vid.c
 	)
 source_group("client\\menu" FILES ${MENU_INCLUDES})

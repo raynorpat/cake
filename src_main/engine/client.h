@@ -646,6 +646,7 @@ void M_Menu_Main_f(void);
 		void M_Menu_Options_Controls_f(void);
 			void M_Menu_Keys_f(void);
 		void M_Menu_Options_Screen_f(void);
+		void M_Menu_Options_Effects_f(void);
 	void M_Menu_Video_f(void);
 	void M_Menu_Quit_f(void);
 
