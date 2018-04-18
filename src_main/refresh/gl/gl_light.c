@@ -265,12 +265,8 @@ R_LightPoint
 */
 void R_LightPoint (vec3_t p, vec3_t color, float *lightspot)
 {
-	vec3_t		end;
 	float		r;
-	int			lnum;
-	dlight_t	*dl;
-	vec3_t		dist;
-	float		add;
+	vec3_t		end;
 	vec3_t		pointcolor;
 
 	if (!r_worldmodel->lightdata)
@@ -288,17 +284,6 @@ void R_LightPoint (vec3_t p, vec3_t color, float *lightspot)
 		VectorCopy (vec3_origin, color);
 	else
 		VectorCopy (pointcolor, color);
-
-	// add dynamic light color
-	dl = r_newrefdef.dlights;
-	for (lnum = 0; lnum < r_newrefdef.num_dlights; lnum++, dl++)
-	{
-		VectorSubtract (p, dl->origin, dist);
-		add = dl->radius - VectorLength (dist);
-		add *= (1.0f / 256.0f);
-		if (add > 0)
-			VectorMA (color, add, dl->color, color);
-	}
 }
 
 

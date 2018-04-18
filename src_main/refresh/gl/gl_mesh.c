@@ -45,6 +45,12 @@ GLuint gl_meshprog = 0;
 GLuint gl_meshubo = 0;
 GLuint gl_meshubobinding = 0;
 
+GLuint u_meshMaxLights;
+GLuint u_meshEntOrig;
+GLuint u_meshLightPos[MAX_LIGHTS];
+GLuint u_meshLightColor[MAX_LIGHTS];
+GLuint u_meshLightAtten[MAX_LIGHTS];
+
 int gl_meshuboblocksize = 0;
 int gl_meshubonumblocks = 0;
 
@@ -68,6 +74,15 @@ void RMesh_CreatePrograms (void)
 
 	glProgramUniform1i (gl_meshprog, glGetUniformLocation (gl_meshprog, "diffuse"), 0);
 	glProgramUniform3fv (gl_meshprog, glGetUniformLocation (gl_meshprog, "lightnormal"), 162, (float *) r_avertexnormals);
+
+	u_meshMaxLights = glGetUniformLocation(gl_meshprog, "r_maxLights");
+	u_meshEntOrig = glGetUniformLocation(gl_meshprog, "r_entOrig");
+	for (int i = 0; i < MAX_LIGHTS; ++i)
+	{
+		u_meshLightPos[i] = glGetUniformLocation(gl_meshprog, va("Lights.origin[%i]", i));
+		u_meshLightColor[i] = glGetUniformLocation(gl_meshprog, va("Lights.color[%i]", i));
+		u_meshLightAtten[i] = glGetUniformLocation(gl_meshprog, va("Lights.radius[%i]", i));
+	}
 
 	glGenBuffers (1, &gl_meshubo);
 	glNamedBufferDataEXT (gl_meshubo, MESH_UBO_MAX_BLOCKS * gl_meshuboblocksize, NULL, GL_STREAM_DRAW);
@@ -365,7 +380,21 @@ void R_DrawAliasModel (entity_t *e)
 	}
 	else
 	{
+		dlight_t *l;
+		int i;
+
+		// grab static lighting from lightmap
 		R_LightPoint (e->currorigin, gl_meshuboupdate.shadelight, lightspot);
+
+		// grab dynamic lighting
+		glProgramUniform1i (gl_meshprog, u_meshMaxLights, r_newrefdef.num_dlights);
+		glProgramUniform3fv (gl_meshprog, u_meshEntOrig, 1, e->currorigin);
+		for (i = 0, l = r_newrefdef.dlights; i < r_newrefdef.num_dlights; i++, l++)
+		{
+			glProgramUniform3fv (gl_meshprog, u_meshLightPos[i], 1, l->origin);
+			glProgramUniform3fv (gl_meshprog, u_meshLightColor[i], 1, l->color);
+			glProgramUniform1f (gl_meshprog, u_meshLightAtten[i], l->radius);
+		}
 
 		// player lighting hack for communication back to server
 		// big hack!
@@ -391,8 +420,10 @@ void R_DrawAliasModel (entity_t *e)
 	if (e->flags & RF_MINLIGHT)
 	{
 		for (i = 0; i < 3; i++)
+		{
 			if (gl_meshuboupdate.shadelight[i] > 0.1)
 				break;
+		}
 
 		if (i == 3)
 		{
