@@ -514,7 +514,7 @@ Con_DrawInput
 The input line scrolls horizontally if typing goes beyond the right edge
 ================
 */
-void Con_DrawInput (vec4_t color)
+void Con_DrawInput (void)
 {
 	int		i;
 	char	*text;
@@ -541,7 +541,7 @@ void Con_DrawInput (vec4_t color)
 		text += 1 + key_linepos - con.linewidth;
 
 	// draw it
-	SCR_Text_Paint (20, 234, 0.15f, color, text, 0, 0, UI_DROPSHADOW, &cls.consoleFont);
+	SCR_Text_Paint (20, 234, 0.15f, colorWhite, text, 0, 0, UI_DROPSHADOW, &cls.consoleFont);
 
 	// remove cursor
 	key_lines[edit_line][key_linepos] = 0;
@@ -690,8 +690,6 @@ void Con_DrawConsole (float frac)
 	SCR_FillRect (630, 10, 1, 230, color);	// right
 
 	// draw the version number
-	RE_Draw_SetColor (g_color_table[ColorIndex(COLOR_RED)]);
-
 	Vector4Set (fontColor, 1.0f, 1.0f, 1.0f, alpha);
 	Vector4Set (fontColorHighlight, 1.0f, 1.0f, 1.0f, alpha * 1.5f);
 
@@ -715,6 +713,8 @@ void Con_DrawConsole (float frac)
 	// draw from the bottom up
 	if (con.display != con.current)
 	{
+		RE_Draw_SetColor (g_color_table[ColorIndex(COLOR_RED)]);
+
 		// draw arrows to show the buffer is backscrolled
 		for (x = 0; x < con.linewidth - 12; x += 3)
 			SCR_Text_PaintSingleChar (con.xadjust + (x + 1) * 8 + 15, y, 0.15f, fontColorHighlight, '^', 0, 0, UI_DROPSHADOW, &cls.consoleBoldFont);
@@ -722,6 +722,8 @@ void Con_DrawConsole (float frac)
 		y -= 8;
 		rows -= CON_LINESTEP;
 		rowOffset = CON_LINESTEP;
+
+		RE_Draw_SetColor (NULL);
 	}
 
 	row = con.display;
@@ -766,7 +768,7 @@ void Con_DrawConsole (float frac)
 	RE_Draw_SetColor (NULL);
 
 	// draw the input prompt, user text, and cursor if desired
-	Con_DrawInput (color);
+	Con_DrawInput ();
 }
 
 //=============================================================================

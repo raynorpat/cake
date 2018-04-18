@@ -359,7 +359,6 @@ void RPostProcess_ComputeShader_CalculateLuminance(void)
 	glBindImageTexture (0, r_currentRenderHDRImage64, 0, GL_FALSE, 0, GL_READ_ONLY, GL_RGBA16F);
 	glBindImageTexture (1, m_lumCurrent, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA16F);
 	glDispatchCompute (1, 1, 1);
-	//glMemoryBarrier (GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);  
 
 	// adapt luminance based on current and previous frame
 	GL_UseProgram (gl_calcAdaptiveLumProg);
