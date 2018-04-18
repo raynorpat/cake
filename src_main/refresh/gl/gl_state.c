@@ -76,6 +76,29 @@ void GL_Clear(GLbitfield mask)
 	glClear(mask);
 }
 
+
+void GL_CheckError (char *str)
+{
+	GLenum err = glGetError();
+
+	switch (err)
+	{
+	case GL_INVALID_ENUM: VID_Printf(PRINT_ALL, S_COLOR_RED "GL_INVALID_ENUM"); break;
+	case GL_INVALID_VALUE: VID_Printf(PRINT_ALL, S_COLOR_RED "GL_INVALID_VALUE"); break;
+	case GL_INVALID_OPERATION: VID_Printf(PRINT_ALL, S_COLOR_RED "GL_INVALID_OPERATION"); break;
+	case GL_STACK_OVERFLOW: VID_Printf(PRINT_ALL, S_COLOR_RED "GL_STACK_OVERFLOW"); break;
+	case GL_STACK_UNDERFLOW: VID_Printf(PRINT_ALL, S_COLOR_RED "GL_STACK_UNDERFLOW"); break;
+	case GL_OUT_OF_MEMORY: VID_Printf(PRINT_ALL, S_COLOR_RED  "GL_OUT_OF_MEMORY"); break;
+	case GL_TABLE_TOO_LARGE: VID_Printf(PRINT_ALL, S_COLOR_RED "GL_TABLE_TOO_LARGE"); break;
+	default: return;
+	}
+
+	if (str)
+		VID_Printf(PRINT_ALL, S_COLOR_RED " with %s\n", str);
+	else VID_Printf(PRINT_ALL, S_COLOR_RED "\n");
+}
+
+
 void GL_GetShaderInfoLog(GLuint s, char *src, qboolean isprog)
 {
 	static char infolog[4096] = { 0 };
@@ -155,7 +178,7 @@ qboolean GL_CompileShader(GLuint sh, char *src, GLenum shadertype, char *entrypo
 
 	if (!sh || !src) return false;
 
-	glGetError();
+	GL_CheckError (__func__);
 
 	// generate GLSL header
 	GL_GetShaderHeader (shadertype, entrypoint, shaderHeader, sizeof(shaderHeader));
@@ -199,7 +222,7 @@ GLuint GL_CreateShaderFromName(char *name, char *vsentry, char *fsentry)
 	vs = glCreateShader(GL_VERTEX_SHADER);
 	fs = glCreateShader(GL_FRAGMENT_SHADER);
 
-	glGetError();
+	GL_CheckError (__func__);
 
 	// this crap really should have been built-in to GLSL...
 	if (!GL_CompileShader(vs, ressrc, GL_VERTEX_SHADER, vsentry))
@@ -256,7 +279,7 @@ GLuint GL_CreateComputeShaderFromName(char *name)
 
 	cs = glCreateShader(GL_COMPUTE_SHADER);
 
-	glGetError();
+	GL_CheckError (__func__);
 
 	// this crap really should have been built-in to GLSL...
 	glShaderSource(cs, 1, &(ressrc), 0);

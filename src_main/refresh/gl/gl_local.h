@@ -444,6 +444,8 @@ void GL_Enable (int bits);
 void GL_BlendFunc (GLenum sfactor, GLenum dfactor);
 void GL_BindVertexArray (GLuint vertexarray);
 
+void GL_CheckError (char *str);
+
 typedef struct cubeface_s
 {
 	int width;

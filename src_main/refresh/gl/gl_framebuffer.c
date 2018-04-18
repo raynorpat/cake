@@ -72,6 +72,8 @@ static FBO_t *R_CreateFBO(const char *name, int width, int height)
 
 	glGenFramebuffers(1, &fbo->frameBuffer);
 
+	GL_CheckError (__func__);
+
 	return fbo;
 }
 
@@ -101,6 +103,8 @@ static void R_CreateFBOColorBuffer(FBO_t * fbo, int format, int index)
 
 	if (notCreatedYet)
 		glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + index, GL_RENDERBUFFER, fbo->colorBuffers[index]);
+
+	GL_CheckError (__func__);
 }
 
 /*
@@ -121,6 +125,8 @@ static void R_CreateFBODepthBuffer(FBO_t * fbo, int format)
 
 	if (notCreatedYet)
 		glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, fbo->depthBuffer);
+
+	GL_CheckError (__func__);
 }
 
 /*
@@ -141,6 +147,8 @@ static void R_CreateFBOStencilBuffer(FBO_t * fbo, int format)
 
 	if (notCreatedYet)
 		glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_RENDERBUFFER, fbo->stencilBuffer);
+
+	GL_CheckError (__func__);
 }
 
 /*

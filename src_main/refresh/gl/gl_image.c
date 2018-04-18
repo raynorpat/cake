@@ -56,7 +56,6 @@ void Img_Free (void)
 	img_base = 0;
 }
 
-
 void GL_ResampleTexture (unsigned *in, int inwidth, int inheight, unsigned *out, int outwidth, int outheight);
 
 /*
@@ -102,12 +101,8 @@ static void GL_SwapBlueRed (byte *data, int width, int height, int samples)
 		j = data[0];
 		data[0] = data[2];
 		data[2] = j;
-		// data[0] ^= data[2];
-		// data[2] = data[0] ^ data[2];
-		// data[0] ^= data[2];
 	}
 }
-
 
 typedef struct glmode_s
 {
@@ -329,28 +324,6 @@ void GL_ImageList_f (void)
 	VID_Printf (PRINT_ALL, "Total texel count (not counting mipmaps): %i\n", texels);
 }
 
-void GL_CheckError (char *str)
-{
-	GLenum err = glGetError ();
-
-	switch (err)
-	{
-	case GL_INVALID_ENUM: VID_Printf (PRINT_ALL, S_COLOR_RED "GL_INVALID_ENUM"); break;
-	case GL_INVALID_VALUE: VID_Printf (PRINT_ALL, S_COLOR_RED "GL_INVALID_VALUE"); break;
-	case GL_INVALID_OPERATION: VID_Printf (PRINT_ALL, S_COLOR_RED "GL_INVALID_OPERATION"); break;
-	case GL_STACK_OVERFLOW: VID_Printf (PRINT_ALL, S_COLOR_RED "GL_STACK_OVERFLOW"); break;
-	case GL_STACK_UNDERFLOW: VID_Printf (PRINT_ALL, S_COLOR_RED "GL_STACK_UNDERFLOW"); break;
-	case GL_OUT_OF_MEMORY: VID_Printf (PRINT_ALL, S_COLOR_RED  "GL_OUT_OF_MEMORY"); break;
-	case GL_TABLE_TOO_LARGE: VID_Printf (PRINT_ALL, S_COLOR_RED "GL_TABLE_TOO_LARGE"); break;
-	default: return;
-	}
-
-	if (str)
-		VID_Printf (PRINT_ALL, S_COLOR_RED " with %s\n", str);
-	else VID_Printf (PRINT_ALL, S_COLOR_RED "\n");
-}
-
-
 GLuint GL_LoadCubeMap (cubeface_t *faces)
 {
 	int i;
@@ -375,7 +348,7 @@ GLuint GL_LoadCubeMap (cubeface_t *faces)
 	if (!size) size = 1;
 
 	// if this causes trouble on AMD we can revert it back to glTexImage (would really prefer not to though...)
-	glGetError ();
+	GL_CheckError( __func__ );
 	glTextureStorage2DEXT (texnum, GL_TEXTURE_CUBE_MAP, 1, GL_RGBA8, size, size);
 
 	if (glGetError () != GL_NO_ERROR)
