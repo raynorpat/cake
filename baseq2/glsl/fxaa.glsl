@@ -77,7 +77,7 @@ void FXAAFS ()
 	float minSamplingDirectionFactor = 1.0 / (min(abs(samplingDirection.x), abs(samplingDirection.y)) + samplingDirectionReduce);
     
     // calculate final sampling direction vector by reducing, clamping to a range and finally adapting to the texture size. 
-    samplingDirection = clamp(samplingDirection * minSamplingDirectionFactor, vec2(-u_maxSpan, -u_maxSpan), vec2(u_maxSpan, u_maxSpan)) * texScale;
+    samplingDirection = clamp(samplingDirection * minSamplingDirectionFactor, vec2(-u_maxSpan, -u_maxSpan), vec2(u_maxSpan, u_maxSpan)) * r_FBufScale;
 	
 	// inner samples on the tab.
 	vec3 rgbSampleNeg = texture(diffuse, st + samplingDirection * (1.0/3.0 - 0.5)).rgb;
