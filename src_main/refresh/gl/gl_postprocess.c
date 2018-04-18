@@ -391,6 +391,7 @@ static void RPostProcess_DownscaleTo64(void)
 static void RPostProcess_DownscaleBrightpass(void)
 {
 	vec4_t brightParam;
+	vec2_t texScale;
 
 	R_BindFBO(brightpassRenderFBO);
 
@@ -398,6 +399,10 @@ static void RPostProcess_DownscaleBrightpass(void)
 	GL_Clear(GL_COLOR_BUFFER_BIT);
 
 	GL_Enable(!BLEND_BIT | !CULLFACE_BIT);
+
+	// set screen scale
+	texScale[0] = 1.0f / vid.width;
+	texScale[1] = 1.0f / vid.height;
 
 	// do downscaled brightpass
 	GL_UseProgram(gl_compositeprog);
@@ -407,6 +412,7 @@ static void RPostProcess_DownscaleBrightpass(void)
 	brightParam[2] = 0;
 	brightParam[3] = 0;
 	glProgramUniform4f(gl_compositeprog, u_compositeBrightParam, brightParam[0], brightParam[1], brightParam[2], brightParam[3]);
+	glProgramUniform2f(gl_compositeprog, u_compositeTexScale, texScale[0], texScale[1]);
 	glProgramUniform1i(gl_compositeprog, u_compositeMode, 1);
 
 	GL_BindTexture(GL_TEXTURE0, GL_TEXTURE_2D, r_drawnearestclampsampler, r_currentRenderHDRImage);
@@ -503,7 +509,6 @@ static void RPostProcess_DoBloomAndTonemap(void)
 
 void RPostProcess_SSAO(void)
 {
-	vec2_t texScale;
 	vec3_t zFarParam;
 
 	if (!r_ssao->value)
@@ -519,10 +524,7 @@ void RPostProcess_SSAO(void)
 	glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT);
 
-	// set screen scale
-	texScale[0] = 1.0f / vid.width;
-	texScale[1] = 1.0f / vid.height;
-
+	// enable correct bits
 	GL_Enable(!DEPTHTEST_BIT | !CULLFACE_BIT | BLEND_BIT);
 
 	GL_UseProgram(gl_ssaoprog);
@@ -542,8 +544,6 @@ void RPostProcess_SSAO(void)
 
 void RPostProcess_FXAA(void)
 {
-	vec2_t texScale;
-
 	if (!r_fxaa->value)
 		return;
 	if (!gl_config.gl_ext_GPUShader5_support)
@@ -551,10 +551,6 @@ void RPostProcess_FXAA(void)
 
 	// reset current render image
 	RPostProcess_SetCurrentRender();
-
-	// set screen scale
-	texScale[0] = 1.0f / vid.width;
-	texScale[1] = 1.0f / vid.height;
 	
 	GL_Enable(!DEPTHTEST_BIT | !CULLFACE_BIT | !BLEND_BIT);
 
