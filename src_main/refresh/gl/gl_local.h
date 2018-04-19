@@ -255,6 +255,7 @@ extern	cvar_t	*r_nocull;
 extern  cvar_t  *r_nofog;
 extern	cvar_t	*r_lerpmodels;
 extern	cvar_t	*r_postprocessing;
+extern	cvar_t	*r_useSrgb;
 extern	cvar_t	*r_useTonemap;
 extern	cvar_t	*r_useVignette;
 extern	cvar_t	*r_useFilmgrain;
@@ -390,6 +391,7 @@ typedef struct
 
 	qboolean	gl_ext_GPUShader5_support;
 	qboolean	gl_ext_computeShader_support;
+	qboolean	gl_arb_framebuffer_srgb_support;
 } glconfig_t;
 
 typedef struct

@@ -80,6 +80,7 @@ cvar_t	*r_nofog;
 cvar_t	*r_lerpmodels;
 cvar_t	*r_lefthand;
 
+cvar_t	*r_useSrgb;
 cvar_t	*r_useTonemap;
 cvar_t	*r_useVignette;
 cvar_t	*r_useFilmgrain;
@@ -511,6 +512,7 @@ static void R_Register (void)
 	r_lerpmodels = Cvar_Get ("r_lerpmodels", "1", 0);
 	r_speeds = Cvar_Get ("r_speeds", "0", 0);
 
+	r_useSrgb = Cvar_Get ("r_useSrgb", "1", CVAR_ARCHIVE);
 	r_useTonemap = Cvar_Get ("r_useTonemap", "1", CVAR_ARCHIVE);
 	r_useVignette = Cvar_Get ("r_useVignette", "1", CVAR_ARCHIVE);
 	r_useFilmgrain = Cvar_Get ("r_useFilmgrain", "1", CVAR_ARCHIVE);
@@ -829,6 +831,35 @@ static void RMain_CheckFor_ComputeShader(void)
 	gl_config.gl_ext_computeShader_support = false;
 }
 
+static void RMain_CheckFor_Srgb(void)
+{
+	VID_Printf(PRINT_ALL, "checking for GL_ARB_framebuffer_sRGB...\n");
+
+	// check in glew first...
+	if (!glewIsSupported("GL_ARB_framebuffer_sRGB "))
+	{
+		// lets double check the actual extension list we grabbed earlier,
+		// glew is known to be buggy checking for extensions...
+		if (!strcmp("GL_ARB_framebuffer_sRGB ", gl_config.extension_string))
+		{
+			// found it in our list
+			VID_Printf(PRINT_ALL, S_COLOR_GREEN " ...found GL_ARB_framebuffer_sRGB\n");
+			gl_config.gl_arb_framebuffer_srgb_support = true;
+			return;
+		}
+	}
+	else
+	{
+		// found it in glew's list
+		VID_Printf(PRINT_ALL, S_COLOR_GREEN " ...found GL_ARB_framebuffer_sRGB\n");
+		gl_config.gl_arb_framebuffer_srgb_support = true;
+		return;
+	}
+
+	VID_Printf(PRINT_ALL, S_COLOR_RED " ...missing GL_ARB_framebuffer_sRGB\n");
+	gl_config.gl_arb_framebuffer_srgb_support = false;
+}
+
 #define R_MODE_FALLBACK 10 // 1024x768
 
 static int SetMode_impl(int mode, int fullscreen)
@@ -931,6 +962,9 @@ success:
 
 	// check for compute shader support
 	RMain_CheckFor_ComputeShader();
+
+	// check for sRGB framebuffer support
+	RMain_CheckFor_Srgb();
 
 	return true;
 }

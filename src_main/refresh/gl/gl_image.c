@@ -330,6 +330,7 @@ GLuint GL_LoadCubeMap (cubeface_t *faces)
 	int size = 0;
 	GLuint texnum = 0;
 	qboolean allowStorage;
+	int sRGB = r_useSrgb->integer;
 
 	glGenTextures (1, &texnum);
 
@@ -349,7 +350,7 @@ GLuint GL_LoadCubeMap (cubeface_t *faces)
 
 	// if this causes trouble on AMD we can revert it back to glTexImage (would really prefer not to though...)
 	GL_CheckError( __func__ );
-	glTextureStorage2DEXT (texnum, GL_TEXTURE_CUBE_MAP, 1, GL_RGBA8, size, size);
+	glTextureStorage2DEXT (texnum, GL_TEXTURE_CUBE_MAP, 1, (gl_config.gl_arb_framebuffer_srgb_support && (sRGB == 1)) ? GL_SRGB8_ALPHA8 : GL_RGBA8, size, size);
 
 	if (glGetError () != GL_NO_ERROR)
 	{
@@ -374,7 +375,7 @@ GLuint GL_LoadCubeMap (cubeface_t *faces)
 		if (allowStorage)
 			glTextureSubImage2DEXT (texnum, GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, 0, 0, size, size, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, faces[i].data);
 		else
-			glTextureImage2DEXT (texnum, GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGBA8, size, size, 0, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, faces[i].data);
+			glTextureImage2DEXT (texnum, GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, (gl_config.gl_arb_framebuffer_srgb_support && (sRGB == 1)) ? GL_SRGB8_ALPHA8 : GL_RGBA8, size, size, 0, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, faces[i].data);
 	}
 
 	// don't leak
@@ -874,6 +875,7 @@ GLuint GL_UploadTexture (byte *data, int width, int height, qboolean mipmap, int
 	int nummips = mipmap ? (floor (Q_log2((float) max (width, height))) + 1) : 1;
 	GLuint texnum = 0;
 	unsigned *trans = NULL;
+	int sRGB = r_useSrgb->integer;
 
 	if (bits == 8)
 	{
@@ -891,7 +893,7 @@ GLuint GL_UploadTexture (byte *data, int width, int height, qboolean mipmap, int
 	upload_height = height;
 
 	glGenTextures (1, &texnum);
-	glTextureStorage2DEXT (texnum, GL_TEXTURE_2D, nummips, GL_RGBA8, width, height);
+	glTextureStorage2DEXT (texnum, GL_TEXTURE_2D, nummips, (gl_config.gl_arb_framebuffer_srgb_support && (sRGB == 1)) ? GL_SRGB8_ALPHA8 : GL_RGBA8, width, height);
 	glTextureSubImage2DEXT (texnum, GL_TEXTURE_2D, 0, 0, 0, width, height, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, trans);
 
 	for (i = 1; i < nummips; i++)

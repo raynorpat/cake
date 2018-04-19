@@ -129,6 +129,10 @@ static void GL_GetShaderHeader (GLenum shadertype, GLchar *entrypoint, char *des
 	if (gl_config.gl_ext_GPUShader5_support)
 		Q_strlcat (dest, "#extension GL_ARB_gpu_shader5 : require\n", size);
 
+	// special defines for various GL extensions
+	if (gl_config.gl_arb_framebuffer_srgb_support)
+		Q_strlcat (dest, "#define USE_SRGB 1\n", size);
+
 	// define entry point
 	if (entrypoint)
 		Q_strlcat (dest, va("#define %s main\n", entrypoint), size);
@@ -359,7 +363,8 @@ GL_SetDefaultState
 */
 void GL_SetDefaultState(void)
 {
-	glEnable(GL_FRAMEBUFFER_SRGB);
+	if(gl_config.gl_arb_framebuffer_srgb_support)
+		glEnable(GL_FRAMEBUFFER_SRGB);
 
 	glDrawBuffer(GL_BACK);
 	glReadBuffer(GL_BACK);
