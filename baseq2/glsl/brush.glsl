@@ -123,7 +123,7 @@ void LightmappedFS ()
 	}
 	
 	// output tonemapped colors
-	fragColor.rgb = ToneMap_ACESFilmic (fragColor.rgb);
+//	fragColor.rgb = ToneMap_ACESFilmic (fragColor.rgb);
 	fragColor.a = alpha;
 }
 #endif

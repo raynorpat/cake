@@ -112,7 +112,7 @@ void MeshFS ()
 	fragColor = mix (diffuseTerm, shadelight, meshshellmix);
 	
 	// tonemap final color
-	fragColor.rgb = ToneMap_ACESFilmic (fragColor.rgb);
+//	fragColor.rgb = ToneMap_ACESFilmic (fragColor.rgb);
 }
 #endif
 

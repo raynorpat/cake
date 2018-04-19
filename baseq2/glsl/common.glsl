@@ -34,51 +34,58 @@ vec3 doBrightnessAndContrast(vec3 value, float brightnessValue, float contrastVa
 	return vec3(pow(abs(color.rgb), vec3(brightnessValue)));
 }
 
-float TonemapWhitePoint = 2.0; // linear white point
-
-// ACES color system tonemapper
-vec3 ToneMap_ACESFilmic (vec3 x)
+// generic filmic tonemap by Timothy Lottes
+//  - http://32ipi028l5q82yhj72224m8j-wpengine.netdna-ssl.com/wp-content/uploads/2016/03/GdcVdrLottes.pdf
+vec3 ToneMap_Generic (vec3 x, float hdrMax)
 {
-    const float a = 2.51f;
-    const float b = 0.03f;
-    const float c = 2.43f;
-    const float d = 0.59f;
-    const float e = 0.14f;
+	float a = 1.25; // contrast
+    float d = 0.97; // shoulder
+    float mid_in = 0.3;
+	float mid_out = 0.18;
+	
+	vec3 crosstalk = vec3(64.0, 32.0, 128.0); // controls amount of channel crosstalk
+	vec3 saturation = vec3(0.0, 0.0, 0.0); // full tonal range saturation control
+	vec3 crossSaturation = vec3(4.0, 1.0, 16.0); // crosstalk saturation
 
-    return (x * (a * x + b)) / (x * (c * x + d) + e);
-}
+	float ad = a * d; // contrast * shoulder
 
-vec3 Normalized_ToneMap_ACESFilmic (vec3 x)
-{
-	return ToneMap_ACESFilmic(x) / ToneMap_ACESFilmic(vec3(TonemapWhitePoint));
-}
+	float midi_pow_a  = pow(mid_in, a);
+	float midi_pow_ad = pow(mid_in, ad);
+	float hdrm_pow_a  = pow(hdrMax, a);
+	float hdrm_pow_ad = pow(hdrMax, ad);
+	float u = hdrm_pow_ad * mid_out - midi_pow_ad * mid_out;
+	float v = midi_pow_ad * mid_out;
 
-// John Hable's Uncharted 2 tonemapper
-vec3 ToneMap_Hable (vec3 x)
-{
-    const float a = 0.22f;
-    const float b = 0.30f;
-    const float c = 0.10f;
-    const float d = 0.20f;
-    const float e = 0.01f;
-    const float f = 0.30f;
-
-    return ((x * (a * x + b * c) + d * e) / (x * (a * x + b) + d * f)) - e / f;
-}
-
-vec3 Normalized_ToneMap_Hable (vec3 x)
-{
-	return ToneMap_Hable(x) / ToneMap_Hable(vec3(TonemapWhitePoint));
-}
-
-// https://twitter.com/jimhejl/status/633777619998130176?
-vec3 ToneMap_Hejl2015 (vec3 x, float whitePt)
-{
-	vec4 vh = vec4(x, whitePt);
-	vec4 va = (1.425 * vh) + 0.05;
-	vec4 vf = ((vh * va + 0.004) / ((vh * (va + 0.55) + 0.0491))) - 0.0821;
-
-	return vf.rgb / vf.www;
+	float b = -((-midi_pow_a + (mid_out * (hdrm_pow_ad * midi_pow_a - hdrm_pow_a * v)) / u) / v); // power, adjusts compression
+    float c = (hdrm_pow_ad * midi_pow_a - hdrm_pow_a * v) / u; // speed of compression
+		
+	// saturation base is contrast
+	saturation += a;
+	
+	// peak of all color channels
+	float peakColor = max(max(x.r, x.g), x.b);
+	peakColor = max(peakColor, 1.0 / (256.0 * 65536.0)); // protect against / 0
+	
+	// color ratio
+	vec3 peakRatio = x / peakColor;
+	
+	// contrast adjustment
+	peakColor = pow(peakColor, a);
+	
+	// highlight compression
+	peakColor = peakColor / (pow(peakColor, d) * b + c);
+	
+	// convert to non-linear space and saturate
+	// saturation is folded into first transform
+	peakRatio = pow(peakRatio, (saturation / crossSaturation));
+  
+	// move towards white on overexposure
+	vec3 white = vec3(1.0, 1.0, 1.0);
+	peakRatio = mix(peakRatio, white, pow(vec3(peakColor), crosstalk));
+	
+	// convert back to linear
+	peakRatio = pow(peakRatio, crossSaturation);
+    return peakRatio * peakColor;
 }
 
 // phong BRDF for specular highlights

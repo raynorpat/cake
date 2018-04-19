@@ -35,7 +35,6 @@ uniform vec4 brightnessContrastBlurSSAOAmount;
 uniform vec2 rescale;
 
 #define USE_TONEMAP						1
-float Uncharted2WhitePoint = 11.2; // linear white point
 vec3 ToneMap(vec3 c, float avglum)
 {
 	// calculation from: Perceptual Effects in Real-time Tone Mapping - Krawczyk et al.
@@ -49,11 +48,8 @@ vec3 ToneMap(vec3 c, float avglum)
 	// exposure curves ranges from 0.0625 to 16.0
 	vec3 exposedColor = exp2( newExposure ) * c.rgb;
 
-	float exposureBias = 1.0;
-	vec3 curr = ToneMap_ACESFilmic( exposedColor * exposureBias );
-	vec3 whiteScale = 1.0 / ToneMap_ACESFilmic( vec3( Uncharted2WhitePoint ) );
-
-	return curr * whiteScale;
+	// tonemap
+	return ToneMap_Generic( exposedColor, 11.2 );
 }
 
 #define USE_VIGNETTE						1
@@ -92,25 +88,9 @@ void HDRPostFS ()
 		scene = GammaToLinearSpace(texture(precomposite, st));
 	}
 
-	// multiply scene with ambient occlusion
-	if (brightnessContrastBlurSSAOAmount.w > 0)
-	{
-		vec4 AOScene = texture(AOTex, st);
-		scene *= AOScene;
-	}
-
 	// then mix in the previously generated bloom
-	vec4 hdrScene = texture(diffuse, st);
+	vec4 hdrScene = GammaToLinearSpace(texture(diffuse, st));
 	vec4 color = vec4(hdrScene.rgb + scene.rgb * brightnessContrastBlurSSAOAmount.z, hdrScene.a);
-
-	// filmic vignette effect
-#if USE_VIGNETTE
-	vec2 vignetteST = st;
-    vignetteST *= 1.0 - vignetteST.yx;
-    float vig = vignetteST.x * vignetteST.y * 15.0;
-    vig = pow(vig, 0.25);
-	color.rgb *= vig;
-#endif
 
 	// tonemap using filmic tonemapping curve
 #if USE_TONEMAP
@@ -118,16 +98,32 @@ void HDRPostFS ()
 	color.rgb = ToneMap(color.rgb, luminance.r);
 #endif
 
-	// film grain effect
-#if USE_FILMGRAIN
-	FilmgrainPass(color);
-#endif
+	// multiply scene with ambient occlusion
+	if (brightnessContrastBlurSSAOAmount.w > 0)
+	{
+		vec4 AOScene = GammaToLinearSpace(texture(AOTex, st));
+		color *= AOScene;
+	}
 
 	// brightness
 	color.rgb = doBrightnessAndContrast(color.rgb, brightnessContrastBlurSSAOAmount.x, brightnessContrastBlurSSAOAmount.y);
 	
 	// convert back out to gamma space
 	vec4 finalColor = LinearToGammaSpace(color);
+
+	// filmic vignette effect
+#if USE_VIGNETTE
+	vec2 vignetteST = st;
+    vignetteST *= 1.0 - vignetteST.yx;
+    float vig = vignetteST.x * vignetteST.y * 15.0;
+    vig = pow(vig, 0.25);
+	finalColor.rgb *= vig;
+#endif
+
+	// film grain effect
+#if USE_FILMGRAIN
+	FilmgrainPass(finalColor);
+#endif	
 	
 	// mix scene with possible modulation (eg item pickups, getting shot, etc)
 	finalColor = mix(finalColor, surfcolor, surfcolor.a);
