@@ -103,7 +103,7 @@ void MeshFS ()
 	vec4 shade = max (shadedot + 1.0, (shadedot * 0.2954545) + 1.0) * shadelight;
 	
 	// get dynamic lights
-	if (maxLights > 0)
+	if (r_maxLights > 0)
 		DynamicLighting(normal);
 	
 	// set diffuse
