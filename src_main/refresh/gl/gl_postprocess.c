@@ -79,7 +79,6 @@ GLuint r_brightPassRenderImage;
 GLuint r_bloomRenderImage[MAX_BLOOM_BUFFERS];
 GLuint r_currentRenderHDRImage64;
 GLuint r_currentRenderHDRImage;
-GLuint r_currentRenderBasicImage;
 GLuint r_currentRenderImage;
 GLuint r_currentDepthRenderImage;
 GLuint r_currentAORenderImage;
@@ -611,7 +610,7 @@ void RPostProcess_BasicPostProcess(void)
 
 	GL_Enable(BLEND_BIT);
 
-	GL_BindTexture(GL_TEXTURE0, GL_TEXTURE_2D, r_drawnearestclampsampler, r_currentRenderImage);
+	GL_BindTexture(GL_TEXTURE0, GL_TEXTURE_2D, r_drawnearestclampsampler, r_currentRenderHDRImage);
 	GL_BindTexture(GL_TEXTURE1, GL_TEXTURE_2D, r_drawwrapsampler, r_warpGradientImage);
 
 	GL_BindVertexArray(r_postvao);
@@ -701,24 +700,12 @@ void RPostProcess_Begin(void)
 		r_dowaterwarppost = false;
 	}
 
-	if (r_skipHDRPost)
-	{
-		// bind basic framebuffer object
-		R_BindFBO(basicRenderFBO);
+	// bind HDR framebuffer object
+	R_BindFBO(hdrRenderFBO);
 
-		// clear out color in framebuffer object before we start drawing to it
-		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-		GL_Clear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
-	}
-	else
-	{
-		// bind HDR framebuffer object
-		R_BindFBO(hdrRenderFBO);
-
-		// clear out color in framebuffer object before we start drawing to it
-		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-		GL_Clear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
-	}
+	// clear out color in framebuffer object before we start drawing to it
+	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+	GL_Clear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
 }
 
 void RPostProcess_FinishToScreen(void)
