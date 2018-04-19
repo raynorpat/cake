@@ -23,8 +23,7 @@ out vec4 fragColor;
 
 void SkyFS ()
 {
-	//fragColor = texture (skydiffuse, texcoords.xzy);
-	fragColor = texture (skydiffuse, texcoords.xyz);
+	fragColor = sRGBAToLinearRGBA(texture (skydiffuse, texcoords.xyz));
 }
 #endif
 

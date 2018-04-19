@@ -103,7 +103,7 @@ void LightmappedFS ()
 		DynamicLighting (normal);
 	
 	// set diffuse
-	vec3 diffuseTerm = diffAlbedo.rgb * diffLight;
+	vec3 diffuseTerm = sRGBToLinearRGB(diffAlbedo.rgb * diffLight);
 	
 	// debug parameters
 	if (debugParams.x == 1)

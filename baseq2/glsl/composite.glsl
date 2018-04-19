@@ -144,7 +144,7 @@ void CompositeFS ()
 		
 		// grab scene
 		color = texture(diffuse, st);
-		vec3 linearColor = GammaToLinearSpace(color.rgb);
+		vec3 linearColor = sRGBToLinearRGB(color.rgb);
 		
 		// grab brightness
 		float br = Brightness(linearColor);

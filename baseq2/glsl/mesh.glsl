@@ -107,7 +107,7 @@ void MeshFS ()
 		DynamicLighting(normal);
 	
 	// set diffuse
-	vec4 diffuseTerm = vec4(diffAlbedo.rgb * diffLight.rgb, 1.0) * shade;
+	vec4 diffuseTerm = vec4(sRGBToLinearRGB(diffAlbedo.rgb * diffLight.rgb), 1.0) * shade;
 
 	// output final color
 	fragColor = mix (diffuseTerm, shadelight, meshshellmix);

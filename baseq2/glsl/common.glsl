@@ -2,8 +2,6 @@
 // common.glsl
 
 const float pi = 3.14159265;
-const float gamma = 2.2;
-const vec4 LUMINANCE_VECTOR = vec4(0.2125, 0.7154, 0.0721, 0.0);
 
 // saturate function from HLSL
 float saturate( float v ) { return clamp( v, 0.0, 1.0 ); }
@@ -12,21 +10,42 @@ vec3 saturate( vec3 v ) { return clamp( v, 0.0, 1.0 ); }
 // brightness function
 float Brightness(vec3 c) { return max(max(c.r, c.g), c.b); }
 
-// gamma to linear space conversion
-vec3 GammaToLinearSpace(vec3 v) { return pow(v, vec3(gamma)); }
-vec4 GammaToLinearSpace(vec4 v) { return vec4(GammaToLinearSpace(v.rgb), v.a); }
+// sRGB <-> Linear RGB Color Conversions
+vec3 sRGBToLinearRGB( vec3 rgb )
+{
+#if !defined( USE_SRGB )
+	return max( pow( rgb, vec3( 2.2 ) ), vec3( 0.0 ) );
+#else
+	return rgb;
+#endif
+}
+vec4 sRGBAToLinearRGBA( vec4 rgba )
+{
+#if !defined( USE_SRGB )
+	return vec4( max( pow( rgba.rgb, vec3( 2.2 ) ), vec3( 0.0 ) ), rgba.a );
+#else
+	return rgba;
+#endif
+}
 
-// linear to gamma space conversion
-vec3 LinearToGammaSpace(vec3 v) { return pow(v, vec3(1.0 / gamma)); }
-vec4 LinearToGammaSpace(vec4 v) { return vec4(LinearToGammaSpace(v.rgb), v.a); }
+vec3 LinearRGBToSRGB( vec3 rgb )
+{
+#if !defined( USE_SRGB )
+	return pow( rgb, vec3( 1.0 ) / vec3( 2.2 ) );
+#else
+	return rgb;
+#endif
+}
+vec4 LinearRGBToSRGB( vec4 rgba )
+{
+#if !defined( USE_SRGB )
+	rgba.rgb = pow( rgba.rgb, vec3( 1.0 ) / vec3( 2.2 ) );
+	return rgba;
+#else
+	return rgba;
+#endif
+}
 
-// sRGB space conversions - http://chilliant.blogspot.com/2012/08/srgb-approximations-for-hlsl.html
-vec3 SRGBToLinearSpace(vec3 v) { return v * (v * (v * 0.305306011 + 0.682171111) + 0.012522878); }
-vec4 SRGBToLinearSpace(vec4 v) { return vec4(SRGBToLinearSpace(v.rgb), v.a); }
-
-vec3 LinearToSRGBSpace(vec3 v) { return max(1.055 * pow(v, vec3(0.416666667)) - 0.055, 0.0); }
-vec4 LinearToSRGBSpace(vec4 v) { return vec4(LinearToSRGBSpace(v.rgb), v.a); }
-	
 // brightness and contrast control
 vec3 doBrightnessAndContrast(vec3 value, float brightnessValue, float contrastValue)
 {
@@ -99,9 +118,6 @@ vec3 RRTAndODTFit(vec3 v)
 
 vec3 ToneMap_ACES(vec3 x)
 {
-	// convert to sRGB
-	x = LinearToSRGBSpace(x);
-	
 	// get into ACES color space
     x = x * ACESInputMat;
 
@@ -112,8 +128,5 @@ vec3 ToneMap_ACES(vec3 x)
     x = x * ACESOutputMat;
 
     // clamp to [0, 1]
-    x = saturate(x);
-	
-	// convert to linear RGB
-	return SRGBToLinearSpace(x);
+    return saturate(x);	
 }

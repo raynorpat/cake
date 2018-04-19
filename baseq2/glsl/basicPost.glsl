@@ -53,42 +53,37 @@ void BasicPostFS ()
 		vec4 distort1 = texture (gradient, texcoords[1].yx);
 		vec4 distort2 = texture (gradient, texcoords[1].xy);
 		vec2 warpcoords = texcoords[0].xy + (distort1.ba + distort2.ab);
-		scene = GammaToLinearSpace(texture(diffuse, warpcoords * rescale));
+		scene = texture(diffuse, warpcoords * rescale);
 	}
 	else
 	{
-		scene = GammaToLinearSpace(texture(diffuse, st));
+		scene = texture(diffuse, st);
 	}
-	
+		
 	// tonemap using filmic tonemapping curve
 #if r_useTonemap	
 	scene.rgb = ToneMap_ACES (scene.rgb);
 #endif
-	
-	// brightness
-	scene.rgb = doBrightnessAndContrast(scene.rgb, brightnessContrastAmount.x, brightnessContrastAmount.y);
 
-	// convert back out to gamma space
-	vec4 finalColor = LinearToGammaSpace(scene);
-	
+	// brightness
+	//scene.rgb = doBrightnessAndContrast(scene.rgb, brightnessContrastAmount.x, brightnessContrastAmount.y);
+
 	// filmic vignette effect
 #if r_useVignette
 	vec2 vignetteST = st;
     vignetteST *= 1.0 - vignetteST.yx;
     float vig = vignetteST.x * vignetteST.y * 15.0;
     vig = pow(vig, 0.25);
-	finalColor.rgb *= vig;
+	scene.rgb *= vig;
 #endif
 
 	// film grain effect
 #if r_useFilmgrain
-	FilmgrainPass(finalColor);
+	FilmgrainPass(scene);
 #endif
 	
 	// mix scene with possible modulation (eg item pickups, getting shot, etc)
-	finalColor = mix(finalColor, surfcolor, surfcolor.a);
-	
-	// send it out to the screen
-	fragColor = finalColor;
+	// and send it out to the screen
+	fragColor = mix(scene, surfcolor, surfcolor.a);
 }
 #endif

@@ -32,9 +32,9 @@ void DrawFS ()
 	vec4 colorTex = texture (diffuse, texcoords.st);
 	colorTex *= colorAdd;
 	
-	fragColor = mix (colorTex, iocolor, texturecolormix);
+	fragColor = sRGBAToLinearRGBA(mix (colorTex, iocolor, texturecolormix));
 
-	fragColor.rgb = doBrightnessAndContrast(fragColor.rgb, brightnessAmount, contrastAmount);
+	//fragColor.rgb = doBrightnessAndContrast(fragColor.rgb, brightnessAmount, contrastAmount);
 }
 #endif
 

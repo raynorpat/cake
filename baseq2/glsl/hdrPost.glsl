@@ -77,15 +77,15 @@ void HDRPostFS ()
 		vec4 distort2 = texture (warpgradient, texcoords[1].xy);
 		vec2 warpcoords = texcoords[0].xy + (distort1.ba + distort2.ab);
 
-		scene = GammaToLinearSpace(texture(precomposite, warpcoords * rescale));
+		scene = texture(precomposite, warpcoords * rescale);
 	}
 	else
 	{
-		scene = GammaToLinearSpace(texture(precomposite, st));
+		scene = texture(precomposite, st);
 	}
-
+	
 	// then mix in the previously generated bloom
-	vec4 hdrScene = GammaToLinearSpace(texture(diffuse, st));
+	vec4 hdrScene = texture(diffuse, st);
 	vec4 color = vec4(hdrScene.rgb + scene.rgb * brightnessContrastBlurSSAOAmount.z, hdrScene.a);
 
 	// tonemap using filmic tonemapping curve
@@ -97,34 +97,29 @@ void HDRPostFS ()
 	// multiply scene with ambient occlusion
 	if (brightnessContrastBlurSSAOAmount.w > 0)
 	{
-		vec4 AOScene = GammaToLinearSpace(texture(AOTex, st));
+		vec4 AOScene = texture(AOTex, st);
 		color *= AOScene;
 	}
 
 	// brightness
-	color.rgb = doBrightnessAndContrast(color.rgb, brightnessContrastBlurSSAOAmount.x, brightnessContrastBlurSSAOAmount.y);
+	//color.rgb = doBrightnessAndContrast(color.rgb, brightnessContrastBlurSSAOAmount.x, brightnessContrastBlurSSAOAmount.y);
 	
-	// convert back out to gamma space
-	vec4 finalColor = LinearToGammaSpace(color);
-
 	// filmic vignette effect
 #if r_useVignette
 	vec2 vignetteST = st;
     vignetteST *= 1.0 - vignetteST.yx;
     float vig = vignetteST.x * vignetteST.y * 15.0;
     vig = pow(vig, 0.25);
-	finalColor.rgb *= vig;
+	color.rgb *= vig;
 #endif
 
 	// film grain effect
 #if r_useFilmgrain
-	FilmgrainPass(finalColor);
+	FilmgrainPass(color);
 #endif
 	
 	// mix scene with possible modulation (eg item pickups, getting shot, etc)
-	finalColor = mix(finalColor, surfcolor, surfcolor.a);
-	
-	// send it out to the screen
-	fragColor = finalColor;
+	// and send it out to the screen
+	fragColor = mix(color, surfcolor, surfcolor.a);
 }
 #endif
