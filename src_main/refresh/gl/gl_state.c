@@ -182,11 +182,11 @@ qboolean GL_CompileShader(GLuint sh, char *src, GLenum shadertype, char *entrypo
 
 	// generate GLSL header
 	GL_GetShaderHeader (shadertype, entrypoint, shaderHeader, sizeof(shaderHeader));
-	sizeHeader = strlen(shaderHeader);
-	sizeFinal = sizeHeader + strlen(src);
+	sizeHeader = strlen (shaderHeader);
+	sizeFinal = sizeHeader + strlen (src);
 
 	// put everything together
-	shaderFinal = malloc(sizeFinal);
+	shaderFinal = malloc (sizeFinal);
 	Q_strlcpy (shaderFinal, shaderHeader, sizeFinal);
 	Q_strlcat (shaderFinal, src, sizeFinal);
 
@@ -196,6 +196,8 @@ qboolean GL_CompileShader(GLuint sh, char *src, GLenum shadertype, char *entrypo
 	glGetShaderiv(sh, GL_COMPILE_STATUS, &result);
 
 	GL_GetShaderInfoLog(sh, src, false);
+
+	free (shaderFinal);
 
 	if (result != GL_TRUE)
 		return false;
