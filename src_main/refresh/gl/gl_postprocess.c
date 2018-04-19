@@ -481,13 +481,9 @@ static void RPostProcess_DoBloomAndTonemap(void)
 	waterwarpParam[3] = 0.125f;
 	glProgramUniform4f(gl_hdrpostprog, u_postwaterwarpparam, waterwarpParam[0], waterwarpParam[1], waterwarpParam[2], waterwarpParam[3]);
 	if (r_dowaterwarppost)
-	{
 		glProgramUniform1i(gl_hdrpostprog, u_postwaterwarp, 1);
-	}
 	else
-	{
 		glProgramUniform1i(gl_hdrpostprog, u_postwaterwarp, 0);
-	}
 
 	// set brightness, contrast, and bloom levels along with SSAO value
 	glProgramUniform4f(gl_hdrpostprog, u_postBrightnessContrastBlurSSAOAmount, vid_gamma->value, vid_contrast->value, r_hdrBloomIntensity->value, r_ssao->value);
@@ -734,9 +730,6 @@ void RPostProcess_FinishToScreen(void)
 		// perform bloom and tonemap
 		RPostProcess_DoBloomAndTonemap();
 
-		// perform global fog pass
-		RPostProcess_GlobalFog();
-
 		// exchange lunimance texture for next frame
 		GLuint temp = m_lum[0];
 		m_lum[0] = m_lum[1];
@@ -748,13 +741,10 @@ void RPostProcess_FinishToScreen(void)
 
 		// perform basic underwater screen warp, gamma and brightness
 		RPostProcess_BasicPostProcess();
-
-		// perform global fog pass
-		RPostProcess_GlobalFog();
 	}
 
-	// set currentrender image
-	RPostProcess_SetCurrentRender();
+	// perform global fog pass
+	RPostProcess_GlobalFog();
 
 	// perform FXAA pass
 	RPostProcess_FXAA();

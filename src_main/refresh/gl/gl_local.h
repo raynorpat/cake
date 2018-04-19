@@ -255,6 +255,10 @@ extern	cvar_t	*r_nocull;
 extern  cvar_t  *r_nofog;
 extern	cvar_t	*r_lerpmodels;
 extern	cvar_t	*r_postprocessing;
+extern	cvar_t	*r_useTonemap;
+extern	cvar_t	*r_useVignette;
+extern	cvar_t	*r_useFilmgrain;
+extern	cvar_t	*r_useBloom;
 
 extern	cvar_t	*r_lightlevel;	// FIXME: This is a HACK to get the client's light level
 
@@ -278,10 +282,10 @@ extern	cvar_t	*vid_gamma;
 extern	cvar_t	*vid_contrast;
 extern	cvar_t	*r_lightscale;
 
-extern	glmatrix	r_drawmatrix;
-extern	glmatrix	r_worldmatrix;
-extern	glmatrix	r_projectionmatrix;
-extern	glmatrix	r_mvpmatrix;
+extern	glmatrix r_drawmatrix;
+extern	glmatrix r_worldmatrix;
+extern	glmatrix r_projectionmatrix;
+extern	glmatrix r_mvpmatrix;
 
 extern GLuint r_surfacesampler;
 extern GLuint r_lightmapsampler;

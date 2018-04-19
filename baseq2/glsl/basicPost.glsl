@@ -28,9 +28,6 @@ uniform int waterwarppost;
 uniform vec2 brightnessContrastAmount;
 uniform vec2 rescale;
 
-#define USE_VIGNETTE						1
-
-#define USE_FILMGRAIN						1
 void FilmgrainPass( inout vec4 color )
 {
 	vec2 uv = gl_FragCoord.st * r_FBufScale;
@@ -64,7 +61,9 @@ void BasicPostFS ()
 	}
 	
 	// tonemap using filmic tonemapping curve
+#if r_useTonemap	
 	scene.rgb = ToneMap_ACES (scene.rgb);
+#endif
 	
 	// brightness
 	scene.rgb = doBrightnessAndContrast(scene.rgb, brightnessContrastAmount.x, brightnessContrastAmount.y);
@@ -73,7 +72,7 @@ void BasicPostFS ()
 	vec4 finalColor = LinearToGammaSpace(scene);
 	
 	// filmic vignette effect
-#if USE_VIGNETTE
+#if r_useVignette
 	vec2 vignetteST = st;
     vignetteST *= 1.0 - vignetteST.yx;
     float vig = vignetteST.x * vignetteST.y * 15.0;
@@ -82,7 +81,7 @@ void BasicPostFS ()
 #endif
 
 	// film grain effect
-#if USE_FILMGRAIN
+#if r_useFilmgrain
 	FilmgrainPass(finalColor);
 #endif
 	

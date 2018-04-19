@@ -34,7 +34,6 @@ uniform vec4 surfcolor;
 uniform vec4 brightnessContrastBlurSSAOAmount;
 uniform vec2 rescale;
 
-#define USE_TONEMAP						1
 vec3 ToneMap(vec3 c, float avglum)
 {
 	// calculation from: Perceptual Effects in Real-time Tone Mapping - Krawczyk et al.
@@ -52,9 +51,6 @@ vec3 ToneMap(vec3 c, float avglum)
 	return ToneMap_ACES( exposedColor );
 }
 
-#define USE_VIGNETTE						1
-
-#define USE_FILMGRAIN						1
 void FilmgrainPass( inout vec4 color )
 {
 	vec2 uv = gl_FragCoord.st * r_FBufScale;
@@ -93,7 +89,7 @@ void HDRPostFS ()
 	vec4 color = vec4(hdrScene.rgb + scene.rgb * brightnessContrastBlurSSAOAmount.z, hdrScene.a);
 
 	// tonemap using filmic tonemapping curve
-#if USE_TONEMAP
+#if r_useTonemap
 	vec3 luminance = texture(lumTex, vec2(0.0, 0.0)).rgb;
 	color.rgb = ToneMap(color.rgb, luminance.r);
 #endif
@@ -112,7 +108,7 @@ void HDRPostFS ()
 	vec4 finalColor = LinearToGammaSpace(color);
 
 	// filmic vignette effect
-#if USE_VIGNETTE
+#if r_useVignette
 	vec2 vignetteST = st;
     vignetteST *= 1.0 - vignetteST.yx;
     float vig = vignetteST.x * vignetteST.y * 15.0;
@@ -121,9 +117,9 @@ void HDRPostFS ()
 #endif
 
 	// film grain effect
-#if USE_FILMGRAIN
+#if r_useFilmgrain
 	FilmgrainPass(finalColor);
-#endif	
+#endif
 	
 	// mix scene with possible modulation (eg item pickups, getting shot, etc)
 	finalColor = mix(finalColor, surfcolor, surfcolor.a);

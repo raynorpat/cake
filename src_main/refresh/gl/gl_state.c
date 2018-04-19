@@ -150,6 +150,16 @@ static void GL_GetShaderHeader (GLenum shadertype, GLchar *entrypoint, char *des
 	fbufHeightScale = 1.0f / ((float)vid.height);
 	Q_strlcat (dest, va("#ifndef r_FBufScale\n#define r_FBufScale vec2(%f, %f)\n#endif\n", fbufWidthScale, fbufHeightScale), size);
 
+	// use* cvars
+	if (r_useTonemap->value)
+		Q_strlcat (dest, "#ifndef r_useTonemap\n#define r_useTonemap 1\n#endif\n", size);
+	if (r_useVignette->value)
+		Q_strlcat (dest, "#ifndef r_useVignette\n#define r_useVignette 1\n#endif\n", size);
+	if (r_useFilmgrain->value)
+		Q_strlcat (dest, "#ifndef r_useFilmgrain\n#define r_useFilmgrain 1\n#endif\n", size);
+	if (r_useBloom->value)
+		Q_strlcat (dest, "#ifndef r_useBloom\n#define r_useBloom 1\n#endif\n", size);
+
 	// load up common.glsl
 	char *commonbuf = NULL;
 	char *commonsrc;
