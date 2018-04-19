@@ -28,6 +28,21 @@ uniform int waterwarppost;
 uniform vec2 brightnessContrastAmount;
 uniform vec2 rescale;
 
+#define USE_VIGNETTE						1
+
+#define USE_FILMGRAIN						1
+void FilmgrainPass( inout vec4 color )
+{
+	vec2 uv = gl_FragCoord.st * r_FBufScale;
+    float strength = 16.0;
+    
+    float x = (uv.x + 4.0) * (uv.y + 4.0) * (warpparams.x * 10.0);
+	vec4 grain = vec4(mod((mod(x, 13.0) + 1.0) * (mod(x, 123.0) + 1.0), 0.01)-0.005) * strength;
+    
+   	grain = 1.0 - grain;
+	color *= grain;
+}
+
 out vec4 fragColor;
 
 void BasicPostFS ()
@@ -41,7 +56,7 @@ void BasicPostFS ()
 		vec4 distort1 = texture (gradient, texcoords[1].yx);
 		vec4 distort2 = texture (gradient, texcoords[1].xy);
 		vec2 warpcoords = texcoords[0].xy + (distort1.ba + distort2.ab);
-		scene = texture(diffuse, warpcoords * rescale);
+		scene = GammaToLinearSpace(texture(diffuse, warpcoords * rescale));
 	}
 	else
 	{
@@ -49,13 +64,27 @@ void BasicPostFS ()
 	}
 	
 	// tonemap using filmic tonemapping curve
-	//scene.rgb = ToneMap_ACESFilmic (scene.rgb);
+	scene.rgb = ToneMap_ACES (scene.rgb);
 	
 	// brightness
 	scene.rgb = doBrightnessAndContrast(scene.rgb, brightnessContrastAmount.x, brightnessContrastAmount.y);
 
 	// convert back out to gamma space
 	vec4 finalColor = LinearToGammaSpace(scene);
+	
+	// filmic vignette effect
+#if USE_VIGNETTE
+	vec2 vignetteST = st;
+    vignetteST *= 1.0 - vignetteST.yx;
+    float vig = vignetteST.x * vignetteST.y * 15.0;
+    vig = pow(vig, 0.25);
+	finalColor.rgb *= vig;
+#endif
+
+	// film grain effect
+#if USE_FILMGRAIN
+	FilmgrainPass(finalColor);
+#endif
 	
 	// mix scene with possible modulation (eg item pickups, getting shot, etc)
 	finalColor = mix(finalColor, surfcolor, surfcolor.a);
