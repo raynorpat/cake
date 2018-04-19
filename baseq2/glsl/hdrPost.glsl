@@ -49,7 +49,7 @@ vec3 ToneMap(vec3 c, float avglum)
 	vec3 exposedColor = exp2( newExposure ) * c.rgb;
 
 	// tonemap
-	return ToneMap_Generic( exposedColor, 11.2 );
+	return ToneMap_ACES( exposedColor );
 }
 
 #define USE_VIGNETTE						1

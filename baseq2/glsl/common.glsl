@@ -34,60 +34,6 @@ vec3 doBrightnessAndContrast(vec3 value, float brightnessValue, float contrastVa
 	return vec3(pow(abs(color.rgb), vec3(brightnessValue)));
 }
 
-// generic filmic tonemap by Timothy Lottes
-//  - http://32ipi028l5q82yhj72224m8j-wpengine.netdna-ssl.com/wp-content/uploads/2016/03/GdcVdrLottes.pdf
-vec3 ToneMap_Generic (vec3 x, float hdrMax)
-{
-	float a = 1.25; // contrast
-    float d = 0.97; // shoulder
-    float mid_in = 0.3;
-	float mid_out = 0.18;
-	
-	vec3 crosstalk = vec3(64.0, 32.0, 128.0); // controls amount of channel crosstalk
-	vec3 saturation = vec3(0.0, 0.0, 0.0); // full tonal range saturation control
-	vec3 crossSaturation = vec3(4.0, 1.0, 16.0); // crosstalk saturation
-
-	float ad = a * d; // contrast * shoulder
-
-	float midi_pow_a  = pow(mid_in, a);
-	float midi_pow_ad = pow(mid_in, ad);
-	float hdrm_pow_a  = pow(hdrMax, a);
-	float hdrm_pow_ad = pow(hdrMax, ad);
-	float u = hdrm_pow_ad * mid_out - midi_pow_ad * mid_out;
-	float v = midi_pow_ad * mid_out;
-
-	float b = -((-midi_pow_a + (mid_out * (hdrm_pow_ad * midi_pow_a - hdrm_pow_a * v)) / u) / v); // power, adjusts compression
-    float c = (hdrm_pow_ad * midi_pow_a - hdrm_pow_a * v) / u; // speed of compression
-		
-	// saturation base is contrast
-	saturation += a;
-	
-	// peak of all color channels
-	float peakColor = max(max(x.r, x.g), x.b);
-	peakColor = max(peakColor, 1.0 / (256.0 * 65536.0)); // protect against / 0
-	
-	// color ratio
-	vec3 peakRatio = x / peakColor;
-	
-	// contrast adjustment
-	peakColor = pow(peakColor, a);
-	
-	// highlight compression
-	peakColor = peakColor / (pow(peakColor, d) * b + c);
-	
-	// convert to non-linear space and saturate
-	// saturation is folded into first transform
-	peakRatio = pow(peakRatio, (saturation / crossSaturation));
-  
-	// move towards white on overexposure
-	vec3 white = vec3(1.0, 1.0, 1.0);
-	peakRatio = mix(peakRatio, white, pow(vec3(peakColor), crosstalk));
-	
-	// convert back to linear
-	peakRatio = pow(peakRatio, crossSaturation);
-    return peakRatio * peakColor;
-}
-
 // phong BRDF for specular highlights
 vec3 Phong(vec3 viewDir, vec3 lightDir, vec3 normal, vec3 lightColor, float specIntensity, float specPower)
 {
@@ -125,4 +71,49 @@ vec3 LambertFill(vec3 lightDir, vec3 normal, float fillStrength, vec3 lightColor
 
 	// hard + soft lighting
 	return lightColor * (fill * fillStrength + direct);
+}
+
+// ACES color system tonemap
+// - originally written by Stephen Hill (@self_shadow), who deserves all credit for coming up with this fit and implementing it. 
+
+// sRGB => XYZ => D65_2_D60 => AP1 => RRT_SAT
+const mat3 ACESInputMat = mat3(
+    0.59719, 0.35458, 0.04823,
+    0.07600, 0.90834, 0.01566,
+    0.02840, 0.13383, 0.83777
+);
+
+// ODT_SAT => XYZ => D60_2_D65 => sRGB
+const mat3 ACESOutputMat = mat3(
+     1.60475, -0.53108, -0.07367,
+    -0.10208,  1.10813, -0.00605,
+    -0.00327, -0.07276,  1.07602
+);
+
+vec3 RRTAndODTFit(vec3 v)
+{
+    vec3 a = v * (v + 0.0245786f) - 0.000090537f;
+    vec3 b = v * (0.983729f * v + 0.4329510f) + 0.238081f;
+    return a / b;
+}
+
+vec3 ToneMap_ACES(vec3 x)
+{
+	// convert to sRGB
+	x = LinearToSRGBSpace(x);
+	
+	// get into ACES color space
+    x = x * ACESInputMat;
+
+    // apply RRT and ODT
+    x = RRTAndODTFit(x);
+	
+	// output back into sRGB
+    x = x * ACESOutputMat;
+
+    // clamp to [0, 1]
+    x = saturate(x);
+	
+	// convert to linear RGB
+	return SRGBToLinearSpace(x);
 }
