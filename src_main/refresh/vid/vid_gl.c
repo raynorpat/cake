@@ -391,6 +391,9 @@ vidrserr_t VID_InitWindow(int mode, int fullscreen)
 		SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, testDepthBits);
 		SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, testStencilBits);
 
+		SDL_GL_SetAttribute(SDL_GL_ACCELERATED_VISUAL, 1);
+		SDL_GL_SetAttribute(SDL_GL_FRAMEBUFFER_SRGB_CAPABLE, 1);
+
 		SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, samples ? 1 : 0);
 		SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, samples);
 
@@ -505,6 +508,9 @@ vidrserr_t VID_InitWindow(int mode, int fullscreen)
 				continue;
 			}
 		}
+
+		// make the context current
+		SDL_GL_MakeCurrent(window, context);
 
 		// clear to black
 		glClearColor(0, 0, 0, 1);

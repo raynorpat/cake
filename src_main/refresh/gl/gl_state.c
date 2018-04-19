@@ -359,6 +359,8 @@ GL_SetDefaultState
 */
 void GL_SetDefaultState(void)
 {
+	glEnable(GL_FRAMEBUFFER_SRGB);
+
 	glDrawBuffer(GL_BACK);
 	glReadBuffer(GL_BACK);
 
