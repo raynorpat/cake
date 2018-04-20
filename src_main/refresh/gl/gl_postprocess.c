@@ -286,12 +286,15 @@ void RPostProcess_CreatePrograms(void)
 	u_globalfogUnprojectMatrix = glGetUniformLocation(gl_globalfogprog, "unprojectmatrix");
 
 	// create ssao shader
-	gl_ssaoprog = GL_CreateShaderFromName("glsl/ssao.glsl", "SSAOVS", "SSAOFS");
+	if (gl_config.gl_ext_GPUShader5_support)
+	{
+		gl_ssaoprog = GL_CreateShaderFromName("glsl/ssao.glsl", "SSAOVS", "SSAOFS");
 
-	u_ssaoZFar = glGetUniformLocation(gl_ssaoprog, "zFar");
+		u_ssaoZFar = glGetUniformLocation(gl_ssaoprog, "zFar");
 
-	glProgramUniform1i(gl_ssaoprog, glGetUniformLocation(gl_ssaoprog, "depthmap"), 0);
-	glProgramUniformMatrix4fv(gl_ssaoprog, glGetUniformLocation(gl_ssaoprog, "orthomatrix"), 1, GL_FALSE, r_drawmatrix.m[0]);
+		glProgramUniform1i(gl_ssaoprog, glGetUniformLocation(gl_ssaoprog, "depthmap"), 0);
+		glProgramUniformMatrix4fv(gl_ssaoprog, glGetUniformLocation(gl_ssaoprog, "orthomatrix"), 1, GL_FALSE, r_drawmatrix.m[0]);
+	}
 
 	// create barebones shaders
 	if (r_skipHDRPost)
@@ -310,21 +313,6 @@ void RPostProcess_CreatePrograms(void)
 	}
 	else
 	{
-		// create lum compute shader
-		gl_calcLumProg = GL_CreateComputeShaderFromName("glsl/calcLum.cs");
-
-		glProgramUniform1i(gl_calcLumProg, glGetUniformLocation(gl_calcLumProg, "inputImage"), 0);
-		glProgramUniform1i(gl_calcLumProg, glGetUniformLocation(gl_calcLumProg, "outputImage"), 1);
-
-		// create adaptive lum compute shader
-		gl_calcAdaptiveLumProg = GL_CreateComputeShaderFromName("glsl/calcAdaptiveLum.cs");
-
-		u_deltaTime = glGetUniformLocation(gl_calcAdaptiveLumProg, "deltaTime");
-
-		glProgramUniform1i(gl_calcAdaptiveLumProg, glGetUniformLocation(gl_calcAdaptiveLumProg, "currentImage"), 0);
-		glProgramUniform1i(gl_calcAdaptiveLumProg, glGetUniformLocation(gl_calcAdaptiveLumProg, "image0"), 1);
-		glProgramUniform1i(gl_calcAdaptiveLumProg, glGetUniformLocation(gl_calcAdaptiveLumProg, "image1"), 2);
-
 		// create tonemap shader
 		gl_hdrpostprog = GL_CreateShaderFromName("glsl/hdrPost.glsl", "HDRPostVS", "HDRPostFS");
 
@@ -351,6 +339,25 @@ void RPostProcess_CreatePrograms(void)
 		glProgramUniformMatrix4fv(gl_fxaaprog, glGetUniformLocation(gl_fxaaprog, "orthomatrix"), 1, GL_FALSE, r_drawmatrix.m[0]);
 	}
 
+	// compute shaders for luminance and adaptive luminance
+	if (gl_config.gl_ext_computeShader_support)
+	{
+		// create lum compute shader
+		gl_calcLumProg = GL_CreateComputeShaderFromName("glsl/calcLum.cs");
+
+		glProgramUniform1i(gl_calcLumProg, glGetUniformLocation(gl_calcLumProg, "inputImage"), 0);
+		glProgramUniform1i(gl_calcLumProg, glGetUniformLocation(gl_calcLumProg, "outputImage"), 1);
+
+		// create adaptive lum compute shader
+		gl_calcAdaptiveLumProg = GL_CreateComputeShaderFromName("glsl/calcAdaptiveLum.cs");
+
+		u_deltaTime = glGetUniformLocation(gl_calcAdaptiveLumProg, "deltaTime");
+
+		glProgramUniform1i(gl_calcAdaptiveLumProg, glGetUniformLocation(gl_calcAdaptiveLumProg, "currentImage"), 0);
+		glProgramUniform1i(gl_calcAdaptiveLumProg, glGetUniformLocation(gl_calcAdaptiveLumProg, "image0"), 1);
+		glProgramUniform1i(gl_calcAdaptiveLumProg, glGetUniformLocation(gl_calcAdaptiveLumProg, "image1"), 2);
+	}
+
 	// create final post shader
 }
 
@@ -362,7 +369,7 @@ void RPostProcess_Init(void)
 	r_hdrExposureAdjust = Cvar_Get("r_hdrExposureAdjust", "0.068", 0);
 	
 	r_bloomIntensity = Cvar_Get("r_bloomIntensity", "3.5", 0);
-	r_bloomBlurPasses = Cvar_Get("r_bloomBlurPasses", "16", 0);
+	r_bloomBlurPasses = Cvar_Get("r_bloomBlurPasses", "4", 0);
 
 	r_postprocessing = Cvar_Get("r_postprocessing", "1", CVAR_ARCHIVE);
 	r_ssao = Cvar_Get("r_ssao", "1", CVAR_ARCHIVE);
@@ -380,6 +387,9 @@ static void RPostProcess_SetCurrentRender(void)
 
 static void RPostProcess_ComputeShader_CalculateLuminance(void)
 {
+	if (!gl_config.gl_ext_computeShader_support)
+		return;
+
 	// calculate current luminance level
 	GL_UseProgram (gl_calcLumProg);
 	glBindImageTexture (0, r_currentRenderHDRImage64, 0, GL_FALSE, 0, GL_READ_ONLY, GL_RGBA16F);
@@ -543,6 +553,8 @@ void RPostProcess_SSAO(void)
 	vec3_t zFarParam;
 
 	if (!r_ssao->value)
+		return;
+	if (!gl_config.gl_ext_GPUShader5_support)
 		return;
 
 	// blit current framebuffer into ambient occlusion buffer
@@ -749,38 +761,33 @@ void RPostProcess_FinishToScreen(void)
 
 	R_BindNullFBO();
 
+	// downscale to 64x64
+	RPostProcess_DownscaleTo64();
+
+	// calculate eye adaptation by compute shader
+	RPostProcess_ComputeShader_CalculateLuminance();
+
+	// downscale with bright pass
+	RPostProcess_DownscaleBrightpass();
+
+	// perform bloom
+	RPostProcess_Bloom();
+
 	// perform HDR post processing
 	if (!r_skipHDRPost)
 	{
 		// perform screenspace ambient occlusion
 		RPostProcess_SSAO();
-
-		// downscale to 64x64
-		RPostProcess_DownscaleTo64();
-
-		// calculate eye adaptation by compute shader
-		RPostProcess_ComputeShader_CalculateLuminance();
-
-		// downscale with bright pass
-		RPostProcess_DownscaleBrightpass();
-
-		// perform bloom
-		RPostProcess_Bloom();
-
+		
 		// perform tonemap
 		RPostProcess_Tonemap();
-
-		// exchange lunimance texture for next frame
-		GLuint temp = m_lum[0];
-		m_lum[0] = m_lum[1];
-		m_lum[1] = temp;
 	}
 	else
 	{
 		// perform basic post processing
 
 		// perform basic underwater screen warp, gamma and brightness
-		RPostProcess_BasicPostProcess();
+		//RPostProcess_BasicPostProcess();
 	}
 
 	// perform global fog pass
@@ -788,6 +795,11 @@ void RPostProcess_FinishToScreen(void)
 
 	// perform FXAA pass
 	RPostProcess_FXAA();
+
+	// exchange lunimance texture for next frame
+	GLuint temp = m_lum[0];
+	m_lum[0] = m_lum[1];
+	m_lum[1] = temp;
 
 	// reset blending color for next frame
 	v_blend[3] = 0;

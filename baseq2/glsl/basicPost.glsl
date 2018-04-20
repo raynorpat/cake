@@ -65,7 +65,7 @@ void BasicPostFS ()
 	
 	// tonemap using filmic tonemapping curve
 #if r_useTonemap	
-	scene.rgb = ToneMap_ACES (scene.rgb);
+	scene.rgb = ToneMap_ACES (scene.rgb * 1.8);
 #endif
 
 	// filmic vignette effect
