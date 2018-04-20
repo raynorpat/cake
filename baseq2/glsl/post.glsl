@@ -23,6 +23,7 @@ void PostVS ()
 #ifdef FRAGMENTSHADER
 uniform sampler2D scene;
 uniform sampler2D warpgradient;
+uniform sampler2D colorLUT;
 
 uniform int waterwarppost;
 
@@ -40,6 +41,36 @@ void FilmgrainPass( inout vec4 color )
     
    	grain = 1.0 - grain;
 	color *= grain;
+}
+
+#define LUT_WIDTH 256.0
+#define LUT_HEIGHT 16.0
+
+// this takes a 2D LUT and turns it into a 3D LUT
+// with a fix to the blue channel to prevent banding artifacts
+vec3 ColorMap (vec3 x)
+{
+	float cell = x.b * 16.0;
+
+	// calculate the two adjacent cells to read from
+    float cell_l = floor(cell); 
+    float cell_h = ceil(cell);
+	
+	float half_px_x = 0.5 / LUT_WIDTH;
+    float half_px_y = 0.5 / LUT_HEIGHT;
+    float r_offset = half_px_x + x.r / 16.0 * 0.9375;
+    float g_offset = half_px_y + x.g * 0.9375;
+	
+	// calculate two separate lookup positions, one for each cell
+	vec2 lut_pos_l = vec2(cell_l / 16.0 + r_offset, g_offset); 
+    vec2 lut_pos_h = vec2(cell_h / 16.0 + r_offset, g_offset);
+	
+	// sample the two colors from the cell positions
+	vec3 graded_color_l = texture (colorLUT, lut_pos_l).rgb;
+    vec3 graded_color_h = texture (colorLUT, lut_pos_h).rgb;
+	
+	// mix the colors linearly according to the fraction of cell, which is the scaled blue color value
+	return mix(graded_color_l, graded_color_h, fract(cell));
 }
 
 out vec4 fragColor;
@@ -63,6 +94,13 @@ void PostFS ()
 		sceneColor = texture(scene, st);
 	}
 	
+	// convert to linear RGB
+	sceneColor.rgb = sRGBToLinearRGB(sceneColor.rgb);
+	
+	// color grade via 2D LUT
+	sceneColor.rgb = clamp(sceneColor.rgb, 0.0, 1.0);
+	sceneColor.rgb = ColorMap(sceneColor.rgb);
+	
 	// film grain effect
 #if r_useFilmgrain
 	FilmgrainPass(sceneColor);
@@ -83,7 +121,10 @@ void PostFS ()
 
 	// brightness
 	sceneColor.rgb = doBrightnessAndContrast(sceneColor.rgb, brightnessContrastAmount.x, brightnessContrastAmount.y);
-		
+
+	// convert back to sRGB
+	sceneColor.rgb = LinearRGBToSRGB(sceneColor.rgb);
+	
 	// send it out to the screen
 	fragColor = sceneColor;
 }

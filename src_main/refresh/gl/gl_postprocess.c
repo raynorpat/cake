@@ -73,6 +73,8 @@ qboolean r_dowaterwarppost = false;
 
 GLuint r_warpGradientImage;
 GLuint r_brightPassRenderImage;
+GLuint r_defaultColorLUT;
+GLuint r_overrideColorLUT;
 GLuint r_bloomRenderImage[MAX_BLOOM_BUFFERS];
 GLuint r_currentRenderHDRImage64;
 GLuint r_currentRenderHDRImage;
@@ -91,6 +93,7 @@ cvar_t *r_ssao;
 cvar_t *r_fxaa;
 cvar_t *r_bloomIntensity;
 cvar_t *r_bloomBlurPasses;
+cvar_t *r_colorGradeOverride;
 
 void RPostProcess_CreatePrograms(void)
 {
@@ -103,6 +106,11 @@ void RPostProcess_CreatePrograms(void)
 	LoadImageThruSTB ("env/warpgradient.tga", "tga", &data, &width, &height);
 	if (data)
 		r_warpGradientImage = GL_UploadTexture (data, width, height, false, 32);
+
+	// create texture for default color LUT
+	LoadImageThruSTB ("env/defaultLUT.png", "png", &data, &width, &height);
+	if (data)
+		r_defaultColorLUT = GL_UploadTexture (data, width, height, false, 32);
 
 	// create 1x1 texture with a decent middle luminance value
 	// This fixes an issue with the adaptation going nuts on the 
@@ -319,6 +327,7 @@ void RPostProcess_CreatePrograms(void)
 
 	glProgramUniform1i(gl_postprog, glGetUniformLocation(gl_postprog, "scene"), 0);
 	glProgramUniform1i(gl_postprog, glGetUniformLocation(gl_postprog, "warpgradient"), 1);
+	glProgramUniform1i(gl_postprog, glGetUniformLocation(gl_postprog, "colorLUT"), 2);
 	glProgramUniform2f(gl_postprog, glGetUniformLocation(gl_postprog, "rescale"), 1.0 / r_warpmaxs, 1.0 / r_warpmaxt);
 	glProgramUniformMatrix4fv(gl_postprog, glGetUniformLocation(gl_postprog, "orthomatrix"), 1, GL_FALSE, r_drawmatrix.m[0]);
 	u_postsurfcolor = glGetUniformLocation(gl_postprog, "surfcolor");
@@ -340,6 +349,8 @@ void RPostProcess_Init(void)
 	r_postprocessing = Cvar_Get("r_postprocessing", "1", CVAR_ARCHIVE);
 	r_ssao = Cvar_Get("r_ssao", "1", CVAR_ARCHIVE);
 	r_fxaa = Cvar_Get("r_fxaa", "0", CVAR_ARCHIVE);
+
+	r_colorGradeOverride = Cvar_Get("r_colorGradeOverride", "", 0);
 }
 
 static void RPostProcess_SetCurrentRender(void)
@@ -489,6 +500,7 @@ static void RPostProcess_Tonemap(void)
 
 static void RPostProcess_PostScreenBlends(void)
 {
+	GLuint r_colorLUT;
 	vec4_t waterwarpParam;
 
 	// reset current render image
@@ -514,12 +526,41 @@ static void RPostProcess_PostScreenBlends(void)
 	// set brightness and contrast levels
 	glProgramUniform2f(gl_postprog, u_postBrightnessContrastAmount, vid_gamma->value, vid_contrast->value);
 
+	// set color grading LUT
+	if (r_colorGradeOverride->string[0])
+	{
+		// load a color grade override LUT
+		if (r_colorGradeOverride->modified)
+		{
+			byte *data = NULL;
+			int width, height;
+
+			LoadImageThruSTB(va("env/%s.png", r_colorGradeOverride->string), "png", &data, &width, &height);
+			if (data)
+				r_overrideColorLUT = GL_UploadTexture(data, width, height, false, 32);
+
+			r_colorGradeOverride->modified = false;
+		}
+		r_colorLUT = r_overrideColorLUT;
+	}
+	else if (r_worldColorGradeImage)
+	{
+		// load the map provided color grade LUT
+		r_colorLUT = r_worldColorGradeImage;
+	}
+	else
+	{
+		// load the default neutral color grade LUT
+		r_colorLUT = r_defaultColorLUT;
+	}
+
 	GL_Enable(BLEND_BIT);
 
 	GL_UseProgram(gl_postprog);
 
 	GL_BindTexture(GL_TEXTURE0, GL_TEXTURE_2D, r_drawnearestclampsampler, r_currentRenderImage);
 	GL_BindTexture(GL_TEXTURE1, GL_TEXTURE_2D, r_drawwrapsampler, r_warpGradientImage);
+	GL_BindTexture(GL_TEXTURE2, GL_TEXTURE_2D, r_drawclampsampler, r_colorLUT);
 
 	GL_BindVertexArray(r_postvao);
 	glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
@@ -732,8 +773,6 @@ void RPostProcess_FinishToScreen(void)
 
 	// perform screen blending post processing steps
 	RPostProcess_PostScreenBlends();
-
-	// TODO: color grading via LUT
 
 	// exchange lunimance texture for next frame
 	GLuint temp = m_lum[0];
