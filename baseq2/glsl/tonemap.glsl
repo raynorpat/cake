@@ -27,7 +27,6 @@ uniform float r_exposureAdjust;
 vec3 ToneMapWithLum(vec3 x, float avglum)
 {
 	float newExposure = 0.0;
-	float exposureOffset = r_exposureAdjust;
 	
 	// calculation from: Perceptual Effects in Real-time Tone Mapping - Krawczyk et al.
 	float hdrKey = 1.03 - (2.0 / (2.0 + (avglum + 1.0f)));
@@ -38,7 +37,7 @@ vec3 ToneMapWithLum(vec3 x, float avglum)
 	newExposure = log2( max( linearExposure, 0.0001 ) );
 
 	// add offset to exposure
-	newExposure += exposureOffset;
+	newExposure += r_exposureAdjust;
 	
 	// exposure curves ranges from 0.0625 to 16.0
 	vec3 exposedColor = exp2( newExposure ) * x.rgb;
