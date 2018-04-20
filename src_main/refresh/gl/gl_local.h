@@ -312,6 +312,9 @@ void R_EnableLights (int framecount, int bitmask);
 
 extern	model_t	*r_worldmodel;
 
+extern  char r_worldColorGradeName[MAX_QPATH];
+extern	GLuint r_worldColorGradeImage;
+
 extern	unsigned	d_8to24table_rgba[256];
 
 extern	int		registration_sequence;

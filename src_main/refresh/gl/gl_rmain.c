@@ -33,6 +33,9 @@ viddef_t	vid;
 
 model_t		*r_worldmodel;
 
+char		r_worldColorGradeName[MAX_QPATH];
+GLuint		r_worldColorGradeImage;
+
 float		gldepthmin, gldepthmax;
 
 glconfig_t	gl_config;

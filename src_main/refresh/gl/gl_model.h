@@ -37,7 +37,6 @@ BRUSH MODELS
 //
 // in memory representation
 //
-// !!! if this is changed, it must be changed in asm_draw.h too !!!
 typedef struct
 {
 	vec3_t		position;
@@ -65,7 +64,6 @@ typedef struct
 #define SURF_DRAWBACKGROUND	0x40
 #define SURF_UNDERWATER		0x80
 
-// !!! if this is changed, it must be changed in asm_draw.h too !!!
 typedef struct
 {
 	unsigned short	v[2];
@@ -245,8 +243,8 @@ typedef struct model_s
 	int			lastcurrframe;
 	int			lastlastframe;
 
-	int numframeverts;
-	int numindexes;
+	int			numframeverts;
+	int			numindexes;
 
 	int			extradatasize;
 	void		*extradata;

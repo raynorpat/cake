@@ -300,6 +300,63 @@ model_t *Mod_ForName (char *name, qboolean crash)
 
 byte	*mod_base;
 
+/*
+=================
+Mod_LoadEntities
+=================
+*/
+static void Mod_LoadEntities(lump_t *l)
+{
+	char *data;
+	qboolean isworld;
+	char key[MAX_KEY], value[MAX_VALUE], *token;
+	char colorGrade[MAX_QPATH];
+
+	colorGrade[0] = '\0';
+
+	data = (char *)mod_base + l->fileofs;
+	if (!data || !data[0])
+		return;
+
+	for (; (token = COM_Parse(&data)) && token[0] == '{'; )
+	{
+		isworld = false;
+
+		while (1)
+		{
+			token = COM_Parse (&data);
+			if (!token[0])
+				break; // error
+			if (token[0] == '}')
+				break; // end of entity
+
+			Q_strlcpy (key, token, sizeof(key));
+
+			token = COM_Parse (&data);
+			if (!token[0])
+				break; // error
+
+			Q_strlcpy (value, token, sizeof(value));
+
+			// now that we have the key pair worked out...
+			if (!strcmp(key, "classname"))
+			{
+				if (!strcmp(value, "worldspawn"))
+					isworld = true;
+			}
+			else if (!strcmp(key, "_colorGrade"))
+			{
+				Q_strlcpy (colorGrade, value, sizeof(colorGrade));
+			}
+		}
+
+		if (isworld)
+		{
+			Q_strlcpy (r_worldColorGradeName, colorGrade, sizeof(r_worldColorGradeName));
+			break;
+		}
+	}
+}
 
 /*
 =================
@@ -960,7 +1017,7 @@ void Mod_LoadBrushModel (model_t *mod, void *buffer)
 		((int *) header) [i] = LittleLong (((int *) header) [i]);
 
 	// load into heap
-
+	Mod_LoadEntities (&header->lumps[LUMP_ENTITIES]);
 	Mod_LoadVertexes (&header->lumps[LUMP_VERTEXES]);
 	Mod_LoadEdges (&header->lumps[LUMP_EDGES]);
 	Mod_LoadSurfedges (&header->lumps[LUMP_SURFEDGES]);
@@ -1207,6 +1264,19 @@ void RE_GL_BeginRegistration (char *model)
 	r_worldmodel = Mod_ForName (fullname, true);
 
 	r_viewcluster = -1;
+
+	// load color grade LUT from world
+	if (r_worldColorGradeName[0] && r_worldmodel)
+	{
+		byte *data = NULL;
+		int width, height;
+
+		LoadImageThruSTB(va("env/%s.png", r_worldColorGradeName), "png", &data, &width, &height);
+		if (data)
+			r_worldColorGradeImage = GL_UploadTexture(data, width, height, false, 32);
+		else
+			r_worldColorGradeImage = 0;
+	}
 }
 
 
