@@ -184,7 +184,7 @@ static void VID_Menu_InitCvars (void)
 	if (!fov)
 		fov = Cvar_Get("fov", "90", CVAR_USERINFO | CVAR_ARCHIVE);
 	if (!vid_gamma)
-		vid_gamma = Cvar_Get("vid_gamma", "1.0", CVAR_ARCHIVE);
+		vid_gamma = Cvar_Get("vid_gamma", "2.0", CVAR_ARCHIVE);
 	if (!vid_contrast)
 		vid_contrast = Cvar_Get("vid_contrast", "1.0", CVAR_ARCHIVE);
 	if (!gl_swapinterval)

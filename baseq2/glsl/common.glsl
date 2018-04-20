@@ -49,8 +49,9 @@ vec4 LinearRGBToSRGB( vec4 rgba )
 // brightness and contrast control
 vec3 doBrightnessAndContrast(vec3 value, float brightnessValue, float contrastValue)
 {
-	vec3 color = value.rgb * contrastValue;
-	return vec3(pow(abs(color.rgb), vec3(brightnessValue)));
+	vec3 color = ((value.rgb - 0.5f) * max(contrastValue, 0)) + 0.5f;
+	color = vec3(pow(abs(color.r), brightnessValue), pow(abs(color.g), brightnessValue), pow(abs(color.b), brightnessValue));
+	return color;
 }
 
 // phong BRDF for specular highlights

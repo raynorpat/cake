@@ -132,6 +132,8 @@ static void GL_GetShaderHeader (GLenum shadertype, GLchar *entrypoint, char *des
 	// special defines for various GL extensions
 	if (gl_config.gl_arb_framebuffer_srgb_support)
 		Q_strlcat (dest, "#define USE_SRGB 1\n", size);
+	if (gl_config.gl_ext_computeShader_support)
+		Q_strlcat (dest, "#define USE_COMPUTE_LUM 1\n", size);
 
 	// define entry point
 	if (entrypoint)
@@ -161,8 +163,6 @@ static void GL_GetShaderHeader (GLenum shadertype, GLchar *entrypoint, char *des
 		Q_strlcat (dest, "#ifndef r_useVignette\n#define r_useVignette 1\n#endif\n", size);
 	if (r_useFilmgrain->value)
 		Q_strlcat (dest, "#ifndef r_useFilmgrain\n#define r_useFilmgrain 1\n#endif\n", size);
-	if (r_useBloom->value)
-		Q_strlcat (dest, "#ifndef r_useBloom\n#define r_useBloom 1\n#endif\n", size);
 
 	// load up common.glsl
 	char *commonbuf = NULL;
