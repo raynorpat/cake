@@ -21,7 +21,6 @@ void HDRPostVS ()
 
 
 #ifdef FRAGMENTSHADER
-uniform sampler2D diffuse;
 uniform sampler2D precomposite;
 uniform sampler2D warpgradient;
 uniform sampler2D lumTex;
@@ -36,19 +35,25 @@ uniform vec2 rescale;
 
 vec3 ToneMap(vec3 c, float avglum)
 {
+	float newExposure = 0.0;
+	float exposureOffset = exposure;
+	
 	// calculation from: Perceptual Effects in Real-time Tone Mapping - Krawczyk et al.
 	float hdrKey = 1.03 - (2.0 / (2.0 + (avglum + 1.0f)));
 
 	// calculate exposure from geometric mean of luminance
-	float avgLuminance = max( avglum, 0.001 );
+	float avgLuminance = max( avglum, 0.00001 );
 	float linearExposure = ( hdrKey / avgLuminance );
-	float newExposure = log2( max( linearExposure, 0.0001 ) );
+	newExposure = log2( max( linearExposure, 0.0001 ) );
 
+	// add offset to exposure
+	newExposure += exposureOffset;
+	
 	// exposure curves ranges from 0.0625 to 16.0
 	vec3 exposedColor = exp2( newExposure ) * c.rgb;
 
 	// tonemap
-	return ToneMap_ACES( exposedColor );
+	return LinearRGBToSRGB( ToneMap_ACES(exposedColor) * 1.8 );
 }
 
 void FilmgrainPass( inout vec4 color )
@@ -84,25 +89,23 @@ void HDRPostFS ()
 		scene = texture(precomposite, st);
 	}
 	
-	// then mix in the previously generated bloom
-	vec4 hdrScene = texture(diffuse, st);
-	vec4 color = vec4(hdrScene.rgb + scene.rgb * brightnessContrastBlurSSAOAmount.z, hdrScene.a);
-
-	// tonemap using filmic tonemapping curve
-#if r_useTonemap
-	vec3 luminance = texture(lumTex, vec2(0.0, 0.0)).rgb;
-	color.rgb = ToneMap(color.rgb, luminance.r);
-#endif
-
 	// multiply scene with ambient occlusion
-	if (brightnessContrastBlurSSAOAmount.w > 0)
-	{
-		vec4 AOScene = texture(AOTex, st);
-		color *= AOScene;
-	}
+	//if (brightnessContrastBlurSSAOAmount.w > 0)
+	//{
+	//	vec4 AOScene = texture(AOTex, st);
+	//	scene *= AOScene;
+	//}
+
+	// film grain effect
+#if r_useFilmgrain
+	FilmgrainPass(scene);
+#endif	
 
 	// brightness
-	//color.rgb = doBrightnessAndContrast(color.rgb, brightnessContrastBlurSSAOAmount.x, brightnessContrastBlurSSAOAmount.y);
+	//scene.rgb = doBrightnessAndContrast(scene.rgb, brightnessContrastBlurSSAOAmount.x, brightnessContrastBlurSSAOAmount.y);
+
+	// mix scene with possible modulation (eg item pickups, getting shot, etc)
+	scene = mix(scene, surfcolor, surfcolor.a);
 	
 	// filmic vignette effect
 #if r_useVignette
@@ -110,16 +113,16 @@ void HDRPostFS ()
     vignetteST *= 1.0 - vignetteST.yx;
     float vig = vignetteST.x * vignetteST.y * 15.0;
     vig = pow(vig, 0.25);
-	color.rgb *= vig;
-#endif
-
-	// film grain effect
-#if r_useFilmgrain
-	FilmgrainPass(color);
+	scene.rgb *= vig;
 #endif
 	
-	// mix scene with possible modulation (eg item pickups, getting shot, etc)
-	// and send it out to the screen
-	fragColor = mix(color, surfcolor, surfcolor.a);
+	// tonemap using filmic tonemapping curve
+#if r_useTonemap
+	vec3 luminance = texture(lumTex, vec2(0.0, 0.0)).rgb; // retrieves the log-average luminance texture 
+	scene.rgb = ToneMap(scene.rgb, luminance.r);
+#endif
+
+	// send it out to the screen
+	fragColor = scene;
 }
 #endif

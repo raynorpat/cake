@@ -60,13 +60,13 @@ void BasicPostFS ()
 		scene = texture(diffuse, st);
 	}
 		
+	// brightness
+	//scene.rgb = doBrightnessAndContrast(scene.rgb, brightnessContrastAmount.x, brightnessContrastAmount.y);
+	
 	// tonemap using filmic tonemapping curve
 #if r_useTonemap	
 	scene.rgb = ToneMap_ACES (scene.rgb);
 #endif
-
-	// brightness
-	//scene.rgb = doBrightnessAndContrast(scene.rgb, brightnessContrastAmount.x, brightnessContrastAmount.y);
 
 	// filmic vignette effect
 #if r_useVignette
@@ -81,9 +81,11 @@ void BasicPostFS ()
 #if r_useFilmgrain
 	FilmgrainPass(scene);
 #endif
-	
+
 	// mix scene with possible modulation (eg item pickups, getting shot, etc)
+	scene = mix(scene, surfcolor, surfcolor.a);
+	
 	// and send it out to the screen
-	fragColor = mix(scene, surfcolor, surfcolor.a);
+	fragColor = scene;
 }
 #endif

@@ -25,6 +25,9 @@ GLuint u_ssaoZFar = 0;
 
 GLuint gl_fxaaprog = 0;
 
+GLuint gl_bloomprog = 0;
+GLuint u_bloomIntensity = 0;
+
 GLuint gl_basicpostprog = 0;
 GLuint u_uwwarpparams = 0;
 GLuint u_uwsurfcolor = 0;
@@ -89,11 +92,11 @@ cvar_t *r_hdrLinearThreshold;
 cvar_t *r_hdrKneeCoeff;
 cvar_t *r_hdrExposureCompensation;
 cvar_t *r_hdrExposureAdjust;
-cvar_t *r_hdrBloomIntensity;
-cvar_t *r_hdrBlurPasses;
 cvar_t *r_postprocessing;
 cvar_t *r_ssao;
 cvar_t *r_fxaa;
+cvar_t *r_bloomIntensity;
+cvar_t *r_bloomBlurPasses;
 
 void RPostProcess_CreatePrograms(void)
 {
@@ -262,6 +265,15 @@ void RPostProcess_CreatePrograms(void)
 	u_compositeTexScale = glGetUniformLocation(gl_compositeprog, "texScale");
 	u_compositeBrightParam = glGetUniformLocation(gl_compositeprog, "brightParam");
 
+	// create bloom shader
+	gl_bloomprog = GL_CreateShaderFromName("glsl/bloom.glsl", "BloomVS", "BloomFS");
+
+	glProgramUniform1i(gl_bloomprog, glGetUniformLocation(gl_bloomprog, "bloomScene"), 0);
+	glProgramUniform1i(gl_bloomprog, glGetUniformLocation(gl_bloomprog, "scene"), 1);
+	glProgramUniformMatrix4fv(gl_bloomprog, glGetUniformLocation(gl_bloomprog, "orthomatrix"), 1, GL_FALSE, r_drawmatrix.m[0]);
+
+	u_bloomIntensity = glGetUniformLocation(gl_bloomprog, "r_bloomIntensity");
+
 	// create global fog shader
 	gl_globalfogprog = GL_CreateShaderFromName("glsl/globalFog.glsl", "GlobalFogVS", "GlobalFogFS");
 
@@ -309,11 +321,10 @@ void RPostProcess_CreatePrograms(void)
 
 		u_deltaTime = glGetUniformLocation(gl_calcAdaptiveLumProg, "deltaTime");
 
-		glProgramUniform1i(gl_hdrpostprog, glGetUniformLocation(gl_hdrpostprog, "diffuse"), 0);
-		glProgramUniform1i(gl_hdrpostprog, glGetUniformLocation(gl_hdrpostprog, "precomposite"), 1);
-		glProgramUniform1i(gl_hdrpostprog, glGetUniformLocation(gl_hdrpostprog, "warpgradient"), 2);
-		glProgramUniform1i(gl_hdrpostprog, glGetUniformLocation(gl_hdrpostprog, "lumTex"), 3);
-		glProgramUniform1i(gl_hdrpostprog, glGetUniformLocation(gl_hdrpostprog, "AOTex"), 4);
+		glProgramUniform1i(gl_hdrpostprog, glGetUniformLocation(gl_hdrpostprog, "precomposite"), 0);
+		glProgramUniform1i(gl_hdrpostprog, glGetUniformLocation(gl_hdrpostprog, "warpgradient"), 1);
+		glProgramUniform1i(gl_hdrpostprog, glGetUniformLocation(gl_hdrpostprog, "lumTex"), 2);
+		glProgramUniform1i(gl_hdrpostprog, glGetUniformLocation(gl_hdrpostprog, "AOTex"), 3);
 		glProgramUniform2f(gl_hdrpostprog, glGetUniformLocation(gl_hdrpostprog, "rescale"), 1.0 / r_warpmaxs, 1.0 / r_warpmaxt);
 		glProgramUniformMatrix4fv(gl_hdrpostprog, glGetUniformLocation(gl_hdrpostprog, "orthomatrix"), 1, GL_FALSE, r_drawmatrix.m[0]);
 
@@ -342,16 +353,26 @@ void RPostProcess_Init(void)
 	r_hdrLinearThreshold = Cvar_Get("r_hdrLinearThreshold", "0.8", 0);
 	r_hdrKneeCoeff = Cvar_Get("r_hdrKneeCoeff", "0.5", 0);
 	r_hdrExposureCompensation = Cvar_Get("r_hdrExposureCompensation", "3.0", 0);
-	r_hdrExposureAdjust = Cvar_Get("r_hdrExposureAdjust", "1.4", 0);
-	r_hdrBloomIntensity = Cvar_Get("r_hdrBloomIntensity", "1.75", 0);
-	r_hdrBlurPasses = Cvar_Get("r_hdrBlurPasses", "16", 0);
+	r_hdrExposureAdjust = Cvar_Get("r_hdrExposureAdjust", "0.068", 0);
+	
+	r_bloomIntensity = Cvar_Get("r_bloomIntensity", "3.5", 0);
+	r_bloomBlurPasses = Cvar_Get("r_bloomBlurPasses", "16", 0);
 
 	r_postprocessing = Cvar_Get("r_postprocessing", "1", CVAR_ARCHIVE);
 	r_ssao = Cvar_Get("r_ssao", "1", CVAR_ARCHIVE);
 	r_fxaa = Cvar_Get("r_fxaa", "0", CVAR_ARCHIVE);
 }
 
-void RPostProcess_ComputeShader_CalculateLuminance(void)
+static void RPostProcess_SetCurrentRender(void)
+{
+	GL_BindTexture(GL_TEXTURE0, GL_TEXTURE_2D, r_drawnearestclampsampler, r_currentRenderImage);
+	glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, vid.width, vid.height);
+
+	GL_BindTexture(GL_TEXTURE0, GL_TEXTURE_2D, r_drawnearestclampsampler, r_currentDepthRenderImage);
+	glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, vid.width, vid.height);
+}
+
+static void RPostProcess_ComputeShader_CalculateLuminance(void)
 {
 	// calculate current luminance level
 	GL_UseProgram (gl_calcLumProg);
@@ -367,15 +388,6 @@ void RPostProcess_ComputeShader_CalculateLuminance(void)
 	glUniform1f (u_deltaTime, 1 / 60.0f); // simulates 60fps
 	glDispatchCompute (1, 1, 1);
 	glMemoryBarrier (GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
-}
-
-static void RPostProcess_SetCurrentRender(void)
-{
-	GL_BindTexture(GL_TEXTURE0, GL_TEXTURE_2D, r_drawnearestclampsampler, r_currentRenderImage);
-	glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, vid.width, vid.height);
-
-	GL_BindTexture(GL_TEXTURE0, GL_TEXTURE_2D, r_drawnearestclampsampler, r_currentDepthRenderImage);
-	glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, vid.width, vid.height);
 }
 
 static void RPostProcess_DownscaleTo64(void)
@@ -421,10 +433,9 @@ static void RPostProcess_DownscaleBrightpass(void)
 	R_BindNullFBO();
 }
 
-static void RPostProcess_DoBloomAndTonemap(void)
+static void RPostProcess_Bloom(void)
 {
 	int i, j, flip = 0;
-	vec4_t waterwarpParam;
 	vec2_t texScale;
 
 	// set screen scale
@@ -436,7 +447,7 @@ static void RPostProcess_DoBloomAndTonemap(void)
 
 	for (i = 0; i < 2; i++)
 	{
-		for (j = 0; j < r_hdrBlurPasses->value; j++)
+		for (j = 0; j < r_bloomBlurPasses->value; j++)
 		{
 			texScale[0] = 1.0f / bloomRenderFBO[flip]->width;
 			texScale[1] = 1.0f / bloomRenderFBO[flip]->height;
@@ -464,11 +475,25 @@ static void RPostProcess_DoBloomAndTonemap(void)
 
 	R_BindNullFBO();
 
-	// then we can do a final post-process pass
-	if (v_blend[3])
-		glProgramUniform4f(gl_hdrpostprog, u_postsurfcolor, v_blend[0], v_blend[1], v_blend[2], v_blend[3] * 0.5);
-	else
-		glProgramUniform4f(gl_hdrpostprog, u_postsurfcolor, 0, 0, 0, 0);
+	// add bloom together
+	GL_Enable(BLEND_BIT);
+
+	GL_UseProgram(gl_bloomprog);
+
+	GL_BindTexture(GL_TEXTURE1, GL_TEXTURE_2D, r_drawnearestclampsampler, r_currentRenderHDRImage);
+
+	glProgramUniform1f(gl_bloomprog, u_bloomIntensity, r_bloomIntensity->value);
+
+	GL_BindVertexArray(r_postvao);
+	glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+}
+
+static void RPostProcess_Tonemap(void)
+{
+	vec4_t waterwarpParam;
+
+	// reset current render image
+	RPostProcess_SetCurrentRender();
 
 	// adaptive exposure adjustment in log space
 	float newExp = r_hdrExposureCompensation->value * log(r_hdrExposureAdjust->value + 0.0001f);
@@ -485,17 +510,23 @@ static void RPostProcess_DoBloomAndTonemap(void)
 	else
 		glProgramUniform1i(gl_hdrpostprog, u_postwaterwarp, 0);
 
+	// screen blends
+	if (v_blend[3])
+		glProgramUniform4f(gl_hdrpostprog, u_postsurfcolor, v_blend[0], v_blend[1], v_blend[2], v_blend[3] * 0.5);
+	else
+		glProgramUniform4f(gl_hdrpostprog, u_postsurfcolor, 0, 0, 0, 0);
+
 	// set brightness, contrast, and bloom levels along with SSAO value
-	glProgramUniform4f(gl_hdrpostprog, u_postBrightnessContrastBlurSSAOAmount, vid_gamma->value, vid_contrast->value, r_hdrBloomIntensity->value, r_ssao->value);
+	glProgramUniform4f(gl_hdrpostprog, u_postBrightnessContrastBlurSSAOAmount, vid_gamma->value, vid_contrast->value, r_bloomIntensity->value, r_ssao->value);
 
 	GL_Enable(BLEND_BIT);
 
 	GL_UseProgram(gl_hdrpostprog);
 
-	GL_BindTexture(GL_TEXTURE1, GL_TEXTURE_2D, r_drawnearestclampsampler, r_currentRenderHDRImage);
-	GL_BindTexture(GL_TEXTURE2, GL_TEXTURE_2D, r_drawwrapsampler, r_warpGradientImage);
-	GL_BindTexture(GL_TEXTURE3, GL_TEXTURE_2D, r_drawclampsampler, m_lum[1]);
-	GL_BindTexture(GL_TEXTURE4, GL_TEXTURE_2D, r_drawnearestclampsampler, r_currentAORenderImage);
+	GL_BindTexture(GL_TEXTURE0, GL_TEXTURE_2D, r_drawnearestclampsampler, r_currentRenderImage);
+	GL_BindTexture(GL_TEXTURE1, GL_TEXTURE_2D, r_drawwrapsampler, r_warpGradientImage);
+	GL_BindTexture(GL_TEXTURE2, GL_TEXTURE_2D, r_drawclampsampler, m_lum[1]);
+	GL_BindTexture(GL_TEXTURE3, GL_TEXTURE_2D, r_drawnearestclampsampler, r_currentAORenderImage);
 
 	GL_BindVertexArray(r_postvao);
 	glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
@@ -727,8 +758,11 @@ void RPostProcess_FinishToScreen(void)
 		// downscale with bright pass
 		RPostProcess_DownscaleBrightpass();
 
-		// perform bloom and tonemap
-		RPostProcess_DoBloomAndTonemap();
+		// perform bloom
+		RPostProcess_Bloom();
+
+		// perform tonemap
+		RPostProcess_Tonemap();
 
 		// exchange lunimance texture for next frame
 		GLuint temp = m_lum[0];

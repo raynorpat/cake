@@ -5,7 +5,7 @@ layout (local_size_x = 1, local_size_y = 1) in;
 layout(binding = 0, rgba16f) uniform highp image2D inputImage;
 layout(binding = 1, rgba16f) uniform highp image2D outputImage;
 
-vec3 LUMINANCE_VECTOR  = vec3(0.2125, 0.7154, 0.0721);
+vec3 LUMINANCE_VECTOR = vec3(0.2126, 0.7152, 0.0722);
 
 void main()
 {

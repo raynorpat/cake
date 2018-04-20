@@ -128,5 +128,7 @@ vec3 ToneMap_ACES(vec3 x)
     x = x * ACESOutputMat;
 
     // clamp to [0, 1]
-    return saturate(x);	
+    x = saturate(x);
+	
+	return x;
 }

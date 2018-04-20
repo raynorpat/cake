@@ -39,7 +39,7 @@ void ParticleFS ()
 	vec4 color = iocolor;
 
 	// multiply the particle color alpha for fading out
-	fragColor = color * iocolor.a;
+	fragColor = sRGBAToLinearRGBA(color * iocolor.a);
 }
 #endif
 
