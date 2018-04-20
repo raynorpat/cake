@@ -696,6 +696,7 @@ void RPostProcess_GlobalFog(void)
 	glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, vid.width, vid.height);
 
 	GL_BindTexture(GL_TEXTURE1, GL_TEXTURE_2D, r_drawnearestclampsampler, r_currentDepthRenderImage);
+	glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, vid.width, vid.height);
 
 	GL_BindVertexArray(r_postvao);
 	glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
@@ -749,9 +750,6 @@ void RPostProcess_FinishToScreen(void)
 	// perform FXAA pass
 	RPostProcess_FXAA();
 
-	// perform global fog pass
-	RPostProcess_GlobalFog();
-
 	// downscale to 64x64
 	RPostProcess_DownscaleTo64();
 
@@ -772,6 +770,9 @@ void RPostProcess_FinishToScreen(void)
 		// perform bloom
 		RPostProcess_Bloom();
 	}
+
+	// perform global fog pass
+	RPostProcess_GlobalFog();
 
 	// perform screen blending post processing steps
 	RPostProcess_PostScreenBlends();
