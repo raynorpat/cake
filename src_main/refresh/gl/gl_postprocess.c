@@ -538,6 +538,8 @@ static void RPostProcess_PostScreenBlends(void)
 			LoadImageThruSTB(va("env/%s.png", r_colorGradeOverride->string), "png", &data, &width, &height);
 			if (data)
 				r_overrideColorLUT = GL_UploadTexture(data, width, height, false, 32);
+			else
+				r_overrideColorLUT = r_defaultColorLUT;
 
 			r_colorGradeOverride->modified = false;
 		}
