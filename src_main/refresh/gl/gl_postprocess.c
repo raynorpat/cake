@@ -344,7 +344,7 @@ void RPostProcess_Init(void)
 	r_hdrExposureAdjust = Cvar_Get("r_hdrExposureAdjust", "0.068", 0);
 	
 	r_bloomIntensity = Cvar_Get("r_bloomIntensity", "3.5", 0);
-	r_bloomBlurPasses = Cvar_Get("r_bloomBlurPasses", "4", 0);
+	r_bloomBlurPasses = Cvar_Get("r_bloomBlurPasses", "2", 0);
 
 	r_postprocessing = Cvar_Get("r_postprocessing", "1", CVAR_ARCHIVE);
 	r_ssao = Cvar_Get("r_ssao", "1", CVAR_ARCHIVE);
