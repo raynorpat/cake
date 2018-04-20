@@ -106,7 +106,7 @@ void RPostProcess_CreatePrograms(void)
 	int width, height, x, y;
 
 	// do functionality test, as we don't want to load shaders that we don't need
-	if (!GLEW_ARB_texture_gather || !gl_config.gl_ext_computeShader_support)
+	if (!gl_config.gl_ext_computeShader_support)
 	{
 		// these won't quite work out that great on lesser hardware,
 		// so skip post-processing when the hardware doesn't support it
@@ -285,6 +285,14 @@ void RPostProcess_CreatePrograms(void)
 	u_globalfogColorDensity = glGetUniformLocation(gl_globalfogprog, "fogColorDensity");
 	u_globalfogUnprojectMatrix = glGetUniformLocation(gl_globalfogprog, "unprojectmatrix");
 
+	// create ssao shader
+	gl_ssaoprog = GL_CreateShaderFromName("glsl/ssao.glsl", "SSAOVS", "SSAOFS");
+
+	u_ssaoZFar = glGetUniformLocation(gl_ssaoprog, "zFar");
+
+	glProgramUniform1i(gl_ssaoprog, glGetUniformLocation(gl_ssaoprog, "depthmap"), 0);
+	glProgramUniformMatrix4fv(gl_ssaoprog, glGetUniformLocation(gl_ssaoprog, "orthomatrix"), 1, GL_FALSE, r_drawmatrix.m[0]);
+
 	// create barebones shaders
 	if (r_skipHDRPost)
 	{
@@ -302,24 +310,29 @@ void RPostProcess_CreatePrograms(void)
 	}
 	else
 	{
-		// create shaders
-		gl_hdrpostprog = GL_CreateShaderFromName("glsl/hdrPost.glsl", "HDRPostVS", "HDRPostFS");
-		gl_ssaoprog = GL_CreateShaderFromName("glsl/ssao.glsl", "SSAOVS", "SSAOFS");
-
-		// create compute shaders
+		// create lum compute shader
 		gl_calcLumProg = GL_CreateComputeShaderFromName("glsl/calcLum.cs");
+
+		glProgramUniform1i(gl_calcLumProg, glGetUniformLocation(gl_calcLumProg, "inputImage"), 0);
+		glProgramUniform1i(gl_calcLumProg, glGetUniformLocation(gl_calcLumProg, "outputImage"), 1);
+
+		// create adaptive lum compute shader
 		gl_calcAdaptiveLumProg = GL_CreateComputeShaderFromName("glsl/calcAdaptiveLum.cs");
 
-		// set up shader uniforms
+		u_deltaTime = glGetUniformLocation(gl_calcAdaptiveLumProg, "deltaTime");
+
+		glProgramUniform1i(gl_calcAdaptiveLumProg, glGetUniformLocation(gl_calcAdaptiveLumProg, "currentImage"), 0);
+		glProgramUniform1i(gl_calcAdaptiveLumProg, glGetUniformLocation(gl_calcAdaptiveLumProg, "image0"), 1);
+		glProgramUniform1i(gl_calcAdaptiveLumProg, glGetUniformLocation(gl_calcAdaptiveLumProg, "image1"), 2);
+
+		// create tonemap shader
+		gl_hdrpostprog = GL_CreateShaderFromName("glsl/hdrPost.glsl", "HDRPostVS", "HDRPostFS");
+
 		u_postsurfcolor = glGetUniformLocation(gl_hdrpostprog, "surfcolor");
 		u_postBrightnessContrastBlurSSAOAmount = glGetUniformLocation(gl_hdrpostprog, "brightnessContrastBlurSSAOAmount");
 		u_postExposure = glGetUniformLocation(gl_hdrpostprog, "exposure");
 		u_postwaterwarpparam = glGetUniformLocation(gl_hdrpostprog, "waterwarpParam");
 		u_postwaterwarp = glGetUniformLocation(gl_hdrpostprog, "waterwarppost");
-
-		u_ssaoZFar = glGetUniformLocation(gl_ssaoprog, "zFar");
-
-		u_deltaTime = glGetUniformLocation(gl_calcAdaptiveLumProg, "deltaTime");
 
 		glProgramUniform1i(gl_hdrpostprog, glGetUniformLocation(gl_hdrpostprog, "precomposite"), 0);
 		glProgramUniform1i(gl_hdrpostprog, glGetUniformLocation(gl_hdrpostprog, "warpgradient"), 1);
@@ -327,25 +340,18 @@ void RPostProcess_CreatePrograms(void)
 		glProgramUniform1i(gl_hdrpostprog, glGetUniformLocation(gl_hdrpostprog, "AOTex"), 3);
 		glProgramUniform2f(gl_hdrpostprog, glGetUniformLocation(gl_hdrpostprog, "rescale"), 1.0 / r_warpmaxs, 1.0 / r_warpmaxt);
 		glProgramUniformMatrix4fv(gl_hdrpostprog, glGetUniformLocation(gl_hdrpostprog, "orthomatrix"), 1, GL_FALSE, r_drawmatrix.m[0]);
-
-		glProgramUniform1i(gl_ssaoprog, glGetUniformLocation(gl_ssaoprog, "depthmap"), 0);
-		glProgramUniformMatrix4fv(gl_ssaoprog, glGetUniformLocation(gl_ssaoprog, "orthomatrix"), 1, GL_FALSE, r_drawmatrix.m[0]);
-
-		glProgramUniform1i(gl_calcLumProg, glGetUniformLocation(gl_calcLumProg, "inputImage"), 0);
-		glProgramUniform1i(gl_calcLumProg, glGetUniformLocation(gl_calcLumProg, "outputImage"), 1);
-
-		glProgramUniform1i(gl_calcAdaptiveLumProg, glGetUniformLocation(gl_calcAdaptiveLumProg, "currentImage"), 0);
-		glProgramUniform1i(gl_calcAdaptiveLumProg, glGetUniformLocation(gl_calcAdaptiveLumProg, "image0"), 1);
-		glProgramUniform1i(gl_calcAdaptiveLumProg, glGetUniformLocation(gl_calcAdaptiveLumProg, "image1"), 2);
 	}
 
 	// fxaa shader
 	if (gl_config.gl_ext_GPUShader5_support)
 	{
 		gl_fxaaprog = GL_CreateShaderFromName("glsl/fxaa.glsl", "FXAAVS", "FXAAFS");
+
 		glProgramUniform1i(gl_fxaaprog, glGetUniformLocation(gl_fxaaprog, "diffuse"), 0);
 		glProgramUniformMatrix4fv(gl_fxaaprog, glGetUniformLocation(gl_fxaaprog, "orthomatrix"), 1, GL_FALSE, r_drawmatrix.m[0]);
 	}
+
+	// create final post shader
 }
 
 void RPostProcess_Init(void)
