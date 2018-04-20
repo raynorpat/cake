@@ -125,9 +125,9 @@ void RPostProcess_CreatePrograms(void)
 	{
 		for (y = 0; y < 1; y++)
 		{
-			lumdata[y][x][0] = 32;
-			lumdata[y][x][1] = 32;
-			lumdata[y][x][2] = 32;
+			lumdata[y][x][0] = pow(32, 1/2.2);
+			lumdata[y][x][1] = pow(32, 1/2.2);
+			lumdata[y][x][2] = pow(32, 1/2.2);
 			lumdata[y][x][3] = 255;
 		}
 	}
