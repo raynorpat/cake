@@ -12,7 +12,7 @@ layout(location = 2) in vec4 texcoord;
 void DrawVS ()
 {
 	gl_Position = orthomatrix * position;
-	iocolor = color;
+	iocolor = LinearRGBToSRGB(color);
 	texcoords = texcoord;
 }
 #endif
@@ -30,8 +30,8 @@ out vec4 fragColor;
 void DrawFS ()
 {
 	vec4 colorTex = texture (diffuse, texcoords.st);
-	colorTex = sRGBAToLinearRGBA(colorTex * colorAdd);
-	
+	colorTex *= LinearRGBToSRGB(colorAdd);
+
 	// mix with color and color matrix
 	fragColor = mix (colorTex, iocolor, texturecolormix);
 
@@ -39,7 +39,7 @@ void DrawFS ()
 	fragColor.rgb = doBrightnessAndContrast(fragColor.rgb, brightnessAmount, contrastAmount);
 	
 	// convert back to sRGB and send it out to the screen
-	fragColor = LinearRGBToSRGB(fragColor);
+	fragColor = fragColor;
 }
 #endif
 
