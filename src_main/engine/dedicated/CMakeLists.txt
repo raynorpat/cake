@@ -93,12 +93,16 @@ source_group("system\\sdl" FILES ${SYSTEM_SOURCES})
 set(SHARED_INCLUDES
 	../../shared/game.h
 	../../shared/q_platform.h
+	../../shared/q_compiler.h
+	../../shared/q_types.h
+	../../shared/q_endian.h
 	../../shared/q_shared.h
 	../../shared/qfiles.h
 	)
 set(SHARED_SOURCES
 	../../shared/m_flash.c
 	../../shared/q_shared.c
+	../../shared/q_endian.c
 	)
 source_group("shared" FILES ${SHARED_INCLUDES})
 source_group("shared" FILES ${SHARED_SOURCES})

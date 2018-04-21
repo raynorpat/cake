@@ -18,7 +18,8 @@ void CompositeVS ()
 
 
 #ifdef FRAGMENTSHADER
-uniform sampler2D diffuse;
+uniform sampler2D scene;
+uniform sampler2D extraScene;
 uniform vec2 rescale;
 
 uniform int compositeMode;
@@ -143,8 +144,8 @@ void CompositeFS ()
 		st *= vec2(4.0, 4.0);
 		
 		// grab scene
-		color = texture(diffuse, st);
-		vec3 linearColor = GammaToLinearSpace(color.rgb);
+		color = texture(scene, st);
+		vec3 linearColor = sRGBToLinearRGB(color.rgb);
 		
 		// grab brightness
 		float br = Brightness(linearColor);
@@ -170,7 +171,7 @@ void CompositeFS ()
 		for(int t = -tap; t <= tap; t++)
 		{
 			float weight = gaussFact[t + tap];
-			color += texture(diffuse, st + vec2(t, 0) * texScale) * weight;
+			color += texture(scene, st + vec2(t, 0) * texScale) * weight;
 		}
 
 		fragColor = color * (1.0 / gaussSum);
@@ -187,7 +188,7 @@ void CompositeFS ()
 		for(int t = -tap; t <= tap; t++)
 		{
 			float weight = gaussFact[t + tap];
-			color += texture(diffuse, st + vec2(0, t) * texScale) * weight;
+			color += texture(scene, st + vec2(0, t) * texScale) * weight;
 		}
 
 		fragColor = color * (1.0 / gaussSum);
@@ -197,7 +198,7 @@ void CompositeFS ()
 	else if(compositeMode == 4)
 	{	
 		// grab scene
-		color = texture (diffuse, st);
+		color = texture (scene, st);
 		
 		// dither scene
 		vec4 colorDither = strength * dither8x8(gl_FragCoord.st, color);

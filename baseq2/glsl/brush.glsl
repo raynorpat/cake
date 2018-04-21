@@ -103,7 +103,7 @@ void LightmappedFS ()
 		DynamicLighting (normal);
 	
 	// set diffuse
-	vec3 diffuseTerm = diffAlbedo.rgb * diffLight;
+	vec3 diffuseTerm = sRGBToLinearRGB(diffAlbedo.rgb * diffLight);
 	
 	// debug parameters
 	if (debugParams.x == 1)
@@ -122,8 +122,7 @@ void LightmappedFS ()
 		fragColor.rgb = diffuseTerm.rgb;
 	}
 	
-	// output tonemapped colors
-	fragColor.rgb = ToneMap_ACESFilmic (fragColor.rgb);
+	// output alpha
 	fragColor.a = alpha;
 }
 #endif

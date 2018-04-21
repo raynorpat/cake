@@ -20,6 +20,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 // matrix.c -- matrix math functionality
 #include "ref_public.h"
 
+extern cvar_t *r_zfar;
+extern cvar_t *r_znear;
+
 static float QXVec3Length(const QXVECTOR3 *pv)
 {
 	if (!pv)
@@ -252,37 +255,52 @@ glmatrix *GL_OrthoMatrix (glmatrix *m, float left, float right, float bottom, fl
 }
 
 
-glmatrix *GL_PerspectiveMatrix (glmatrix *m, float fovy, float aspect, float zNear, float zFar)
+glmatrix *GL_PerspectiveMatrix (glmatrix *m, float fovy, float aspect)
 {
 	glmatrix tmp;
-	float xmin, xmax, ymin, ymax;
-	float nudge = 1.0 - 1.0 / (1 << 23);
+	float xMin, xMax, yMin, yMax;
+	float width, height, depth;
+	float zNear, zFar;
 
-	ymax = zNear * tan (fovy * M_PI / 360.0);
-	ymin = -ymax;
+	zNear = r_znear->value;
+	zFar = r_zfar->value;
 
-	xmin = ymin * aspect;
-	xmax = ymax * aspect;
+	yMax = zNear * tan (fovy * M_PI / 360.0);
+	yMin = -yMax;
 
-	tmp.m[0][0] = (2 * zNear) / (xmax - xmin);
+	xMin = yMin * aspect;
+	xMax = yMax * aspect;
+
+	width = xMax - xMin;
+	height = yMax - yMin;
+	depth = zFar - zNear;
+
+	// far plane at infinity, see RobustShadowVolumes.pdf by Nvidia
+	tmp.m[0][0] = 2 * zNear / width;
 	tmp.m[0][1] = 0;
 	tmp.m[0][2] = 0;
 	tmp.m[0][3] = 0;
 
 	tmp.m[1][0] = 0;
-	tmp.m[1][1] = (2 * zNear) / (ymax - ymin);
+	tmp.m[1][1] = 2 * zNear / height;
 	tmp.m[1][2] = 0;
 	tmp.m[1][3] = 0;
 
-	tmp.m[2][0] = (xmax + xmin) / (xmax - xmin);
-	tmp.m[2][1] = (ymax + ymin) / (ymax - ymin);
-	tmp.m[2][2] = -1 * nudge;
+	tmp.m[2][0] = (xMax + xMin) / width;
+	tmp.m[2][1] = (yMax + yMin) / height;
+	tmp.m[2][2] = -1;
 	tmp.m[2][3] = -1;
 
 	tmp.m[3][0] = 0;
 	tmp.m[3][1] = 0;
-	tmp.m[3][2] = -2 * zNear * nudge;
+	tmp.m[3][2] = -2 * zNear;
 	tmp.m[3][3] = 0;
+
+	if (zFar > zNear)
+	{
+		tmp.m[2][2] = -(zFar + zNear) / depth;
+		tmp.m[3][2] = -2 * zFar * zNear / depth;
+	}
 
 	return GL_MultMatrix (m, &tmp, m);
 }

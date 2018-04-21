@@ -103,16 +103,14 @@ void MeshFS ()
 	vec4 shade = max (shadedot + 1.0, (shadedot * 0.2954545) + 1.0) * shadelight;
 	
 	// get dynamic lights
-	DynamicLighting(normal);
+	if (r_maxLights > 0)
+		DynamicLighting(normal);
 	
 	// set diffuse
-	vec4 diffuseTerm = vec4(diffAlbedo.rgb * diffLight.rgb, 1.0) * shade;
+	vec4 diffuseTerm = vec4(sRGBToLinearRGB(diffAlbedo.rgb * diffLight.rgb), 1.0) * shade;
 
 	// output final color
 	fragColor = mix (diffuseTerm, shadelight, meshshellmix);
-	
-	// tonemap final color
-	fragColor.rgb = ToneMap_ACESFilmic (fragColor.rgb);
 }
 #endif
 

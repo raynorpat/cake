@@ -23,26 +23,18 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #define _Q_SHARED_
 
 #include "q_platform.h"
+#include "q_compiler.h"
+#include "q_types.h"
+#include "q_endian.h"
 
 #include <assert.h>
 #include <math.h>
 #include <stdio.h>
-#include <stdarg.h>
 #include <string.h>
 #include <stdlib.h>
-#include <stddef.h>
-#include <ctype.h>
-#include <stdint.h>
 #include <time.h>
 #ifdef _WIN32
 #include <direct.h>
-#endif
-
-typedef unsigned char 		byte;
-#if defined(__cplusplus) || defined(__bool_true_false_are_defined)
-typedef int					qboolean;
-#else
-typedef enum {false, true}	qboolean;
 #endif
 
 #ifndef max
@@ -51,7 +43,6 @@ typedef enum {false, true}	qboolean;
 #ifndef min
 #define min(a,b) (((a) < (b)) ? (a) : (b))
 #endif
-
 
 #if defined(__DJGPP__) || defined(_WIN32)
 char *strtok_r(char *s, const char *delim, char **last);
@@ -341,17 +332,7 @@ void *Q_memccpy (void *dst, const void *src, int c, size_t size);
 
 int glob_match (char *pattern, char *text);
 
-//=============================================
-
-short	BigShort (short l);
-short	LittleShort (short l);
-int		BigLong (int l);
-int		LittleLong (int l);
-float	BigFloat (float l);
-float	LittleFloat (float l);
-
-void	Swap_Init (void);
-char	*va (char *format, ...);
+char *va (char *format, ...);
 
 //=============================================
 

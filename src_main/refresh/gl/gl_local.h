@@ -187,7 +187,6 @@ qboolean R_CheckFBO(const FBO_t * fbo);
 void R_BindNullFBO(void);
 void R_BindFBO(FBO_t * fbo);
 
-extern FBO_t *basicRenderFBO;
 extern FBO_t *hdrRenderFBO;
 extern FBO_t *hdrDownscale64;
 extern FBO_t *brightpassRenderFBO;
@@ -215,6 +214,20 @@ typedef struct
 
 #define BACKFACE_EPSILON	0.01
 
+typedef enum
+{
+	FRUSTUM_NEAR,
+	FRUSTUM_LEFT,
+	FRUSTUM_RIGHT,
+	FRUSTUM_BOTTOM,
+	FRUSTUM_TOP,
+	FRUSTUM_FAR,
+	FRUSTUM_PLANES = 5,
+	FRUSTUM_CLIPALL = 1 | 2 | 4 | 8 | 16 //| 32
+} frustumBits_t;
+
+typedef cplane_t frustum_t[6];
+
 //====================================================
 
 extern	image_t		gltextures[MAX_GLTEXTURES];
@@ -226,7 +239,7 @@ extern int			numFBOs;
 extern	image_t		*r_notexture;
 extern	int			r_visframecount;
 extern	int			r_framecount;
-extern	cplane_t	frustum[4];
+extern	frustum_t	frustum;
 extern	int			c_brush_polys, c_alias_polys;
 
 extern	int			gl_filter_min, gl_filter_max;
@@ -255,7 +268,14 @@ extern	cvar_t	*r_novis;
 extern	cvar_t	*r_nocull;
 extern  cvar_t  *r_nofog;
 extern	cvar_t	*r_lerpmodels;
+extern	cvar_t	*r_znear;
+extern	cvar_t	*r_zfar;
 extern	cvar_t	*r_postprocessing;
+extern	cvar_t	*r_useSrgb;
+extern	cvar_t	*r_useTonemap;
+extern	cvar_t	*r_useVignette;
+extern	cvar_t	*r_useFilmgrain;
+extern	cvar_t	*r_useBloom;
 
 extern	cvar_t	*r_lightlevel;	// FIXME: This is a HACK to get the client's light level
 
@@ -279,10 +299,10 @@ extern	cvar_t	*vid_gamma;
 extern	cvar_t	*vid_contrast;
 extern	cvar_t	*r_lightscale;
 
-extern	glmatrix	r_drawmatrix;
-extern	glmatrix	r_worldmatrix;
-extern	glmatrix	r_projectionmatrix;
-extern	glmatrix	r_mvpmatrix;
+extern	glmatrix r_drawmatrix;
+extern	glmatrix r_worldmatrix;
+extern	glmatrix r_projectionmatrix;
+extern	glmatrix r_mvpmatrix;
 
 extern GLuint r_surfacesampler;
 extern GLuint r_lightmapsampler;
@@ -307,6 +327,9 @@ void R_EnableLights (int framecount, int bitmask);
 //====================================================================
 
 extern	model_t	*r_worldmodel;
+
+extern  char r_worldColorGradeName[MAX_QPATH];
+extern	GLuint r_worldColorGradeImage;
 
 extern	unsigned	d_8to24table_rgba[256];
 
@@ -387,6 +410,7 @@ typedef struct
 
 	qboolean	gl_ext_GPUShader5_support;
 	qboolean	gl_ext_computeShader_support;
+	qboolean	gl_arb_framebuffer_srgb_support;
 } glconfig_t;
 
 typedef struct

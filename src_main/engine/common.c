@@ -1510,7 +1510,6 @@ void Qcommon_Init (int argc, char **argv)
 	// cvar and command buffer management
 	COM_InitArgv (argc, argv);
 
-	Swap_Init ();
 	Cbuf_Init ();
 
 	Cmd_Init ();
@@ -1561,7 +1560,7 @@ void Qcommon_Init (int argc, char **argv)
 	cl_maxfps = Cvar_Get ("cl_maxfps", "60", CVAR_ARCHIVE);
 	r_maxfps = Cvar_Get ("r_maxfps", "95", CVAR_ARCHIVE);
 
-	s = va ("%4.2f %s %s %s", VERSION, CPUSTRING, __DATE__, BUILDSTRING);
+	s = va ("%4.2f %s %s", VERSION, PLATFORM_STRING, __DATE__);
 	Cvar_Get ("version", s, CVAR_SERVERINFO | CVAR_NOSET);
 
 	if (dedicated->value)

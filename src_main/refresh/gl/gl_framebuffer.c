@@ -24,7 +24,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 FBO_t		*fbos[MAX_FBOS];
 int			numFBOs;
 
-FBO_t		*basicRenderFBO;
 FBO_t		*hdrRenderFBO;
 FBO_t		*hdrDownscale64;
 FBO_t		*brightpassRenderFBO;
@@ -223,19 +222,6 @@ void R_InitFBOs(void)
 {
 	numFBOs = 0;
 	gl_state.currentFBO = NULL;
-
-	// BASIC RENDER
-
-	basicRenderFBO = R_CreateFBO("_basicRender", vid.width, vid.height);
-	R_BindFBO(basicRenderFBO);
-
-	R_CreateFBOColorBuffer(basicRenderFBO, GL_RGBA8, 0);
-	R_CreateFBODepthBuffer(basicRenderFBO, GL_DEPTH_COMPONENT24);
-
-	R_AttachFBOTexture2D(GL_TEXTURE_2D, r_currentRenderImage, 0);
-	R_AttachFBOTextureDepth(r_currentDepthRenderImage);
-
-	R_CheckFBO(basicRenderFBO);
 
 	// HDR RENDER
 

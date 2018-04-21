@@ -129,6 +129,12 @@ static void GL_GetShaderHeader (GLenum shadertype, GLchar *entrypoint, char *des
 	if (gl_config.gl_ext_GPUShader5_support)
 		Q_strlcat (dest, "#extension GL_ARB_gpu_shader5 : require\n", size);
 
+	// special defines for various GL extensions
+	if (gl_config.gl_arb_framebuffer_srgb_support)
+		Q_strlcat (dest, "#define USE_SRGB 1\n", size);
+	if (gl_config.gl_ext_computeShader_support)
+		Q_strlcat (dest, "#define USE_COMPUTE_LUM 1\n", size);
+
 	// define entry point
 	if (entrypoint)
 		Q_strlcat (dest, va("#define %s main\n", entrypoint), size);
@@ -149,6 +155,14 @@ static void GL_GetShaderHeader (GLenum shadertype, GLchar *entrypoint, char *des
 	fbufWidthScale = 1.0f / ((float)vid.width);
 	fbufHeightScale = 1.0f / ((float)vid.height);
 	Q_strlcat (dest, va("#ifndef r_FBufScale\n#define r_FBufScale vec2(%f, %f)\n#endif\n", fbufWidthScale, fbufHeightScale), size);
+
+	// use* cvars
+	if (r_useTonemap->value)
+		Q_strlcat (dest, "#ifndef r_useTonemap\n#define r_useTonemap 1\n#endif\n", size);
+	if (r_useVignette->value)
+		Q_strlcat (dest, "#ifndef r_useVignette\n#define r_useVignette 1\n#endif\n", size);
+	if (r_useFilmgrain->value)
+		Q_strlcat (dest, "#ifndef r_useFilmgrain\n#define r_useFilmgrain 1\n#endif\n", size);
 
 	// load up common.glsl
 	char *commonbuf = NULL;
@@ -351,6 +365,9 @@ GL_SetDefaultState
 */
 void GL_SetDefaultState(void)
 {
+	if(gl_config.gl_arb_framebuffer_srgb_support)
+		glEnable(GL_FRAMEBUFFER_SRGB);
+
 	glDrawBuffer(GL_BACK);
 	glReadBuffer(GL_BACK);
 

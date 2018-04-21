@@ -25,7 +25,7 @@ void ParticleVS ()
 
 	gl_Position = worldMatrix * vec4 (position.xyz + (rightVec * scale * texcoord.t) + (upVec * scale * texcoord.s), 1.0);
 
-	iocolor = color;
+	iocolor = LinearRGBToSRGB(color);
 	offsets = texcoord;
 }
 #endif

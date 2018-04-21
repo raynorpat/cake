@@ -33,6 +33,9 @@ viddef_t	vid;
 
 model_t		*r_worldmodel;
 
+char		r_worldColorGradeName[MAX_QPATH];
+GLuint		r_worldColorGradeImage;
+
 float		gldepthmin, gldepthmax;
 
 glconfig_t	gl_config;
@@ -40,7 +43,7 @@ glstate_t	gl_state;
 
 image_t		*r_notexture;		// use for bad textures
 
-cplane_t	frustum[4];
+frustum_t	frustum;
 
 int			r_visframecount;	// bumped when going to a new PVS
 int			r_framecount;		// used for dlight push checking
@@ -79,6 +82,14 @@ cvar_t	*r_nocull;
 cvar_t	*r_nofog;
 cvar_t	*r_lerpmodels;
 cvar_t	*r_lefthand;
+cvar_t	*r_znear;
+cvar_t	*r_zfar;
+
+cvar_t	*r_useSrgb;
+cvar_t	*r_useTonemap;
+cvar_t	*r_useVignette;
+cvar_t	*r_useFilmgrain;
+cvar_t	*r_useBloom;
 
 cvar_t	*r_lightlevel;	// FIXME: This is a HACK to get the client's light level
 
@@ -121,9 +132,12 @@ qboolean R_CullBox (vec3_t mins, vec3_t maxs)
 	if (r_nocull->value)
 		return false;
 
-	for (i = 0; i < 4; i++)
+	// check against frustum planes
+	for (i = 0; i < FRUSTUM_PLANES; i++)
+	{
 		if (BOX_ON_PLANE_SIDE (mins, maxs, &frustum[i]) == 2)
 			return true;
+	}
 
 	return false;
 }
@@ -296,7 +310,7 @@ void R_SetupGL (void)
 
 	// set up projection matrix
 	GL_LoadIdentity (&r_projectionmatrix);
-	GL_PerspectiveMatrix (&r_projectionmatrix, r_newrefdef.fov_y, (float) r_newrefdef.width / (float) r_newrefdef.height, 4, 4096);
+	GL_PerspectiveMatrix (&r_projectionmatrix, r_newrefdef.fov_y, (float) r_newrefdef.width / (float) r_newrefdef.height);
 
 	// set up modelview matrix
 	GL_LoadIdentity (&r_worldmatrix);
@@ -317,30 +331,45 @@ void R_SetupGL (void)
 	// glClear is affected by the current depth write mask so meake sure that depth writing is enabled
 	GL_Enable (gl_state.statebits | DEPTHWRITE_BIT);
 
+	// extract the frustum from the MVP matrix
+	// see http://gamedevs.org/uploads/fast-extraction-viewing-frustum-planes-from-world-view-projection-matrix.pdf
 	if (!gl_lockfrustum->value)
 	{
-		// extract the frustum from the MVP matrix
-		frustum[0].normal[0] = r_mvpmatrix._14 - r_mvpmatrix._11;
-		frustum[0].normal[1] = r_mvpmatrix._24 - r_mvpmatrix._21;
-		frustum[0].normal[2] = r_mvpmatrix._34 - r_mvpmatrix._31;
+		// left
+		frustum[FRUSTUM_LEFT].normal[0] = r_mvpmatrix._14 + r_mvpmatrix._11;
+		frustum[FRUSTUM_LEFT].normal[1] = r_mvpmatrix._24 + r_mvpmatrix._21;
+		frustum[FRUSTUM_LEFT].normal[2] = r_mvpmatrix._34 + r_mvpmatrix._31;
 
-		frustum[1].normal[0] = r_mvpmatrix._14 + r_mvpmatrix._11;
-		frustum[1].normal[1] = r_mvpmatrix._24 + r_mvpmatrix._21;
-		frustum[1].normal[2] = r_mvpmatrix._34 + r_mvpmatrix._31;
+		// right
+		frustum[FRUSTUM_RIGHT].normal[0] = r_mvpmatrix._14 - r_mvpmatrix._11;
+		frustum[FRUSTUM_RIGHT].normal[1] = r_mvpmatrix._24 - r_mvpmatrix._22;
+		frustum[FRUSTUM_RIGHT].normal[2] = r_mvpmatrix._34 - r_mvpmatrix._31;
 
-		frustum[2].normal[0] = r_mvpmatrix._14 + r_mvpmatrix._12;
-		frustum[2].normal[1] = r_mvpmatrix._24 + r_mvpmatrix._22;
-		frustum[2].normal[2] = r_mvpmatrix._34 + r_mvpmatrix._32;
+		// bottom
+		frustum[FRUSTUM_BOTTOM].normal[0] = r_mvpmatrix._14 + r_mvpmatrix._12;
+		frustum[FRUSTUM_BOTTOM].normal[1] = r_mvpmatrix._24 + r_mvpmatrix._22;
+		frustum[FRUSTUM_BOTTOM].normal[2] = r_mvpmatrix._34 + r_mvpmatrix._32;
 
-		frustum[3].normal[0] = r_mvpmatrix._14 - r_mvpmatrix._12;
-		frustum[3].normal[1] = r_mvpmatrix._24 - r_mvpmatrix._22;
-		frustum[3].normal[2] = r_mvpmatrix._34 - r_mvpmatrix._32;
+		// top
+		frustum[FRUSTUM_TOP].normal[0] = r_mvpmatrix._14 - r_mvpmatrix._12;
+		frustum[FRUSTUM_TOP].normal[1] = r_mvpmatrix._24 - r_mvpmatrix._22;
+		frustum[FRUSTUM_TOP].normal[2] = r_mvpmatrix._34 - r_mvpmatrix._32;
+
+		// near
+		frustum[FRUSTUM_NEAR].normal[0] = r_mvpmatrix._13;
+		frustum[FRUSTUM_NEAR].normal[1] = r_mvpmatrix._23;
+		frustum[FRUSTUM_NEAR].normal[2] = r_mvpmatrix._33;
+
+		// far
+		frustum[FRUSTUM_FAR].normal[0] = r_mvpmatrix._14 - r_mvpmatrix._13;
+		frustum[FRUSTUM_FAR].normal[1] = r_mvpmatrix._24 - r_mvpmatrix._23;
+		frustum[FRUSTUM_FAR].normal[2] = r_mvpmatrix._34 - r_mvpmatrix._33;
 	}
 
-	for (i = 0; i < 4; i++)
+	for (i = 0; i < 6; i++)
 	{
 		frustum[i].type = PLANE_ANYZ;
-		frustum[i].dist = DotProduct (r_origin, frustum[i].normal);
+		frustum[i].dist = DotProduct(r_origin, frustum[i].normal);
 		frustum[i].signbits = SignbitsForPlane (&frustum[i]);
 	}
 
@@ -505,6 +534,14 @@ static void R_Register (void)
 	r_nofog = Cvar_Get ("r_nofog", "0", 0);
 	r_lerpmodels = Cvar_Get ("r_lerpmodels", "1", 0);
 	r_speeds = Cvar_Get ("r_speeds", "0", 0);
+	r_znear = Cvar_Get("r_znear", "4", 0);
+	r_zfar = Cvar_Get("r_zfar", "0", 0);
+
+	r_useSrgb = Cvar_Get ("r_useSrgb", "1", CVAR_ARCHIVE);
+	r_useTonemap = Cvar_Get ("r_useTonemap", "1", CVAR_ARCHIVE);
+	r_useVignette = Cvar_Get ("r_useVignette", "1", CVAR_ARCHIVE);
+	r_useFilmgrain = Cvar_Get ("r_useFilmgrain", "1", CVAR_ARCHIVE);
+	r_useBloom = Cvar_Get ("r_useBloom", "1", CVAR_ARCHIVE);
 
 	r_lightlevel = Cvar_Get ("r_lightlevel", "0", 0);
 
@@ -819,6 +856,35 @@ static void RMain_CheckFor_ComputeShader(void)
 	gl_config.gl_ext_computeShader_support = false;
 }
 
+static void RMain_CheckFor_Srgb(void)
+{
+	VID_Printf(PRINT_ALL, "checking for GL_ARB_framebuffer_sRGB...\n");
+
+	// check in glew first...
+	if (!glewIsSupported("GL_ARB_framebuffer_sRGB "))
+	{
+		// lets double check the actual extension list we grabbed earlier,
+		// glew is known to be buggy checking for extensions...
+		if (!strcmp("GL_ARB_framebuffer_sRGB ", gl_config.extension_string))
+		{
+			// found it in our list
+			VID_Printf(PRINT_ALL, S_COLOR_GREEN " ...found GL_ARB_framebuffer_sRGB\n");
+			gl_config.gl_arb_framebuffer_srgb_support = true;
+			return;
+		}
+	}
+	else
+	{
+		// found it in glew's list
+		VID_Printf(PRINT_ALL, S_COLOR_GREEN " ...found GL_ARB_framebuffer_sRGB\n");
+		gl_config.gl_arb_framebuffer_srgb_support = true;
+		return;
+	}
+
+	VID_Printf(PRINT_ALL, S_COLOR_RED " ...missing GL_ARB_framebuffer_sRGB\n");
+	gl_config.gl_arb_framebuffer_srgb_support = false;
+}
+
 #define R_MODE_FALLBACK 10 // 1024x768
 
 static int SetMode_impl(int mode, int fullscreen)
@@ -921,6 +987,9 @@ success:
 
 	// check for compute shader support
 	RMain_CheckFor_ComputeShader();
+
+	// check for sRGB framebuffer support
+	RMain_CheckFor_Srgb();
 
 	return true;
 }

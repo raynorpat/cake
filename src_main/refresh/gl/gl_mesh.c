@@ -314,7 +314,8 @@ static qboolean R_CullAliasModel (vec3_t bbox[8], entity_t *e)
 		{
 			int mask = 0;
 
-			for (f = 0; f < 4; f++)
+			// check against frustum planes
+			for (f = 0; f < FRUSTUM_PLANES; f++)
 			{
 				float dp = DotProduct (frustum[f].normal, bbox[p]);
 
@@ -469,7 +470,7 @@ void R_DrawAliasModel (entity_t *e)
 
 		GL_LoadIdentity (&gunmatrix);
 		GL_ScaleMatrix (&gunmatrix, -1, 1, 1);
-		GL_PerspectiveMatrix (&gunmatrix, r_newrefdef.fov_y, (float) r_newrefdef.width / r_newrefdef.height, 4, 4096);
+		GL_PerspectiveMatrix (&gunmatrix, r_newrefdef.fov_y, (float) r_newrefdef.width / r_newrefdef.height);
 
 		// eval a new mvp for left-handedness
 		GL_LoadMatrix (&gl_meshuboupdate.localMatrix, &r_worldmatrix);
