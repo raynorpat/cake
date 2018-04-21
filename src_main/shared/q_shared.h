@@ -23,6 +23,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #define _Q_SHARED_
 
 #include "q_platform.h"
+#include "q_endian.h"
 
 #include <assert.h>
 #include <math.h>
@@ -51,7 +52,6 @@ typedef enum {false, true}	qboolean;
 #ifndef min
 #define min(a,b) (((a) < (b)) ? (a) : (b))
 #endif
-
 
 #if defined(__DJGPP__) || defined(_WIN32)
 char *strtok_r(char *s, const char *delim, char **last);
@@ -341,17 +341,7 @@ void *Q_memccpy (void *dst, const void *src, int c, size_t size);
 
 int glob_match (char *pattern, char *text);
 
-//=============================================
-
-short	BigShort (short l);
-short	LittleShort (short l);
-int		BigLong (int l);
-int		LittleLong (int l);
-float	BigFloat (float l);
-float	LittleFloat (float l);
-
-void	Swap_Init (void);
-char	*va (char *format, ...);
+char *va (char *format, ...);
 
 //=============================================
 

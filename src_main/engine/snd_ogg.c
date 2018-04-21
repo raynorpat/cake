@@ -33,7 +33,12 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 qboolean ogg_first_init = true;
 qboolean ogg_started = false;
 
+// for ovread()
+#ifdef Q_BIG_ENDIAN
+int ogg_bigendian = 1;
+#else
 int ogg_bigendian = 0;
+#endif
 
 byte *ogg_buffer;			// File buffer
 char ovBuf[4096];           // Buffer for sound
@@ -82,10 +87,6 @@ void OGG_Init(void)
 		Com_Printf("Ogg Vorbis not initializing.\n");
 		return;
 	}
-
-	// for ovread()
-	if (bigendien == true)
-		ogg_bigendian = 1;
 
 	// Cvars
 	ogg_autoplay = Cvar_Get("ogg_autoplay", "?", CVAR_ARCHIVE);
