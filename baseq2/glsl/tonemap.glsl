@@ -53,6 +53,15 @@ void TonemapFS ()
 {
 	vec2 st = gl_FragCoord.st * r_FBufScale;
 	vec4 sceneColor = texture(scene, st);
+	
+	// filmic vignette effect
+#if r_useVignette
+	vec2 vignetteST = st;
+    vignetteST *= 1.0 - vignetteST.yx;
+    float vig = vignetteST.x * vignetteST.y * 15.0;
+    vig = pow(vig, 0.25);
+	sceneColor.rgb *= vig;
+#endif
 
 	// tonemap using filmic tonemapping curve
 #if r_useTonemap
