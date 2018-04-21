@@ -43,7 +43,7 @@ glstate_t	gl_state;
 
 image_t		*r_notexture;		// use for bad textures
 
-cplane_t	frustum[4];
+frustum_t	frustum;
 
 int			r_visframecount;	// bumped when going to a new PVS
 int			r_framecount;		// used for dlight push checking
@@ -132,9 +132,12 @@ qboolean R_CullBox (vec3_t mins, vec3_t maxs)
 	if (r_nocull->value)
 		return false;
 
-	for (i = 0; i < 4; i++)
+	// check against frustum planes
+	for (i = 0; i < FRUSTUM_PLANES; i++)
+	{
 		if (BOX_ON_PLANE_SIDE (mins, maxs, &frustum[i]) == 2)
 			return true;
+	}
 
 	return false;
 }
@@ -328,30 +331,45 @@ void R_SetupGL (void)
 	// glClear is affected by the current depth write mask so meake sure that depth writing is enabled
 	GL_Enable (gl_state.statebits | DEPTHWRITE_BIT);
 
+	// extract the frustum from the MVP matrix
+	// see http://gamedevs.org/uploads/fast-extraction-viewing-frustum-planes-from-world-view-projection-matrix.pdf
 	if (!gl_lockfrustum->value)
 	{
-		// extract the frustum from the MVP matrix
-		frustum[0].normal[0] = r_mvpmatrix._14 - r_mvpmatrix._11;
-		frustum[0].normal[1] = r_mvpmatrix._24 - r_mvpmatrix._21;
-		frustum[0].normal[2] = r_mvpmatrix._34 - r_mvpmatrix._31;
+		// left
+		frustum[FRUSTUM_LEFT].normal[0] = r_mvpmatrix._14 + r_mvpmatrix._11;
+		frustum[FRUSTUM_LEFT].normal[1] = r_mvpmatrix._24 + r_mvpmatrix._21;
+		frustum[FRUSTUM_LEFT].normal[2] = r_mvpmatrix._34 + r_mvpmatrix._31;
 
-		frustum[1].normal[0] = r_mvpmatrix._14 + r_mvpmatrix._11;
-		frustum[1].normal[1] = r_mvpmatrix._24 + r_mvpmatrix._21;
-		frustum[1].normal[2] = r_mvpmatrix._34 + r_mvpmatrix._31;
+		// right
+		frustum[FRUSTUM_RIGHT].normal[0] = r_mvpmatrix._14 - r_mvpmatrix._11;
+		frustum[FRUSTUM_RIGHT].normal[1] = r_mvpmatrix._24 - r_mvpmatrix._22;
+		frustum[FRUSTUM_RIGHT].normal[2] = r_mvpmatrix._34 - r_mvpmatrix._31;
 
-		frustum[2].normal[0] = r_mvpmatrix._14 + r_mvpmatrix._12;
-		frustum[2].normal[1] = r_mvpmatrix._24 + r_mvpmatrix._22;
-		frustum[2].normal[2] = r_mvpmatrix._34 + r_mvpmatrix._32;
+		// bottom
+		frustum[FRUSTUM_BOTTOM].normal[0] = r_mvpmatrix._14 + r_mvpmatrix._12;
+		frustum[FRUSTUM_BOTTOM].normal[1] = r_mvpmatrix._24 + r_mvpmatrix._22;
+		frustum[FRUSTUM_BOTTOM].normal[2] = r_mvpmatrix._34 + r_mvpmatrix._32;
 
-		frustum[3].normal[0] = r_mvpmatrix._14 - r_mvpmatrix._12;
-		frustum[3].normal[1] = r_mvpmatrix._24 - r_mvpmatrix._22;
-		frustum[3].normal[2] = r_mvpmatrix._34 - r_mvpmatrix._32;
+		// top
+		frustum[FRUSTUM_TOP].normal[0] = r_mvpmatrix._14 - r_mvpmatrix._12;
+		frustum[FRUSTUM_TOP].normal[1] = r_mvpmatrix._24 - r_mvpmatrix._22;
+		frustum[FRUSTUM_TOP].normal[2] = r_mvpmatrix._34 - r_mvpmatrix._32;
+
+		// near
+		frustum[FRUSTUM_NEAR].normal[0] = r_mvpmatrix._13;
+		frustum[FRUSTUM_NEAR].normal[1] = r_mvpmatrix._23;
+		frustum[FRUSTUM_NEAR].normal[2] = r_mvpmatrix._33;
+
+		// far
+		frustum[FRUSTUM_FAR].normal[0] = r_mvpmatrix._14 - r_mvpmatrix._13;
+		frustum[FRUSTUM_FAR].normal[1] = r_mvpmatrix._24 - r_mvpmatrix._23;
+		frustum[FRUSTUM_FAR].normal[2] = r_mvpmatrix._34 - r_mvpmatrix._33;
 	}
 
-	for (i = 0; i < 4; i++)
+	for (i = 0; i < 6; i++)
 	{
 		frustum[i].type = PLANE_ANYZ;
-		frustum[i].dist = DotProduct (r_origin, frustum[i].normal);
+		frustum[i].dist = DotProduct(r_origin, frustum[i].normal);
 		frustum[i].signbits = SignbitsForPlane (&frustum[i]);
 	}
 

@@ -214,6 +214,20 @@ typedef struct
 
 #define BACKFACE_EPSILON	0.01
 
+typedef enum
+{
+	FRUSTUM_NEAR,
+	FRUSTUM_LEFT,
+	FRUSTUM_RIGHT,
+	FRUSTUM_BOTTOM,
+	FRUSTUM_TOP,
+	FRUSTUM_FAR,
+	FRUSTUM_PLANES = 5,
+	FRUSTUM_CLIPALL = 1 | 2 | 4 | 8 | 16 //| 32
+} frustumBits_t;
+
+typedef cplane_t frustum_t[6];
+
 //====================================================
 
 extern	image_t		gltextures[MAX_GLTEXTURES];
@@ -225,7 +239,7 @@ extern int			numFBOs;
 extern	image_t		*r_notexture;
 extern	int			r_visframecount;
 extern	int			r_framecount;
-extern	cplane_t	frustum[4];
+extern	frustum_t	frustum;
 extern	int			c_brush_polys, c_alias_polys;
 
 extern	int			gl_filter_min, gl_filter_max;

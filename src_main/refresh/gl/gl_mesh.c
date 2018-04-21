@@ -314,7 +314,8 @@ static qboolean R_CullAliasModel (vec3_t bbox[8], entity_t *e)
 		{
 			int mask = 0;
 
-			for (f = 0; f < 4; f++)
+			// check against frustum planes
+			for (f = 0; f < FRUSTUM_PLANES; f++)
 			{
 				float dp = DotProduct (frustum[f].normal, bbox[p]);
 
