@@ -251,7 +251,8 @@ void RPostProcess_CreatePrograms(void)
 	// create composite shader
 	gl_compositeprog = GL_CreateShaderFromName("glsl/composite.glsl", "CompositeVS", "CompositeFS");
 	
-	glProgramUniform1i(gl_compositeprog, glGetUniformLocation(gl_compositeprog, "diffuse"), 0);
+	glProgramUniform1i(gl_compositeprog, glGetUniformLocation(gl_compositeprog, "scene"), 0);
+	glProgramUniform1i(gl_compositeprog, glGetUniformLocation(gl_compositeprog, "extraScene"), 1);
 	glProgramUniform2f(gl_compositeprog, glGetUniformLocation(gl_compositeprog, "rescale"), 1.0 / r_warpmaxs, 1.0 / r_warpmaxt);
 	glProgramUniformMatrix4fv(gl_compositeprog, glGetUniformLocation(gl_compositeprog, "orthomatrix"), 1, GL_FALSE, r_drawmatrix.m[0]);
 	u_compositeMode = glGetUniformLocation(gl_compositeprog, "compositeMode");
@@ -603,6 +604,23 @@ void RPostProcess_SSAO(void)
 	glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
 
 	R_BindNullFBO();
+
+	// set screen scale
+	texScale[0] = 1.0f / vid.width;
+	texScale[1] = 1.0f / vid.height;
+
+	GL_Enable(BLEND_BIT);
+
+	GL_UseProgram(gl_compositeprog);
+
+	glProgramUniform2f(gl_compositeprog, u_compositeTexScale, texScale[0], texScale[1]);
+	glProgramUniform1i(gl_compositeprog, u_compositeMode, 5);
+
+	GL_BindTexture(GL_TEXTURE0, GL_TEXTURE_2D, r_drawnearestclampsampler, r_currentAORenderImage);
+	GL_BindTexture(GL_TEXTURE1, GL_TEXTURE_2D, r_drawnearestclampsampler, r_currentRenderHDRImage);
+
+	GL_BindVertexArray(r_postvao);
+	glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
 }
 
 void RPostProcess_FXAA(void)
