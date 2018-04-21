@@ -213,18 +213,6 @@ void CompositeFS ()
 		fragColor = colorDither * vignetting;
 		return;
 	}
-	else if(compositeMode == 5)
-	{
-		// grab scene
-		color = texture (scene, st);
-		
-		// grab extra scene and multiply
-		vec4 extraColor = texture (extraScene, st);
-		color *= extraColor;
-		
-		fragColor = vec4(color.rgb, 1.0);
-		return;
-	}
 }
 #endif
 

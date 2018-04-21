@@ -20,6 +20,7 @@ void TonemapVS ()
 #ifdef FRAGMENTSHADER
 uniform sampler2D scene;
 uniform sampler2D sceneLum;
+uniform sampler2D sceneAO;
 
 uniform float r_hdrKey;
 
@@ -47,6 +48,10 @@ void TonemapFS ()
 {
 	vec2 st = gl_FragCoord.st * r_FBufScale;
 	vec4 sceneColor = texture(scene, st);
+	
+	// SSAO
+	vec4 sceneAOColor = texture(sceneAO, st);
+	sceneColor = clamp(sceneColor * sceneAOColor, 0.0, 1.0);
 	
 	// filmic vignette effect
 #if r_useVignette
