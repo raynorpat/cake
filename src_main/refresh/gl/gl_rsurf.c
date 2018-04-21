@@ -629,7 +629,7 @@ void R_DrawBrushModel (entity_t *e)
 R_RecursiveWorldNode
 ================
 */
-void R_RecursiveWorldNode (mnode_t *node)
+void R_RecursiveWorldNode (mnode_t *node, int planeBits)
 {
 	int			c, side, sidebit;
 	cplane_t	*plane;
@@ -640,11 +640,31 @@ void R_RecursiveWorldNode (mnode_t *node)
 	if (node->contents == CONTENTS_SOLID)
 		return;		// solid
 
+	// if the node wasn't marked as potentially visible, exit
 	if (node->visframe != r_visframecount)
 		return;
 
-	if (R_CullBox (node->minmaxs, node->minmaxs + 3))
-		return;
+	// if the bounding volume is outside the frustum, nothing inside can be visible
+	if (!r_nocull->integer)
+	{
+		int i, r;
+
+		for (i = 0; i < FRUSTUM_PLANES; i++)
+		{
+			if (planeBits & (1 << i))
+			{
+				r = BoxOnPlaneSide(node->minmaxs, node->minmaxs + 3, &frustum[i]);
+				if (r == 2)
+				{
+					return; // culled
+				}
+				if (r == 1)
+				{
+					planeBits &= ~(1 << i);	// all descendants will also be in front
+				}
+			}
+		}
+	}
 
 	// if a leaf node, draw stuff
 	if (node->contents != -1)
@@ -705,7 +725,7 @@ void R_RecursiveWorldNode (mnode_t *node)
 	}
 
 	// recurse down the children, front side first
-	R_RecursiveWorldNode (node->children[side]);
+	R_RecursiveWorldNode (node->children[side], planeBits);
 
 	// draw stuff
 	for (c = node->numsurfaces, surf = r_worldmodel->surfaces + node->firstsurface; c; c--, surf++)
@@ -721,7 +741,7 @@ void R_RecursiveWorldNode (mnode_t *node)
 	}
 
 	// recurse down the back side
-	R_RecursiveWorldNode (node->children[!side]);
+	R_RecursiveWorldNode (node->children[!side], planeBits);
 }
 
 
@@ -753,7 +773,7 @@ void R_DrawWorld (void)
 	R_MarkLights (r_worldmodel->nodes, GL_LoadIdentity(&localMatrix));
 
 	// recurse world
-	R_RecursiveWorldNode (r_worldmodel->nodes);
+	R_RecursiveWorldNode (r_worldmodel->nodes, FRUSTUM_CLIPALL);
 
 	// draw world
 	R_DrawTextureChains (&ent);
