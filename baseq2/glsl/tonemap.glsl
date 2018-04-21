@@ -21,23 +21,17 @@ void TonemapVS ()
 uniform sampler2D scene;
 uniform sampler2D sceneLum;
 
-uniform float r_exposureAdjust;
+uniform float r_hdrKey;
 
 #if USE_COMPUTE_LUM
 vec3 ToneMapWithLum(vec3 x, float avglum)
 {
-	float newExposure = 0.0;
-	
-	// calculation from: Perceptual Effects in Real-time Tone Mapping - Krawczyk et al.
-	float hdrKey = 1.03 - (2.0 / (2.0 + (avglum + 1.0f)));
+	float avgLuminance = max( avglum, 0.00001 );
+	float hdrKey = r_hdrKey;
 
 	// calculate exposure from geometric mean of luminance
-	float avgLuminance = max( avglum, 0.00001 );
-	float linearExposure = ( hdrKey / avgLuminance );
-	newExposure = log2( max( linearExposure, 0.0001 ) );
-
-	// add offset to exposure
-	newExposure += r_exposureAdjust;
+	float linearExposure = hdrKey / avgLuminance;
+	float newExposure = log2( max( linearExposure, 0.00001 ) );
 	
 	// exposure curves ranges from 0.0625 to 16.0
 	vec3 exposedColor = exp2( newExposure ) * x.rgb;
@@ -66,10 +60,10 @@ void TonemapFS ()
 	// tonemap using filmic tonemapping curve
 #if r_useTonemap
 	#if USE_COMPUTE_LUM
-		float luminance = texture(sceneLum, vec2(0.0, 0.0)).r; // retrieves the log-average luminance texture 
+		float luminance = sRGBAToLinearRGBA(texture(sceneLum, vec2(0.0, 0.0))).r; // retrieves the log-average luminance texture 
 		sceneColor.rgb = ToneMapWithLum(sceneColor.rgb, luminance);
 	#else
-		sceneColor.rgb = LinearRGBToSRGB( ToneMap_ACES(sceneColor.rgb) * 1.8 );
+		sceneColor.rgb = LinearRGBToSRGB(ToneMap_ACES(sceneColor.rgb) * 1.8);
 	#endif
 #endif
 

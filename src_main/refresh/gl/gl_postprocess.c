@@ -44,8 +44,8 @@ qboolean r_fogwater = false;
 qboolean r_foglava = false;
 qboolean r_fogslime = false;
 
-GLuint gl_tonemapprog = 0;
-GLuint u_tonemapExposure = 0;
+GLuint gl_tonemapprog = 0; 
+GLuint u_tonemapHdrKey = 0;
 
 GLuint gl_postprog = 0;
 GLuint u_postsurfcolor = 0;
@@ -86,8 +86,7 @@ GLuint m_lumCurrent;
 
 cvar_t *r_hdrLinearThreshold;
 cvar_t *r_hdrKneeCoeff;
-cvar_t *r_hdrExposureCompensation;
-cvar_t *r_hdrExposureAdjust;
+cvar_t *r_hdrKey;
 cvar_t *r_postprocessing;
 cvar_t *r_ssao;
 cvar_t *r_fxaa;
@@ -289,12 +288,11 @@ void RPostProcess_CreatePrograms(void)
 
 	// create tonemap shader
 	gl_tonemapprog = GL_CreateShaderFromName("glsl/tonemap.glsl", "TonemapVS", "TonemapFS");
-
-	u_tonemapExposure = glGetUniformLocation(gl_tonemapprog, "r_exposureAdjust");
-
+	
 	glProgramUniform1i(gl_tonemapprog, glGetUniformLocation(gl_tonemapprog, "scene"), 0);
 	glProgramUniform1i(gl_tonemapprog, glGetUniformLocation(gl_tonemapprog, "sceneLum"), 1);
 	glProgramUniformMatrix4fv(gl_tonemapprog, glGetUniformLocation(gl_tonemapprog, "orthomatrix"), 1, GL_FALSE, r_drawmatrix.m[0]);
+	u_tonemapHdrKey = glGetUniformLocation(gl_tonemapprog, "r_hdrKey");
 
 	// fxaa shader
 	if (gl_config.gl_ext_GPUShader5_support)
@@ -341,8 +339,7 @@ void RPostProcess_Init(void)
 {
 	r_hdrLinearThreshold = Cvar_Get("r_hdrLinearThreshold", "0.8", 0);
 	r_hdrKneeCoeff = Cvar_Get("r_hdrKneeCoeff", "0.5", 0);
-	r_hdrExposureCompensation = Cvar_Get("r_hdrExposureCompensation", "3.0", 0);
-	r_hdrExposureAdjust = Cvar_Get("r_hdrExposureAdjust", "0.068", 0);
+	r_hdrKey = Cvar_Get("r_hdrKey", "0.065", 0);
 	
 	r_bloomIntensity = Cvar_Get("r_bloomIntensity", "3.5", 0);
 	r_bloomBlurPasses = Cvar_Get("r_bloomBlurPasses", "2", 0);
@@ -398,6 +395,13 @@ static void RPostProcess_DownscaleBrightpass(void)
 {
 	vec4_t brightParam;
 	vec2_t texScale;
+
+	// grab current HDR image if we did FXAA
+	if (r_fxaa->integer)
+	{
+		GL_BindTexture(GL_TEXTURE0, GL_TEXTURE_2D, r_drawnearestclampsampler, r_currentRenderHDRImage);
+		glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, vid.width, vid.height);
+	}
 
 	R_BindFBO(brightpassRenderFBO);
 
@@ -486,16 +490,16 @@ static void RPostProcess_Bloom(void)
 
 static void RPostProcess_Tonemap(void)
 {
-	// adaptive exposure adjustment in log space
-	float newExp = r_hdrExposureCompensation->value * log(r_hdrExposureAdjust->value + 0.0001f);
-	glProgramUniform1f(gl_tonemapprog, u_tonemapExposure, newExp);
-
 	GL_Enable(BLEND_BIT);
 
 	GL_UseProgram(gl_tonemapprog);
 
 	GL_BindTexture(GL_TEXTURE0, GL_TEXTURE_2D, r_drawnearestclampsampler, r_currentRenderHDRImage);
+	glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, vid.width, vid.height);
+
 	GL_BindTexture(GL_TEXTURE1, GL_TEXTURE_2D, r_drawclampsampler, m_lum[1]);
+
+	glProgramUniform1f(gl_tonemapprog, u_tonemapHdrKey, r_hdrKey->value);
 
 	GL_BindVertexArray(r_postvao);
 	glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
@@ -574,6 +578,7 @@ static void RPostProcess_PostScreenBlends(void)
 void RPostProcess_SSAO(void)
 {
 	vec3_t zFarParam;
+	vec2_t texScale;
 
 	if (!r_ssao->integer)
 		return;
@@ -632,14 +637,18 @@ void RPostProcess_FXAA(void)
 	if (!gl_config.gl_ext_GPUShader5_support)
 		return;
 
-	// reset current render image
-	RPostProcess_SetCurrentRender();
+	// grab current HDR image if we did SSAO
+	if (r_ssao->integer)
+	{
+		GL_BindTexture(GL_TEXTURE0, GL_TEXTURE_2D, r_drawnearestclampsampler, r_currentRenderHDRImage);
+		glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, vid.width, vid.height);
+	}
 	
 	GL_Enable(!DEPTHTEST_BIT | !CULLFACE_BIT | !BLEND_BIT);
 
 	GL_UseProgram(gl_fxaaprog);
 	
-	GL_BindTexture(GL_TEXTURE0, GL_TEXTURE_2D, r_drawnearestclampsampler, r_currentRenderImage);
+	GL_BindTexture(GL_TEXTURE0, GL_TEXTURE_2D, r_drawnearestclampsampler, r_currentRenderHDRImage);
 
 	GL_BindVertexArray(r_postvao);
 	glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
@@ -766,21 +775,12 @@ void RPostProcess_FinishToScreen(void)
 	if (r_newrefdef.rdflags & RDF_NOWORLDMODEL) return;
 
 	R_BindNullFBO();
+	
+	// perform screenspace ambient occlusion
+	RPostProcess_SSAO();
 
 	// perform FXAA pass
 	RPostProcess_FXAA();
-
-	// downscale to 64x64
-	RPostProcess_DownscaleTo64();
-
-	// calculate eye adaptation by compute shader
-	RPostProcess_ComputeShader_CalculateLuminance();
-
-	// perform tonemap
-	RPostProcess_Tonemap();
-
-	// perform screenspace ambient occlusion
-	RPostProcess_SSAO();
 
 	if (r_useBloom->integer)
 	{
@@ -790,6 +790,15 @@ void RPostProcess_FinishToScreen(void)
 		// perform bloom
 		RPostProcess_Bloom();
 	}
+
+	// downscale to 64x64
+	RPostProcess_DownscaleTo64();
+
+	// calculate eye adaptation by compute shader
+	RPostProcess_ComputeShader_CalculateLuminance();
+
+	// perform tonemap
+	RPostProcess_Tonemap();
 
 	// perform global fog pass
 	RPostProcess_GlobalFog();
