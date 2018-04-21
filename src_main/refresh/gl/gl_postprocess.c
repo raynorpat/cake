@@ -387,9 +387,11 @@ static void RPostProcess_ComputeShader_CalculateLuminance(void)
 static void RPostProcess_DownscaleTo64(void)
 {
 	// blit current hdr framebuffer into downscaled 64x64 texture
-	glBindFramebuffer(GL_READ_FRAMEBUFFER_EXT, hdrRenderFBO->frameBuffer);
-	glBindFramebuffer(GL_DRAW_FRAMEBUFFER_EXT, hdrDownscale64->frameBuffer);
+	glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
+	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, hdrDownscale64->frameBuffer);
 	glBlitFramebuffer(0, 0, vid.width, vid.height, 0, 0, 64, 64, GL_COLOR_BUFFER_BIT, GL_LINEAR);
+	glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
+	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
 }
 
 static void RPostProcess_DownscaleBrightpass(void)
@@ -579,8 +581,8 @@ void RPostProcess_SSAO(void)
 		return;
 
 	// blit current framebuffer into ambient occlusion buffer
-	glBindFramebuffer(GL_READ_FRAMEBUFFER_EXT, hdrRenderFBO->frameBuffer);
-	glBindFramebuffer(GL_DRAW_FRAMEBUFFER_EXT, AORenderFBO->frameBuffer);
+	glBindFramebuffer(GL_READ_FRAMEBUFFER, hdrRenderFBO->frameBuffer);
+	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, AORenderFBO->frameBuffer);
 	glBlitFramebuffer(0, 0, vid.width, vid.height, 0, 0, vid.width, vid.height, GL_COLOR_BUFFER_BIT, GL_LINEAR);
 
 	// bind ambient occlusion buffer and clear to white
