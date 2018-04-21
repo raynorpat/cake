@@ -685,8 +685,8 @@ void WriteGame (char *filename, qboolean autosave)
 
 	strncpy(str_ver, SAVEGAMEVER, sizeof(str_ver) - 1);
 	strncpy(str_game, GAMEVERSION, sizeof(str_game) - 1);
-	strncpy(str_os, BUILDSTRING, sizeof(str_os) - 1);
-	strncpy(str_arch, ARCH, sizeof(str_arch) - 1);
+	strncpy(str_os, OS_STRING, sizeof(str_os) - 1);
+	strncpy(str_arch, ARCH_STRING, sizeof(str_arch) - 1);
 
 	fwrite(str_ver, sizeof(str_ver), 1, f);
 	fwrite(str_game, sizeof(str_game), 1, f);
@@ -734,12 +734,12 @@ void ReadGame (char *filename)
 		fclose(f);
 		gi.error("Savegame from an other game module.\n");
 	}
- 	else if (strcmp(str_os, BUILDSTRING))
+ 	else if (strcmp(str_os, OS_STRING))
 	{
 		fclose(f);
 		gi.error("Savegame from an other os.\n");
 	}
- 	else if (strcmp(str_arch, ARCH))
+ 	else if (strcmp(str_arch, ARCH_STRING))
 	{
 		fclose(f);
 		gi.error("Savegame from an other architecure.\n");

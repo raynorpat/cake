@@ -23,27 +23,18 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #define _Q_SHARED_
 
 #include "q_platform.h"
+#include "q_compiler.h"
+#include "q_types.h"
 #include "q_endian.h"
 
 #include <assert.h>
 #include <math.h>
 #include <stdio.h>
-#include <stdarg.h>
 #include <string.h>
 #include <stdlib.h>
-#include <stddef.h>
-#include <ctype.h>
-#include <stdint.h>
 #include <time.h>
 #ifdef _WIN32
 #include <direct.h>
-#endif
-
-typedef unsigned char 		byte;
-#if defined(__cplusplus) || defined(__bool_true_false_are_defined)
-typedef int					qboolean;
-#else
-typedef enum {false, true}	qboolean;
 #endif
 
 #ifndef max

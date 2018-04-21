@@ -4,6 +4,8 @@ project(game)
 set(SHARED_INCLUDES
 	../shared/game.h
 	../shared/q_platform.h
+	../shared/q_compiler.h
+	../shared/q_types.h
 	../shared/q_endian.h
 	../shared/q_shared.h
 	../shared/qfiles.h

@@ -803,7 +803,7 @@ void *Sys_GetGameAPI (void *parms)
 	char	name[MAX_OSPATH];
 	char	*path;
 	char	cwd[MAX_OSPATH];
-	const char *gamename = LIB_PREFIX "game_" ARCH LIB_SUFFIX;
+	const char *gamename = LIB_PREFIX "game_" ARCH_STRING LIB_SUFFIX;
 
 	if (game_library)
 		Com_Error(ERR_FATAL, "Sys_GetGameAPI without Sys_UnloadingGame");

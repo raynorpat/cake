@@ -252,6 +252,8 @@ configure_file("../shared/q_gitbuild.c.in" "${CMAKE_CURRENT_BINARY_DIR}/q_gitbui
 set(SHARED_INCLUDES
 	../shared/game.h
 	../shared/q_platform.h
+	../shared/q_compiler.h
+	../shared/q_types.h
 	../shared/q_endian.h
 	../shared/q_shared.h
 	../shared/q_gitbuild.h
