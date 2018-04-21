@@ -469,7 +469,7 @@ void R_DrawAliasModel (entity_t *e)
 
 		GL_LoadIdentity (&gunmatrix);
 		GL_ScaleMatrix (&gunmatrix, -1, 1, 1);
-		GL_PerspectiveMatrix (&gunmatrix, r_newrefdef.fov_y, (float) r_newrefdef.width / r_newrefdef.height, 4, 4096);
+		GL_PerspectiveMatrix (&gunmatrix, r_newrefdef.fov_y, (float) r_newrefdef.width / r_newrefdef.height);
 
 		// eval a new mvp for left-handedness
 		GL_LoadMatrix (&gl_meshuboupdate.localMatrix, &r_worldmatrix);

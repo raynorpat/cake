@@ -254,6 +254,8 @@ extern	cvar_t	*r_novis;
 extern	cvar_t	*r_nocull;
 extern  cvar_t  *r_nofog;
 extern	cvar_t	*r_lerpmodels;
+extern	cvar_t	*r_znear;
+extern	cvar_t	*r_zfar;
 extern	cvar_t	*r_postprocessing;
 extern	cvar_t	*r_useSrgb;
 extern	cvar_t	*r_useTonemap;

@@ -60,7 +60,7 @@ glmatrix *GL_RotateMatrix (glmatrix *m, float a, float x, float y, float z);
 glmatrix *GL_RadianRotateMatrix (glmatrix *m, float y, float p, float r);
 glmatrix *GL_LoadMatrix (glmatrix *dst, glmatrix *src);
 glmatrix *GL_OrthoMatrix (glmatrix *m, float left, float right, float bottom, float top, float zNear, float zFar);
-glmatrix *GL_PerspectiveMatrix (glmatrix *m, float fovy, float aspect, float zNear, float zFar);
+glmatrix *GL_PerspectiveMatrix (glmatrix *m, float fovy, float aspect);
 void GL_TransformPoint (glmatrix *m, float *in, float *out);
 
 

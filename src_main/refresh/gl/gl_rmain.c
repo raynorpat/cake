@@ -82,6 +82,8 @@ cvar_t	*r_nocull;
 cvar_t	*r_nofog;
 cvar_t	*r_lerpmodels;
 cvar_t	*r_lefthand;
+cvar_t	*r_znear;
+cvar_t	*r_zfar;
 
 cvar_t	*r_useSrgb;
 cvar_t	*r_useTonemap;
@@ -305,7 +307,7 @@ void R_SetupGL (void)
 
 	// set up projection matrix
 	GL_LoadIdentity (&r_projectionmatrix);
-	GL_PerspectiveMatrix (&r_projectionmatrix, r_newrefdef.fov_y, (float) r_newrefdef.width / (float) r_newrefdef.height, 4, 4096);
+	GL_PerspectiveMatrix (&r_projectionmatrix, r_newrefdef.fov_y, (float) r_newrefdef.width / (float) r_newrefdef.height);
 
 	// set up modelview matrix
 	GL_LoadIdentity (&r_worldmatrix);
@@ -514,6 +516,8 @@ static void R_Register (void)
 	r_nofog = Cvar_Get ("r_nofog", "0", 0);
 	r_lerpmodels = Cvar_Get ("r_lerpmodels", "1", 0);
 	r_speeds = Cvar_Get ("r_speeds", "0", 0);
+	r_znear = Cvar_Get("r_znear", "4", 0);
+	r_zfar = Cvar_Get("r_zfar", "0", 0);
 
 	r_useSrgb = Cvar_Get ("r_useSrgb", "1", CVAR_ARCHIVE);
 	r_useTonemap = Cvar_Get ("r_useTonemap", "1", CVAR_ARCHIVE);
