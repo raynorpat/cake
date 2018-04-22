@@ -28,12 +28,7 @@ source_group("common" FILES ${COMMON_SOURCES})
 set(MAIN_SOURCES
 	./main.c
 	)
-
-# info source
-set(INFO_SOURCES
-	./info.c
-	)
-source_group("info" FILES ${INFO_SOURCES})
+source_group("main" FILES ${MAIN_SOURCES})
 
 # bsp source
 set(BSP_INCLUDES
@@ -43,11 +38,8 @@ set(BSP_SOURCES
 	./brushbsp.c
 	./csg.c
 	./faces.c
-#	./gldraw.c
-	./glfile.c
 	./leakfile.c
 	./map.c
-	./nodraw.c
 	./portals.c
 	./prtfile.c
 	./qbsp.c
@@ -73,7 +65,7 @@ source_group("rad" FILES ${RAD_SOURCES})
 
 # vis sources
 set(VIS_INCLUDES
-	./vis.h
+	./qvis.h
 	)
 set(VIS_SOURCES
 	./flow.c

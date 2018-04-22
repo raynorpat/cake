@@ -31,6 +31,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 */
 
+#define EQUAL_EPSILON		0.001
 #define	INTEGRAL_EPSILON	0.01
 #define	POINT_EPSILON		0.5
 #define	OFF_EPSILON			0.5
@@ -52,24 +53,16 @@ int	numsuperverts;
 
 face_t		*edgefaces[MAX_MAP_EDGES][2];
 int		firstmodeledge = 1;
-int		firstmodelface;
 
 int	c_tryedges;
 
 vec3_t	edge_dir;
 vec3_t	edge_start;
-vec_t	edge_len;
 
 int		num_edge_verts;
 int		edge_verts[MAX_MAP_VERTS];
 
-
 float	subdivide_size = 240;
-
-
-face_t *NewFaceFromFace (face_t *f);
-
-//===========================================================================
 
 typedef struct hashvert_s
 {
@@ -77,19 +70,14 @@ typedef struct hashvert_s
 	int		num;
 } hashvert_t;
 
-
 #define	HASH_SIZE	64
-
 
 int	vertexchain[MAX_MAP_VERTS];		// the next vertex in a hash chain
 int	hashverts[HASH_SIZE*HASH_SIZE];	// a vertex number, or 0 for no verts
 
 face_t		*edgefaces[MAX_MAP_EDGES][2];
 
-//============================================================================
-
-
-unsigned HashVec (vec3_t vec)
+static unsigned HashVec (vec3_t vec)
 {
 	int			x, y;
 
@@ -101,6 +89,7 @@ unsigned HashVec (vec3_t vec)
 	
 	return y*HASH_SIZE + x;
 }
+
 
 /*
 =============
@@ -155,6 +144,42 @@ int	GetVertexnum (vec3_t in)
 		
 	return numvertexes-1;
 }
+
+//========================================================
+
+int		c_faces;
+
+face_t	*AllocFace (void)
+{
+	face_t	*f;
+
+	f = malloc(sizeof(*f));
+	memset (f, 0, sizeof(*f));
+	c_faces++;
+
+	return f;
+}
+
+face_t *NewFaceFromFace (face_t *f)
+{
+	face_t	*newf;
+
+	newf = AllocFace ();
+	*newf = *f;
+	newf->merged = NULL;
+	newf->split[0] = newf->split[1] = NULL;
+	newf->w = NULL;
+	return newf;
+}
+
+void FreeFace (face_t *f)
+{
+	if (f->w)
+		FreeWinding (f->w);
+	free (f);
+	c_faces--;
+}
+
 
 /*
 ==================
@@ -274,62 +299,13 @@ Uses the hash tables to cut down to a small number
 */
 void FindEdgeVerts (vec3_t v1, vec3_t v2)
 {
-	int		x1, x2, y1, y2, t;
-	int		x, y;
-	int		vnum;
-
-#if 0
-{
 	int		i;
-	num_edge_verts = numvertexes-1;
-	for (i=0 ; i<numvertexes-1 ; i++)
+
+	num_edge_verts = numvertexes - 1;
+	for (i = 0; i < num_edge_verts; i++)
 		edge_verts[i] = i+1;
 }
-#endif
 
-	x1 = (4096 + (int)(v1[0]+0.5)) >> 7;
-	y1 = (4096 + (int)(v1[1]+0.5)) >> 7;
-	x2 = (4096 + (int)(v2[0]+0.5)) >> 7;
-	y2 = (4096 + (int)(v2[1]+0.5)) >> 7;
-
-	if (x1 > x2)
-	{
-		t = x1;
-		x1 = x2;
-		x2 = t;
-	}
-	if (y1 > y2)
-	{
-		t = y1;
-		y1 = y2;
-		y2 = t;
-	}
-#if 0
-	x1--;
-	x2++;
-	y1--;
-	y2++;
-	if (x1 < 0)
-		x1 = 0;
-	if (x2 >= HASH_SIZE)
-		x2 = HASH_SIZE;
-	if (y1 < 0)
-		y1 = 0;
-	if (y2 >= HASH_SIZE)
-		y2 = HASH_SIZE;
-#endif
-	num_edge_verts = 0;
-	for (x=x1 ; x <= x2 ; x++)
-	{
-		for (y=y1 ; y <= y2 ; y++)
-		{
-			for (vnum=hashverts[y*HASH_SIZE+x] ; vnum ; vnum=vertexchain[vnum])
-			{
-				edge_verts[num_edge_verts++] = vnum;
-			}
-		}
-	}
-}
 
 /*
 ==========
@@ -443,7 +419,6 @@ void FixFaceEdges (node_t *node, face_t *f)
 	}
 	if (i == f->numpoints)
 	{
-		f->badstartvert = true;
 		c_badstartverts++;
 		base = 0;
 	}
@@ -509,43 +484,6 @@ void FixTjuncs (node_t *headnode)
 }
 
 
-//========================================================
-
-int		c_faces;
-
-face_t	*AllocFace (void)
-{
-	face_t	*f;
-
-	f = malloc(sizeof(*f));
-	memset (f, 0, sizeof(*f));
-	c_faces++;
-
-	return f;
-}
-
-face_t *NewFaceFromFace (face_t *f)
-{
-	face_t	*newf;
-
-	newf = AllocFace ();
-	*newf = *f;
-	newf->merged = NULL;
-	newf->split[0] = newf->split[1] = NULL;
-	newf->w = NULL;
-	return newf;
-}
-
-void FreeFace (face_t *f)
-{
-	if (f->w)
-		FreeWinding (f->w);
-	free (f);
-	c_faces--;
-}
-
-//========================================================
-
 /*
 ==================
 GetEdge
@@ -570,18 +508,10 @@ int GetEdge2 (int v1, int v2,  face_t *f)
 			&& edgefaces[i][0]->contents == f->contents)
 			{
 				if (edgefaces[i][1])
-	//				printf ("WARNING: multiple backward edge\n");
 					continue;
 				edgefaces[i][1] = f;
 				return -i;
 			}
-	#if 0
-			if (v1 == edge->v[0] && v2 == edge->v[1])
-			{
-				printf ("WARNING: multiple forward edge\n");
-				return i;
-			}
-	#endif
 		}
 	}
 
@@ -589,10 +519,10 @@ int GetEdge2 (int v1, int v2,  face_t *f)
 	if (numedges >= MAX_MAP_EDGES)
 		Error ("numedges == MAX_MAP_EDGES");
 	edge = &dedges[numedges];
-	numedges++;
 	edge->v[0] = v1;
 	edge->v[1] = v2;
-	edgefaces[numedges-1][0] = f;
+	edgefaces[numedges][0] = f;
+	numedges++;
 	
 	return numedges-1;
 }
@@ -627,7 +557,6 @@ winding_t *TryMergeWinding (winding_t *f1, winding_t *f2, vec3_t planenormal)
 	vec_t		dot;
 	qboolean	keep1, keep2;
 	
-
 	//
 	// find a common edge
 	//	
@@ -838,16 +767,8 @@ void SubdivideFace (node_t *node, face_t *f)
 				if (v > maxs)
 					maxs = v;
 			}
-#if 0
-			if (maxs - mins <= 0)
-				Error ("zero extents");
-#endif
-			if (axis == 2)
-			{	// allow double high walls
-				if (maxs - mins <= subdivide_size/* *2 */)
-					break;
-			}
-			else if (maxs - mins <= subdivide_size)
+			
+			if (maxs - mins <= subdivide_size)
 				break;
 			
 		// split it

@@ -20,7 +20,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 */
 
-#include "vis.h"
+#include "qvis.h"
 #include "threads.h"
 #include "stdlib.h"
 
@@ -32,8 +32,6 @@ char		outbase[32];
 
 portal_t	*portals;
 leaf_t		*leafs;
-
-int			c_portaltest, c_portalpass, c_portalcheck;
 
 byte		*uncompressedvis;
 
@@ -78,12 +76,12 @@ NewWinding
 winding_t *NewWinding (int points)
 {
 	winding_t	*w;
-	int			size;
+	size_t		size;
 	
 	if (points > MAX_POINTS_ON_WINDING)
 		Error ("NewWinding: %i points", points);
 	
-	size = (int)((winding_t *)0)->points[points];
+	size = (size_t)((winding_t *)0)->points[points];
 	w = malloc (size);
 	memset (w, 0, size);
 	
@@ -129,9 +127,7 @@ LeafVectorFromPortalVector
 int LeafVectorFromPortalVector (byte *portalbits, byte *leafbits)
 {
 	int			i;
-	portal_t	*p;
 	int			c_leafs;
-
 
 	memset (leafbits, 0, leafbytes);
 
@@ -139,7 +135,7 @@ int LeafVectorFromPortalVector (byte *portalbits, byte *leafbits)
 	{
 		if (portalbits[i>>3] & (1<<(i&7)) )
 		{
-			p = portals+i;
+			portal_t *p = portals+i;
 			leafbits[p->leaf>>3] |= (1<<(p->leaf&7));
 		}
 	}
@@ -237,7 +233,6 @@ void CalcPortalVis (void)
 	}
 	
 	RunThreadsOnIndividual (numportals*2, true, PortalFlow);
-
 }
 
 
@@ -251,8 +246,6 @@ void CalcVis (void)
 	int		i;
 
 	RunThreadsOnIndividual (numportals*2, true, BasePortalVis);
-
-//	RunThreadsOnIndividual (numportals*2, true, BetterPortalVis);
 
 	SortPortals ();
 	
@@ -314,22 +307,16 @@ void LoadPortals (char *name)
 	int			leafnums[2];
 	plane_t		plane;
 	
-	if (!strcmp(name,"-"))
-		f = stdin;
-	else
-	{
-		f = fopen(name, "r");
-		if (!f)
-			Error ("LoadPortals: couldn't read %s\n",name);
-	}
+	f = fopen(name, "r");
+	if (!f)
+		Error ("LoadPortals: couldn't read %s\n",name);
 
 	if (fscanf (f,"%79s\n%i\n%i\n",magic, &portalclusters, &numportals) != 3)
 		Error ("LoadPortals: failed to read header");
 	if (strcmp(magic,PORTALFILE))
 		Error ("LoadPortals: not a portal file");
 
-	printf ("%4i portalclusters\n", portalclusters);
-	printf ("%4i numportals\n", numportals);
+	printf ("Loading %4i portals, %4i portalclusters..\n", numportals, portalclusters);
 
 	// these counts should take advantage of 64 bit systems automatically
 	leafbytes = ((portalclusters+63)&~63)>>3;
@@ -356,8 +343,7 @@ void LoadPortals (char *name)
 		
 	for (i=0, p=portals ; i<numportals ; i++)
 	{
-		if (fscanf (f, "%i %i %i ", &numpoints, &leafnums[0], &leafnums[1])
-			!= 3)
+		if (fscanf (f, "%i %i %i ", &numpoints, &leafnums[0], &leafnums[1])	!= 3)
 			Error ("LoadPortals: reading portal %i", i);
 		if (numpoints > MAX_POINTS_ON_WINDING)
 			Error ("LoadPortals: portal %i has too many points", i);
@@ -376,8 +362,7 @@ void LoadPortals (char *name)
 
 			// scanf into double, then assign to vec_t
 			// so we don't care what size vec_t is
-			if (fscanf (f, "(%lf %lf %lf ) "
-			, &v[0], &v[1], &v[2]) != 3)
+			if (fscanf (f, "(%lf %lf %lf ) ", &v[0], &v[1], &v[2]) != 3)
 				Error ("LoadPortals: reading portal %i", i);
 			for (k=0 ; k<3 ; k++)
 				w->points[j][k] = v[k];
@@ -419,7 +404,6 @@ void LoadPortals (char *name)
 		p->leaf = leafnums[0];
 		SetPortalSphere (p);
 		p++;
-
 	}
 	
 	fclose (f);
@@ -555,7 +539,8 @@ int Vis_Main (int argc, char **argv)
 	
 	ThreadSetDefault ();
 
-	SetQdirFromPath (argv[i]);	
+	SetQdirFromPath (argv[i]);
+
 	strcpy (source, ExpandArg(argv[i]));
 	StripExtension (source);
 	DefaultExtension (source, ".bsp");
@@ -577,7 +562,7 @@ int Vis_Main (int argc, char **argv)
 
 	CalcPHS ();
 
-	visdatasize = vismap_p - dvisdata;	
+	visdatasize = vismap_p - dvisdata;
 	printf ("visdatasize:%i  compressed from %i\n", visdatasize, originalvismapsize*2);
 
 	sprintf (name, "%s%s", outbase, source);

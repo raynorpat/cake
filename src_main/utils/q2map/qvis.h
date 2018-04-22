@@ -46,12 +46,15 @@ typedef struct
 	vec3_t	points[MAX_POINTS_ON_FIXED_WINDING];			// variable sized
 } winding_t;
 
-winding_t	*NewWinding (int points);
 void		FreeWinding (winding_t *w);
 winding_t	*CopyWinding (winding_t *w);
 
+typedef enum {
+	stat_none,
+ 	stat_working,
+ 	stat_done
+} vstatus_t;
 
-typedef enum {stat_none, stat_working, stat_done} vstatus_t;
 typedef struct
 {
 	plane_t		plane;	// normal pointing into neighbor
@@ -115,30 +118,20 @@ typedef struct
 } threaddata_t;
 
 
-
 extern	int			numportals;
 extern	int			portalclusters;
 
 extern	portal_t	*portals;
 extern	leaf_t		*leafs;
 
-extern	int			c_portaltest, c_portalpass, c_portalcheck;
-extern	int			c_portalskip, c_leafskip;
-extern	int			c_vistest, c_mighttest;
-extern	int			c_chains;
-
-extern	byte	*vismap, *vismap_p, *vismap_end;	// past visfile
+extern int 			portallongs;
+extern int 			portalbytes;
 
 extern	int			testlevel;
 
 extern	byte		*uncompressed;
 
-extern	int		leafbytes, leaflongs;
-extern	int		portalbytes, portallongs;
-
-
 void LeafFlow (int leafnum);
-
 
 void BasePortalVis (int portalnum);
 void BetterPortalVis (int portalnum);

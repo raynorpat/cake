@@ -25,8 +25,6 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 int		c_active_portals;
 int		c_peak_portals;
-int		c_boundary;
-int		c_boundary_sides;
 
 /*
 ===========
@@ -42,8 +40,8 @@ portal_t *AllocPortal (void)
 	if (c_active_portals > c_peak_portals)
 		c_peak_portals = c_active_portals;
 	
-	p = malloc (sizeof(portal_t));
-	memset (p, 0, sizeof(portal_t));
+	p = malloc (sizeof(*p));
+	memset (p, 0, sizeof(*p));
 	
 	return p;
 }
@@ -155,7 +153,7 @@ qboolean Portal_EntityFlood (portal_t *p, int s)
 {
 	if (p->nodes[0]->planenum != PLANENUM_LEAF
 		|| p->nodes[1]->planenum != PLANENUM_LEAF)
-		Error ("Portal_EntityFlood: not a leaf");
+		Error ("Portal_EntityFlood: not a leaf\n");
 
 	// can never cross to a solid 
 	if ( (p->nodes[0]->contents & CONTENTS_SOLID)
@@ -179,7 +177,7 @@ AddPortalToNodes
 void AddPortalToNodes (portal_t *p, node_t *front, node_t *back)
 {
 	if (p->nodes[0] || p->nodes[1])
-		Error ("AddPortalToNode: allready included");
+		Error ("AddPortalToNode: already included\n");
 
 	p->nodes[0] = front;
 	p->next[0] = front->portals;
@@ -229,19 +227,6 @@ void RemovePortalFromNode (portal_t *portal, node_t *l)
 		*pp = portal->next[1];	
 		portal->nodes[1] = NULL;
 	}
-}
-
-//============================================================================
-
-void PrintPortal (portal_t *p)
-{
-	int			i;
-	winding_t	*w;
-	
-	w = p->winding;
-	for (i=0 ; i<w->numpoints ; i++)
-		printf ("(%5.0f,%5.0f,%5.0f)\n",w->p[i][0]
-		, w->p[i][1], w->p[i][2]);
 }
 
 /*
@@ -357,8 +342,6 @@ winding_t	*BaseWindingForNode (node_t *node)
 
 //============================================================
 
-qboolean WindingIsTiny (winding_t *w);
-
 /*
 ==================
 MakeNodePortal
@@ -376,6 +359,9 @@ void MakeNodePortal (node_t *node)
 	int			side;
 
 	w = BaseWindingForNode (node);
+
+	side = 0;
+	dist = 0;
 
 	// clip the portal by all the other portals in the node
 	for (p = node->portals ; p && w; p = p->next[side])	
@@ -528,8 +514,7 @@ CalcNodeBounds
 void CalcNodeBounds (node_t *node)
 {
 	portal_t	*p;
-	int			s;
-	int			i;
+	int 		i, s;
 
 	// calc mins/maxs for both leafs and nodes
 	ClearBounds (node->mins, node->maxs);
@@ -574,6 +559,7 @@ void MakeTreePortals_r (node_t *node)
 	MakeTreePortals_r (node->children[0]);
 	MakeTreePortals_r (node->children[1]);
 }
+
 
 /*
 ==================
@@ -628,15 +614,13 @@ PlaceOccupant
 qboolean PlaceOccupant (node_t *headnode, vec3_t origin, entity_t *occupant)
 {
 	node_t	*node;
-	vec_t	d;
-	plane_t	*plane;
 
 	// find the leaf to start in
 	node = headnode;
 	while (node->planenum != PLANENUM_LEAF)
 	{
-		plane = &mapplanes[node->planenum];
-		d = DotProduct (origin, plane->normal) - plane->dist;
+		plane_t *plane = &mapplanes[node->planenum];
+		vec_t d = DotProduct (origin, plane->normal) - plane->dist;
 		if (d >= 0)
 			node = node->children[0];
 		else
@@ -671,6 +655,7 @@ qboolean FloodEntities (tree_t *tree)
 	qprintf ("--- FloodEntities ---\n");
 	inside = false;
 	tree->outside_node.occupied = 0;
+	cl = "";
 
 	for (i=1 ; i<num_entities ; i++)
 	{
@@ -742,14 +727,12 @@ void FloodAreas_r (node_t *node)
 {
 	portal_t	*p;
 	int			s;
-	bspbrush_t	*b;
-	entity_t	*e;
 
 	if (node->contents == CONTENTS_AREAPORTAL)
 	{
 		// this node is part of an area portal
-		b = node->brushlist;
-		e = &entities[b->original->entitynum];
+		bspbrush_t	*b = node->brushlist;
+		entity_t	*e = &entities[b->original->entitynum];
 
 		// if the current area has allready touched this
 		// portal, we are done
@@ -771,7 +754,7 @@ void FloodAreas_r (node_t *node)
 	}
 
 	if (node->area)
-		return;		// allready got it
+		return;		// already got it
 	node->area = c_areas;
 
 	for (p=node->portals ; p ; p = p->next[s])
@@ -806,7 +789,7 @@ void FindAreas_r (node_t *node)
 	}
 
 	if (node->area)
-		return;		// allready got it
+		return;		// already got it
 
 	if (node->contents & CONTENTS_SOLID)
 		return;
@@ -814,7 +797,7 @@ void FindAreas_r (node_t *node)
 	if (!node->occupied)
 		return;			// not reachable by entities
 
-	// area portals are allways only flooded into, never
+	// area portals are always only flooded into, never
 	// out of
 	if (node->contents == CONTENTS_AREAPORTAL)
 		return;
@@ -846,7 +829,7 @@ void SetAreaPortalAreas_r (node_t *node)
 	if (node->contents == CONTENTS_AREAPORTAL)
 	{
 		if (node->area)
-			return;		// allready set
+			return;		// already set
 
 		b = node->brushlist;
 		e = &entities[b->original->entitynum];
@@ -868,7 +851,6 @@ EmitAreaPortals
 void EmitAreaPortals (node_t *headnode)
 {
 	int				i, j;
-	entity_t		*e;
 	dareaportal_t	*dp;
 
 	if (c_areas > MAX_MAP_AREAS)
@@ -881,7 +863,7 @@ void EmitAreaPortals (node_t *headnode)
 		dareas[i].firstareaportal = numareaportals;
 		for (j=0 ; j<num_entities ; j++)
 		{
-			e = &entities[j];
+			entity_t *e = &entities[j];
 			if (!e->areaportalnum)
 				continue;
 			dp = &dareaportals[numareaportals];
@@ -985,13 +967,11 @@ void FindPortalSide (portal_t *p)
 {
 	int			viscontents;
 	bspbrush_t	*bb;
-	mapbrush_t	*brush;
-	node_t		*n;
 	int			i,j;
 	int			planenum;
-	side_t		*side, *bestside;
+	side_t		*bestside;
 	float		dot, bestdot;
-	plane_t		*p1, *p2;
+	plane_t		*p2;
 
 	// decide which content change is strongest
 	// solid > lava > water, etc
@@ -1005,16 +985,16 @@ void FindPortalSide (portal_t *p)
 
 	for (j=0 ; j<2 ; j++)
 	{
-		n = p->nodes[j];
-		p1 = &mapplanes[p->onnode->planenum];
+		node_t *n = p->nodes[j];
+		plane_t *p1 = &mapplanes[p->onnode->planenum];
 		for (bb=n->brushlist ; bb ; bb=bb->next)
 		{
-			brush = bb->original;
+			mapbrush_t *brush = bb->original;
 			if ( !(brush->contents & viscontents) )
 				continue;
 			for (i=0 ; i<brush->numsides ; i++)
 			{
-				side = &brush->original_sides[i];
+				side_t *side = &brush->original_sides[i];
 				if (side->bevel)
 					continue;
 				if (side->texinfo == TEXINFO_NODE)
@@ -1090,17 +1070,14 @@ MarkVisibleSides
 void MarkVisibleSides (tree_t *tree, int startbrush, int endbrush)
 {
 	int		i, j;
-	mapbrush_t	*mb;
-	int		numsides;
 
 	qprintf ("--- MarkVisibleSides ---\n");
 
 	// clear all the visible flags
 	for (i=startbrush ; i<endbrush ; i++)
 	{
-		mb = &mapbrushes[i];
-
-		numsides = mb->numsides;
+		mapbrush_t *mb = &mapbrushes[i];
+		int numsides = mb->numsides;
 		for (j=0 ; j<numsides ; j++)
 			mb->original_sides[j].visible = false;
 	}

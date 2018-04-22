@@ -29,7 +29,6 @@ char		name[1024];
 
 vec_t		microvolume = 1.0;
 qboolean	noprune;
-qboolean	glview;
 qboolean	nodetail;
 qboolean	fulldetail;
 qboolean	onlyents;
@@ -250,8 +249,6 @@ void ProcessWorldModel (void)
 	}
 
 	FloodAreas (tree);
-	if (glview)
-		WriteGLView (tree, source);
 	MakeFaces (tree->headnode);
 	FixTjuncs (tree->headnode);
 
@@ -350,19 +347,10 @@ int BSP_Main (int argc, char **argv)
 			numthreads = atoi (argv[i+1]);
 			i++;
 		}
-		else if (!strcmp(argv[i],"-glview"))
-		{
-			glview = true;
-		}
 		else if (!strcmp(argv[i], "-v"))
 		{
 			printf ("verbose = true\n");
 			verbose = true;
-		}
-		else if (!strcmp(argv[i], "-draw"))
-		{
-			printf ("drawflag = true\n");
-			drawflag = true;
 		}
 		else if (!strcmp(argv[i], "-noweld"))
 		{

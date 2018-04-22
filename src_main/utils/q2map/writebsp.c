@@ -24,17 +24,6 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 int		c_nofaces;
 int		c_facenodes;
 
-
-/*
-=========================================================
-
-ONLY SAVE OUT PLANES THAT ARE ACTUALLY USED AS NODES
-
-=========================================================
-*/
-
-int		planeused[MAX_MAP_PLANES];
-
 /*
 ============
 EmitPlanes
@@ -48,20 +37,17 @@ void EmitPlanes (void)
 	int			i;
 	dplane_t	*dp;
 	plane_t		*mp;
-	int		planetranslate[MAX_MAP_PLANES];
 
 	mp = mapplanes;
 	for (i=0 ; i<nummapplanes ; i++, mp++)
 	{
 		dp = &dplanes[numplanes];
-		planetranslate[i] = numplanes;
 		VectorCopy ( mp->normal, dp->normal);
 		dp->dist = mp->dist;
 		dp->type = mp->type;
 		numplanes++;
 	}
 }
-
 
 //========================================================
 
@@ -97,7 +83,6 @@ void EmitMarkFace (dleaf_t *leaf_p, face_t *f)
 		dleaffaces[numleaffaces] =  facenum;
 		numleaffaces++;
 	}
-
 }
 
 
@@ -215,7 +200,6 @@ void EmitFace (face_t *f)
 	df->texinfo = f->texinfo;
 	for (i=0 ; i<f->numpoints ; i++)
 	{
-//		e = GetEdge (f->pts[i], f->pts[(i+1)%f->numpoints], f);
 		e = GetEdge2 (f->vertexnums[i], f->vertexnums[(i+1)%f->numpoints], f);
 		if (numsurfedges >= MAX_MAP_SURFEDGES)
 			Error ("numsurfedges == MAX_MAP_SURFEDGES");
@@ -250,9 +234,6 @@ int EmitDrawNode_r (node_t *node)
 	VectorCopy (node->mins, n->mins);
 	VectorCopy (node->maxs, n->maxs);
 
-	planeused[node->planenum]++;
-	planeused[node->planenum^1]++;
-
 	if (node->planenum & 1)
 		Error ("WriteDrawNodes_r: odd planenum");
 	n->planenum = node->planenum;
@@ -267,7 +248,6 @@ int EmitDrawNode_r (node_t *node)
 		EmitFace (f);
 
 	n->numfaces = numfaces - n->firstface;
-
 
 	//
 	// recursively output the other nodes
@@ -429,11 +409,12 @@ void EmitBrushes (void)
 
 		// add any axis planes not contained in the brush to bevel off corners
 		for (x=0 ; x<3 ; x++)
+		{
 			for (s=-1 ; s<=1 ; s+=2)
 			{
 			// add the plane
 				VectorCopy (vec3_origin, normal);
-				normal[x] = s;
+				normal[x] = (float)s;
 				if (s == -1)
 					dist = -b->mins[x];
 				else
@@ -454,9 +435,8 @@ void EmitBrushes (void)
 					db->numsides++;
 				}
 			}
-
+		}
 	}
-
 }
 
 //===========================================================
@@ -518,7 +498,6 @@ BeginModel
 */
 int	firstmodleaf;
 extern	int firstmodeledge;
-extern	int	firstmodelface;
 void BeginModel (void)
 {
 	dmodel_t	*mod;
@@ -536,7 +515,6 @@ void BeginModel (void)
 
 	firstmodleaf = numleafs;
 	firstmodeledge = numedges;
-	firstmodelface = numfaces;
 
 	//
 	// bound the brushes

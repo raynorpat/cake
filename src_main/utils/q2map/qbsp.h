@@ -30,9 +30,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define	MAX_BRUSH_SIDES	128
 #define	CLIP_EPSILON	0.1
 
-#define	BOGUS_RANGE	8192
-
-#define	TEXINFO_NODE		-1		// side is allready on a node
+#define	TEXINFO_NODE	-1		// side is already on a node
 
 typedef struct plane_s
 {
@@ -61,7 +59,7 @@ typedef struct side_s
 	int			contents;		// from miptex
 	int			surf;			// from miptex
 	qboolean	visible;		// choose visble planes first
-	qboolean	tested;			// this plane allready checked as a split
+	qboolean	tested;			// this plane already checked as a split
 	qboolean	bevel;			// don't ever use for bsp splitting
 } side_t;
 
@@ -99,10 +97,8 @@ typedef struct face_s
 	int				outputnumber;
 	winding_t		*w;
 	int				numpoints;
-	qboolean		badstartvert;	// tjunctions cannot be fixed without a midpoint vertex
 	int				vertexnums[MAXEDGES];
 } face_t;
-
 
 
 typedef struct bspbrush_s
@@ -114,7 +110,6 @@ typedef struct bspbrush_s
 	int		numsides;
 	side_t	sides[6];			// variably sized
 } bspbrush_t;
-
 
 
 #define	MAX_NODE_BRUSHES	8
@@ -195,6 +190,7 @@ extern	char	source[1024];
 
 void 	LoadMapFile (char *filename);
 int		FindFloatPlane (vec3_t normal, vec_t dist);
+qboolean WindingIsTiny (winding_t *w);
 
 //=============================================================================
 
@@ -222,25 +218,10 @@ int TexinfoForBrushTexture (plane_t *plane, brush_texture_t *bt, vec3_t origin);
 void FindGCD (int *v);
 
 mapbrush_t *Brush_LoadEntity (entity_t *ent);
-int	PlaneTypeForNormal (vec3_t normal);
 qboolean MakeBrushPlanes (mapbrush_t *b);
 int		FindIntPlane (int *inormal, int *iorigin);
 void	CreateBrush (int brushnum);
 
-
-//=============================================================================
-
-// draw.c
-
-extern vec3_t	draw_mins, draw_maxs;
-extern	qboolean	drawflag;
-
-void Draw_ClearWindow (void);
-void DrawWinding (winding_t *w);
-
-void GLS_BeginScene (void);
-void GLS_Winding (winding_t *w, int code);
-void GLS_EndScene (void);
 
 //=============================================================================
 
@@ -249,16 +230,12 @@ void GLS_EndScene (void);
 bspbrush_t *MakeBspBrushList (int startbrush, int endbrush,
 		vec3_t clipmins, vec3_t clipmaxs);
 bspbrush_t *ChopBrushes (bspbrush_t *head);
-bspbrush_t *InitialBrushList (bspbrush_t *list);
-bspbrush_t *OptimizedBrushList (bspbrush_t *list);
 
 void WriteBrushMap (char *name, bspbrush_t *list);
 
 //=============================================================================
 
 // brushbsp
-
-void WriteBrushList (char *name, bspbrush_t *brush, qboolean onlyvis);
 
 bspbrush_t *CopyBrush (bspbrush_t *brush);
 
@@ -270,9 +247,6 @@ node_t *AllocNode (void);
 bspbrush_t *AllocBrush (int numsides);
 int	CountBrushList (bspbrush_t *brushes);
 void FreeBrush (bspbrush_t *brushes);
-vec_t BrushVolume (bspbrush_t *brush);
-
-void BoundBrush (bspbrush_t *brush);
 void FreeBrushList (bspbrush_t *brushes);
 
 tree_t *BrushBSP (bspbrush_t *brushlist, vec3_t mins, vec3_t maxs);
@@ -287,7 +261,8 @@ void MakeHeadnodePortals (tree_t *tree);
 void MakeNodePortal (node_t *node);
 void SplitNodePortals (node_t *node);
 
-qboolean	Portal_VisFlood (portal_t *p);
+qboolean Portal_VisFlood (portal_t *p);
+void RemovePortalFromNode (portal_t *portal, node_t *l);
 
 qboolean FloodEntities (tree_t *tree);
 void FillOutside (node_t *headnode);
@@ -297,13 +272,6 @@ void FreePortal (portal_t *p);
 void EmitAreaPortals (node_t *headnode);
 
 void MakeTreePortals (tree_t *tree);
-
-//=============================================================================
-
-// glfile.c
-
-void OutputWinding (winding_t *w, FILE *glview);
-void WriteGLView (tree_t *tree, char *source);
 
 //=============================================================================
 
@@ -338,10 +306,7 @@ void MakeFaces (node_t *headnode);
 void FixTjuncs (node_t *headnode);
 int GetEdge2 (int v1, int v2,  face_t *f);
 
-face_t	*AllocFace (void);
 void FreeFace (face_t *f);
-
-void MergeNodeFaces (node_t *node);
 
 //=============================================================================
 
@@ -349,7 +314,6 @@ void MergeNodeFaces (node_t *node);
 
 void FreeTree (tree_t *tree);
 void FreeTree_r (node_t *node);
-void PrintTree_r (node_t *node, int depth);
 void FreeTreePortals_r (node_t *node);
 void PruneNodes_r (node_t *node);
 void PruneNodes (node_t *node);

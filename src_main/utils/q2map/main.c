@@ -40,11 +40,6 @@ int main (int argc, char **argv)
 	}
 	
 	// check for general program options
-	if(!strcmp(argv[1], "-info"))
-	{
-		Info_Main(argc - 1, argv + 1);
-		return 0;
-	}
 	if(!strcmp(argv[1], "-bsp"))
 	{
 		BSP_Main(argc - 1, argv + 1);
@@ -65,7 +60,6 @@ showUsage:
 	Error("usage: q2map [-<switch> [-<switch> ...]] <mapname>\n"
 		  "\n"
 		  "Switches:\n"
-		  "   info        	 = print BSP information\n"
 		  "   bsp        	 = compile MAP to BSP\n"
 		  "   vis            = compute visibility\n"
 		  "   light          = compute lighting\n");

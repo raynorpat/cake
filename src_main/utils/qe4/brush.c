@@ -28,7 +28,6 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 face_t *Face_Alloc( void );
 void    Face_Free( face_t *f );
 
-winding_t	*NewWinding (int points);
 void		FreeWinding (winding_t *w);
 winding_t	*Winding_Clone( winding_t *w );
 winding_t	*ClipWinding (winding_t *in, plane_t *split, qboolean keepon);
@@ -70,7 +69,6 @@ face_t	*Face_Clone (face_t *f)
 //============================================================================
 
 #define	BOGUS_RANGE	18000
-
 
 /*
 ==================

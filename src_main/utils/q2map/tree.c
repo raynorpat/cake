@@ -23,28 +23,6 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 extern	int	c_nodes;
 
-void RemovePortalFromNode (portal_t *portal, node_t *l);
-
-node_t *NodeForPoint (node_t *node, vec3_t origin)
-{
-	plane_t	*plane;
-	vec_t	d;
-
-	while (node->planenum != PLANENUM_LEAF)
-	{
-		plane = &mapplanes[node->planenum];
-		d = DotProduct (origin, plane->normal) - plane->dist;
-		if (d >= 0)
-			node = node->children[0];
-		else
-			node = node->children[1];
-	}
-
-	return node;
-}
-
-
-
 /*
 =============
 FreeTreePortals_r
@@ -122,36 +100,6 @@ void FreeTree (tree_t *tree)
 	free (tree);
 }
 
-//===============================================================
-
-void PrintTree_r (node_t *node, int depth)
-{
-	int		i;
-	plane_t	*plane;
-	bspbrush_t	*bb;
-
-	for (i=0 ; i<depth ; i++)
-		printf ("  ");
-	if (node->planenum == PLANENUM_LEAF)
-	{
-		if (!node->brushlist)
-			printf ("NULL\n");
-		else
-		{
-			for (bb=node->brushlist ; bb ; bb=bb->next)
-				printf ("%i ", bb->original->brushnum);
-			printf ("\n");
-		}
-		return;
-	}
-
-	plane = &mapplanes[node->planenum];
-	printf ("#%i (%5.2f %5.2f %5.2f):%5.2f\n", node->planenum,
-		plane->normal[0], plane->normal[1], plane->normal[2],
-		plane->dist);
-	PrintTree_r (node->children[0], depth+1);
-	PrintTree_r (node->children[1], depth+1);
-}
 
 /*
 =========================================================

@@ -19,7 +19,7 @@ along with Quake 2 Tools source code; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 */
-#include "vis.h"
+#include "qvis.h"
 
 /*
 
@@ -53,31 +53,6 @@ int CountBits (byte *bits, int numbits)
 	return c;
 }
 
-int		c_fullskip;
-int		c_portalskip, c_leafskip;
-int		c_vistest, c_mighttest;
-
-int		c_chop, c_nochop;
-
-int		active;
-
-void CheckStack (leaf_t *leaf, threaddata_t *thread)
-{
-	pstack_t	*p, *p2;
-
-	for (p=thread->pstack_head.next ; p ; p=p->next)
-	{
-//		printf ("=");
-		if (p->leaf == leaf)
-			Error ("CheckStack: leaf recursion");
-		for (p2=thread->pstack_head.next ; p2 != p ; p2=p2->next)
-			if (p2->leaf == p->leaf)
-				Error ("CheckStack: late leaf recursion");
-	}
-//	printf ("\n");
-}
-
-
 winding_t *AllocStackWinding (pstack_t *stack)
 {
 	int		i;
@@ -98,9 +73,7 @@ winding_t *AllocStackWinding (pstack_t *stack)
 
 void FreeStackWinding (winding_t *w, pstack_t *stack)
 {
-	int		i;
-
-	i = w - stack->windings;
+	int i = w - stack->windings;
 
 	if (i<0 || i>2)
 		return;		// not from local
@@ -392,7 +365,6 @@ void RecursiveLeafFlow (int leafnum, threaddata_t *thread, pstack_t *prevstack)
 	thread->c_chains++;
 
 	leaf = &leafs[leafnum];
-//	CheckStack (leaf, thread);
 
 	prevstack->next = &stack;
 
@@ -442,68 +414,49 @@ void RecursiveLeafFlow (int leafnum, threaddata_t *thread, pstack_t *prevstack)
 		VectorSubtract (vec3_origin, p->plane.normal, backplane.normal);
 		backplane.dist = -p->plane.dist;
 		
-//		c_portalcheck++;
-		
 		stack.portal = p;
 		stack.next = NULL;
 		stack.freewindings[0] = 1;
 		stack.freewindings[1] = 1;
 		stack.freewindings[2] = 1;
 		
-#if 1
-{
-float d;
+		{
+			float d = DotProduct (p->origin, thread->pstack_head.portalplane.normal);
+			d -= thread->pstack_head.portalplane.dist;
+			if (d < -p->radius)
+			{
+				continue;
+			}
+			else if (d > p->radius)
+			{
+				stack.pass = p->winding;
+			}
+			else	
+			{
+				stack.pass = ChopWinding (p->winding, &stack, &thread->pstack_head.portalplane);
+				if (!stack.pass)
+				continue;
+			}
+		}
 
-	d = DotProduct (p->origin, thread->pstack_head.portalplane.normal);
-	d -= thread->pstack_head.portalplane.dist;
-	if (d < -p->radius)
-	{
-		continue;
-	}
-	else if (d > p->radius)
-	{
-		stack.pass = p->winding;
-	}
-	else	
-	{
-		stack.pass = ChopWinding (p->winding, &stack, &thread->pstack_head.portalplane);
-		if (!stack.pass)
-			continue;
-	}
-}
-#else
-		stack.pass = ChopWinding (p->winding, &stack, &thread->pstack_head.portalplane);
-		if (!stack.pass)
-			continue;
-#endif
-
-	
-#if 1
-{
-float d;
-
-	d = DotProduct (thread->base->origin, p->plane.normal);
-	d -= p->plane.dist;
-	if (d > p->radius)
-	{
-		continue;
-	}
-	else if (d < -p->radius)
-	{
-		stack.source = prevstack->source;
-	}
-	else	
-	{
-		stack.source = ChopWinding (prevstack->source, &stack, &backplane);
-		if (!stack.source)
-			continue;
-	}
-}
-#else
-		stack.source = ChopWinding (prevstack->source, &stack, &backplane);
-		if (!stack.source)
-			continue;
-#endif
+		{
+			float d = DotProduct (thread->base->origin, p->plane.normal);
+			d -= p->plane.dist;
+			if (d > p->radius)
+			{
+				continue;
+			}
+			else if (d < -p->radius)
+			{
+				stack.source = prevstack->source;
+			}
+			else	
+			{
+				stack.source = ChopWinding (prevstack->source, &stack, &backplane);
+				if (!stack.source)
+					continue;
+			}
+		}
 
 		if (!prevstack->pass)
 		{	// the second leaf can only be blocked if coplanar
@@ -568,51 +521,6 @@ void PortalFlow (int portalnum)
 	qprintf ("portal:%4i  mightsee:%4i  cansee:%4i (%i chains)\n", 
 		(int)(p - portals),	c_might, c_can, data.c_chains);
 }
-
-
-/*
-===============================================================================
-
-This is a rough first-order aproximation that is used to trivially reject some
-of the final calculations.
-
-
-Calculates portalfront and portalflood bit vectors
-
-thinking about:
-
-typedef struct passage_s
-{
-	struct passage_s	*next;
-	struct portal_s		*to;
-	stryct sep_s		*seperators;
-	byte				*mightsee;
-} passage_t;
-
-typedef struct portal_s
-{
-	struct passage_s	*passages;
-	int					leaf;		// leaf portal faces into
-} portal_s;
-
-leaf = portal->leaf
-clear 
-for all portals
-
-
-calc portal visibility
-	clear bit vector
-	for all passages
-		passage visibility
-
-
-for a portal to be visible to a passage, it must be on the front of
-all seperating planes, and both portals must be behind the mew portal
-
-===============================================================================
-*/
-
-int		c_flood, c_vis;
 
 
 /*
@@ -701,87 +609,4 @@ void BasePortalVis (int portalnum)
 	SimpleFlood (p, p->leaf);
 
 	p->nummightsee = CountBits (p->portalflood, numportals*2);
-//	printf ("portal %i: %i mightsee\n", portalnum, p->nummightsee);
-	c_flood += p->nummightsee;
 }
-
-
-
-
-
-/*
-===============================================================================
-
-This is a second order aproximation 
-
-Calculates portalvis bit vector
-
-WAAAAAAY too slow.
-
-===============================================================================
-*/
-
-/*
-==================
-RecursiveLeafBitFlow
-
-==================
-*/
-void RecursiveLeafBitFlow (int leafnum, byte *mightsee, byte *cansee)
-{
-	portal_t	*p;
-	leaf_t 		*leaf;
-	int			i, j;
-	long		more;
-	int			pnum;
-	byte		newmight[MAX_PORTALS/8];
-
-	leaf = &leafs[leafnum];
-	
-// check all portals for flowing into other leafs	
-	for (i=0 ; i<leaf->numportals ; i++)
-	{
-		p = leaf->portals[i];
-		pnum = p - portals;
-
-		// if some previous portal can't see it, skip
-		if (! (mightsee[pnum>>3] & (1<<(pnum&7)) ) )
-			continue;
-
-		// if this portal can see some portals we mightsee, recurse
-		more = 0;
-		for (j=0 ; j<portallongs ; j++)
-		{
-			((long *)newmight)[j] = ((long *)mightsee)[j] 
-				& ((long *)p->portalflood)[j];
-			more |= ((long *)newmight)[j] & ~((long *)cansee)[j];
-		}
-
-		if (!more)
-			continue;	// can't see anything new
-
-		cansee[pnum>>3] |= (1<<(pnum&7));
-
-		RecursiveLeafBitFlow (p->leaf, newmight, cansee);
-	}	
-}
-
-/*
-==============
-BetterPortalVis
-==============
-*/
-void BetterPortalVis (int portalnum)
-{
-	portal_t	*p;
-
-	p = portals+portalnum;
-
-	RecursiveLeafBitFlow (p->leaf, p->portalflood, p->portalvis);
-
-	// build leaf vis information
-	p->nummightsee = CountBits (p->portalvis, numportals*2);
-	c_vis += p->nummightsee;
-}
-
-

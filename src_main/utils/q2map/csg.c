@@ -28,9 +28,6 @@ tag all brushes with original contents
 brushes may contain multiple contents
 there will be no brush overlap after csg phase
 
-
-
-
 each side has a count of the other sides it splits
 
 the best split will be the one that minimizes the total split counts
@@ -48,20 +45,8 @@ for all sides
 			cost++;
 }
 
+*/
 
-  */
-
-void SplitBrush2 (bspbrush_t *brush, int planenum,
-	bspbrush_t **front, bspbrush_t **back)
-{
-	SplitBrush (brush, planenum, front, back);
-#if 0
-	if (*front && (*front)->sides[(*front)->numsides-1].texinfo == -1)
-		(*front)->sides[(*front)->numsides-1].texinfo = (*front)->sides[0].texinfo;	// not -1
-	if (*back && (*back)->sides[(*back)->numsides-1].texinfo == -1)
-		(*back)->sides[(*back)->numsides-1].texinfo = (*back)->sides[0].texinfo;	// not -1
-#endif
-}
 
 /*
 ===============
@@ -74,7 +59,7 @@ The originals are undisturbed.
 ===============
 */
 bspbrush_t *SubtractBrush (bspbrush_t *a, bspbrush_t *b)
-{	// a - b = out (list)
+{
 	int		i;
 	bspbrush_t	*front, *back;
 	bspbrush_t	*out, *in;
@@ -83,7 +68,7 @@ bspbrush_t *SubtractBrush (bspbrush_t *a, bspbrush_t *b)
 	out = NULL;
 	for (i=0 ; i<b->numsides && in ; i++)
 	{
-		SplitBrush2 (in, b->sides[i].planenum, &front, &back);
+		SplitBrush (in, b->sides[i].planenum, &front, &back);
 		if (in != a)
 			FreeBrush (in);
 		if (front)
@@ -102,41 +87,6 @@ bspbrush_t *SubtractBrush (bspbrush_t *a, bspbrush_t *b)
 	}
 	return out;
 }
-
-/*
-===============
-IntersectBrush
-
-Returns a single brush made up by the intersection of the
-two provided brushes, or NULL if they are disjoint.
-
-The originals are undisturbed.
-===============
-*/
-bspbrush_t *IntersectBrush (bspbrush_t *a, bspbrush_t *b)
-{
-	int		i;
-	bspbrush_t	*front, *back;
-	bspbrush_t	*in;
-
-	in = a;
-	for (i=0 ; i<b->numsides && in ; i++)
-	{
-		SplitBrush2 (in, b->sides[i].planenum, &front, &back);
-		if (in != a)
-			FreeBrush (in);
-		if (front)
-			FreeBrush (front);
-		in = back;
-	}
-
-	if (in == a)
-		return NULL;
-
-	in->next = NULL;
-	return in;
-}
-
 
 /*
 ===============
@@ -161,8 +111,7 @@ qboolean BrushesDisjoint (bspbrush_t *a, bspbrush_t *b)
 	{
 		for (j=0 ; j<b->numsides ; j++)
 		{
-			if (a->sides[i].planenum ==
-			(b->sides[j].planenum^1) )
+			if (a->sides[i].planenum == (b->sides[j].planenum^1) )
 				return true;	// opposite planes, so not touching
 		}
 	}
@@ -170,30 +119,8 @@ qboolean BrushesDisjoint (bspbrush_t *a, bspbrush_t *b)
 	return false;	// might intersect
 }
 
-/*
-===============
-IntersectionContents
-
-Returns a content word for the intersection of two brushes.
-Some combinations will generate a combination (water + clip),
-but most will be the stronger of the two contents.
-===============
-*/
-int	IntersectionContents (int c1, int c2)
-{
-	int		out;
-
-	out = c1 | c2;
-
-	if (out & CONTENTS_SOLID)
-		out = CONTENTS_SOLID;
-
-	return out;
-}
-
-
-int		minplanenums[3];
-int		maxplanenums[3];
+static int minplanenums[3];
+static int maxplanenums[3];
 
 /*
 ===============
@@ -386,47 +313,6 @@ bspbrush_t *CullList (bspbrush_t *list, bspbrush_t *skip1)
 
 /*
 ==================
-WriteBrushMap
-==================
-*/
-void WriteBrushMap (char *name, bspbrush_t *list)
-{
-	FILE	*f;
-	side_t	*s;
-	int		i;
-	winding_t	*w;
-
-	printf ("writing %s\n", name);
-	f = fopen (name, "wb");
-	if (!f)
-		Error ("Can't write %s\b", name);
-
-	fprintf (f, "{\n\"classname\" \"worldspawn\"\n");
-
-	for ( ; list ; list=list->next )
-	{
-		fprintf (f, "{\n");
-		for (i=0,s=list->sides ; i<list->numsides ; i++,s++)
-		{
-			w = BaseWindingForPlane (mapplanes[s->planenum].normal, mapplanes[s->planenum].dist);
-
-			fprintf (f,"( %i %i %i ) ", (int)w->p[0][0], (int)w->p[0][1], (int)w->p[0][2]);
-			fprintf (f,"( %i %i %i ) ", (int)w->p[1][0], (int)w->p[1][1], (int)w->p[1][2]);
-			fprintf (f,"( %i %i %i ) ", (int)w->p[2][0], (int)w->p[2][1], (int)w->p[2][2]);
-
-			fprintf (f, "%s 0 0 0 1 1\n", texinfo[s->texinfo].texture);
-			FreeWinding (w);
-		}
-		fprintf (f, "}\n");
-	}
-	fprintf (f, "}\n");
-
-	fclose (f);
-
-}
-
-/*
-==================
 BrushGE
 
 Returns true if b1 is allowed to bite b2
@@ -462,10 +348,6 @@ bspbrush_t *ChopBrushes (bspbrush_t *head)
 	qprintf ("---- ChopBrushes ----\n");
 	qprintf ("original brushes: %i\n", CountBrushList (head));
 
-#if 0
-	if (startbrush == 0)
-		WriteBrushList ("before.gl", head, false);
-#endif
 	keep = NULL;
 
 newlist:
@@ -555,81 +437,5 @@ newlist:
 	}
 
 	qprintf ("output brushes: %i\n", CountBrushList (keep));
-#if 0
-	{
-		WriteBrushList ("after.gl", keep, false);
-		WriteBrushMap ("after.map", keep);
-	}
-#endif
 	return keep;
-}
-
-
-/*
-=================
-InitialBrushList
-=================
-*/
-bspbrush_t *InitialBrushList (bspbrush_t *list)
-{
-	bspbrush_t *b;
-	bspbrush_t	*out, *newb;
-	int			i;
-
-	// only return brushes that have visible faces
-	out = NULL;
-	for (b=list ; b ; b=b->next)
-	{
-#if 0
-		for (i=0 ; i<b->numsides ; i++)
-			if (b->sides[i].visible)
-				break;
-		if (i == b->numsides)
-			continue;
-#endif
-		newb = CopyBrush (b);
-		newb->next = out;
-		out = newb;
-
-		// clear visible, so it must be set by MarkVisibleFaces_r
-		// to be used in the optimized list
-		for (i=0 ; i<b->numsides ; i++)
-		{
-			newb->sides[i].original = &b->sides[i];
-//			newb->sides[i].visible = true;
-			b->sides[i].visible = false;
-		}
-	}
-
-	return out;
-}
-
-/*
-=================
-OptimizedBrushList
-=================
-*/
-bspbrush_t *OptimizedBrushList (bspbrush_t *list)
-{
-	bspbrush_t *b;
-	bspbrush_t	*out, *newb;
-	int			i;
-
-	// only return brushes that have visible faces
-	out = NULL;
-	for (b=list ; b ; b=b->next)
-	{
-		for (i=0 ; i<b->numsides ; i++)
-			if (b->sides[i].visible)
-				break;
-		if (i == b->numsides)
-			continue;
-		newb = CopyBrush (b);
-		newb->next = out;
-		out = newb;
-	}
-
-//	WriteBrushList ("vis.gl", out, true);
-
-	return out;
 }

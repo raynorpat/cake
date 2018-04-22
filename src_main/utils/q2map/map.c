@@ -41,18 +41,8 @@ vec3_t		map_mins, map_maxs;
 
 int		c_boxbevels;
 int		c_edgebevels;
-
 int		c_areaportals;
-
 int		c_clipbrushes;
-
-/*
-=============================================================================
-
-PLANE FINDING
-
-=============================================================================
-*/
 
 
 /*
@@ -141,7 +131,7 @@ int CreateNewFloatPlane (vec3_t normal, vec_t dist)
 
 	nummapplanes += 2;
 
-	// allways put axial planes facing positive first
+	// always put axial planes facing positive first
 	if (p->type < 3)
 	{
 		if (p->normal[0] < 0 || p->normal[1] < 0 || p->normal[2] < 0)
@@ -890,8 +880,19 @@ void LoadMapFile (char *filename)
 
 	LoadScriptFile (filename);
 
+	memset(mapbrushes, 0, sizeof(mapbrush_t) * MAX_MAP_BRUSHES);
+	nummapbrushes = 0;
+
+	memset(brushsides, 0, sizeof(side_t) * MAX_MAP_SIDES);
 	nummapbrushsides = 0;
+
+	memset(side_brushtextures, 0, sizeof(brush_texture_t) * MAX_MAP_SIDES);
+
+	memset(mapplanes, 0, sizeof(plane_t) * MAX_MAP_PLANES);
+	numplanes = 0;
+
 	num_entities = 0;
+	numtexinfo = 0;
 	
 	while (ParseMapEntity ())
 	{
