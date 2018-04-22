@@ -33,7 +33,6 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #include "mathlib.h"
 #include "trilib.h"
 #include "lbmlib.h"
-#include "threads.h"
 #include "l3dslib.h"
 #include "bspfile.h"
 

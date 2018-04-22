@@ -60,7 +60,6 @@ set(COMMON_INCLUDES
 	../common/mdfour.h
 	../common/scriplib.h
 	../common/trilib.h
-	../common/threads.h
 	)
 set(COMMON_SOURCES
 	../common/bspfile.c
@@ -71,7 +70,6 @@ set(COMMON_SOURCES
 	../common/mdfour.c
 	../common/scriplib.c
 	../common/trilib.c
-	../common/threads.c
 	)
 source_group("common" FILES ${COMMON_INCLUDES})
 source_group("common" FILES ${COMMON_SOURCES})
