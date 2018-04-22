@@ -39,11 +39,6 @@ plane_t		*planehash[PLANE_HASHES];
 
 vec3_t		map_mins, map_maxs;
 
-// undefine to make plane finding use linear sort
-#define	USE_HASHING
-
-void TestExpandBrushes (void);
-
 int		c_boxbevels;
 int		c_edgebevels;
 
@@ -95,22 +90,13 @@ PlaneEqual
 */
 #define	NORMAL_EPSILON	0.00001
 #define	DIST_EPSILON	0.01
-qboolean	PlaneEqual (plane_t *p, vec3_t normal, vec_t dist)
+static inline qboolean PlaneEqual (plane_t *p, vec3_t normal, vec_t dist)
 {
-#if 1
-	if (
-	   fabs(p->normal[0] - normal[0]) < NORMAL_EPSILON
+	if (fabs(p->normal[0] - normal[0]) < NORMAL_EPSILON
 	&& fabs(p->normal[1] - normal[1]) < NORMAL_EPSILON
 	&& fabs(p->normal[2] - normal[2]) < NORMAL_EPSILON
 	&& fabs(p->dist - dist) < DIST_EPSILON )
 		return true;
-#else
-	if (p->normal[0] == normal[0]
-		&& p->normal[1] == normal[1]
-		&& p->normal[2] == normal[2]
-		&& p->dist == dist)
-		return true;
-#endif
 	return false;
 }
 
@@ -119,7 +105,7 @@ qboolean	PlaneEqual (plane_t *p, vec3_t normal, vec_t dist)
 AddPlaneToHash
 ================
 */
-void	AddPlaneToHash (plane_t *p)
+void AddPlaneToHash (plane_t *p)
 {
 	int		hash;
 
@@ -181,7 +167,7 @@ int CreateNewFloatPlane (vec3_t normal, vec_t dist)
 SnapVector
 ==============
 */
-void	SnapVector (vec3_t normal)
+void SnapVector (vec3_t normal)
 {
 	int		i;
 
@@ -207,7 +193,7 @@ void	SnapVector (vec3_t normal)
 SnapPlane
 ==============
 */
-void	SnapPlane (vec3_t normal, vec_t *dist)
+void SnapPlane (vec3_t normal, vec_t *dist)
 {
 	SnapVector (normal);
 
@@ -218,26 +204,9 @@ void	SnapPlane (vec3_t normal, vec_t *dist)
 /*
 =============
 FindFloatPlane
-
 =============
 */
-#ifndef USE_HASHING
-int		FindFloatPlane (vec3_t normal, vec_t dist)
-{
-	int		i;
-	plane_t	*p;
-
-	SnapPlane (normal, &dist);
-	for (i=0, p=mapplanes ; i<nummapplanes ; i++, p++)
-	{
-		if (PlaneEqual (p, normal, dist))
-			return i;
-	}
-
-	return CreateNewFloatPlane (normal, dist);
-}
-#else
-int		FindFloatPlane (vec3_t normal, vec_t dist)
+int	FindFloatPlane (vec3_t normal, vec_t dist)
 {
 	int		i;
 	plane_t	*p;
@@ -260,7 +229,6 @@ int		FindFloatPlane (vec3_t normal, vec_t dist)
 
 	return CreateNewFloatPlane (normal, dist);
 }
-#endif
 
 /*
 ================
@@ -786,11 +754,6 @@ void MoveBrushesToWorld (entity_t *mapent)
 	temp = malloc(newbrushes*sizeof(mapbrush_t));
 	memcpy (temp, mapbrushes + mapent->firstbrush, newbrushes*sizeof(mapbrush_t));
 
-#if	0		// let them keep their original brush numbers
-	for (i=0 ; i<newbrushes ; i++)
-		temp[i].entitynum = 0;
-#endif
-
 	// make space to move the brushes (overlapped copy)
 	memmove (mapbrushes + worldbrushes + newbrushes,
 		mapbrushes + worldbrushes,
@@ -840,8 +803,6 @@ qboolean	ParseMapEntity (void)
 	memset (mapent, 0, sizeof(*mapent));
 	mapent->firstbrush = nummapbrushes;
 	mapent->numbrushes = 0;
-//	mapent->portalareas[0] = -1;
-//	mapent->portalareas[1] = -1;
 
 	do
 	{
@@ -922,7 +883,7 @@ LoadMapFile
 ================
 */
 void LoadMapFile (char *filename)
-{		
+{
 	int		i;
 
 	qprintf ("--- LoadMapFile ---\n");
@@ -955,63 +916,4 @@ void LoadMapFile (char *filename)
 	qprintf ("%5i areaportals\n", c_areaportals);
 	qprintf ("size: %5.0f,%5.0f,%5.0f to %5.0f,%5.0f,%5.0f\n", map_mins[0],map_mins[1],map_mins[2],
 		map_maxs[0],map_maxs[1],map_maxs[2]);
-
-//	TestExpandBrushes ();
-}
-
-
-//====================================================================
-
-
-/*
-================
-TestExpandBrushes
-
-Expands all the brush planes and saves a new map out
-================
-*/
-void TestExpandBrushes (void)
-{
-	FILE	*f;
-	side_t	*s;
-	int		i, j, bn;
-	winding_t	*w;
-	char	*name = "expanded.map";
-	mapbrush_t	*brush;
-	vec_t	dist;
-
-	printf ("writing %s\n", name);
-	f = fopen (name, "wb");
-	if (!f)
-		Error ("Can't write %s\b", name);
-
-	fprintf (f, "{\n\"classname\" \"worldspawn\"\n");
-
-	for (bn=0 ; bn<nummapbrushes ; bn++)
-	{
-		brush = &mapbrushes[bn];
-		fprintf (f, "{\n");
-		for (i=0 ; i<brush->numsides ; i++)
-		{
-			s = brush->original_sides + i;
-			dist = mapplanes[s->planenum].dist;
-			for (j=0 ; j<3 ; j++)
-				dist += fabs( 16 * mapplanes[s->planenum].normal[j] );
-
-			w = BaseWindingForPlane (mapplanes[s->planenum].normal, dist);
-
-			fprintf (f,"( %i %i %i ) ", (int)w->p[0][0], (int)w->p[0][1], (int)w->p[0][2]);
-			fprintf (f,"( %i %i %i ) ", (int)w->p[1][0], (int)w->p[1][1], (int)w->p[1][2]);
-			fprintf (f,"( %i %i %i ) ", (int)w->p[2][0], (int)w->p[2][1], (int)w->p[2][2]);
-
-			fprintf (f, "%s 0 0 0 1 1\n", texinfo[s->texinfo].texture);
-			FreeWinding (w);
-		}
-		fprintf (f, "}\n");
-	}
-	fprintf (f, "}\n");
-
-	fclose (f);
-
-	Error ("can't proceed after expanding brushes");
 }

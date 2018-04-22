@@ -31,9 +31,6 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 */
 
-// undefine for dumb linear searches
-#define	USE_HASHING
-
 #define	INTEGRAL_EPSILON	0.01
 #define	POINT_EPSILON		0.5
 #define	OFF_EPSILON			0.5
@@ -105,7 +102,6 @@ unsigned HashVec (vec3_t vec)
 	return y*HASH_SIZE + x;
 }
 
-#ifdef USE_HASHING
 /*
 =============
 GetVertex
@@ -142,7 +138,7 @@ int	GetVertexnum (vec3_t in)
 			return vnum;
 	}
 	
-// emit a vertex
+	// emit a vertex
 	if (numvertexes == MAX_MAP_VERTS)
 		Error ("numvertexes == MAX_MAP_VERTS");
 
@@ -159,55 +155,6 @@ int	GetVertexnum (vec3_t in)
 		
 	return numvertexes-1;
 }
-#else
-/*
-==================
-GetVertexnum
-
-Dumb linear search
-==================
-*/
-int	GetVertexnum (vec3_t v)
-{
-	int			i, j;
-	dvertex_t	*dv;
-	vec_t		d;
-
-	c_totalverts++;
-
-	// make really close values exactly integral
-	for (i=0 ; i<3 ; i++)
-	{
-		if ( fabs(v[i] - (int)(v[i]+0.5)) < INTEGRAL_EPSILON )
-			v[i] = (int)(v[i]+0.5);
-		if (v[i] < -4096 || v[i] > 4096)
-			Error ("GetVertexnum: outside +/- 4096");
-	}
-
-	// search for an existing vertex match
-	for (i=0, dv=dvertexes ; i<numvertexes ; i++, dv++)
-	{
-		for (j=0 ; j<3 ; j++)
-		{
-			d = v[j] - dv->point[j];
-			if ( d > POINT_EPSILON || d < -POINT_EPSILON)
-				break;
-		}
-		if (j == 3)
-			return i;		// a match
-	}
-
-	// new point
-	if (numvertexes == MAX_MAP_VERTS)
-		Error ("MAX_MAP_VERTS");
-	VectorCopy (v, dv->point);
-	numvertexes++;
-	c_uniqueverts++;
-
-	return numvertexes-1;
-}
-#endif
-
 
 /*
 ==================
@@ -318,7 +265,6 @@ void EmitVertexes_r (node_t *node)
 }
 
 
-#ifdef USE_HASHING
 /*
 ==========
 FindEdgeVerts
@@ -384,24 +330,6 @@ void FindEdgeVerts (vec3_t v1, vec3_t v2)
 		}
 	}
 }
-
-#else
-/*
-==========
-FindEdgeVerts
-
-Forced a dumb check of everything
-==========
-*/
-void FindEdgeVerts (vec3_t v1, vec3_t v2)
-{
-	int		i;
-
-	num_edge_verts = numvertexes-1;
-	for (i=0 ; i<num_edge_verts ; i++)
-		edge_verts[i] = i+1;
-}
-#endif
 
 /*
 ==========
