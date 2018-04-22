@@ -79,7 +79,7 @@ winding_t *NewWinding (int points)
 	size_t		size;
 	
 	if (points > MAX_POINTS_ON_WINDING)
-		Error ("NewWinding: %i points", points);
+		Con_Error("NewWinding: %i points\n", points);
 	
 	size = (size_t)((winding_t *)0)->points[points];
 	w = malloc (size);
@@ -173,7 +173,7 @@ void ClusterMerge (int leafnum)
 	{
 		p = leaf->portals[i];
 		if (p->status != stat_done)
-			Error ("portal not done");
+			Con_Error("portal not done\n");
 		for (j=0 ; j<portallongs ; j++)
 			((long *)portalvector)[j] |= ((long *)p->portalvis)[j];
 		pnum = p - portals;
@@ -184,7 +184,7 @@ void ClusterMerge (int leafnum)
 	numvis = LeafVectorFromPortalVector (portalvector, uncompressed);
 
 	if (uncompressed[leafnum>>3] & (1<<(leafnum&7)))
-		printf ("WARNING: Leaf portals saw into leaf\n");
+		Con_Print("WARNING: Leaf portals saw into leaf\n");
 		
 	uncompressed[leafnum>>3] |= (1<<(leafnum&7));
 	numvis++;		// count the leaf itself
@@ -195,7 +195,7 @@ void ClusterMerge (int leafnum)
 //
 // compress the bit string
 //
-	qprintf ("cluster %4i : %4i visible\n", leafnum, numvis);
+	Con_Verbose ("cluster %4i : %4i visible\n", leafnum, numvis);
 	totalvis += numvis;
 
 	i = CompressVis (uncompressed, compressed);
@@ -204,7 +204,7 @@ void ClusterMerge (int leafnum)
 	vismap_p += i;
 	
 	if (vismap_p > vismap_end)
-		Error ("Vismap expansion overflow");
+		Con_Error("Vismap expansion overflow\n");
 
 	dvis->bitofs[leafnum][DVIS_PVS] = dest-vismap;
 
@@ -232,7 +232,7 @@ void CalcPortalVis (void)
 		return;
 	}
 	
-	RunThreadsOnIndividual (numportals*2, true, PortalFlow);
+	RunThreadsOn(numportals*2, true, PortalFlow);
 }
 
 
@@ -245,7 +245,7 @@ void CalcVis (void)
 {
 	int		i;
 
-	RunThreadsOnIndividual (numportals*2, true, BasePortalVis);
+	RunThreadsOn (numportals*2, true, BasePortalVis);
 
 	SortPortals ();
 	
@@ -257,7 +257,7 @@ void CalcVis (void)
 	for (i=0 ; i<portalclusters ; i++)
 		ClusterMerge (i);
 		
-	printf ("Average clusters visible: %i\n", totalvis / portalclusters);
+	Con_Print("Average clusters visible: %i\n", totalvis / portalclusters);
 }
 
 
@@ -309,14 +309,14 @@ void LoadPortals (char *name)
 	
 	f = fopen(name, "r");
 	if (!f)
-		Error ("LoadPortals: couldn't read %s\n",name);
+		Con_Error("LoadPortals: couldn't read %s\n",name);
 
 	if (fscanf (f,"%79s\n%i\n%i\n",magic, &portalclusters, &numportals) != 3)
-		Error ("LoadPortals: failed to read header");
+		Con_Error("LoadPortals: failed to read header\n");
 	if (strcmp(magic,PORTALFILE))
-		Error ("LoadPortals: not a portal file");
+		Con_Error("LoadPortals: not a portal file\n");
 
-	printf ("Loading %4i portals, %4i portalclusters..\n", numportals, portalclusters);
+	Con_Print("Loading %4i portals, %4i portalclusters..\n", numportals, portalclusters);
 
 	// these counts should take advantage of 64 bit systems automatically
 	leafbytes = ((portalclusters+63)&~63)>>3;
@@ -344,12 +344,12 @@ void LoadPortals (char *name)
 	for (i=0, p=portals ; i<numportals ; i++)
 	{
 		if (fscanf (f, "%i %i %i ", &numpoints, &leafnums[0], &leafnums[1])	!= 3)
-			Error ("LoadPortals: reading portal %i", i);
+			Con_Error("LoadPortals: reading portal %i\n", i);
 		if (numpoints > MAX_POINTS_ON_WINDING)
-			Error ("LoadPortals: portal %i has too many points", i);
+			Con_Error("LoadPortals: portal %i has too many points\n", i);
 		if ( (unsigned)leafnums[0] > portalclusters
 		|| (unsigned)leafnums[1] > portalclusters)
-			Error ("LoadPortals: reading portal %i", i);
+			Con_Error("LoadPortals: reading portal %i\n", i);
 		
 		w = p->winding = NewWinding (numpoints);
 		w->original = true;
@@ -363,7 +363,7 @@ void LoadPortals (char *name)
 			// scanf into double, then assign to vec_t
 			// so we don't care what size vec_t is
 			if (fscanf (f, "(%lf %lf %lf ) ", &v[0], &v[1], &v[2]) != 3)
-				Error ("LoadPortals: reading portal %i", i);
+				Con_Error("LoadPortals: reading portal %i\n", i);
 			for (k=0 ; k<3 ; k++)
 				w->points[j][k] = v[k];
 		}
@@ -375,7 +375,7 @@ void LoadPortals (char *name)
 	// create forward portal
 		l = &leafs[leafnums[0]];
 		if (l->numportals == MAX_PORTALS_ON_LEAF)
-			Error ("Leaf with too many portals");
+			Con_Error("Leaf with too many portals\n");
 		l->portals[l->numportals] = p;
 		l->numportals++;
 		
@@ -389,7 +389,7 @@ void LoadPortals (char *name)
 	// create backwards portal
 		l = &leafs[leafnums[1]];
 		if (l->numportals == MAX_PORTALS_ON_LEAF)
-			Error ("Leaf with too many portals");
+			Con_Error("Leaf with too many portals\n");
 		l->portals[l->numportals] = p;
 		l->numportals++;
 		
@@ -428,7 +428,7 @@ void CalcPHS (void)
 	byte	uncompressed[MAX_MAP_LEAFS/8];
 	byte	compressed[MAX_MAP_LEAFS/8];
 
-	printf ("Building PHS...\n");
+	Con_Print("Building PHS...\n");
 
 	count = 0;
 	for (i=0 ; i<portalclusters ; i++)
@@ -447,7 +447,7 @@ void CalcPHS (void)
 				// OR this pvs row into the phs
 				index = ((j<<3)+k);
 				if (index >= portalclusters)
-					Error ("Bad bit in PVS");	// pad bits should be 0
+					Con_Error("Bad bit in PVS\n");	// pad bits should be 0
 				src = (long *)(uncompressedvis + index*leafbytes);
 				dest = (long *)uncompressed;
 				for (l=0 ; l<leaflongs ; l++)
@@ -467,14 +467,14 @@ void CalcPHS (void)
 		vismap_p += j;
 		
 		if (vismap_p > vismap_end)
-			Error ("Vismap expansion overflow");
+			Con_Error("Vismap expansion overflow\n");
 
 		dvis->bitofs[i][DVIS_PHS] = (byte *)dest-vismap;
 
 		memcpy (dest, compressed, j);	
 	}
 
-	printf ("Average clusters hearable: %i\n", count/portalclusters);
+	Con_Print("Average clusters hearable: %i\n", count/portalclusters);
 }
 
 /*
@@ -491,7 +491,7 @@ int Vis_Main (int argc, char **argv)
 	double	start, end;
 	int		total_vis_time;
 		
-	printf ("---- vis ----\n");
+	Con_Print("---- VIS ----\n");
 
 	verbose = false;
 	for (i=1 ; i<argc ; i++)
@@ -503,23 +503,23 @@ int Vis_Main (int argc, char **argv)
 		}
 		else if (!strcmp(argv[i], "-fast"))
 		{
-			printf ("fastvis = true\n");
+			Con_Print("fastvis = true\n");
 			fastvis = true;
 		}
 		else if (!strcmp(argv[i], "-level"))
 		{
 			testlevel = atoi(argv[i+1]);
-			printf ("testlevel = %i\n", testlevel);
+			Con_Print("testlevel = %i\n", testlevel);
 			i++;
 		}
 		else if (!strcmp(argv[i], "-v"))
 		{
-			printf ("verbose = true\n");
+			Con_Print("verbose = true\n");
 			verbose = true;
 		}
 		else if (!strcmp (argv[i],"-nosort"))
 		{
-			printf ("nosort = true\n");
+			Con_Print("nosort = true\n");
 			nosort = true;
 		}
 		else if (!strcmp (argv[i],"-tmpin"))
@@ -527,17 +527,15 @@ int Vis_Main (int argc, char **argv)
 		else if (!strcmp (argv[i],"-tmpout"))
 			strcpy (outbase, "/tmp");
 		else if (argv[i][0] == '-')
-			Error ("Unknown option \"%s\"", argv[i]);
+			Con_Error("Unknown option \"%s\"\n", argv[i]);
 		else
 			break;
 	}
 
 	if (i != argc - 1)
-		Error ("usage: q2map -vis [-threads #] [-level 0-4] [-fast] [-v] bspfile");
+		Con_Error("usage: q2map -vis [-threads #] [-level 0-4] [-fast] [-v] bspfile\n");
 
 	start = I_FloatTime ();
-	
-	ThreadSetDefault ();
 
 	SetQdirFromPath (argv[i]);
 
@@ -546,16 +544,16 @@ int Vis_Main (int argc, char **argv)
 	DefaultExtension (source, ".bsp");
 
 	sprintf (name, "%s%s", inbase, source);
-	printf ("reading %s\n", name);
+	Con_Print("reading %s\n", name);
 	LoadBSPFile (name);
 	if (numnodes == 0 || numfaces == 0)
-		Error ("Empty map");
+		Con_Error("Empty map\n");
 
 	sprintf (portalfile, "%s%s", inbase, ExpandArg(argv[i]));
 	StripExtension (portalfile);
 	strcat (portalfile, ".prt");
 	
-	printf ("reading %s\n", portalfile);
+	Con_Print("reading %s\n", portalfile);
 	LoadPortals (portalfile);
 	
 	CalcVis ();
@@ -563,19 +561,19 @@ int Vis_Main (int argc, char **argv)
 	CalcPHS ();
 
 	visdatasize = vismap_p - dvisdata;
-	printf ("visdatasize:%i  compressed from %i\n", visdatasize, originalvismapsize*2);
+	Con_Print("visdatasize:%i  compressed from %i\n", visdatasize, originalvismapsize*2);
 
 	sprintf (name, "%s%s", outbase, source);
-	printf ("writing %s\n", name);
+	Con_Print("writing %s\n", name);
 	WriteBSPFile (name);	
 	
 	end = I_FloatTime ();
 	total_vis_time = (int) ( end - start );
-	printf ("\nVIS Time: ");
+	Con_Print("\nVIS Time: ");
 	if ( total_vis_time > 59 ) {
-		printf( "%d minutes ", total_vis_time / 60 );
+		Con_Print( "%d minutes ", total_vis_time / 60 );
 	}
-	printf( "%d seconds\n", total_vis_time % 60 );
+	Con_Print( "%d seconds\n", total_vis_time % 60 );
 
 	return 0;
 }

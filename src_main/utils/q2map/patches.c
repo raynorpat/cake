@@ -76,7 +76,7 @@ void CalcTextureReflectivity (void)
 		sprintf (path, "%stextures/%s.wal", gamedir, texinfo[i].texture);
 		if (TryLoadFile (path, (void **)&mt) == -1)
 		{
-			printf ("Couldn't load %s\n", path);
+			Con_Print ("Couldn't load %s\n", path);
 			texture_reflectivity[i][0] = 0.5;
 			texture_reflectivity[i][1] = 0.5;
 			texture_reflectivity[i][2] = 0.5;
@@ -210,7 +210,7 @@ void MakePatchForFace (int fn, winding_t *w)
 
 	patch = &patches[num_patches];
 	if (num_patches == MAX_PATCHES)
-		Error ("num_patches == MAX_PATCHES");
+		Con_Error("num_patches == MAX_PATCHES\n");
 	patch->next = face_patches[fn];
 	face_patches[fn] = patch;
 
@@ -223,7 +223,7 @@ void MakePatchForFace (int fn, winding_t *w)
 	if (face_offset[fn][0] || face_offset[fn][1] || face_offset[fn][2] )
 	{	// origin offset faces must create new planes
 		if (numplanes + fakeplanes >= MAX_MAP_PLANES)
-			Error ("numplanes + fakeplanes >= MAX_MAP_PLANES");
+			Con_Error("numplanes + fakeplanes >= MAX_MAP_PLANES\n");
 		pl = &dplanes[numplanes + fakeplanes];
 		fakeplanes++;
 
@@ -237,7 +237,7 @@ void MakePatchForFace (int fn, winding_t *w)
 	leaf = PointInLeaf(patch->origin);
 	patch->cluster = leaf->cluster;
 	if (patch->cluster == -1)
-		qprintf ("patch->cluster == -1\n");
+		Con_Verbose("patch->cluster == -1\n");
 
 	patch->area = area;
 	if (patch->area <= 1)
@@ -295,7 +295,7 @@ void MakePatches (void)
 	vec3_t		origin;
 	entity_t	*ent;
 
-	qprintf ("%i faces\n", numfaces);
+	Con_Verbose("%i faces\n", numfaces);
 
 	for (i=0 ; i<nummodels ; i++)
 	{
@@ -321,7 +321,7 @@ void MakePatches (void)
 		}
 	}
 
-	qprintf ("%i sqaure feet\n", (int)(totalarea/64));
+	Con_Verbose("%i sqaure feet\n", (int)(totalarea/64));
 }
 
 /*
@@ -355,14 +355,14 @@ void FinishSplit (patch_t *patch, patch_t *newp)
 	leaf = PointInLeaf(patch->origin);
 	patch->cluster = leaf->cluster;
 	if (patch->cluster == -1)
-		qprintf ("patch->cluster == -1\n");
+		Con_Verbose("patch->cluster == -1\n");
 
 	WindingCenter (newp->winding, newp->origin);
 	VectorAdd (newp->origin, newp->plane->normal, newp->origin);
 	leaf = PointInLeaf(newp->origin);
 	newp->cluster = leaf->cluster;
 	if (newp->cluster == -1)
-		qprintf ("patch->cluster == -1\n");
+		Con_Verbose("patch->cluster == -1\n");
 }
 
 /*
@@ -418,7 +418,7 @@ void	SubdividePatch (patch_t *patch)
 	// create a new patch
 	//
 	if (num_patches == MAX_PATCHES)
-		Error ("MAX_PATCHES");
+		Con_Error("MAX_PATCHES\n");
 	newp = &patches[num_patches];
 	num_patches++;
 
@@ -474,7 +474,7 @@ void	DicePatch (patch_t *patch)
 	// create a new patch
 	//
 	if (num_patches == MAX_PATCHES)
-		Error ("MAX_PATCHES");
+		Con_Error("MAX_PATCHES\n");
 	newp = &patches[num_patches];
 	num_patches++;
 
@@ -509,7 +509,7 @@ void SubdividePatches (void)
 //		SubdividePatch (&patches[i]);
 		DicePatch (&patches[i]);
 	}
-	qprintf ("%i patches after subdivision\n", num_patches);
+	Con_Verbose("%i patches after subdivision\n", num_patches);
 }
 
 //=====================================================================

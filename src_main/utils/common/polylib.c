@@ -24,16 +24,6 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #include "mathlib.h"
 #include "polylib.h"
 
-
-extern int numthreads;
-
-// counters are only bumped when running single threaded,
-// because they are an awefull coherence problem
-int	c_active_windings;
-int	c_peak_windings;
-int	c_winding_allocs;
-int	c_winding_points;
-
 #define	BOGUS_RANGE	8192
 
 void pw(winding_t *w)
@@ -54,14 +44,6 @@ winding_t	*AllocWinding (int points)
 	winding_t	*w;
 	int			s;
 
-	if (numthreads == 1)
-	{
-		c_winding_allocs++;
-		c_winding_points += points;
-		c_active_windings++;
-		if (c_active_windings > c_peak_windings)
-			c_peak_windings = c_active_windings;
-	}
 	s = sizeof(vec_t)*3*points + sizeof(int);
 	w = malloc (s);
 	memset (w, 0, s);
@@ -74,8 +56,6 @@ void FreeWinding (winding_t *w)
 		Error ("FreeWinding: freed a freed winding");
 	*(unsigned *)w = 0xdeaddead;
 
-	if (numthreads == 1)
-		c_active_windings--;
 	free (w);
 }
 
@@ -84,9 +64,7 @@ void FreeWinding (winding_t *w)
 RemoveColinearPoints
 ============
 */
-int	c_removed;
-
-void	RemoveColinearPoints (winding_t *w)
+void RemoveColinearPoints (winding_t *w)
 {
 	int		i, j, k;
 	vec3_t	v1, v2;
@@ -112,8 +90,6 @@ void	RemoveColinearPoints (winding_t *w)
 	if (nump == w->numpoints)
 		return;
 
-	if (numthreads == 1)
-		c_removed += w->numpoints - nump;
 	w->numpoints = nump;
 	memcpy (w->p, p, nump*sizeof(p[0]));
 }

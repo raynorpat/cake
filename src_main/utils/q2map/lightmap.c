@@ -170,7 +170,7 @@ triedge_t	*FindEdge (triangulation_t *trian, int p0, int p1)
 		return trian->edgematrix[p0][p1];
 
 	if (trian->numedges > MAX_TRI_EDGES-2)
-		Error ("trian->numedges > MAX_TRI_EDGES-2");
+		Con_Error("trian->numedges > MAX_TRI_EDGES-2\n");
 
 	VectorSubtract (trian->points[p1]->origin, trian->points[p0]->origin, v1);
 	VectorNormalize (v1, v1);
@@ -203,7 +203,7 @@ triangle_t	*AllocTriangle (triangulation_t *trian)
 	triangle_t	*t;
 
 	if (trian->numtris >= MAX_TRI_TRIS)
-		Error ("trian->numtris >= MAX_TRI_TRIS");
+		Con_Error("trian->numtris >= MAX_TRI_TRIS\n");
 
 	t = &trian->tris[trian->numtris];
 	trian->numtris++;
@@ -316,7 +316,7 @@ void AddPointToTriangulation (patch_t *patch, triangulation_t *trian)
 
 	pnum = trian->numpoints;
 	if (pnum == MAX_TRI_POINTS)
-		Error ("trian->numpoints == MAX_TRI_POINTS");
+		Con_Error("trian->numpoints == MAX_TRI_POINTS\n");
 	trian->points[pnum] = patch;
 	trian->numpoints++;
 }
@@ -454,7 +454,7 @@ void SampleTriangulation (vec3_t point, triangulation_t *trian, vec3_t color)
 	}
 
 	if (!p1)
-		Error ("SampleTriangulation: no points");
+		Con_Error("SampleTriangulation: no points\n");
 
 	VectorCopy (p1->totallight, color);
 }
@@ -548,7 +548,7 @@ void CalcFaceExtents (lightinfo_t *l)
 		l->texmins[i] = mins[i];
 		l->texsize[i] = maxs[i] - mins[i];
 		if (l->texsize[0] * l->texsize[1] > SINGLEMAP/4)	// div 4 for extrasamples
-			Error ("Surface to large to map");
+			Con_Error("Surface to large to map\n");
 	}
 }
 
@@ -589,7 +589,7 @@ void CalcFaceVectors (lightinfo_t *l)
 	distscale = DotProduct (texnormal, l->facenormal);
 	if (!distscale)
 	{
-		qprintf ("WARNING: Texture axis perpendicular to face\n");
+		Con_Verbose ("WARNING: Texture axis perpendicular to face\n");
 		distscale = 1;
 	}
 	if (distscale < 0)
@@ -872,8 +872,7 @@ void CreateDirectLights (void)
 			{	// point towards target
 				e2 = FindTargetEntity (target);
 				if (!e2)
-					printf ("WARNING: light at (%i %i %i) has missing target\n",
-					(int)dl->origin[0], (int)dl->origin[1], (int)dl->origin[2]);
+					Con_Print ("WARNING: light at (%i %i %i) has missing target\n", (int)dl->origin[0], (int)dl->origin[1], (int)dl->origin[2]);
 				else
 				{
 					GetVectorForKey (e2, "origin", dest);
@@ -904,7 +903,7 @@ void CreateDirectLights (void)
 		}
 	}
 
-	qprintf ("%i direct lights\n", numdlights);
+	Con_Verbose("%i direct lights\n", numdlights);
 }
 
 /*
@@ -967,7 +966,7 @@ void GatherSampleLight (vec3_t pos, vec3_t normal,
 				scale = (l->intensity - dist) * dot;
 				break;
 			default:
-				Error ("Bad l->type");
+				Con_Error("Bad l->type\n");
 			}
 
 			if (TestLine_r (0, pos, l->origin))
@@ -1121,7 +1120,7 @@ void BuildFacelights (int facenum)
 		}
 		else
 		{
-//			printf ("patch with no samples\n");
+//			Con_Print ("patch with no samples\n");
 		}
 	}
 
@@ -1193,7 +1192,7 @@ dlightdata[lightdatasize-(i+1)*3 + 1] = 255;
 #endif
 
 	if (lightdatasize > MAX_MAP_LIGHTING)
-		Error ("MAX_MAP_LIGHTING");
+		Con_Error("MAX_MAP_LIGHTING\n");
 	ThreadUnlock ();
 
 	f->styles[0] = 0;
@@ -1258,7 +1257,7 @@ dlightdata[lightdatasize-(i+1)*3 + 1] = 255;
 	if (fl->numstyles > MAXLIGHTMAPS)
 	{
 		fl->numstyles = MAXLIGHTMAPS;
-		printf ("face with too many lightstyles: (%f %f %f)\n",
+		Con_Print ("face with too many lightstyles: (%f %f %f)\n",
 			face_patches[facenum]->origin[0],
 			face_patches[facenum]->origin[1],
 			face_patches[facenum]->origin[2]

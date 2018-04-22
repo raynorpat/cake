@@ -85,7 +85,7 @@ static unsigned HashVec (vec3_t vec)
 	y = (4096 + (int)(vec[1]+0.5)) >> 7;
 
 	if ( x < 0 || x >= HASH_SIZE || y < 0 || y >= HASH_SIZE )
-		Error ("HashVec: point outside valid range");
+		Con_Error("HashVec: point outside valid range\n");
 	
 	return y*HASH_SIZE + x;
 }
@@ -129,7 +129,7 @@ int	GetVertexnum (vec3_t in)
 	
 	// emit a vertex
 	if (numvertexes == MAX_MAP_VERTS)
-		Error ("numvertexes == MAX_MAP_VERTS");
+		Con_Error("numvertexes == MAX_MAP_VERTS\n");
 
 	dvertexes[numvertexes].point[0] = vert[0];
 	dvertexes[numvertexes].point[1] = vert[1];
@@ -249,9 +249,10 @@ void EmitFaceVertexes (node_t *node, face_t *f)
 	for (i=0 ; i<w->numpoints ; i++)
 	{
 		if (noweld)
-		{	// make every point unique
+		{
+			// make every point unique
 			if (numvertexes == MAX_MAP_VERTS)
-				Error ("MAX_MAP_VERTS");
+				Con_Error("MAX_MAP_VERTS\n");
 			superverts[i] = numvertexes;
 			VectorCopy (w->p[i], dvertexes[numvertexes].point);
 			numvertexes++;
@@ -358,7 +359,7 @@ void TestEdge (vec_t start, vec_t end, int p1, int p2, int startvert)
 
 	// the edge p1 to p2 is now free of tjunctions
 	if (numsuperverts >= MAX_SUPERVERTS)
-		Error ("MAX_SUPERVERTS");
+		Con_Error("MAX_SUPERVERTS\n");
 	superverts[numsuperverts] = p1;
 	numsuperverts++;
 }
@@ -460,27 +461,27 @@ FixTjuncs
 void FixTjuncs (node_t *headnode)
 {
 	// snap and merge all vertexes
-	qprintf ("---- snap verts ----\n");
+	Con_Verbose("---- snap verts ----\n");
 	memset (hashverts, 0, sizeof(hashverts));
 	c_totalverts = 0;
 	c_uniqueverts = 0;
 	c_faceoverflows = 0;
 	EmitVertexes_r (headnode);
-	qprintf ("%i unique from %i\n", c_uniqueverts, c_totalverts);
+	Con_Verbose("%i unique from %i\n", c_uniqueverts, c_totalverts);
 
 	// break edges on tjunctions
-	qprintf ("---- tjunc ----\n");
+	Con_Verbose("---- tjunc ----\n");
 	c_tryedges = 0;
 	c_degenerate = 0;
 	c_facecollapse = 0;
 	c_tjunctions = 0;
 	if (!notjunc)
 		FixEdges_r (headnode);
-	qprintf ("%5i edges degenerated\n", c_degenerate);
-	qprintf ("%5i faces degenerated\n", c_facecollapse);
-	qprintf ("%5i edges added by tjunctions\n", c_tjunctions);
-	qprintf ("%5i faces added by tjunctions\n", c_faceoverflows);
-	qprintf ("%5i bad start verts\n", c_badstartverts);
+	Con_Verbose("%5i edges degenerated\n", c_degenerate);
+	Con_Verbose("%5i faces degenerated\n", c_facecollapse);
+	Con_Verbose("%5i edges added by tjunctions\n", c_tjunctions);
+	Con_Verbose("%5i faces added by tjunctions\n", c_faceoverflows);
+	Con_Verbose("%5i bad start verts\n", c_badstartverts);
 }
 
 
@@ -517,7 +518,7 @@ int GetEdge2 (int v1, int v2,  face_t *f)
 
 // emit an edge
 	if (numedges >= MAX_MAP_EDGES)
-		Error ("numedges == MAX_MAP_EDGES");
+		Con_Error("numedges == MAX_MAP_EDGES\n");
 	edge = &dedges[numedges];
 	edge->v[0] = v1;
 	edge->v[1] = v2;
@@ -780,7 +781,7 @@ void SubdivideFace (node_t *node, face_t *f)
 
 			ClipWindingEpsilon (w, temp, dist, ON_EPSILON, &frontw, &backw);
 			if (!frontw || !backw)
-				Error ("SubdivideFace: didn't split the polygon");
+				Con_Error("SubdivideFace: didn't split the polygon\n");
 
 			f->split[0] = NewFaceFromFace (f);
 			f->split[0]->w = frontw;
@@ -912,14 +913,14 @@ MakeFaces
 */
 void MakeFaces (node_t *node)
 {
-	qprintf ("--- MakeFaces ---\n");
+	Con_Verbose("--- MakeFaces ---\n");
 	c_merge = 0;
 	c_subdivide = 0;
 	c_nodefaces = 0;
 
 	MakeFaces_r (node);
 
-	qprintf ("%5i makefaces\n", c_nodefaces);
-	qprintf ("%5i merged\n", c_merge);
-	qprintf ("%5i subdivided\n", c_subdivide);
+	Con_Verbose("%5i makefaces\n", c_nodefaces);
+	Con_Verbose("%5i merged\n", c_merge);
+	Con_Verbose("%5i subdivided\n", c_subdivide);
 }

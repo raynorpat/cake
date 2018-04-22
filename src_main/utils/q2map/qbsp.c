@@ -111,7 +111,6 @@ node_t	*BlockTree (int xl, int yl, int xh, int yh)
 /*
 ============
 ProcessBlock_Thread
-
 ============
 */
 int			brush_start, brush_end;
@@ -126,7 +125,7 @@ void ProcessBlock_Thread (int blocknum)
 	yblock = block_yl + blocknum / (block_xh-block_xl+1);
 	xblock = block_xl + blocknum % (block_xh-block_xl+1);
 
-	qprintf ("############### block %2i,%2i ###############\n", xblock, yblock);
+	Con_Verbose("############### block %2i,%2i ###############\n", xblock, yblock);
 
 	mins[0] = xblock*1024;
 	mins[1] = yblock*1024;
@@ -134,6 +133,8 @@ void ProcessBlock_Thread (int blocknum)
 	maxs[0] = (xblock+1)*1024;
 	maxs[1] = (yblock+1)*1024;
 	maxs[2] = 4096;
+
+	ThreadLock();
 
 	// the makelist and chopbrushes could be cached between the passes...
 	brushes = MakeBspBrushList (brush_start, brush_end, mins, maxs);
@@ -143,6 +144,7 @@ void ProcessBlock_Thread (int blocknum)
 		node->planenum = PLANENUM_LEAF;
 		node->contents = CONTENTS_SOLID;
 		block_nodes[xblock+5][yblock+5] = node;
+		ThreadUnlock();
 		return;
 	}
 
@@ -151,13 +153,13 @@ void ProcessBlock_Thread (int blocknum)
 
 	tree = BrushBSP (brushes, mins, maxs);
 
+	ThreadUnlock();
 	block_nodes[xblock+5][yblock+5] = tree->headnode;
 }
 
 /*
 ============
 ProcessWorldModel
-
 ============
 */
 void ProcessWorldModel (void)
@@ -196,9 +198,9 @@ void ProcessWorldModel (void)
 
 	for (optimize = false ; optimize <= true ; optimize++)
 	{
-		qprintf ("--------------------------------------------\n");
+		Con_Verbose("--------------------------------------------\n");
 
-		RunThreadsOnIndividual ((block_xh-block_xl+1)*(block_yh-block_yl+1),
+		RunThreadsOn ((block_xh-block_xl+1)*(block_yh-block_yl+1),
 			!verbose, ProcessBlock_Thread);
 
 		//
@@ -207,7 +209,7 @@ void ProcessWorldModel (void)
 		// will also get nodes.
 		//
 
-		qprintf ("--------------------------------------------\n");
+		Con_Verbose("--------------------------------------------\n");
 
 		tree = AllocTree ();
 		tree->headnode = BlockTree (block_xl-1, block_yl-1, block_xh+1, block_yh+1);
@@ -229,14 +231,14 @@ void ProcessWorldModel (void)
 			FillOutside (tree->headnode);
 		else
 		{
-			printf ("**** leaked ****\n");
 			leaked = true;
 			LeakFile (tree);
 			if (leaktest)
 			{
-				printf ("--- MAP LEAKED ---\n");
+				Con_Print("--- MAP LEAKED ---\n");
 				exit (0);
 			}
+			Con_Verbose("**** leaked ****\n");
 		}
 
 		MarkVisibleSides (tree, brush_start, brush_end);
@@ -310,16 +312,13 @@ void ProcessModels (void)
 		if (!entities[entity_num].numbrushes)
 			continue;
 
-		qprintf ("############### model %i ###############\n", nummodels);
+		Con_Verbose("############### model %i ###############\n", nummodels);
 		BeginModel ();
 		if (entity_num == 0)
 			ProcessWorldModel ();
 		else
 			ProcessSubModel ();
 		EndModel ();
-
-		if (!verboseentities)
-			verbose = false;	// don't bother printing submodels
 	}
 
 	EndBSPFile ();
@@ -338,7 +337,7 @@ int BSP_Main (int argc, char **argv)
 	char	path[1024];
 	int 	total_bsp_time;
 
-	printf ("---- qbsp3 ----\n");
+	Con_Print ("---- BSP ----\n");
 
 	for (i=1 ; i<argc ; i++)
 	{
@@ -349,101 +348,101 @@ int BSP_Main (int argc, char **argv)
 		}
 		else if (!strcmp(argv[i], "-v"))
 		{
-			printf ("verbose = true\n");
+			Con_Print("verbose = true\n");
 			verbose = true;
 		}
 		else if (!strcmp(argv[i], "-noweld"))
 		{
-			printf ("noweld = true\n");
+			Con_Print("noweld = true\n");
 			noweld = true;
 		}
 		else if (!strcmp(argv[i], "-nocsg"))
 		{
-			printf ("nocsg = true\n");
+			Con_Print("nocsg = true\n");
 			nocsg = true;
 		}
 		else if (!strcmp(argv[i], "-noshare"))
 		{
-			printf ("noshare = true\n");
+			Con_Print("noshare = true\n");
 			noshare = true;
 		}
 		else if (!strcmp(argv[i], "-notjunc"))
 		{
-			printf ("notjunc = true\n");
+			Con_Print("notjunc = true\n");
 			notjunc = true;
 		}
 		else if (!strcmp(argv[i], "-nowater"))
 		{
-			printf ("nowater = true\n");
+			Con_Print("nowater = true\n");
 			nowater = true;
 		}
 		else if (!strcmp(argv[i], "-noopt"))
 		{
-			printf ("noopt = true\n");
+			Con_Print("noopt = true\n");
 			noopt = true;
 		}
 		else if (!strcmp(argv[i], "-noprune"))
 		{
-			printf ("noprune = true\n");
+			Con_Print("noprune = true\n");
 			noprune = true;
 		}
 		else if (!strcmp(argv[i], "-nofill"))
 		{
-			printf ("nofill = true\n");
+			Con_Print("nofill = true\n");
 			nofill = true;
 		}
 		else if (!strcmp(argv[i], "-nomerge"))
 		{
-			printf ("nomerge = true\n");
+			Con_Print("nomerge = true\n");
 			nomerge = true;
 		}
 		else if (!strcmp(argv[i], "-nosubdiv"))
 		{
-			printf ("nosubdiv = true\n");
+			Con_Print("nosubdiv = true\n");
 			nosubdiv = true;
 		}
 		else if (!strcmp(argv[i], "-nodetail"))
 		{
-			printf ("nodetail = true\n");
+			Con_Print("nodetail = true\n");
 			nodetail = true;
 		}
 		else if (!strcmp(argv[i], "-fulldetail"))
 		{
-			printf ("fulldetail = true\n");
+			Con_Print("fulldetail = true\n");
 			fulldetail = true;
 		}
 		else if (!strcmp(argv[i], "-onlyents"))
 		{
-			printf ("onlyents = true\n");
+			Con_Print("onlyents = true\n");
 			onlyents = true;
 		}
 		else if (!strcmp(argv[i], "-micro"))
 		{
 			microvolume = atof(argv[i+1]);
-			printf ("microvolume = %f\n", microvolume);
+			Con_Print("microvolume = %f\n", microvolume);
 			i++;
 		}
 		else if (!strcmp(argv[i], "-leaktest"))
 		{
-			printf ("leaktest = true\n");
+			Con_Print("leaktest = true\n");
 			leaktest = true;
 		}
 		else if (!strcmp(argv[i], "-verboseentities"))
 		{
-			printf ("verboseentities = true\n");
+			Con_Print("verboseentities = true\n");
 			verboseentities = true;
 		}
 		else if (!strcmp(argv[i], "-chop"))
 		{
 			subdivide_size = atof(argv[i+1]);
-			printf ("subdivide_size = %f\n", subdivide_size);
+			Con_Print("subdivide_size = %f\n", subdivide_size);
 			i++;
 		}
 		else if (!strcmp(argv[i], "-block"))
 		{
 			block_xl = block_xh = atoi(argv[i+1]);
 			block_yl = block_yh = atoi(argv[i+2]);
-			printf ("block: %i,%i\n", block_xl, block_yl);
+			Con_Print("block: %i,%i\n", block_xl, block_yl);
 			i+=2;
 		}
 		else if (!strcmp(argv[i], "-blocks"))
@@ -452,8 +451,7 @@ int BSP_Main (int argc, char **argv)
 			block_yl = atoi(argv[i+2]);
 			block_xh = atoi(argv[i+3]);
 			block_yh = atoi(argv[i+4]);
-			printf ("blocks: %i,%i to %i,%i\n", 
-				block_xl, block_yl, block_xh, block_yh);
+			Con_Print("blocks: %i,%i to %i,%i\n", block_xl, block_yl, block_xh, block_yh);
 			i+=4;
 		}
 		else if (!strcmp (argv[i],"-tmpout"))
@@ -461,20 +459,17 @@ int BSP_Main (int argc, char **argv)
 			strcpy (outbase, "/tmp");
 		}
 		else if (argv[i][0] == '-')
-			Error ("Unknown option \"%s\"", argv[i]);
+			Con_Error("Unknown option \"%s\"\n", argv[i]);
 		else
 			break;
 	}
 
 	if (i != argc - 1)
-		Error ("usage: q2map -bsp [options] mapfile");
+		Con_Error("usage: q2map -bsp [options] mapfile\n");
 
 	start = I_FloatTime ();
 
-	ThreadSetDefault ();
-	numthreads = 1; // FIXME: multiple threads aren't helping...
 	SetQdirFromPath (argv[i]);
-
 	strcpy (source, ExpandArg (argv[i]));
 	StripExtension (source);
 
@@ -520,11 +515,11 @@ int BSP_Main (int argc, char **argv)
 
 	end = I_FloatTime ();
 	total_bsp_time = (int) ( end - start );
-	printf( "\nBSP Time: " );
+	Con_Print( "\nBSP Time: " );
 	if ( total_bsp_time > 59 ) {
-		printf( "%d minutes ", total_bsp_time / 60 );
+		Con_Print( "%d minutes ", total_bsp_time / 60 );
 	}
-	printf( "%d seconds\n", total_bsp_time % 60 );
+	Con_Print( "%d seconds\n", total_bsp_time % 60 );
 
 	return 0;
 }

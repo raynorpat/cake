@@ -71,14 +71,14 @@ void EmitMarkFace (dleaf_t *leaf_p, face_t *f)
 		return;	// degenerate face
 
 	if (facenum < 0 || facenum >= numfaces)
-		Error ("Bad leafface");
+		Con_Error("Bad leafface\n");
 	for (i=leaf_p->firstleafface ; i<numleaffaces ; i++)
 		if (dleaffaces[i] == facenum)
 			break;		// merged out face
 	if (i == numleaffaces)
 	{
 		if (numleaffaces >= MAX_MAP_LEAFFACES)
-			Error ("MAX_MAP_LEAFFACES");
+			Con_Error("MAX_MAP_LEAFFACES\n");
 
 		dleaffaces[numleaffaces] =  facenum;
 		numleaffaces++;
@@ -103,7 +103,7 @@ void EmitLeaf (node_t *node)
 
 	// emit a leaf
 	if (numleafs >= MAX_MAP_LEAFS)
-		Error ("MAX_MAP_LEAFS");
+		Con_Error("MAX_MAP_LEAFS\n");
 
 	leaf_p = &dleafs[numleafs];
 	numleafs++;
@@ -125,7 +125,7 @@ void EmitLeaf (node_t *node)
 	for (b=node->brushlist ; b ; b=b->next)
 	{
 		if (numleafbrushes >= MAX_MAP_LEAFBRUSHES)
-			Error ("MAX_MAP_LEAFBRUSHES");
+			Con_Error("MAX_MAP_LEAFBRUSHES\n");
 
 		brushnum = b->original - mapbrushes;
 		for (i=leaf_p->firstleafbrush ; i<numleafbrushes ; i++)
@@ -187,7 +187,7 @@ void EmitFace (face_t *f)
 	f->outputnumber = numfaces;
 
 	if (numfaces >= MAX_MAP_FACES)
-		Error ("numfaces == MAX_MAP_FACES");
+		Con_Error("numfaces == MAX_MAP_FACES\n");
 	df = &dfaces[numfaces];
 	numfaces++;
 
@@ -202,7 +202,7 @@ void EmitFace (face_t *f)
 	{
 		e = GetEdge2 (f->vertexnums[i], f->vertexnums[(i+1)%f->numpoints], f);
 		if (numsurfedges >= MAX_MAP_SURFEDGES)
-			Error ("numsurfedges == MAX_MAP_SURFEDGES");
+			Con_Error("numsurfedges == MAX_MAP_SURFEDGES\n");
 		dsurfedges[numsurfedges] = e;
 		numsurfedges++;
 	}
@@ -227,7 +227,7 @@ int EmitDrawNode_r (node_t *node)
 
 	// emit a node	
 	if (numnodes == MAX_MAP_NODES)
-		Error ("MAX_MAP_NODES");
+		Con_Error("MAX_MAP_NODES\n");
 	n = &dnodes[numnodes];
 	numnodes++;
 
@@ -235,7 +235,7 @@ int EmitDrawNode_r (node_t *node)
 	VectorCopy (node->maxs, n->maxs);
 
 	if (node->planenum & 1)
-		Error ("WriteDrawNodes_r: odd planenum");
+		Con_Error("WriteDrawNodes_r: odd planenum\n");
 	n->planenum = node->planenum;
 	n->firstface = numfaces;
 
@@ -284,15 +284,15 @@ void WriteBSP (node_t *headnode)
 	c_nofaces = 0;
 	c_facenodes = 0;
 
-	qprintf ("--- WriteBSP ---\n");
+	Con_Verbose("--- WriteBSP ---\n");
 
 	oldfaces = numfaces;
 	dmodels[nummodels].headnode = EmitDrawNode_r (headnode);
 	EmitAreaPortals (headnode);
 
-	qprintf ("%5i nodes with faces\n", c_facenodes);
-	qprintf ("%5i nodes without faces\n", c_nofaces);
-	qprintf ("%5i faces\n", numfaces-oldfaces);
+	Con_Verbose("%5i nodes with faces\n", c_facenodes);
+	Con_Verbose("%5i nodes without faces\n", c_nofaces);
+	Con_Verbose("%5i faces\n", numfaces-oldfaces);
 }
 
 //===========================================================
@@ -359,7 +359,7 @@ void SetLightStyles (void)
 		if (j == stylenum)
 		{
 			if (stylenum == MAX_SWITCHED_LIGHTS)
-				Error ("stylenum == MAX_SWITCHED_LIGHTS");
+				Con_Error("stylenum == MAX_SWITCHED_LIGHTS\n");
 			strcpy (lighttargets[j], t);
 			stylenum++;
 		}
@@ -400,7 +400,7 @@ void EmitBrushes (void)
 		for (j=0 ; j<b->numsides ; j++)
 		{
 			if (numbrushsides == MAX_MAP_BRUSHSIDES)
-				Error ("MAX_MAP_BRUSHSIDES");
+				Con_Error("MAX_MAP_BRUSHSIDES\n");
 			cp = &dbrushsides[numbrushsides];
 			numbrushsides++;
 			cp->planenum = b->original_sides[j].planenum;
@@ -426,7 +426,7 @@ void EmitBrushes (void)
 				if (i == b->numsides)
 				{
 					if (numbrushsides >= MAX_MAP_BRUSHSIDES)
-						Error ("MAX_MAP_BRUSHSIDES");
+						Con_Error("MAX_MAP_BRUSHSIDES\n");
 
 					dbrushsides[numbrushsides].planenum = planenum;
 					dbrushsides[numbrushsides].texinfo =
@@ -486,7 +486,7 @@ void EndBSPFile (void)
 
 	// write the map
 	sprintf (path, "%s.bsp", source);
-	printf ("Writing %s\n", path);
+	Con_Print ("Writing %s\n", path);
 	WriteBSPFile (path);
 }
 
@@ -508,7 +508,7 @@ void BeginModel (void)
 	vec3_t		mins, maxs;
 
 	if (nummodels == MAX_MAP_MODELS)
-		Error ("MAX_MAP_MODELS");
+		Con_Error("MAX_MAP_MODELS\n");
 	mod = &dmodels[nummodels];
 
 	mod->firstface = numfaces;

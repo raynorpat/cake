@@ -277,11 +277,11 @@ void MakeTransfers (int i)
 		transfer_t	*t;
 		
 		if (patch->numtransfers < 0 || patch->numtransfers > MAX_PATCHES)
-			Error ("Weird numtransfers");
+			Con_Error("Weird numtransfers\n");
 		s = patch->numtransfers * sizeof(transfer_t);
 		patch->transfers = malloc (s);
 		if (!patch->transfers)
-			Error ("Memory allocation failure");
+			Con_Error("Memory allocation failure\n");
 
 		//
 		// normalize all transfers so all of the light
@@ -339,7 +339,7 @@ void WriteWorld (char *name)
 
 	out = fopen (name, "w");
 	if (!out)
-		Error ("Couldn't open %s", name);
+		Con_Error("Couldn't open %s\n", name);
 
 	for (j=0, patch=patches ; j<num_patches ; j++, patch++)
 	{
@@ -457,10 +457,10 @@ void BounceLight (void)
 
 	for (i=0 ; i<numbounce ; i++)
 	{
-		RunThreadsOnIndividual (num_patches, false, ShootLight);
+		RunThreadsOn(num_patches, false, ShootLight);
 		added = CollectLight ();
 
-		qprintf ("bounce:%i added:%f\n", i, added);
+		Con_Verbose("bounce:%i added:%f\n", i, added);
 		if ( dumppatches && (i==0 || i == numbounce-1) )
 		{
 			sprintf (name, "bounce%i.txt", i);
@@ -482,7 +482,7 @@ void CheckPatches (void)
 	{
 		patch = &patches[i];
 		if (patch->totallight[0] < 0 || patch->totallight[1] < 0 || patch->totallight[2] < 0)
-			Error ("negative patch totallight\n");
+			Con_Error("negative patch totallight\n");
 	}
 }
 
@@ -494,7 +494,7 @@ RadWorld
 void RadWorld (void)
 {
 	if (numnodes == 0 || numfaces == 0)
-		Error ("Empty map");
+		Con_Error("Empty map\n");
 	MakeBackplanes ();
 	MakeParents (0, -1);
 	MakeTnodes (&dmodels[0]);
@@ -509,14 +509,13 @@ void RadWorld (void)
 	CreateDirectLights ();
 
 	// build initial facelights
-	RunThreadsOnIndividual (numfaces, true, BuildFacelights);
+	RunThreadsOn (numfaces, true, BuildFacelights);
 
 	if (numbounce > 0)
 	{
 		// build transfer lists
-		RunThreadsOnIndividual (num_patches, true, MakeTransfers);
-		qprintf ("transfer lists: %5.1f megs\n"
-		, (float)total_transfer * sizeof(transfer_t) / (1024*1024));
+		RunThreadsOn (num_patches, true, MakeTransfers);
+		Con_Verbose("transfer lists: %5.1f megs\n", (float)total_transfer * sizeof(transfer_t) / (1024*1024));
 
 		// spread light around
 		BounceLight ();
@@ -531,7 +530,7 @@ void RadWorld (void)
 	LinkPlaneFaces ();
 
 	lightdatasize = 0;
-	RunThreadsOnIndividual (numfaces, true, FinalLightFace);
+	RunThreadsOn (numfaces, true, FinalLightFace);
 }
 
 
@@ -549,7 +548,7 @@ int Light_Main (int argc, char **argv)
 	char	name[1024];
 	int 	total_rad_time;
 
-	printf ("----- Radiosity ----\n");
+	Con_Print ("----- Radiosity ----\n");
 
 	verbose = false;
 
@@ -569,7 +568,7 @@ int Light_Main (int argc, char **argv)
 		else if (!strcmp(argv[i],"-extra"))
 		{
 			extrasamples = true;
-			printf ("extrasamples = true\n");
+			Con_Print("extrasamples = true\n");
 		}
 		else if (!strcmp(argv[i],"-threads"))
 		{
@@ -589,19 +588,19 @@ int Light_Main (int argc, char **argv)
 		else if (!strcmp(argv[i],"-direct"))
 		{
 			direct_scale *= atof(argv[i+1]);
-			printf ("direct light scaling at %f\n", direct_scale);
+			Con_Print("direct light scaling at %f\n", direct_scale);
 			i++;
 		}
 		else if (!strcmp(argv[i],"-entity"))
 		{
 			entity_scale *= atof(argv[i+1]);
-			printf ("entity light scaling at %f\n", entity_scale);
+			Con_Print("entity light scaling at %f\n", entity_scale);
 			i++;
 		}
 		else if (!strcmp(argv[i],"-nopvs"))
 		{
 			nopvs = true;
-			printf ("nopvs = true\n");
+			Con_Print("nopvs = true\n");
 		}
 		else if (!strcmp(argv[i],"-ambient"))
 		{
@@ -621,13 +620,11 @@ int Light_Main (int argc, char **argv)
 			break;
 	}
 
-	ThreadSetDefault ();
-
 	if (maxlight > 255)
 		maxlight = 255;
 
 	if (i != argc - 1)
-		Error ("usage: q2map -light [-v] [-chop num] [-scale num] [-ambient num] [-maxlight num] [-threads num] bspfile");
+		Con_Error("usage: q2map -light [-v] [-chop num] [-scale num] [-ambient num] [-maxlight num] [-threads num] bspfile\n");
 
 	start = I_FloatTime ();
 
@@ -637,14 +634,14 @@ int Light_Main (int argc, char **argv)
 	DefaultExtension (source, ".bsp");
 
 	sprintf (name, "%s%s", inbase, source);
-	printf ("reading %s\n", name);
+	Con_Print("reading %s\n", name);
 	LoadBSPFile (name);
 	ParseEntities ();
 	CalcTextureReflectivity ();
 
 	if (!visdatasize)
 	{
-		printf ("No vis information, direct lighting only.\n");
+		Con_Print("No vis information, direct lighting only.\n");
 		numbounce = 0;
 		ambient = 0.1;
 	}
@@ -652,16 +649,16 @@ int Light_Main (int argc, char **argv)
 	RadWorld ();
 
 	sprintf (name, "%s%s", outbase, source);
-	printf ("writing %s\n", name);
+	Con_Print("writing %s\n", name);
 	WriteBSPFile (name);
 
 	end = I_FloatTime ();
 	total_rad_time = (int) ( end - start );
-	printf( "\nRAD Time: " );
+	Con_Print( "\nRAD Time: " );
 	if ( total_rad_time > 59 ) {
-		printf( "%d minutes ", total_rad_time / 60 );
+		Con_Print( "%d minutes ", total_rad_time / 60 );
 	}
-	printf( "%d seconds\n", total_rad_time % 60 );
+	Con_Print( "%d seconds\n", total_rad_time % 60 );
 	
 	return 0;
 }

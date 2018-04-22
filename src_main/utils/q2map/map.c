@@ -116,10 +116,10 @@ int CreateNewFloatPlane (vec3_t normal, vec_t dist)
 	plane_t	*p, temp;
 
 	if (VectorLength(normal) < 0.5)
-		Error ("FloatPlane: bad normal");
+		Con_Error("FloatPlane: bad normal\n");
 	// create a new plane
 	if (nummapplanes+2 > MAX_MAP_PLANES)
-		Error ("MAX_MAP_PLANES");
+		Con_Error("MAX_MAP_PLANES\n");
 
 	p = &mapplanes[nummapplanes];
 	VectorCopy (normal, p->normal);
@@ -265,8 +265,7 @@ int	BrushContents (mapbrush_t *b)
 		trans |= texinfo[s->texinfo].flags;
 		if (s->contents != contents)
 		{
-			printf ("Entity %i, Brush %i: mixed face contents\n"
-				, b->entitynum, b->brushnum);
+			Con_Print("Entity %i, Brush %i: mixed face contents\n", b->entitynum, b->brushnum);
 			break;
 		}
 	}
@@ -328,7 +327,7 @@ void AddBrushBevels (mapbrush_t *b)
 			if (i == b->numsides)
 			{	// add a new side
 				if (nummapbrushsides == MAX_MAP_BRUSHSIDES)
-					Error ("MAX_MAP_BRUSHSIDES");
+					Con_Error("MAX_MAP_BRUSHSIDES\n");
 				nummapbrushsides++;
 				b->numsides++;
 				VectorClear (normal);
@@ -424,7 +423,7 @@ void AddBrushBevels (mapbrush_t *b)
 						continue;	// wasn't part of the outer hull
 					// add this plane
 					if (nummapbrushsides == MAX_MAP_BRUSHSIDES)
-						Error ("MAX_MAP_BRUSHSIDES");
+						Con_Error("MAX_MAP_BRUSHSIDES\n");
 					nummapbrushsides++;
 					s2 = &b->original_sides[b->numsides];
 					s2->planenum = FindFloatPlane (normal, dist);
@@ -483,9 +482,9 @@ qboolean MakeBrushWindings (mapbrush_t *ob)
 	for (i=0 ; i<3 ; i++)
 	{
 		if (ob->mins[0] < -4096 || ob->maxs[0] > 4096)
-			printf ("entity %i, brush %i: bounds out of range\n", ob->entitynum, ob->brushnum);
+			Con_Print("entity %i, brush %i: bounds out of range\n", ob->entitynum, ob->brushnum);
 		if (ob->mins[0] > 4096 || ob->maxs[0] < -4096)
-			printf ("entity %i, brush %i: no visible sides on brush\n", ob->entitynum, ob->brushnum);
+			Con_Print("entity %i, brush %i: no visible sides on brush\n", ob->entitynum, ob->brushnum);
 	}
 
 	return true;
@@ -508,7 +507,7 @@ void ParseBrush (entity_t *mapent)
 	int			planepts[3][3];
 
 	if (nummapbrushes == MAX_MAP_BRUSHES)
-		Error ("nummapbrushes == MAX_MAP_BRUSHES");
+		Con_Error("nummapbrushes == MAX_MAP_BRUSHES\n");
 
 	b = &mapbrushes[nummapbrushes];
 	b->original_sides = &brushsides[nummapbrushsides];
@@ -523,7 +522,7 @@ void ParseBrush (entity_t *mapent)
 			break;
 
 		if (nummapbrushsides == MAX_MAP_BRUSHSIDES)
-			Error ("MAX_MAP_BRUSHSIDES");
+			Con_Error("MAX_MAP_BRUSHSIDES\n");
 		side = &brushsides[nummapbrushsides];
 
 		// read the three point plane definition
@@ -532,7 +531,7 @@ void ParseBrush (entity_t *mapent)
 			if (i != 0)
 				GetToken (true);
 			if (strcmp (token, "(") )
-				Error ("parsing brush");
+				Con_Error("parsing brush\n");
 			
 			for (j=0 ; j<3 ; j++)
 			{
@@ -542,7 +541,7 @@ void ParseBrush (entity_t *mapent)
 			
 			GetToken (false);
 			if (strcmp (token, ")") )
-				Error ("parsing brush");
+				Con_Error("parsing brush\n");
 				
 		}
 
@@ -606,8 +605,7 @@ void ParseBrush (entity_t *mapent)
 		planenum = PlaneFromPoints (planepts[0], planepts[1], planepts[2]);
 		if (planenum == -1)
 		{
-			printf ("Entity %i, Brush %i: plane with no normal\n"
-				, b->entitynum, b->brushnum);
+			Con_Print("Entity %i, Brush %i: plane with no normal\n", b->entitynum, b->brushnum);
 			continue;
 		}
 
@@ -619,14 +617,12 @@ void ParseBrush (entity_t *mapent)
 			s2 = b->original_sides + k;
 			if (s2->planenum == planenum)
 			{
-				printf ("Entity %i, Brush %i: duplicate plane\n"
-					, b->entitynum, b->brushnum);
+				Con_Print("Entity %i, Brush %i: duplicate plane\n", b->entitynum, b->brushnum);
 				break;
 			}
 			if ( s2->planenum == (planenum^1) )
 			{
-				printf ("Entity %i, Brush %i: mirrored plane\n"
-					, b->entitynum, b->brushnum);
+				Con_Print("Entity %i, Brush %i: mirrored plane\n", b->entitynum, b->brushnum);
 				break;
 			}
 		}
@@ -693,8 +689,7 @@ void ParseBrush (entity_t *mapent)
 
 		if (num_entities == 1)
 		{
-			Error ("Entity %i, Brush %i: origin brushes not allowed in world"
-				, b->entitynum, b->brushnum);
+			Con_Error("Entity %i, Brush %i: origin brushes not allowed in world\n", b->entitynum, b->brushnum);
 			return;
 		}
 
@@ -780,10 +775,10 @@ qboolean	ParseMapEntity (void)
 		return false;
 
 	if (strcmp (token, "{") )
-		Error ("ParseEntity: { not found");
+		Con_Error("ParseEntity: { not found\n");
 	
 	if (num_entities == MAX_MAP_ENTITIES)
-		Error ("num_entities == MAX_MAP_ENTITIES");
+		Con_Error("num_entities == MAX_MAP_ENTITIES\n");
 
 	startbrush = nummapbrushes;
 	startsides = nummapbrushsides;
@@ -797,7 +792,7 @@ qboolean	ParseMapEntity (void)
 	do
 	{
 		if (!GetToken (true))
-			Error ("ParseEntity: EOF without closing brace");
+			Con_Error("ParseEntity: EOF without closing brace\n");
 		if (!strcmp (token, "}") )
 			break;
 		if (!strcmp (token, "{") )
@@ -849,7 +844,7 @@ qboolean	ParseMapEntity (void)
 		char	str[128];
 
 		if (mapent->numbrushes != 1)
-			Error ("Entity %i: func_areaportal can only be a single brush", num_entities-1);
+			Con_Error("Entity %i: func_areaportal can only be a single brush\n", num_entities-1);
 
 		b = &mapbrushes[nummapbrushes-1];
 		b->contents = CONTENTS_AREAPORTAL;
@@ -876,7 +871,7 @@ void LoadMapFile (char *filename)
 {
 	int		i;
 
-	qprintf ("--- LoadMapFile ---\n");
+	Con_Verbose ("--- LoadMapFile ---\n");
 
 	LoadScriptFile (filename);
 
@@ -907,14 +902,13 @@ void LoadMapFile (char *filename)
 		AddPointToBounds (mapbrushes[i].maxs, map_mins, map_maxs);
 	}
 
-	qprintf ("%5i brushes\n", nummapbrushes);
-	qprintf ("%5i clipbrushes\n", c_clipbrushes);
-	qprintf ("%5i total sides\n", nummapbrushsides);
-	qprintf ("%5i boxbevels\n", c_boxbevels);
-	qprintf ("%5i edgebevels\n", c_edgebevels);
-	qprintf ("%5i entities\n", num_entities);
-	qprintf ("%5i planes\n", nummapplanes);
-	qprintf ("%5i areaportals\n", c_areaportals);
-	qprintf ("size: %5.0f,%5.0f,%5.0f to %5.0f,%5.0f,%5.0f\n", map_mins[0],map_mins[1],map_mins[2],
-		map_maxs[0],map_maxs[1],map_maxs[2]);
+	Con_Verbose("%5i brushes\n", nummapbrushes);
+	Con_Verbose("%5i clipbrushes\n", c_clipbrushes);
+	Con_Verbose("%5i total sides\n", nummapbrushsides);
+	Con_Verbose("%5i boxbevels\n", c_boxbevels);
+	Con_Verbose("%5i edgebevels\n", c_edgebevels);
+	Con_Verbose("%5i entities\n", num_entities);
+	Con_Verbose("%5i planes\n", nummapplanes);
+	Con_Verbose("%5i areaportals\n", c_areaportals);
+	Con_Verbose("size: %5.0f,%5.0f,%5.0f to %5.0f,%5.0f,%5.0f\n", map_mins[0], map_mins[1], map_mins[2], map_maxs[0], map_maxs[1], map_maxs[2]);
 }

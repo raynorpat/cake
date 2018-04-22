@@ -345,8 +345,8 @@ bspbrush_t *ChopBrushes (bspbrush_t *head)
 	bspbrush_t	*sub, *sub2;
 	int			c1, c2;
 
-	qprintf ("---- ChopBrushes ----\n");
-	qprintf ("original brushes: %i\n", CountBrushList (head));
+	Con_Verbose("---- ChopBrushes ----\n");
+	Con_Verbose("original brushes: %i\n", CountBrushList (head));
 
 	keep = NULL;
 
@@ -436,6 +436,6 @@ newlist:
 		}
 	}
 
-	qprintf ("output brushes: %i\n", CountBrushList (keep));
+	Con_Verbose("output brushes: %i\n", CountBrushList (keep));
 	return keep;
 }

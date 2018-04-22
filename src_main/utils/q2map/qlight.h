@@ -24,8 +24,9 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #include "mathlib.h"
 #include "bspfile.h"
 #include "polylib.h"
-#include "threads.h"
 #include "lbmlib.h"
+#include "threads.h"
+#include "q2map.h"
 
 #ifdef WIN32
 #include <windows.h>

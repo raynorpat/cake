@@ -24,3 +24,16 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 int BSP_Main (int argc, char **argv);
 int Vis_Main (int argc, char **argv);
 int Light_Main (int argc, char **argv);
+
+#if !defined(__GNUC__)
+#define	__attribute__(x)
+#endif
+
+#define MAX_PRINT_MSG 4096
+
+void Con_Open(void);
+void Con_Close(void);
+
+void Con_Error(const char *fmt, ...) __attribute__((noreturn, format(printf, 1, 2)));
+void Con_Print(const char *fmt, ...) __attribute__((format(printf, 1, 2)));
+void Con_Verbose(const char *fmt, ...) __attribute__((format(printf, 1, 2)));

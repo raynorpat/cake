@@ -35,7 +35,7 @@ portal_t *AllocPortal (void)
 {
 	portal_t	*p;
 	
-	if (numthreads == 1)
+	if(!thread_pool.num_threads)
 		c_active_portals++;
 	if (c_active_portals > c_peak_portals)
 		c_peak_portals = c_active_portals;
@@ -50,7 +50,7 @@ void FreePortal (portal_t *p)
 {
 	if (p->winding)
 		FreeWinding (p->winding);
-	if (numthreads == 1)
+	if(!thread_pool.num_threads)
 		c_active_portals--;
 	free (p);
 }
@@ -153,7 +153,7 @@ qboolean Portal_EntityFlood (portal_t *p, int s)
 {
 	if (p->nodes[0]->planenum != PLANENUM_LEAF
 		|| p->nodes[1]->planenum != PLANENUM_LEAF)
-		Error ("Portal_EntityFlood: not a leaf\n");
+		Con_Error("Portal_EntityFlood: not a leaf\n");
 
 	// can never cross to a solid 
 	if ( (p->nodes[0]->contents & CONTENTS_SOLID)
@@ -177,7 +177,7 @@ AddPortalToNodes
 void AddPortalToNodes (portal_t *p, node_t *front, node_t *back)
 {
 	if (p->nodes[0] || p->nodes[1])
-		Error ("AddPortalToNode: already included\n");
+		Con_Error("AddPortalToNode: already included\n");
 
 	p->nodes[0] = front;
 	p->next[0] = front->portals;
@@ -204,7 +204,7 @@ void RemovePortalFromNode (portal_t *portal, node_t *l)
 	{
 		t = *pp;
 		if (!t)
-			Error ("RemovePortalFromNode: portal not in leaf");	
+			Con_Error("RemovePortalFromNode: portal not in leaf\n");
 
 		if ( t == portal )
 			break;
@@ -214,7 +214,7 @@ void RemovePortalFromNode (portal_t *portal, node_t *l)
 		else if (t->nodes[1] == l)
 			pp = &t->next[1];
 		else
-			Error ("RemovePortalFromNode: portal not bounding leaf");
+			Con_Error("RemovePortalFromNode: portal not bounding leaf\n");
 	}
 	
 	if (portal->nodes[0] == l)
@@ -379,7 +379,7 @@ void MakeNodePortal (node_t *node)
 			dist = -p->plane.dist;
 		}
 		else
-			Error ("CutNodePortals_r: mislinked portal");
+			Con_Error("CutNodePortals_r: mislinked portal\n");
 
 		ChopWindingInPlace (&w, normal, dist, 0.1);
 	}
@@ -432,7 +432,7 @@ void SplitNodePortals (node_t *node)
 		else if (p->nodes[1] == node)
 			side = 1;
 		else
-			Error ("CutNodePortals_r: mislinked portal");
+			Con_Error("CutNodePortals_r: mislinked portal\n");
 		next_portal = p->next[side];
 
 		other_node = p->nodes[!side];
@@ -539,14 +539,14 @@ void MakeTreePortals_r (node_t *node)
 	CalcNodeBounds (node);
 	if (node->mins[0] >= node->maxs[0])
 	{
-		printf ("WARNING: node without a volume\n");
+		Con_Print("WARNING: node without a volume\n");
 	}
 
 	for (i=0 ; i<3 ; i++)
 	{
 		if (node->mins[i] < -8000 || node->maxs[i] > 8000)
 		{
-			printf ("WARNING: node with unbounded volume\n");
+			Con_Print("WARNING: node with unbounded volume\n");
 			break;
 		}
 	}
@@ -652,7 +652,7 @@ qboolean FloodEntities (tree_t *tree)
 	node_t *headnode;
 
 	headnode = tree->headnode;
-	qprintf ("--- FloodEntities ---\n");
+	Con_Verbose ("--- FloodEntities ---\n");
 	inside = false;
 	tree->outside_node.occupied = 0;
 	cl = "";
@@ -698,14 +698,14 @@ gotit: ;
 
 	if (!inside)
 	{
-		qprintf ("no entities in open -- no filling\n");
+		Con_Verbose("no entities in open -- no filling\n");
 	}
 	else if (tree->outside_node.occupied)
 	{
-		qprintf ("entity reached from outside -- no filling\n");
+		Con_Verbose("entity reached from outside -- no filling\n");
 	}
 
-	return (qboolean)(inside && !tree->outside_node.occupied);
+	return inside && !tree->outside_node.occupied;
 }
 
 /*
@@ -734,7 +734,7 @@ void FloodAreas_r (node_t *node)
 		bspbrush_t	*b = node->brushlist;
 		entity_t	*e = &entities[b->original->entitynum];
 
-		// if the current area has allready touched this
+		// if the current area has already touched this
 		// portal, we are done
 		if (e->portalareas[0] == c_areas || e->portalareas[1] == c_areas)
 			return;
@@ -742,7 +742,7 @@ void FloodAreas_r (node_t *node)
 		// note the current area as bounding the portal
 		if (e->portalareas[1])
 		{
-			printf ("WARNING: areaportal entity %i touches > 2 areas\n", b->original->entitynum);
+			Con_Print("WARNING: areaportal entity %i touches > 2 areas\n", b->original->entitynum);
 			return;
 		}
 		if (e->portalareas[0])
@@ -836,7 +836,7 @@ void SetAreaPortalAreas_r (node_t *node)
 		node->area = e->portalareas[0];
 		if (!e->portalareas[1])
 		{
-			printf ("WARNING: areaportal entity %i doesn't touch two areas\n", b->original->entitynum);
+			Con_Print ("WARNING: areaportal entity %i doesn't touch two areas\n", b->original->entitynum);
 			return;
 		}
 	}
@@ -854,7 +854,7 @@ void EmitAreaPortals (node_t *headnode)
 	dareaportal_t	*dp;
 
 	if (c_areas > MAX_MAP_AREAS)
-		Error ("MAX_MAP_AREAS");
+		Con_Error("MAX_MAP_AREAS\n");
 	numareas = c_areas+1;
 	numareaportals = 1;		// leave 0 as an error
 
@@ -883,8 +883,8 @@ void EmitAreaPortals (node_t *headnode)
 		dareas[i].numareaportals = numareaportals - dareas[i].firstareaportal;
 	}
 
-	qprintf ("%5i numareas\n", numareas);
-	qprintf ("%5i numareaportals\n", numareaportals);
+	Con_Verbose("%5i numareas\n", numareas);
+	Con_Verbose("%5i numareaportals\n", numareaportals);
 }
 
 /*
@@ -896,10 +896,10 @@ Mark each leaf with an area, bounded by CONTENTS_AREAPORTAL
 */
 void FloodAreas (tree_t *tree)
 {
-	qprintf ("--- FloodAreas ---\n");
+	Con_Verbose("--- FloodAreas ---\n");
 	FindAreas_r (tree->headnode);
 	SetAreaPortalAreas_r (tree->headnode);
-	qprintf ("%5i areas\n", c_areas);
+	Con_Verbose("%5i areas\n", c_areas);
 }
 
 //======================================================
@@ -946,11 +946,11 @@ void FillOutside (node_t *headnode)
 	c_outside = 0;
 	c_inside = 0;
 	c_solid = 0;
-	qprintf ("--- FillOutside ---\n");
+	Con_Verbose("--- FillOutside ---\n");
 	FillOutside_r (headnode);
-	qprintf ("%5i solid leafs\n", c_solid);
-	qprintf ("%5i leafs filled\n", c_outside);
-	qprintf ("%5i inside leafs\n", c_inside);
+	Con_Verbose("%5i solid leafs\n", c_solid);
+	Con_Verbose("%5i leafs filled\n", c_outside);
+	Con_Verbose("%5i inside leafs\n", c_inside);
 }
 
 
@@ -1018,7 +1018,7 @@ void FindPortalSide (portal_t *p)
 
 gotit:
 	if (!bestside)
-		qprintf ("WARNING: side not found for portal\n");
+		Con_Verbose("WARNING: side not found for portal\n");
 
 	p->sidefound = true;
 	p->side = bestside;
@@ -1071,7 +1071,7 @@ void MarkVisibleSides (tree_t *tree, int startbrush, int endbrush)
 {
 	int		i, j;
 
-	qprintf ("--- MarkVisibleSides ---\n");
+	Con_Verbose("--- MarkVisibleSides ---\n");
 
 	// clear all the visible flags
 	for (i=startbrush ; i<endbrush ; i++)

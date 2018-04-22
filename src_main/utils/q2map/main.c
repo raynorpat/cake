@@ -31,38 +31,44 @@ main
 */
 int main (int argc, char **argv)
 {
-	printf("q2map v1.0 (c) 1996-2006 Id Software, Inc. and cake contributors\n");
-	printf("q2map v1.1 (c) 2017-2018 Pat 'raynorpat' Raynor <raynorpat@gmail.com>\n\n");
+	Con_Open();
+
+	Con_Print("q2map v1.0 (c) 1996-2006 Id Software, Inc. and cake contributors\n");
+	Con_Print("q2map v1.1 (c) 2017-2018 Pat 'raynorpat' Raynor <raynorpat@gmail.com>\n\n");
 	
 	if(argc < 2)
 	{
 		goto showUsage;
 	}
+
+	Thread_Init ();
 	
 	// check for general program options
 	if(!strcmp(argv[1], "-bsp"))
 	{
 		BSP_Main(argc - 1, argv + 1);
-		return 0;
+		goto exit;
 	}
 	if(!strcmp(argv[1], "-vis"))
 	{
 		Vis_Main(argc - 1, argv + 1);
-		return 0;
+		goto exit;
 	}
 	if(!strcmp(argv[1], "-light"))
 	{
 		Light_Main(argc - 1, argv + 1);
-		return 0;
+		goto exit;
 	}
 
 showUsage:
-	Error("usage: q2map [-<switch> [-<switch> ...]] <mapname>\n"
+	Con_Error("usage: q2map [-<switch> [-<switch> ...]] <mapname>\n"
 		  "\n"
 		  "Switches:\n"
 		  "   bsp        	 = compile MAP to BSP\n"
 		  "   vis            = compute visibility\n"
 		  "   light          = compute lighting\n");
 
+exit:
+	Thread_Shutdown ();	
 	return 0;
 }

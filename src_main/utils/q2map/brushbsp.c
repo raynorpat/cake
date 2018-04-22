@@ -235,7 +235,7 @@ bspbrush_t *AllocBrush (int numsides)
 	c = (size_t)&(((bspbrush_t *)0)->sides[numsides]);
 	bb = malloc(c);
 	memset (bb, 0, c);
-	if (numthreads == 1)
+	if(!thread_pool.num_threads)
 		c_active_brushes++;
 	return bb;
 }
@@ -253,7 +253,7 @@ void FreeBrush (bspbrush_t *brushes)
 		if (brushes->sides[i].winding)
 			FreeWinding(brushes->sides[i].winding);
 	free (brushes);
-	if (numthreads == 1)
+	if(!thread_pool.num_threads)
 		c_active_brushes--;
 }
 
@@ -381,7 +381,7 @@ int	TestBrushToPlanenum (bspbrush_t *brush, int planenum,
 	{
 		num = brush->sides[i].planenum;
 		if (num >= 0x10000)
-			Error ("bad planenum\n");
+			Con_Error("bad planenum\n");
 		if (num == planenum)
 			return PSIDE_BACK|PSIDE_FACING;
 		if (num == (planenum ^ 1) )
@@ -536,7 +536,7 @@ void CheckPlaneAgainstParents (int pnum, node_t *node)
 	for (p=node->parent ; p ; p=p->parent)
 	{
 		if (p->planenum == pnum)
-			Error ("Tried parent");
+			Con_Error("Tried parent\n");
 	}
 }
 
@@ -635,7 +635,7 @@ side_t *SelectSplitSide (bspbrush_t *brushes, node_t *node)
 
 					splits += bsplits;
 					if (bsplits && (s&PSIDE_FACING) )
-						Error ("PSIDE_FACING with splits");
+						Con_Error("PSIDE_FACING with splits\n");
 
 					test->testside = s;
 					// if the brush shares this face, don't bother
@@ -690,7 +690,7 @@ side_t *SelectSplitSide (bspbrush_t *brushes, node_t *node)
 		{
 			if (pass > 1)
 			{
-				if (numthreads == 1)
+				if(!thread_pool.num_threads)
 					c_nonvis++;
 			}
 			if (pass > 0)
@@ -821,7 +821,7 @@ void SplitBrush (bspbrush_t *brush, int planenum,
 
 	if (WindingIsHuge (w))
 	{
-		qprintf ("WARNING: huge winding\n");
+		Con_Verbose ("WARNING: huge winding\n");
 	}
 
 	midwinding = w;
@@ -868,7 +868,7 @@ void SplitBrush (bspbrush_t *brush, int planenum,
 		{
 			if (b[i]->mins[j] < -4096 || b[i]->maxs[j] > 4096)
 			{
-				qprintf ("bogus brush after clip\n");
+				Con_Verbose("bogus brush after clip\n");
 				break;
 			}
 		}
@@ -883,9 +883,9 @@ void SplitBrush (bspbrush_t *brush, int planenum,
 	if ( !(b[0] && b[1]) )
 	{
 		if (!b[0] && !b[1])
-			qprintf ("split removed brush\n");
+			Con_Verbose("split removed brush\n");
 		else
-			qprintf ("split not on both sides\n");
+			Con_Verbose("split not on both sides\n");
 		if (b[0])
 		{
 			FreeBrush (b[0]);
@@ -926,7 +926,7 @@ void SplitBrush (bspbrush_t *brush, int planenum,
 		{
 			FreeBrush (b[i]);
 			b[i] = NULL;
-			qprintf ("tiny volume after clip\n");
+			Con_Verbose("tiny volume after clip\n");
 		}
 	}
 }
@@ -1013,7 +1013,7 @@ node_t *BuildTree_r (node_t *node, bspbrush_t *brushes)
 	int			i;
 	bspbrush_t	*children[2];
 
-	if (numthreads == 1)
+	if(!thread_pool.num_threads)
 		c_nodes++;
 
 	// find the best plane to use as a splitter
@@ -1073,7 +1073,7 @@ tree_t *BrushBSP (bspbrush_t *brushlist, vec3_t mins, vec3_t maxs)
 	int			i;
 	vec_t		volume;
 
-	qprintf ("--- BrushBSP ---\n");
+	Con_Verbose("--- BrushBSP ---\n");
 
 	tree = AllocTree ();
 
@@ -1087,8 +1087,7 @@ tree_t *BrushBSP (bspbrush_t *brushlist, vec3_t mins, vec3_t maxs)
 		volume = BrushVolume (b);
 		if (volume < microvolume)
 		{
-			printf ("WARNING: entity %i, brush %i: microbrush\n",
-				b->original->entitynum, b->original->brushnum);
+			Con_Verbose("WARNING: entity %i, brush %i: microbrush\n", b->original->entitynum, b->original->brushnum);
 		}
 
 		for (i=0 ; i<b->numsides ; i++)
@@ -1109,9 +1108,9 @@ tree_t *BrushBSP (bspbrush_t *brushlist, vec3_t mins, vec3_t maxs)
 		AddPointToBounds (b->maxs, tree->mins, tree->maxs);
 	}
 
-	qprintf ("%5i brushes\n", c_brushes);
-	qprintf ("%5i visible faces\n", c_faces);
-	qprintf ("%5i nonvisible faces\n", c_nonvisfaces);
+	Con_Verbose("%5i brushes\n", c_brushes);
+	Con_Verbose("%5i visible faces\n", c_faces);
+	Con_Verbose("%5i nonvisible faces\n", c_nonvisfaces);
 
 	c_nodes = 0;
 	c_nonvis = 0;
@@ -1123,9 +1122,9 @@ tree_t *BrushBSP (bspbrush_t *brushlist, vec3_t mins, vec3_t maxs)
 
 	node = BuildTree_r (node, brushlist);
 
-	qprintf ("%5i visible nodes\n", c_nodes/2 - c_nonvis);
-	qprintf ("%5i nonvis nodes\n", c_nonvis);
-	qprintf ("%5i leafs\n", (c_nodes+1)/2);
+	Con_Verbose("%5i visible nodes\n", c_nodes/2 - c_nonvis);
+	Con_Verbose("%5i nonvis nodes\n", c_nonvis);
+	Con_Verbose("%5i leafs\n", (c_nodes+1)/2);
 
 	return tree;
 }

@@ -51,7 +51,7 @@ void LeakFile (tree_t *tree)
 	if (!tree->outside_node.occupied)
 		return;
 
-	qprintf ("--- LeakFile ---\n");
+	Con_Verbose("--- LeakFile ---\n");
 
 	//
 	// write the points to the file
@@ -59,7 +59,7 @@ void LeakFile (tree_t *tree)
 	sprintf (filename, "%s.lin", source);
 	linefile = fopen (filename, "w");
 	if (!linefile)
-		Error ("Couldn't open %s\n", filename);
+		Con_Error("Couldn't open %s\n", filename);
 
 	count = 0;
 	node = &tree->outside_node;
@@ -92,7 +92,7 @@ void LeakFile (tree_t *tree)
 	GetVectorForKey (node->occupant, "origin", mid);
 
 	fprintf (linefile, "%f %f %f\n", mid[0], mid[1], mid[2]);
-	qprintf ("%5i point linefile\n", count+1);
+	Con_Verbose("%5i point linefile\n", count+1);
 
 	fclose (linefile);
 }

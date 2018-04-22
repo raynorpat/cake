@@ -24,8 +24,9 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #include "mathlib.h"
 #include "scriplib.h"
 #include "polylib.h"
-#include "threads.h"
 #include "bspfile.h"
+#include "threads.h"
+#include "q2map.h"
 
 #define	MAX_BRUSH_SIDES	128
 #define	CLIP_EPSILON	0.1

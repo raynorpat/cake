@@ -245,7 +245,7 @@ void WritePortalFile (tree_t *tree)
 	char	filename[1024];
 	node_t *headnode;
 
-	qprintf ("--- WritePortalFile ---\n");
+	Con_Verbose("--- WritePortalFile ---\n");
 
 	headnode = tree->headnode;
 	num_visclusters = 0;
@@ -263,17 +263,17 @@ void WritePortalFile (tree_t *tree)
 	
 // write the file
 	sprintf (filename, "%s.prt", source);
-	printf ("writing %s\n", filename);
+	Con_Print ("writing %s\n", filename);
 	pf = fopen (filename, "w");
 	if (!pf)
-		Error ("Error opening %s", filename);
+		Con_Error("Error opening %s\n", filename);
 		
 	fprintf (pf, "%s\n", PORTALFILE);
 	fprintf (pf, "%i\n", num_visclusters);
 	fprintf (pf, "%i\n", num_visportals);
 
-	qprintf ("%5i visclusters\n", num_visclusters);
-	qprintf ("%5i visportals\n", num_visportals);
+	Con_Verbose("%5i visclusters\n", num_visclusters);
+	Con_Verbose("%5i visportals\n", num_visportals);
 
 	WritePortalFile_r (headnode);
 
