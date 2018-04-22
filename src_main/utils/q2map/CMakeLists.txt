@@ -50,7 +50,7 @@ set(BSP_SOURCES
 	./nodraw.c
 	./portals.c
 	./prtfile.c
-	./qbsp3.c
+	./qbsp.c
 	./textures.c
 	./tree.c
 	./writebsp.c
@@ -60,12 +60,12 @@ source_group("bsp" FILES ${BSP_SOURCES})
 
 # rad source
 set(RAD_INCLUDES
-	./qrad.h
+	./qlight.h
 	)
 set(RAD_SOURCES
 	./lightmap.c
 	./patches.c
-	./qrad3.c
+	./qlight.c
 	./trace.c
 	)
 source_group("rad" FILES ${RAD_INCLUDES})
@@ -77,7 +77,7 @@ set(VIS_INCLUDES
 	)
 set(VIS_SOURCES
 	./flow.c
-	./qvis3.c
+	./qvis.c
 	)
 source_group("vis" FILES ${VIS_INCLUDES})
 source_group("vis" FILES ${VIS_SOURCES})
