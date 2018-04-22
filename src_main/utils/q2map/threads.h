@@ -20,42 +20,18 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 */
 
-#ifndef __THREAD_H__
-#define __THREAD_H__
+#include "q_threads.h"
 
-#include <SDL_thread.h>
-
-#define MAX_THREADS 16
-
-typedef enum thread_state_s
+typedef struct thread_work_s
 {
-	THREAD_IDLE,
-	THREAD_RUN,
-	THREAD_DONE
-} thread_state_t;
+	int index;				// current work cycle
+	int count;				// total work cycles
+	int fraction;			// last fraction of work completed (tenths)
+	qboolean progress;		// are we reporting progress
+} thread_work_t;
 
-typedef struct thread_s
-{
-	thread_state_t state;
-	SDL_Thread *thread;
-	void (*function)(void *data);
-	void *data;
-} thread_t;
+extern thread_work_t thread_work;
 
-typedef struct thread_pool_s
-{
-	thread_t *threads;
-	int num_threads;
-	SDL_mutex *mutex;
-	qboolean shutdown;
-} thread_pool_t;
-
-extern thread_pool_t thread_pool;
-extern int numthreads;
-
-thread_t *Thread_Create (void (function)(void *data), void *data);
-void Thread_Wait (thread_t *t);
-void Thread_Shutdown (void);
-void Thread_Init (void);
-
-#endif
+void ThreadLock (void);
+void ThreadUnlock (void);
+void RunThreadsOn (int workcount, qboolean progress, void(*func)(int));

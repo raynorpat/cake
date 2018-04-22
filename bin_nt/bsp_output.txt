@@ -1,0 +1,12 @@
+q2map v1.0 (c) 1996-2006 Id Software, Inc. and cake contributors
+q2map v1.1 (c) 2017-2018 Pat 'raynorpat' Raynor <raynorpat@gmail.com>
+
+----- Radiosity ----
+extrasamples = true
+reading d:\cake\baseq2\maps\q2dm8_.bsp
+0...1...2...3...4...5...6...7...8...9... (131 seconds)
+0...1...2...3...4...5...6...7...8...9... (9 seconds)
+0...1...2...3...4...5...6...7...8...9... (10 seconds)
+writing d:\cake\baseq2\maps\q2dm8_.bsp
+
+RAD Time: 2 minutes 31 seconds

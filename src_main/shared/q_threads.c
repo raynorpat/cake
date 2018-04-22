@@ -21,593 +21,167 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
 #include "q_types.h"
-#include "threads.h"
+#include "q_threads.h"
 
-#define	MAX_THREADS	64
+thread_pool_t thread_pool;
+int numthreads;
 
-int		dispatch;
-int		workcount;
-int		oldf;
-qboolean pacifier;
-
-qboolean threaded;
-
-/*
-=============
-GetThreadWork
-=============
-*/
-int	GetThreadWork (void)
+#ifdef _WIN32
+#include <Windows.h>
+static void usleep(__int64 usec)
 {
-	int	r;
-	int	f;
+	HANDLE timer;
+	LARGE_INTEGER ft;
 
-	ThreadLock ();
+	ft.QuadPart = -(10 * usec); // Convert to 100 nanosecond interval, negative value indicates relative time
 
-	if (dispatch == workcount)
-	{
-		ThreadUnlock ();
-		return -1;
-	}
-
-	f = 10*dispatch / workcount;
-	if (f != oldf)
-	{
-		oldf = f;
-		if (pacifier)
-			printf ("%i...", f);
-	}
-
-	r = dispatch;
-	dispatch++;
-	ThreadUnlock ();
-
-	return r;
-}
-
-
-void (*workfunction) (int);
-
-void ThreadWorkerFunction (int threadnum)
-{
-	int		work;
-
-	while (1)
-	{
-		work = GetThreadWork ();
-		if (work == -1)
-			break;
-		workfunction(work);
-	}
-}
-
-void RunThreadsOnIndividual (int workcnt, qboolean showpacifier, void(*func)(int))
-{
-	if (numthreads == -1)
-		ThreadSetDefault ();
-	workfunction = func;
-	RunThreadsOn (workcnt, showpacifier, ThreadWorkerFunction);
-}
-
-
-/*
-===================================================================
-
-WIN32
-
-===================================================================
-*/
-#ifdef WIN32
-
-#define	USED
-
-#include <windows.h>
-
-int		numthreads = -1;
-CRITICAL_SECTION		crit;
-static int enter;
-
-void ThreadSetDefault (void)
-{
-	SYSTEM_INFO info;
-
-	if (numthreads == -1)	// not set manually
-	{
-		GetSystemInfo (&info);
-		numthreads = info.dwNumberOfProcessors;
-		if (numthreads < 1 || numthreads > 32)
-			numthreads = 1;
-	}
-
-	qprintf ("%i threads\n", numthreads);
-}
-
-
-void ThreadLock (void)
-{
-	if (!threaded)
-		return;
-	EnterCriticalSection (&crit);
-	if (enter)
-		Error ("Recursive ThreadLock\n");
-	enter = 1;
-}
-
-void ThreadUnlock (void)
-{
-	if (!threaded)
-		return;
-	if (!enter)
-		Error ("ThreadUnlock without lock\n");
-	enter = 0;
-	LeaveCriticalSection (&crit);
-}
-
-/*
-=============
-RunThreadsOn
-=============
-*/
-void RunThreadsOn (int workcnt, qboolean showpacifier, void(*func)(int))
-{
-	int		threadid[MAX_THREADS];
-	HANDLE	threadhandle[MAX_THREADS];
-	int		i;
-	int		start, end;
-
-	start = I_FloatTime ();
-	dispatch = 0;
-	workcount = workcnt;
-	oldf = -1;
-	pacifier = showpacifier;
-	threaded = true;
-
-	//
-	// run threads in parallel
-	//
-	InitializeCriticalSection (&crit);
-
-	if (numthreads == 1)
-	{
-		// use same thread
-		func (0);
-	}
-	else
-	{
-		for (i=0 ; i<numthreads ; i++)
-		{
-			threadhandle[i] = CreateThread(
-			   NULL,	// LPSECURITY_ATTRIBUTES lpsa,
-			   0,		// DWORD cbStack,
-			   (LPTHREAD_START_ROUTINE)func,	// LPTHREAD_START_ROUTINE lpStartAddr,
-			   (LPVOID)i,	// LPVOID lpvThreadParm,
-			   0,			//   DWORD fdwCreate,
-			   &threadid[i]);
-		}
-
-		for (i=0 ; i<numthreads ; i++)
-			WaitForSingleObject (threadhandle[i], INFINITE);
-	}
-	DeleteCriticalSection (&crit);
-
-	threaded = false;
-	end = I_FloatTime ();
-	if (pacifier)
-		printf (" (%i)\n", end-start);
-}
-
-
-#endif
-
-/*
-===================================================================
-
-OSF1
-
-===================================================================
-*/
-
-#ifdef __osf__
-#define	USED
-
-int		numthreads = 4;
-
-void ThreadSetDefault (void)
-{
-	if (numthreads == -1)	// not set manually
-	{
-		numthreads = 4;
-	}
-}
-
-
-#include <pthread.h>
-
-pthread_mutex_t	*my_mutex;
-
-void ThreadLock (void)
-{
-	if (my_mutex)
-		pthread_mutex_lock (my_mutex);
-}
-
-void ThreadUnlock (void)
-{
-	if (my_mutex)
-		pthread_mutex_unlock (my_mutex);
-}
-
-
-/*
-=============
-RunThreadsOn
-=============
-*/
-void RunThreadsOn (int workcnt, qboolean showpacifier, void(*func)(int))
-{
-	int		i;
-	pthread_t	work_threads[MAX_THREADS];
-	pthread_addr_t	status;
-	pthread_attr_t	attrib;
-	pthread_mutexattr_t	mattrib;
-	int		start, end;
-
-	start = I_FloatTime ();
-	dispatch = 0;
-	workcount = workcnt;
-	oldf = -1;
-	pacifier = showpacifier;
-	threaded = true;
-
-	if (pacifier)
-		setbuf (stdout, NULL);
-
-	if (!my_mutex)
-	{
-		my_mutex = malloc (sizeof(*my_mutex));
-		if (pthread_mutexattr_create (&mattrib) == -1)
-			Error ("pthread_mutex_attr_create failed");
-		if (pthread_mutexattr_setkind_np (&mattrib, MUTEX_FAST_NP) == -1)
-			Error ("pthread_mutexattr_setkind_np failed");
-		if (pthread_mutex_init (my_mutex, mattrib) == -1)
-			Error ("pthread_mutex_init failed");
-	}
-
-	if (pthread_attr_create (&attrib) == -1)
-		Error ("pthread_attr_create failed");
-	if (pthread_attr_setstacksize (&attrib, 0x100000) == -1)
-		Error ("pthread_attr_setstacksize failed");
-
-	for (i=0 ; i<numthreads ; i++)
-	{
-  		if (pthread_create(&work_threads[i], attrib
-		, (pthread_startroutine_t)func, (pthread_addr_t)i) == -1)
-			Error ("pthread_create failed");
-	}
-
-	for (i=0 ; i<numthreads ; i++)
-	{
-		if (pthread_join (work_threads[i], &status) == -1)
-			Error ("pthread_join failed");
-	}
-
-	threaded = false;
-
-	end = I_FloatTime ();
-	if (pacifier)
-		printf (" (%i)\n", end-start);
-}
-
-#endif
-
-/*
-===================================================================
-
-POSIX THREADS (pthreads)
-
-===================================================================
-*/
-
-#if !defined(USED) && !defined(_WIN32) && (defined(__unix__) || defined(__unix) || (defined(__APPLE__) && defined(__MACH__)))
-#include <unistd.h>
-
-#ifdef _POSIX_VERSION
-#define USED
-
-int		numthreads = -1;
-
-#include <stddef.h>
-
-#ifdef _SC_NPROCESSORS_ONLN
-void ThreadSetDefault()
-{
-	if (numthreads == -1)
-	{
-		int res = sysconf(_SC_NPROCESSORS_ONLN); // the number of processors currently online (available).
-		if (res < 1)
-			numthreads = 1;
-		else
-			numthreads = res;
-	}
-}
-#elif defined(__linux__)
-#include <sched.h>
-void ThreadSetDefault()
-{
-	if (numthreads == -1)
-	{
-		cpu_set_t cs;
-		CPU_ZERO(&cs);
-		if (sched_getaffinity(0, sizeof(cs), &cs) != 0)
-		{
-			numthreads = 1;
-			return;
-		}
-
-		int count = 0;
-		for (int i = 0; i < CPU_COUNT(&cs); i++)
-		{
-			if (CPU_ISSET(i, &cs))
-				count++;
-		}
-
-		if (count < 1)
-			numthreads = 1;
-		else
-			numthreads = count;
-	}
-}
-#else
-void ThreadSetDefault()
-{
-	if (numthreads == -1)
-		numthreads = 1;
+	timer = CreateWaitableTimer(NULL, TRUE, NULL);
+	SetWaitableTimer(timer, &ft, 0, NULL, NULL, 0);
+	WaitForSingleObject(timer, INFINITE);
+	CloseHandle(timer);
 }
 #endif
 
-#include <pthread.h>
+/*
+===============
+Thread_Run
 
-typedef void *pthread_addr_t;
-pthread_mutex_t	*my_mutex;
-
-void ThreadLock(void)
+We wrap the user's function with our own. The function pointer and data to
+manipulate are set on the thread_t itself, allowing us to simply take the
+thread as a parameter here.
+===============
+*/
+static int Thread_Run(void *p)
 {
-	if (my_mutex)
-		pthread_mutex_lock(my_mutex);
+	thread_t *t = (thread_t *)p;
+
+	while(!thread_pool.shutdown)
+	{
+		if(t->state == THREAD_RUN)
+		{
+			// invoke the user function
+			t->function(t->data);
+			t->state = THREAD_DONE;
+		}
+
+		usleep(0);
+	}
+
+	return 0;
 }
 
-void ThreadUnlock(void)
-{
-	if (my_mutex)
-		pthread_mutex_unlock(my_mutex);
-}
 
-static void(*q_entry)(int) = 0;
+/*
+===============
+Thread_Create
 
-static void* ThreadEntryStub(void* pParam)
+Creates a new thread to run the specified function. Callers must use
+Thread_Wait on the returned handle to release the thread when it finishes.
+===============
+*/
+thread_t *Thread_Create(void (function)(void *data), void *data)
 {
-	q_entry((int)pParam);
+	if(thread_pool.num_threads)
+	{
+		thread_t *t;
+		int i;
+
+		SDL_mutexP(thread_pool.mutex);
+
+		for(i = 0, t = thread_pool.threads; i < thread_pool.num_threads; i++, t++)
+		{
+			if(t->state == THREAD_IDLE)
+			{
+				t->function = function;
+				t->data = data;
+				t->state = THREAD_RUN;
+				break;
+			}
+		}
+
+		SDL_mutexV(thread_pool.mutex);
+
+		if(i < thread_pool.num_threads)
+			return t;
+	}
+
+	function(data);  // call the function in this thread
+
 	return NULL;
 }
 
-void RunThreadsOn(int workcnt, qboolean showpacifier, void(*func)(int))
-{
-	int       i;
-	pthread_t       work_threads[MAX_THREADS];
-	pthread_addr_t  status;
-	pthread_attr_t  attrib;
-	int          start, end;
-
-	start = I_FloatTime();
-
-	dispatch = 0;
-	workcount = workcnt;
-	oldf = -1;
-	pacifier = showpacifier;
-	threaded = true;
-	q_entry = func;
-
-	if (pacifier)
-		setbuf(stdout, NULL);
-
-	pthread_mutexattr_t mattrib;
-
-	if (!my_mutex)
-	{
-		my_mutex = (pthread_mutex_t*)malloc(sizeof(*my_mutex));
-		if (pthread_mutexattr_init(&mattrib) == -1)
-		{
-			Error("pthread_mutex_attr_init failed");
-		}
-		if (pthread_mutex_init(my_mutex, &mattrib) == -1)
-		{
-			Error("pthread_mutex_init failed");
-		}
-	}
-
-	if (pthread_attr_init(&attrib) == -1)
-	{
-		Error("pthread_attr_init failed");
-	}
-#ifdef _POSIX_THREAD_ATTR_STACKSIZE
-	if (pthread_attr_setstacksize(&attrib, 0x400000) == -1)
-	{
-		Error("pthread_attr_setstacksize failed");
-	}
-#endif
-
-	for (i = 0; i < numthreads; i++)
-	{
-		if (pthread_create(&work_threads[i], &attrib, ThreadEntryStub, (void*)i) == -1)
-		{
-			Error("pthread_create failed");
-		}
-	}
-
-	for (i = 0; i < numthreads; i++)
-	{
-		if (pthread_join(work_threads[i], &status) == -1)
-		{
-			Error("pthread_join failed");
-		}
-	}
-
-	free(my_mutex);
-	my_mutex = NULL;
-
-	q_entry = NULL;
-	threaded = false;
-
-	end = I_FloatTime();
-	if (pacifier)
-		printf(" (%i)\n", end - start);
-}
-
-#endif
-
-#endif
-
 /*
-===================================================================
+===============
+Thread_Wait
 
-IRIX
-
-===================================================================
+Wait for the specified thread to complete.
+===============
 */
-
-#ifdef _MIPS_ISA
-#define	USED
-
-#include <task.h>
-#include <abi_mutex.h>
-#include <sys/types.h>
-#include <sys/prctl.h>
-
-
-int		numthreads = -1;
-abilock_t		lck;
-
-void ThreadSetDefault (void)
+void Thread_Wait(thread_t *t)
 {
-	if (numthreads == -1)
-		numthreads = prctl(PR_MAXPPROCS);
-	printf ("%i threads\n", numthreads);
-//@@
-	usconfig (CONF_INITUSERS, numthreads);
-}
+	if(!t)
+		return;
 
+	while(t->state == THREAD_RUN)
+		usleep(0);
 
-void ThreadLock (void)
-{
-	spin_lock (&lck);
-}
-
-void ThreadUnlock (void)
-{
-	release_lock (&lck);
-}
-
-
-/*
-=============
-RunThreadsOn
-=============
-*/
-void RunThreadsOn (int workcnt, qboolean showpacifier, void(*func)(int))
-{
-	int		i;
-	int		pid[MAX_THREADS];
-	int		start, end;
-
-	start = I_FloatTime ();
-	dispatch = 0;
-	workcount = workcnt;
-	oldf = -1;
-	pacifier = showpacifier;
-	threaded = true;
-
-	if (pacifier)
-		setbuf (stdout, NULL);
-
-	init_lock (&lck);
-
-	for (i=0 ; i<numthreads-1 ; i++)
-	{
-		pid[i] = sprocsp ( (void (*)(void *, size_t))func, PR_SALL, (void *)i
-			, NULL, 0x100000);
-//		pid[i] = sprocsp ( (void (*)(void *, size_t))func, PR_SALL, (void *)i
-//			, NULL, 0x80000);
-		if (pid[i] == -1)
-		{
-			perror ("sproc");
-			Error ("sproc failed");
-		}
-	}
-
-	func(i);
-
-	for (i=0 ; i<numthreads-1 ; i++)
-		wait (NULL);
-
-	threaded = false;
-
-	end = I_FloatTime ();
-	if (pacifier)
-		printf (" (%i)\n", end-start);
-}
-
-
-#endif
-
-/*
-=======================================================================
-
-  SINGLE THREAD
-
-=======================================================================
-*/
-
-#ifndef USED
-
-int		numthreads = 1;
-
-void ThreadSetDefault (void)
-{
-	numthreads = 1;
-}
-
-void ThreadLock (void)
-{
-}
-
-void ThreadUnlock (void)
-{
+	t->state = THREAD_IDLE;
 }
 
 /*
-=============
-RunThreadsOn
-=============
+===============
+Thread_Shutdown
+
+Terminates any running threads, resetting the thread pool.
+===============
 */
-void RunThreadsOn (int workcnt, qboolean showpacifier, void(*func)(int))
+void Thread_Shutdown(void)
 {
-	int		i;
-	int		start, end;
+	thread_t *t;
+	int i;
 
-	dispatch = 0;
-	workcount = workcnt;
-	oldf = -1;
-	pacifier = showpacifier;
-	start = I_FloatTime ();
-#ifdef NeXT
-	if (pacifier)
-		setbuf (stdout, NULL);
-#endif
-	func(0);
+	if(!thread_pool.num_threads)
+		return;
 
-	end = I_FloatTime ();
-	if (pacifier)
-		printf (" (%i)\n", end-start);
+	thread_pool.shutdown = true;  // inform threads to quit
+
+	for(i = 0, t = thread_pool.threads; i < thread_pool.num_threads; i++, t++)
+		SDL_WaitThread(t->thread, NULL);
+
+	free(thread_pool.threads);
+
+	SDL_DestroyMutex(thread_pool.mutex);
 }
 
-#endif
+/*
+===============
+Thread_Init
+
+Initializes the thread pool.
+===============
+*/
+void Thread_Init(void)
+{
+	thread_t *t;
+	int i;
+
+	memset(&thread_pool, 0, sizeof(thread_pool));
+
+	numthreads = 2; // the default number of threads (cores) to utilize
+	if(numthreads > MAX_THREADS)
+		numthreads = MAX_THREADS;
+	else if(numthreads < 0)
+		numthreads = 0;
+
+	thread_pool.num_threads = numthreads;
+
+	if(thread_pool.num_threads)
+	{
+		thread_pool.threads = malloc(sizeof(thread_t) * thread_pool.num_threads);
+
+		for(i = 0, t = thread_pool.threads; i < thread_pool.num_threads; i++, t++)
+			t->thread = SDL_CreateThread(Thread_Run, "", t);
+
+		thread_pool.mutex = SDL_CreateMutex();
+	}
+}
