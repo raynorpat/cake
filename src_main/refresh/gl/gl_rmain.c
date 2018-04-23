@@ -735,7 +735,7 @@ static void RMain_PrintSetExtensionList (void)
 	VID_Printf(PRINT_DEVELOPER, "\n");
 }
 
-static qboolean RMain_CheckFor_DirectStateAccess(void)
+static void RMain_CheckFor_DirectStateAccess(void)
 {
 	VID_Printf(PRINT_ALL, "checking for GL_EXT_direct_state_access...\n");
 
@@ -749,7 +749,7 @@ static qboolean RMain_CheckFor_DirectStateAccess(void)
 			// found it in our list
 			VID_Printf(PRINT_ALL, S_COLOR_GREEN " ...found GL_EXT_direct_state_access\n");
 			gl_config.gl_ext_directstateaccess_support = true;
-			return true;
+			return;
 		}
 	}
 	else
@@ -757,13 +757,13 @@ static qboolean RMain_CheckFor_DirectStateAccess(void)
 		// found it in glad's list
 		VID_Printf(PRINT_ALL, S_COLOR_GREEN " ...found GL_EXT_direct_state_access\n");
 		gl_config.gl_ext_directstateaccess_support = true;
-		return true;
+		return;
 	}
 
 	// okay, we don't have direct state access, so we need to wrap the functions and emulate what they actually do...
 	gl_config.gl_ext_directstateaccess_support = false;
 	VID_Printf(PRINT_ALL, S_COLOR_YELLOW " ...emulating GL_EXT_direct_state_access\n");
-	return true;
+	return;
 }
 
 static void RMain_CheckFor_GPUShader5(void)
@@ -925,12 +925,7 @@ success:
 	RMain_PrintSetExtensionList();
 
 	// check for required feature support
-	if (!RMain_CheckFor_DirectStateAccess())
-	{
-		// DSA is a requirement
-		VID_Printf(PRINT_ALL, S_COLOR_RED "RMain_CheckExtension : unable to emulate GL_EXT_direct_state_access\n");
-		return false;
-	}
+	RMain_CheckFor_DirectStateAccess();
 
 	// check for GPUShader5 support
 	RMain_CheckFor_GPUShader5();
