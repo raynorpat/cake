@@ -655,13 +655,9 @@ void R_RecursiveWorldNode (mnode_t *node, int planeBits)
 			{
 				r = BoxOnPlaneSide(node->minmaxs, node->minmaxs + 3, &frustum[i]);
 				if (r == 2)
-				{
 					return; // culled
-				}
 				if (r == 1)
-				{
 					planeBits &= ~(1 << i);	// all descendants will also be in front
-				}
 			}
 		}
 	}
