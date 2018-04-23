@@ -196,7 +196,7 @@ void GL_DrawAliasFrameLerp (entity_t *e, dmdl_t *hdr, float backlerp)
 	}
 
 	GL_BindVertexArray (e->model->meshvao);
-	GL_Enable ((GOURAUD_BIT | DEPTHTEST_BIT) | ((e->flags & RF_TRANSLUCENT) ? BLEND_BIT : DEPTHWRITE_BIT) | (gl_cull->value ? CULLFACE_BIT : 0));
+	GL_Enable (DEPTHTEST_BIT | ((e->flags & RF_TRANSLUCENT) ? BLEND_BIT : DEPTHWRITE_BIT) | (gl_cull->value ? CULLFACE_BIT : 0));
 	GL_UseProgram (gl_meshprog);
 
 	if (gl_meshubonumblocks + 1 >= MESH_UBO_MAX_BLOCKS)

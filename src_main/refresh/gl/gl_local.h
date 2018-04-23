@@ -440,7 +440,6 @@ void RMain_InvalidateCachedState (void);
 #define DEPTHTEST_BIT		(1 << 2)
 #define SCISSOR_BIT			(1 << 3)
 #define DEPTHWRITE_BIT		(1 << 4)
-#define GOURAUD_BIT			(1 << 5)
 
 #define VAA0	(1 << 0)
 #define VAA1	(1 << 1)

@@ -60,9 +60,6 @@ void GL_Enable(int bits)
 	if ((bits & DEPTHWRITE_BIT) && !(gl_state.statebits & DEPTHWRITE_BIT)) glDepthMask(GL_TRUE);
 	if (!(bits & DEPTHWRITE_BIT) && (gl_state.statebits & DEPTHWRITE_BIT)) glDepthMask(GL_FALSE);
 
-	if ((bits & GOURAUD_BIT) && !(gl_state.statebits & GOURAUD_BIT)) glShadeModel(GL_SMOOTH);
-	if (!(bits & GOURAUD_BIT) && (gl_state.statebits & GOURAUD_BIT)) glShadeModel(GL_FLAT);
-
 	gl_state.statebits = bits;
 }
 
