@@ -50,9 +50,11 @@ void TonemapFS ()
 	vec4 sceneColor = texture(scene, st);
 	
 	// SSAO
+#if r_ssao	
 	vec4 sceneAOColor = texture(sceneAO, st);
 	sceneColor = clamp(sceneColor * sceneAOColor, 0.0, 1.0);
-	
+#endif	
+
 	// filmic vignette effect
 #if r_useVignette
 	vec2 vignetteST = st;

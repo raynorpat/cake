@@ -6,6 +6,7 @@ INOUTTYPE vec3 unprojectionParams;
 #ifdef VERTEXSHADER
 uniform mat4 orthomatrix;
 uniform vec3 zFar;
+uniform float zNear;
 
 layout(location = 0) in vec4 position;
 layout(location = 2) in vec4 texcoord;
@@ -15,9 +16,9 @@ void SSAOVS ()
 	gl_Position = orthomatrix * position;
 	texcoords = texcoord;
 	
-	unprojectionParams.x = - 4.0 * zFar.z;
-	unprojectionParams.y = 2.0 * (zFar.z - 4.0);
-	unprojectionParams.z = 2.0 * zFar.z - 4.0;
+	unprojectionParams.x = -zNear * zFar.z;
+	unprojectionParams.y = 2.0 * (zFar.z - zNear);
+	unprojectionParams.z = 2.0 * zFar.z - zNear;
 }
 #endif
 
@@ -26,15 +27,13 @@ void SSAOVS ()
 uniform sampler2D depthmap;
 
 uniform vec3 zFar;
+uniform float zNear;
 
+#ifdef USE_HIGH_QUALITY_SSAO
 const float haloCutoff = 15.0;
 
-float depthToZ(float depth) {
-	return unprojectionParams.x / ( unprojectionParams.y * depth - unprojectionParams.z );
-}
-vec4 depthToZ(vec4 depth) {
-	return unprojectionParams.x / ( unprojectionParams.y * depth - unprojectionParams.z );
-}
+float depthToZ(float depth) { return unprojectionParams.x / ( unprojectionParams.y * depth - unprojectionParams.z ); }
+vec4 depthToZ(vec4 depth) { return unprojectionParams.x / ( unprojectionParams.y * depth - unprojectionParams.z ); }
 
 vec4 rangeTest(vec4 diff1, vec4 diff2, vec4 deltaX, vec4 deltaY) {
 	vec4 mask = step( 0.0, diff1 + diff2 ) * step( -haloCutoff, -diff1 ) * step( -haloCutoff, -diff2 );
@@ -73,6 +72,13 @@ const vec4 offsets[] = vec4[6](
 	vec4( 6.5,  2.5, 7.5, -0.5 ),
 	vec4( 5.5, -3.5, 2.5, -6.5 )
 );
+#else
+float ReadDepth(vec2 st)
+{
+	vec2 camerarange = vec2(zNear, zFar.z);
+	return (2.0 * camerarange.x) / (camerarange.y + camerarange.x - texture2D(depthmap, st).x * (camerarange.y - camerarange.x));	
+}
+#endif
 
 out vec4 fragColor;
 
@@ -80,18 +86,19 @@ void SSAOFS ()
 {
 	vec2 st = gl_FragCoord.st * r_FBufScale;
 
+#if USE_HIGH_QUALITY_SSAO	
 	vec4 color = vec4( 0.0 );
 	vec4 occlusion = vec4( 0.0 );
 	vec4 total = vec4( 0.0 );
 
 	float center = texture( depthmap, st ).r;
-
 	if( center >= 1.0 )
 	{
 		// no SSAO on the skybox !
 		discard;
 		return;
 	}
+	
 	center = depthToZ( center );
 	float spread = max( 1.0, 100.0 / center );
 
@@ -108,11 +115,35 @@ void SSAOFS ()
 	float summedOcclusion = dot( occlusion, vec4( 1.0 ) );
 	float summedTotal = dot( total, vec4( 1.0 ) );
 
-	if ( summedTotal > 0.0 ) {
+	if ( summedTotal > 0.0 )
 		summedOcclusion /= summedTotal;
+	
+	fragColor = vec4(saturate(1.0 - summedOcclusion));
+#else
+	float depth = ReadDepth(st);
+	float d;
+
+	float aoCap = 1.0;
+	float ao = 0.0;
+	
+	float aoMultiplier = 1000.0;
+	float depthTolerance = 0.0001;
+	
+	float tap = 3.0;
+	float taps = tap * 2.0 + 1.0;
+	for (float i = -tap; i < tap; i++)
+    {
+	    for (float j = -tap; j < tap; j++)
+	    {
+			d = ReadDepth(st + vec2(j, i) * r_FBufScale);
+			ao += min(aoCap, max(0.0, depth - d - depthTolerance) * aoMultiplier);
+		}
 	}
 	
-	fragColor = vec4( clamp(1.0 - summedOcclusion, 0.0, 1.0) );
+	ao /= (taps * taps);
+	
+	fragColor = vec4(saturate(1.0 - ao));
+#endif
 }
 #endif
 

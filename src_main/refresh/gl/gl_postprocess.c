@@ -22,6 +22,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
 GLuint gl_ssaoprog = 0;
 GLuint u_ssaoZFar = 0;
+GLuint u_ssaoZnear = 0;
 
 GLuint gl_fxaaprog = 0;
 
@@ -277,14 +278,12 @@ void RPostProcess_CreatePrograms(void)
 	u_globalfogUnprojectMatrix = glGetUniformLocation(gl_globalfogprog, "unprojectmatrix");
 
 	// create ssao shader
-	if (gl_config.gl_ext_GPUShader5_support)
-	{
-		gl_ssaoprog = GL_CreateShaderFromName("glsl/ssao.glsl", "SSAOVS", "SSAOFS");
+	gl_ssaoprog = GL_CreateShaderFromName("glsl/ssao.glsl", "SSAOVS", "SSAOFS");
 
-		u_ssaoZFar = glGetUniformLocation(gl_ssaoprog, "zFar");
-		glProgramUniform1i(gl_ssaoprog, glGetUniformLocation(gl_ssaoprog, "depthmap"), 0);
-		glProgramUniformMatrix4fv(gl_ssaoprog, glGetUniformLocation(gl_ssaoprog, "orthomatrix"), 1, GL_FALSE, r_drawmatrix.m[0]);
-	}
+	u_ssaoZFar = glGetUniformLocation(gl_ssaoprog, "zFar");
+	u_ssaoZnear = glGetUniformLocation(gl_ssaoprog, "zNear");
+	glProgramUniform1i(gl_ssaoprog, glGetUniformLocation(gl_ssaoprog, "depthmap"), 0);
+	glProgramUniformMatrix4fv(gl_ssaoprog, glGetUniformLocation(gl_ssaoprog, "orthomatrix"), 1, GL_FALSE, r_drawmatrix.m[0]);
 
 	// create tonemap shader
 	gl_tonemapprog = GL_CreateShaderFromName("glsl/tonemap.glsl", "TonemapVS", "TonemapFS");
@@ -580,10 +579,9 @@ static void RPostProcess_PostScreenBlends(void)
 void RPostProcess_SSAO(void)
 {
 	vec3_t zFarParam;
+	float zNear;
 
 	if (!r_ssao->integer)
-		return;
-	if (!gl_config.gl_ext_GPUShader5_support)
 		return;
 
 	// blit current framebuffer into ambient occlusion buffer
@@ -605,8 +603,11 @@ void RPostProcess_SSAO(void)
 
 	zFarParam[0] = 2.0f * tanf(DEG2RAD(r_newrefdef.fov_x * 0.5f)) / vid.width;
 	zFarParam[1] = 2.0f * tanf(DEG2RAD(r_newrefdef.fov_y * 0.5f)) / vid.height;
-	zFarParam[2] = 4096;
+	zFarParam[2] = r_zfar->value ? r_zfar->value : 4092;
 	glProgramUniform3f(gl_ssaoprog, u_ssaoZFar, zFarParam[0], zFarParam[1], zFarParam[2]);
+
+	zNear = r_znear->value ? r_znear->value : 4.0;
+	glProgramUniform1f(gl_ssaoprog, u_ssaoZnear, zNear);
 
 	GL_BindTexture(GL_TEXTURE0, GL_TEXTURE_2D, r_drawnearestclampsampler, r_currentDepthRenderImage);
 

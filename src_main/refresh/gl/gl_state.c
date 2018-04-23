@@ -134,6 +134,11 @@ static void GL_GetShaderHeader (GLenum shadertype, GLchar *entrypoint, char *des
 		Q_strlcat (dest, "#define USE_SRGB 1\n", size);
 	if (gl_config.gl_ext_computeShader_support)
 		Q_strlcat (dest, "#define USE_COMPUTE_LUM 1\n", size);
+	if (gl_config.gl_ext_GPUShader5_support)
+	{
+		Q_strlcat (dest, "#define USE_HIGH_QUALITY_SSAO 1\n", size);
+		Q_strlcat (dest, "#define USE_FXAA 1\n", size);
+	}
 
 	// define entry point
 	if (entrypoint)
@@ -163,6 +168,8 @@ static void GL_GetShaderHeader (GLenum shadertype, GLchar *entrypoint, char *des
 		Q_strlcat (dest, "#ifndef r_useVignette\n#define r_useVignette 1\n#endif\n", size);
 	if (r_useFilmgrain->value)
 		Q_strlcat (dest, "#ifndef r_useFilmgrain\n#define r_useFilmgrain 1\n#endif\n", size);
+	if (r_ssao->value)
+		Q_strlcat(dest, "#ifndef r_ssao\n#define r_ssao 1\n#endif\n", size);
 
 	// load up common.glsl
 	char *commonbuf = NULL;
