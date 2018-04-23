@@ -735,55 +735,33 @@ static void RMain_PrintSetExtensionList (void)
 	VID_Printf(PRINT_DEVELOPER, "\n");
 }
 
-static void RMain_CheckExtension (char *ext)
-{
-	// check in glew first...
-	if (!glewIsSupported(ext))
-	{
-		// lets double check the actual extension list we grabbed earlier,
-		// glew is known to be buggy checking for extensions...
-		if (!strcmp(ext, gl_config.extension_string))
-		{
-			return;
-		}
-	
-		VID_Error (ERR_FATAL, S_COLOR_RED "RMain_CheckExtension : could not find %s", ext);
-		return;
-	}
-}
-
-extern int GL_Init_DSA_Emulation(qboolean inject_always_, qboolean allow_arb_dsa_, qboolean allow_ext_dsa_);
 static qboolean RMain_CheckFor_DirectStateAccess(void)
 {
 	VID_Printf(PRINT_ALL, "checking for GL_EXT_direct_state_access...\n");
 
-	// check in glew first...
-	if (!glewIsSupported("GL_EXT_direct_state_access "))
+	// check in glad first...
+	if (!GLAD_GL_EXT_direct_state_access)
 	{
 		// lets double check the actual extension list we grabbed earlier,
 		// glew is known to be buggy checking for extensions...
-		if (!strcmp("GL_EXT_direct_state_access ", gl_config.extension_string))
+		if (!strcmp("GL_EXT_direct_state_access", gl_config.extension_string))
 		{
 			// found it in our list
 			VID_Printf(PRINT_ALL, S_COLOR_GREEN " ...found GL_EXT_direct_state_access\n");
+			gl_config.gl_ext_directstateaccess_support = true;
 			return true;
 		}
 	}
 	else
 	{
-		// found it in glew's list
+		// found it in glad's list
 		VID_Printf(PRINT_ALL, S_COLOR_GREEN " ...found GL_EXT_direct_state_access\n");
+		gl_config.gl_ext_directstateaccess_support = true;
 		return true;
 	}
 
-	// okay, we don't have direct state access, so we need to wrap the functions
-	// and emulate what they actually do...
-	if (GL_Init_DSA_Emulation(true, false, true) != 1)
-	{
-		// we got a buggy driver here or something is fucked...
-		return false;
-	}
-
+	// okay, we don't have direct state access, so we need to wrap the functions and emulate what they actually do...
+	gl_config.gl_ext_directstateaccess_support = false;
 	VID_Printf(PRINT_ALL, S_COLOR_YELLOW " ...emulating GL_EXT_direct_state_access\n");
 	return true;
 }
@@ -792,12 +770,12 @@ static void RMain_CheckFor_GPUShader5(void)
 {
 	VID_Printf(PRINT_ALL, "checking for GL_ARB_gpu_shader5...\n");
 
-	// check in glew first...
-	if (!glewIsSupported("GL_ARB_gpu_shader5 "))
+	// check in glad first...
+	if (!GLAD_GL_ARB_gpu_shader5)
 	{
 		// lets double check the actual extension list we grabbed earlier,
 		// glew is known to be buggy checking for extensions...
-		if (!strcmp("GL_ARB_gpu_shader5 ", gl_config.extension_string))
+		if (!strcmp("GL_ARB_gpu_shader5", gl_config.extension_string))
 		{
 			// found it in our list
 			VID_Printf(PRINT_ALL, S_COLOR_GREEN " ...found GL_ARB_gpu_shader5\n");
@@ -807,7 +785,7 @@ static void RMain_CheckFor_GPUShader5(void)
 	}
 	else
 	{
-		// found it in glew's list
+		// found it in glad's list
 		VID_Printf(PRINT_ALL, S_COLOR_GREEN " ...found GL_ARB_gpu_shader5\n");
 		gl_config.gl_ext_GPUShader5_support = true;
 		return;
@@ -821,12 +799,12 @@ static void RMain_CheckFor_ComputeShader(void)
 {
 	VID_Printf(PRINT_ALL, "checking for GL_ARB_compute_shader...\n");
 
-	// check in glew first...
-	if (!glewIsSupported("GL_ARB_compute_shader "))
+	// check in glad first...
+	if (!GLAD_GL_ARB_compute_shader)
 	{
 		// lets double check the actual extension list we grabbed earlier,
 		// glew is known to be buggy checking for extensions...
-		if (!strcmp("GL_ARB_compute_shader ", gl_config.extension_string))
+		if (!strcmp("GL_ARB_compute_shader", gl_config.extension_string))
 		{
 			// found it in our list
 			VID_Printf(PRINT_ALL, S_COLOR_GREEN " ...found GL_ARB_compute_shader\n");
@@ -836,7 +814,7 @@ static void RMain_CheckFor_ComputeShader(void)
 	}
 	else
 	{
-		// found it in glew's list
+		// found it in glad's list
 		VID_Printf(PRINT_ALL, S_COLOR_GREEN " ...found GL_ARB_compute_shader\n");
 		gl_config.gl_ext_computeShader_support = true;
 		return;
@@ -850,12 +828,12 @@ static void RMain_CheckFor_Srgb(void)
 {
 	VID_Printf(PRINT_ALL, "checking for GL_ARB_framebuffer_sRGB...\n");
 
-	// check in glew first...
-	if (!glewIsSupported("GL_ARB_framebuffer_sRGB "))
+	// check in glad first...
+	if (!GLAD_GL_ARB_framebuffer_sRGB)
 	{
 		// lets double check the actual extension list we grabbed earlier,
 		// glew is known to be buggy checking for extensions...
-		if (!strcmp("GL_ARB_framebuffer_sRGB ", gl_config.extension_string))
+		if (!strcmp("GL_ARB_framebuffer_sRGB", gl_config.extension_string))
 		{
 			// found it in our list
 			VID_Printf(PRINT_ALL, S_COLOR_GREEN " ...found GL_ARB_framebuffer_sRGB\n");
@@ -865,7 +843,7 @@ static void RMain_CheckFor_Srgb(void)
 	}
 	else
 	{
-		// found it in glew's list
+		// found it in glad's list
 		VID_Printf(PRINT_ALL, S_COLOR_GREEN " ...found GL_ARB_framebuffer_sRGB\n");
 		gl_config.gl_arb_framebuffer_srgb_support = true;
 		return;
@@ -947,27 +925,9 @@ success:
 	RMain_PrintSetExtensionList();
 
 	// check for required feature support
-	// GLEW isn't always reliable so check them manually
-	RMain_CheckExtension("GL_ARB_multitexture ");
-	RMain_CheckExtension("GL_ARB_sampler_objects ");
-	RMain_CheckExtension("GL_ARB_vertex_buffer_object ");
-	RMain_CheckExtension("GL_ARB_vertex_array_object ");
-	RMain_CheckExtension("GL_ARB_texture_non_power_of_two ");
-	RMain_CheckExtension("GL_ARB_framebuffer_object ");
-	RMain_CheckExtension("GL_ARB_instanced_arrays ");
-	RMain_CheckExtension("GL_ARB_base_instance ");
-	RMain_CheckExtension("GL_ARB_map_buffer_range ");
-	RMain_CheckExtension("GL_ARB_texture_storage ");
-	RMain_CheckExtension("GL_ARB_seamless_cube_map ");
-	RMain_CheckExtension("GL_ARB_uniform_buffer_object ");
-	RMain_CheckExtension("GL_ARB_separate_shader_objects ");
-	RMain_CheckExtension("GL_ARB_texture_gather ");
-
-	// we have to check for direct state access separate from the others
-	// due to weird issues across GPUs
 	if (!RMain_CheckFor_DirectStateAccess())
 	{
-		// we are buggggggged, get out of here and fallback to like software or something
+		// DSA is a requirement
 		VID_Printf(PRINT_ALL, S_COLOR_RED "RMain_CheckExtension : unable to emulate GL_EXT_direct_state_access\n");
 		return false;
 	}

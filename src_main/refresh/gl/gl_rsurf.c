@@ -21,6 +21,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #include <assert.h>
 #ifndef _WIN32
 #include <sys/mman.h>
+#else
+#include <windows.h>
 #endif
 #include "gl_local.h"
 
@@ -474,7 +476,7 @@ void R_ModifySurfaceLightmap (msurface_t *surf)
 		{
 			int	smax, tmax;
 			unsigned *base = gl_lms.lightmap_data[surf->lightmaptexturenum];
-			RECT *rect = &gl_lms.lightrect[surf->lightmaptexturenum];
+			rect_t *rect = &gl_lms.lightrect[surf->lightmaptexturenum];
 
 			smax = (surf->extents[0] >> 4) + 1;
 			tmax = (surf->extents[1] >> 4) + 1;

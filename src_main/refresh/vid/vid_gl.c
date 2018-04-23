@@ -22,8 +22,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #include <assert.h>
 #include <SDL.h>
 
-#include <GL/glew.h>
-#include <GL/gl.h>
+#include "../gl/gl_gl.h"
 #include <math.h>
 
 #include "ref_public.h"
@@ -41,7 +40,6 @@ extern qboolean R_GetModeInfo(int *width, int *height, float *windowAspect, int 
 
 // used for buffer swap
 extern void Draw_End2D(void);
-extern void GL_UseProgram(GLuint progid);
 
 // used for video export
 extern void CL_WriteAVIVideoFrame(const byte *imageBuffer, int size);
@@ -205,9 +203,8 @@ int VID_GL_GetRefreshRate(void)
 */
 void VID_Shutdown_GL(qboolean destroyWindow)
 {
-	if (destroyWindow) {
+	if (destroyWindow)
 		VID_ShutdownWindow();
-	}
 }
 
 
@@ -429,7 +426,6 @@ vidrserr_t VID_InitWindow(int mode, int fullscreen)
 		}
 
 		// try for OpenGL core context vs legacy OpenGL context
-		GLenum err = 0;
 		if (1)
 		{
 			int profileMask, majorVersion, minorVersion;
@@ -460,11 +456,11 @@ vidrserr_t VID_InitWindow(int mode, int fullscreen)
 
 				VID_Printf(PRINT_DEVELOPER, S_COLOR_GREEN " ...SDL_GL_CreateContext succeeded.\n");
 
-				err = glewInit();
-				if (GLEW_OK == err) {
+				// load all OpenGL functions using the glad loader function
+				if (gladLoadGLLoader((GLADloadproc)SDL_GL_GetProcAddress)) {
 					renderer = (const char *)glGetString(GL_RENDERER);
 				} else {
-					VID_Printf(PRINT_DEVELOPER, S_COLOR_RED "glewInit() core context failed: %s\n", glewGetErrorString(err));
+					VID_Printf(PRINT_DEVELOPER, S_COLOR_RED "QGL_Init() failed\n");
 					renderer = NULL;
 				}
 								
@@ -495,10 +491,9 @@ vidrserr_t VID_InitWindow(int mode, int fullscreen)
 				continue;
 			}
 
-			err = glewInit();
-			if (GLEW_OK != err)
+			if (!gladLoadGLLoader((GLADloadproc)SDL_GL_GetProcAddress))
 			{
-				VID_Printf(PRINT_ALL, S_COLOR_RED "glewInit() failed: %s\n", glewGetErrorString(err));
+				VID_Printf(PRINT_ALL, S_COLOR_RED "QGL_Init() failed.\n");
 
 				SDL_GL_DeleteContext(context);
 				context = NULL;
@@ -535,7 +530,7 @@ vidrserr_t VID_InitWindow(int mode, int fullscreen)
 		
 		colorBits = realColorBits[0] + realColorBits[1] + realColorBits[2];
 
-		VID_Printf(PRINT_ALL, "Using %d color bits, %d depth, %d stencil display.\n", colorBits, depthBits, stencilBits);
+		VID_Printf(PRINT_ALL, S_COLOR_GREEN "Using %d color bits, %d depth, %d stencil display.\n", colorBits, depthBits, stencilBits);
 		break;
 	}
 
@@ -628,9 +623,9 @@ void VID_GL_EndFrame (void)
 {
 	Draw_End2D ();
 
-	GL_UseProgram (0);
+	GL_BindNullProgram ();
 
-	SDL_GL_SwapWindow(window);
+	SDL_GL_SwapWindow (window);
 }
 
 /*

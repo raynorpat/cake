@@ -33,7 +33,7 @@ _Cake_ builds with CMake. If you've never tried it, please do so, it rocks. We r
 The main dependency to build _Cake_ is SDL2, which is provided in library format for MSVC builds, all others will need to grab it
 from source or from their distribution.
 
-Other dependencies include glew, OpenAL, libcurl, libmad, libmodplug, and zlib.
+Other dependencies include OpenGL, OpenAL, libcurl, libmad, libmodplug, and zlib.
 We provide all dependencies for building everything else in src_main/libs if CMake doesn't find one.
 
 There are various scripts in the src_main directory that will give you a way to build if CMake is installed on your machine. These scripts range from

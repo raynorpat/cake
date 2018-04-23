@@ -50,33 +50,6 @@ if (USE_FREETYPE)
 	source_group("libs\\freetype" FILES ${FREETYPE_SOURCES})
 endif()
 
-if (NOT WIN_UWP)
-	# glew
-	find_package(GLEW)
-	if (GLEW_FOUND)
-		include_directories(${GLEW_INCLUDE_DIRS})
-		set(GLEW_LIBRARY ${GLEW_LIBRARIES})
-	else (GLEW_FOUND)
-		include_directories("../libs/glew/include")
-		set(GLEW_LIBRARY "" )
-		add_definitions(-DGLEW_STATIC)
-	endif (GLEW_FOUND)
-	if (NOT GLEW_FOUND)
-		set(GLEW_INCLUDES ../libs/glew/include/GL/glew.h)
-		set(GLEW_SOURCES ../libs/glew/src/glew.c)
-		if(WIN32)
-			set(GLEW_INCLUDES ${GLEW_INCLUDES} ../libs/glew/include/GL/wglew.h)
-		else(WIN32)
-			set(GLEW_INCLUDES ${GLEW_INCLUDES} ../libs/glew/include/GL/glxew.h)
-		endif(WIN32)
-	else (NOT GLEW_FOUND)
-		set(GLEW_INCLUDES "")
-		set(GLEW_SOURCES "")
-	endif (NOT GLEW_FOUND)
-	source_group("libs\\glew" FILES ${GLEW_INCLUDES})
-	source_group("libs\\glew" FILES ${GLEW_SOURCES})
-endif()
-
 # sdl
 if(NOT USE_SYSTEM_SDL2)
 	SET(SDL2_PATH ../libs/SDL2)
@@ -103,7 +76,7 @@ if (NOT WIN_UWP)
 set(RENDERER_GL_INCLUDES
 	../refresh/gl/gl_model.h
 	../refresh/gl/gl_local.h
-	../refresh/gl/gl_state_dsa.h
+	../refresh/gl/gl_gl.h
 	)
 set(RENDERER_GL_SOURCES
 	../refresh/gl/gl_beam.c
@@ -125,7 +98,8 @@ set(RENDERER_GL_SOURCES
 	../refresh/gl/gl_sprite.c
 	../refresh/gl/gl_state.c
 	../refresh/gl/gl_warp.c
-	../refresh/gl/gl_state_dsa.cpp
+	../refresh/gl/gl_gl.c
+	../refresh/gl/gl_gl_dsa.c
 	../refresh/vid/vid_gl.c
 	)
 source_group("refresh\\gl" FILES ${RENDERER_GL_INCLUDES})
@@ -157,8 +131,7 @@ include_directories(
             )
 
 # build the refresh library
-add_library(refresh STATIC ${GLEW_INCLUDES}
-	${GLEW_SOURCES}
+add_library(refresh STATIC 
 	${FREETYPE_INCLUDES}
 	${FREETYPE_SOURCES}
 	${RENDERER_INCLUDES}

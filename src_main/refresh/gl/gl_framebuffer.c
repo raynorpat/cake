@@ -185,7 +185,7 @@ void R_BindFBO(FBO_t * fbo)
 {
 	//if (gl_state.currentFBO != fbo)
 	{
-		glBindFramebuffer(GL_FRAMEBUFFER, fbo->frameBuffer);
+		GL_BindFramebuffer (GL_FRAMEBUFFER, fbo->frameBuffer);
 		gl_state.currentFBO = fbo;
 	}
 }
@@ -199,8 +199,7 @@ void R_BindNullFBO(void)
 {
 	//if (gl_state.currentFBO)
 	{
-		glBindFramebuffer(GL_FRAMEBUFFER, 0);
-		glBindRenderbuffer(GL_RENDERBUFFER, 0);
+		GL_BindNullFramebuffers ();
 		gl_state.currentFBO = NULL;
 	}
 }

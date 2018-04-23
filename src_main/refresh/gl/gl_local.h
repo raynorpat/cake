@@ -18,34 +18,24 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
 */
 
-#ifdef _WIN32
-#include <windows.h>
-#endif
-
 #include <stdio.h>
-
-#include <GL/glew.h>
-#ifdef _WIN32
-#include <GL/wglew.h>
-#endif
-#include <GL/gl.h>
-#include <GL/glu.h>
 #include <math.h>
 
 #include "ref_public.h"
 #include "vid_public.h"
 
+#include "gl_gl.h"
+
 #define	LIGHTMAP_SIZE	128
 #define	MAX_LIGHTMAPS	128
 
-#ifndef _WIN32
-typedef struct _RECT {
-  long left;
-  long top;
-  long right;
-  long bottom;
-} RECT, *PRECT;
-#endif
+typedef struct rect_s
+{
+	long left;
+	long top;
+	long right;
+	long bottom;
+} rect_t;
 
 typedef struct gllightmapstate_s
 {
@@ -53,7 +43,7 @@ typedef struct gllightmapstate_s
 
 	int			allocated[LIGHTMAP_SIZE];
 	qboolean	modified[MAX_LIGHTMAPS];
-	RECT		lightrect[MAX_LIGHTMAPS];
+	rect_t		lightrect[MAX_LIGHTMAPS];
 
 	// the lightmap texture data needs to be kept in
 	// main memory so texsubimage can update properly
@@ -81,7 +71,7 @@ typedef struct ubodef_s
 	GLuint binding;
 } ubodef_t;
 
-void GL_UseProgram (GLuint progid);
+void GL_UseProgramNoUBOs (GLuint progid);
 void GL_UseProgramWithUBOs (GLuint progid, ubodef_t *ubodef, int numubos);
 
 void RSurf_CreatePrograms (void);
@@ -407,6 +397,7 @@ typedef struct
 	const char *version_string;
 	const char *extension_string;
 
+	qboolean	gl_ext_directstateaccess_support;
 	qboolean	gl_ext_GPUShader5_support;
 	qboolean	gl_ext_computeShader_support;
 	qboolean	gl_arb_framebuffer_srgb_support;

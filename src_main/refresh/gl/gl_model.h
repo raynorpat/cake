@@ -110,7 +110,7 @@ typedef struct msurface_s
 	int			dlightframe;
 	int			dlightbits;
 
-	RECT		lightrect;
+	rect_t		lightrect;
 	int			lightmaptexturenum;
 	byte		styles[MAXLIGHTMAPS];
 	float		cached_light[MAXLIGHTMAPS];	// values currently used in lightmap

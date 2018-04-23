@@ -59,18 +59,6 @@ if (USE_CODEC_OGG)
 	endif (VORBIS_FOUND)
 endif()	
 
-# glew
-find_package(GLEW)
-if (GLEW_FOUND)
-    include_directories(${GLEW_INCLUDE_DIRS})
-    set(GLEW_LIBRARY ${GLEW_LIBRARIES})
-else (GLEW_FOUND)
-    include_directories("../libs/glew/include")
-    set(GLEW_LIBRARY "")
-    add_definitions(-DGLEW_STATIC)
-	message(STATUS "Using builtin glew")
-endif (GLEW_FOUND)
-
 # freetype
 if (USE_FREETYPE)
 	find_package(FREETYPE)
@@ -283,17 +271,6 @@ source_group("system\\win32\\Resources" FILES ${WIN32_RESOURCES})
 
 # libs
 
-# glew
-if (NOT GLEW_FOUND)
-	file(GLOB GLEW_INCLUDES ../libs/glew/include/GL/*.h)
-	file(GLOB GLEW_SOURCES ../libs/glew/src/*.c)
-else (NOT GLEW_FOUND)
-    set(GLEW_INCLUDES "")
-    set(GLEW_SOURCES "")
-endif (NOT GLEW_FOUND)
-source_group("libs\\glew" FILES ${GLEW_INCLUDES})
-source_group("libs\\glew" FILES ${GLEW_SOURCES})
-
 # libcurl
 if (NOT CURL_FOUND)
 	file(GLOB CURL_INCLUDES ../libs/libcurl/include/curl/*.h)
@@ -476,7 +453,6 @@ if (NOT WIN_UWP)
 		iphlpapi
 		wsock32.lib
 		${CURL_LIBRARY}
-        ${GLEW_LIBRARY}
 		${FREETYPE_LIBRARY}
 		${ZLIB_LIBRARY}
 		${OGG_LIBRARY}
@@ -525,7 +501,6 @@ else()
 			refresh
 			${RT_LIBRARY}
 			${SDL2_LIBRARY}
-            ${GLEW_LIBRARY}
 			${FREETYPE_LIBRARY}
 			${CURL_LIBRARY}
 			${OGG_LIBRARY}

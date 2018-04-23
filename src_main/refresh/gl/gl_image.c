@@ -247,7 +247,7 @@ void GL_TextureMode (char *string, int anisotropy)
 
 	gl_texture_anisotropy = 1;
 
-	if (GLEW_EXT_texture_filter_anisotropic & (anisotropy > 1))
+	if (GLAD_GL_EXT_texture_filter_anisotropic & (anisotropy > 1))
 	{
 		glGetFloatv (GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &maxaf);
 

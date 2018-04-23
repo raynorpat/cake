@@ -83,10 +83,7 @@ void GL_CheckError (char *str)
 	case GL_INVALID_ENUM: VID_Printf(PRINT_ALL, S_COLOR_RED "GL_INVALID_ENUM"); break;
 	case GL_INVALID_VALUE: VID_Printf(PRINT_ALL, S_COLOR_RED "GL_INVALID_VALUE"); break;
 	case GL_INVALID_OPERATION: VID_Printf(PRINT_ALL, S_COLOR_RED "GL_INVALID_OPERATION"); break;
-	case GL_STACK_OVERFLOW: VID_Printf(PRINT_ALL, S_COLOR_RED "GL_STACK_OVERFLOW"); break;
-	case GL_STACK_UNDERFLOW: VID_Printf(PRINT_ALL, S_COLOR_RED "GL_STACK_UNDERFLOW"); break;
 	case GL_OUT_OF_MEMORY: VID_Printf(PRINT_ALL, S_COLOR_RED  "GL_OUT_OF_MEMORY"); break;
-	case GL_TABLE_TOO_LARGE: VID_Printf(PRINT_ALL, S_COLOR_RED "GL_TABLE_TOO_LARGE"); break;
 	default: return;
 	}
 
@@ -337,7 +334,7 @@ GLuint GL_CreateComputeShaderFromName(char *name)
 	}
 }
 
-void GL_UseProgram(GLuint progid)
+void GL_UseProgramNoUBOs(GLuint progid)
 {
 	if (gl_state.currentprogram != progid)
 	{
@@ -369,6 +366,12 @@ GL_SetDefaultState
 */
 void GL_SetDefaultState(void)
 {
+	// reset all texture state
+	GL_BindNullTextures ();
+
+	// reset all framebuffer state
+	GL_BindNullFramebuffers ();
+
 	if(gl_config.gl_arb_framebuffer_srgb_support)
 		glEnable(GL_FRAMEBUFFER_SRGB);
 
