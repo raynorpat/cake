@@ -169,7 +169,7 @@ static void GL_GetShaderHeader (GLenum shadertype, GLchar *entrypoint, char *des
 	if (r_useFilmgrain->value)
 		Q_strlcat (dest, "#ifndef r_useFilmgrain\n#define r_useFilmgrain 1\n#endif\n", size);
 	if (r_ssao->value)
-		Q_strlcat(dest, "#ifndef r_ssao\n#define r_ssao 1\n#endif\n", size);
+		Q_strlcat (dest, "#ifndef r_ssao\n#define r_ssao 1\n#endif\n", size);
 
 	// load up common.glsl
 	char *commonbuf = NULL;
