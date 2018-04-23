@@ -75,6 +75,8 @@ baseq2/sprites
 baseq2/textures
 baseq2/video
 
+bin_nt/bsp_output.txt
+
 *.lst
 *.bak
 *.tmp
