@@ -247,6 +247,7 @@ tree_t *AllocTree (void);
 node_t *AllocNode (void);
 bspbrush_t *AllocBrush (int numsides);
 int	CountBrushList (bspbrush_t *brushes);
+void FreeNode (node_t *node);
 void FreeBrush (bspbrush_t *brushes);
 void FreeBrushList (bspbrush_t *brushes);
 

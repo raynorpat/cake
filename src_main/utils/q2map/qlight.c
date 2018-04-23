@@ -570,11 +570,6 @@ int Light_Main (int argc, char **argv)
 			extrasamples = true;
 			Con_Print("extrasamples = true\n");
 		}
-		else if (!strcmp(argv[i],"-threads"))
-		{
-			numthreads = atoi (argv[i+1]);
-			i++;
-		}
 		else if (!strcmp(argv[i],"-chop"))
 		{
 			subdiv = atoi (argv[i+1]);
@@ -624,7 +619,7 @@ int Light_Main (int argc, char **argv)
 		maxlight = 255;
 
 	if (i != argc - 1)
-		Con_Error("usage: q2map -light [-v] [-chop num] [-scale num] [-ambient num] [-maxlight num] [-threads num] bspfile\n");
+		Con_Error("usage: q2map -light [-v] [-chop num] [-scale num] [-ambient num] [-maxlight num] bspfile\n");
 
 	start = I_FloatTime ();
 

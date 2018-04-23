@@ -21,8 +21,13 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 */
 
+#include <SDL.h>
+
 #include "cmdlib.h"
 #include "q2map.h"
+#include "threads.h"
+
+qboolean was_init = false;
 
 /*
 ============
@@ -31,18 +36,27 @@ main
 */
 int main (int argc, char **argv)
 {
-	Con_Open();
+	int32_t num_threads = 0;
 
-	Con_Print("q2map v1.0 (c) 1996-2006 Id Software, Inc. and cake contributors\n");
-	Con_Print("q2map v1.1 (c) 2017-2018 Pat 'raynorpat' Raynor <raynorpat@gmail.com>\n\n");
+	Con_Open ();
+
+	Con_Print ("q2map v1.0 (c) 1996-2006 Id Software, Inc. and cake contributors\n");
+	Con_Print ("q2map v1.1 (c) 2017-2018 Pat 'raynorpat' Raynor <raynorpat@gmail.com>\n\n");
 	
 	if(argc < 2)
 	{
 		goto showUsage;
 	}
 
-	Thread_Init ();
-	
+	SDL_Init (SDL_INIT_TIMER);
+
+	Thread_Init (num_threads);
+	Sem_Init ();
+
+	Con_Print ("Using %u threads\n", Thread_Count());
+
+	was_init = true;
+
 	// check for general program options
 	if(!strcmp(argv[1], "-bsp"))
 	{
@@ -69,6 +83,16 @@ showUsage:
 		  "   light          = compute lighting\n");
 
 exit:
-	Thread_Shutdown ();	
+	was_init = false;
+
+	Sem_Shutdown ();
+	//Thread_Shutdown ();
+
+	SDL_Quit ();
+
+	puts("\nPress any key to close..\n");
+	getchar();
+
+	exit (0);
 	return 0;
 }

@@ -25,37 +25,33 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include <SDL_thread.h>
 
-#define MAX_THREADS 16
+#define MAX_THREADS 128
 
-typedef enum thread_state_s
+typedef enum thread_status_e
 {
 	THREAD_IDLE,
-	THREAD_RUN,
-	THREAD_DONE
-} thread_state_t;
+	THREAD_RUNNING,
+	THREAD_WAIT
+} thread_status_t;
+
+typedef void(*ThreadRunFunc)(void *data);
 
 typedef struct thread_s
 {
-	thread_state_t state;
 	SDL_Thread *thread;
-	void (*function)(void *data);
+	SDL_cond *cond;
+	SDL_mutex *mutex;
+	char name[64];
+	volatile thread_status_t status;
+	ThreadRunFunc Run;
 	void *data;
 } thread_t;
 
-typedef struct thread_pool_s
-{
-	thread_t *threads;
-	int num_threads;
-	SDL_mutex *mutex;
-	qboolean shutdown;
-} thread_pool_t;
-
-extern thread_pool_t thread_pool;
-extern int numthreads;
-
-thread_t *Thread_Create (void (function)(void *data), void *data);
+thread_t *Thread_Create_ (char *name, ThreadRunFunc Run, void *data);
+#define Thread_Create(f, d) Thread_Create_(#f, f, d)
 void Thread_Wait (thread_t *t);
+uint16_t Thread_Count (void);
+void Thread_Init (uint16_t num_threads);
 void Thread_Shutdown (void);
-void Thread_Init (void);
 
 #endif

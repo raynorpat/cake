@@ -21,8 +21,6 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
 #include "qbsp.h"
 
-extern	int	c_nodes;
-
 /*
 =============
 FreeTreePortals_r
@@ -82,9 +80,7 @@ void FreeTree_r (node_t *node)
 	if (node->volume)
 		FreeBrush (node->volume);
 
-	if (!thread_pool.num_threads)
-		c_nodes--;
-	free (node);
+	FreeNode (node);
 }
 
 

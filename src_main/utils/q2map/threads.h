@@ -22,6 +22,20 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include "q_threads.h"
 
+typedef struct semaphores_s
+{
+	SDL_sem *active_portals;
+	SDL_sem *active_nodes;
+	SDL_sem *vis_nodes;
+	SDL_sem *nonvis_nodes;
+	SDL_sem *active_brushes;
+} semaphores_t;
+
+extern semaphores_t semaphores;
+
+void Sem_Init (void);
+void Sem_Shutdown (void);
+
 typedef struct thread_work_s
 {
 	int index;				// current work cycle
@@ -32,6 +46,8 @@ typedef struct thread_work_s
 
 extern thread_work_t thread_work;
 
+typedef void(*ThreadWorkFunc)(int32_t);
+
 void ThreadLock (void);
 void ThreadUnlock (void);
-void RunThreadsOn (int workcount, qboolean progress, void(*func)(int));
+void RunThreadsOn (int32_t workcount, qboolean progress, ThreadWorkFunc func);

@@ -22,9 +22,6 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include "qbsp.h"
 
-
-int		c_nodes;
-int		c_nonvis;
 int		c_active_brushes;
 
 // if a brush just barely pokes onto the other side,
@@ -218,9 +215,22 @@ node_t *AllocNode (void)
 	node = malloc(sizeof(*node));
 	memset (node, 0, sizeof(*node));
 
+	SDL_SemPost (semaphores.active_nodes);
+
 	return node;
 }
 
+/*
+================
+FreeNode
+================
+*/
+void FreeNode (node_t *node)
+{
+	SDL_SemWait (semaphores.active_nodes);
+	
+	free (node);
+}
 
 /*
 ================
@@ -235,8 +245,9 @@ bspbrush_t *AllocBrush (int numsides)
 	c = (size_t)&(((bspbrush_t *)0)->sides[numsides]);
 	bb = malloc(c);
 	memset (bb, 0, c);
-	if(!thread_pool.num_threads)
-		c_active_brushes++;
+
+	SDL_SemPost (semaphores.active_brushes);
+
 	return bb;
 }
 
@@ -249,12 +260,15 @@ void FreeBrush (bspbrush_t *brushes)
 {
 	int			i;
 
-	for (i=0 ; i<brushes->numsides ; i++)
+	for (i = 0; i < brushes->numsides; i++)
+	{
 		if (brushes->sides[i].winding)
 			FreeWinding(brushes->sides[i].winding);
+	}
+	
+	SDL_SemWait (semaphores.active_brushes);
+
 	free (brushes);
-	if(!thread_pool.num_threads)
-		c_active_brushes--;
 }
 
 
@@ -690,8 +704,7 @@ side_t *SelectSplitSide (bspbrush_t *brushes, node_t *node)
 		{
 			if (pass > 1)
 			{
-				if(!thread_pool.num_threads)
-					c_nonvis++;
+				SDL_SemPost (semaphores.nonvis_nodes);
 			}
 			if (pass > 0)
 				node->detail_seperator = true;	// not needed for vis
@@ -1013,8 +1026,7 @@ node_t *BuildTree_r (node_t *node, bspbrush_t *brushes)
 	int			i;
 	bspbrush_t	*children[2];
 
-	if(!thread_pool.num_threads)
-		c_nodes++;
+	SDL_SemPost (semaphores.vis_nodes);
 
 	// find the best plane to use as a splitter
 	bestside = SelectSplitSide (brushes, node);
@@ -1112,8 +1124,12 @@ tree_t *BrushBSP (bspbrush_t *brushlist, vec3_t mins, vec3_t maxs)
 	Con_Verbose("%5i visible faces\n", c_faces);
 	Con_Verbose("%5i nonvisible faces\n", c_nonvisfaces);
 
-	c_nodes = 0;
-	c_nonvis = 0;
+	SDL_DestroySemaphore (semaphores.vis_nodes);
+	semaphores.vis_nodes = SDL_CreateSemaphore (0);
+	
+	SDL_DestroySemaphore (semaphores.nonvis_nodes);
+	semaphores.nonvis_nodes = SDL_CreateSemaphore (0);
+
 	node = AllocNode ();
 
 	node->volume = BrushFromBounds (mins, maxs);
@@ -1122,9 +1138,12 @@ tree_t *BrushBSP (bspbrush_t *brushlist, vec3_t mins, vec3_t maxs)
 
 	node = BuildTree_r (node, brushlist);
 
-	Con_Verbose("%5i visible nodes\n", c_nodes/2 - c_nonvis);
-	Con_Verbose("%5i nonvis nodes\n", c_nonvis);
-	Con_Verbose("%5i leafs\n", (c_nodes+1)/2);
+	uint32_t vis_nodes = SDL_SemValue(semaphores.vis_nodes);
+	uint32_t nonvis_nodes = SDL_SemValue(semaphores.nonvis_nodes);
+
+	Con_Verbose("%5i visible nodes\n", vis_nodes / 2 - nonvis_nodes);
+	Con_Verbose("%5i nonvis nodes\n", nonvis_nodes);
+	Con_Verbose("%5i leafs\n", (vis_nodes + 1) / 2);
 
 	return tree;
 }

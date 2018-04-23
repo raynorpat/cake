@@ -21,6 +21,8 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 */
 
+extern qboolean was_init;
+
 int BSP_Main (int argc, char **argv);
 int Vis_Main (int argc, char **argv);
 int Light_Main (int argc, char **argv);

@@ -20,27 +20,24 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 */
 
+#include <SDL_cpuinfo.h>
+#include <SDL_timer.h>
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+
 #include "q_types.h"
 #include "q_threads.h"
 
-thread_pool_t thread_pool;
-int numthreads;
-
-#ifdef _WIN32
-#include <Windows.h>
-static void usleep(__int64 usec)
+typedef struct thread_pool_s
 {
-	HANDLE timer;
-	LARGE_INTEGER ft;
+	SDL_mutex *mutex;
 
-	ft.QuadPart = -(10 * usec); // Convert to 100 nanosecond interval, negative value indicates relative time
+	thread_t *threads;
+	uint16_t num_threads;
+} thread_pool_t;
 
-	timer = CreateWaitableTimer(NULL, TRUE, NULL);
-	SetWaitableTimer(timer, &ft, 0, NULL, NULL, 0);
-	WaitForSingleObject(timer, INFINITE);
-	CloseHandle(timer);
-}
-#endif
+static thread_pool_t thread_pool;
 
 /*
 ===============
@@ -55,59 +52,147 @@ static int Thread_Run(void *p)
 {
 	thread_t *t = (thread_t *)p;
 
-	while(!thread_pool.shutdown)
+	while(thread_pool.mutex)
 	{
-		if(t->state == THREAD_RUN)
+		SDL_mutexP (t->mutex);
+
+		if(t->status == THREAD_RUNNING)
 		{
 			// invoke the user function
-			t->function(t->data);
-			t->state = THREAD_DONE;
+			t->Run(t->data);
+
+			t->Run = NULL;
+			t->data = NULL;
+
+			t->status = THREAD_WAIT;
+		}
+		else
+		{
+			SDL_CondWait (t->cond, t->mutex);
 		}
 
-		usleep(0);
+		SDL_mutexV (t->mutex);
 	}
 
 	return 0;
 }
 
+/*
+===============
+Thread_Init_
+
+Initializes the threads backing the thread pool
+===============
+*/
+static void Thread_Init_ (uint16_t num_threads)
+{
+	if (num_threads == 0)
+		num_threads = SDL_GetCPUCount ();
+	else if (num_threads == -1)
+		num_threads = 0;
+	else if (num_threads > MAX_THREADS)
+		num_threads = MAX_THREADS;
+
+	thread_pool.num_threads = num_threads;
+	if (thread_pool.num_threads)
+	{
+		thread_pool.threads = malloc (sizeof(thread_t) * thread_pool.num_threads);
+
+		thread_t *t = thread_pool.threads;
+		uint16_t i = 0;
+
+		for (i = 0; i < thread_pool.num_threads; i++, t++)
+		{
+			t->cond = SDL_CreateCond ();
+			t->mutex = SDL_CreateMutex ();
+			t->thread = SDL_CreateThread (Thread_Run, __func__, t);
+		}
+	}
+}
 
 /*
 ===============
-Thread_Create
-
-Creates a new thread to run the specified function. Callers must use
-Thread_Wait on the returned handle to release the thread when it finishes.
+Thread_Shutdown_
 ===============
 */
-thread_t *Thread_Create(void (function)(void *data), void *data)
+static void Thread_Shutdown_ (void)
 {
+	if (thread_pool.num_threads)
+	{
+		thread_t *t = thread_pool.threads;
+		uint16_t i = 0;
+
+		for (i = 0; i < thread_pool.num_threads; i++, t++)
+		{
+			Thread_Wait (t);
+			SDL_CondSignal (t->cond);
+			SDL_WaitThread (t->thread, NULL);
+			SDL_DestroyCond (t->cond);
+			SDL_DestroyMutex (t->mutex);
+		}
+
+		free (thread_pool.threads);
+	}
+}
+
+/*
+===============
+Thread_Create_
+
+Creates a new thread to run the specified function. Callers must use
+Thread_Wait on the returned handle to release the thread when finished.
+===============
+*/
+thread_t *Thread_Create_(char *name, ThreadRunFunc run, void *data)
+{
+	thread_t *t = thread_pool.threads;
+	uint16_t i = 0;
+
+	// if threads are available, find an idle one and dispatch it
 	if(thread_pool.num_threads)
 	{
-		thread_t *t;
-		int i;
+		SDL_mutexP (thread_pool.mutex);
 
-		SDL_mutexP(thread_pool.mutex);
-
-		for(i = 0, t = thread_pool.threads; i < thread_pool.num_threads; i++, t++)
+		for(i = 0; i < thread_pool.num_threads; i++, t++)
 		{
-			if(t->state == THREAD_IDLE)
+			if(t->status == THREAD_IDLE)
 			{
-				t->function = function;
-				t->data = data;
-				t->state = THREAD_RUN;
-				break;
+				SDL_mutexP (t->mutex);
+
+				// if the thread is idle, dispatch it
+				if (t->status == THREAD_IDLE)
+				{
+					strncpy (t->name, name, sizeof(t->name));
+
+					t->Run = run;
+					t->data = data;
+
+					t->status = THREAD_RUNNING;
+
+					SDL_mutexV (t->mutex);
+					SDL_CondSignal (t->cond);
+
+					break;
+				}
+
+				SDL_mutexV (t->mutex);
 			}
 		}
 
-		SDL_mutexV(thread_pool.mutex);
-
-		if(i < thread_pool.num_threads)
-			return t;
+		SDL_mutexV (thread_pool.mutex);
 	}
 
-	function(data);  // call the function in this thread
+	// if we failed to allocate a thread, run the function in this thread
+	if (i == thread_pool.num_threads)
+	{
+		if (thread_pool.num_threads)
+		{
+			t = NULL;
+			run (data);
+		}
+	}
 
-	return NULL;
+	return t;
 }
 
 /*
@@ -119,38 +204,25 @@ Wait for the specified thread to complete.
 */
 void Thread_Wait(thread_t *t)
 {
-	if(!t)
+	if (!t || t->status == THREAD_IDLE)
 		return;
 
-	while(t->state == THREAD_RUN)
-		usleep(0);
+	while(t->status != THREAD_WAIT)
+		SDL_Delay (0);
 
-	t->state = THREAD_IDLE;
+	t->status = THREAD_IDLE;
 }
 
 /*
 ===============
-Thread_Shutdown
+Thread_Count
 
-Terminates any running threads, resetting the thread pool.
+Returns the number of threads in the pool.
 ===============
 */
-void Thread_Shutdown(void)
+uint16_t Thread_Count(void)
 {
-	thread_t *t;
-	int i;
-
-	if(!thread_pool.num_threads)
-		return;
-
-	thread_pool.shutdown = true;  // inform threads to quit
-
-	for(i = 0, t = thread_pool.threads; i < thread_pool.num_threads; i++, t++)
-		SDL_WaitThread(t->thread, NULL);
-
-	free(thread_pool.threads);
-
-	SDL_DestroyMutex(thread_pool.mutex);
+	return thread_pool.num_threads;
 }
 
 /*
@@ -160,28 +232,31 @@ Thread_Init
 Initializes the thread pool.
 ===============
 */
-void Thread_Init(void)
+void Thread_Init(uint16_t num_threads)
 {
-	thread_t *t;
-	int i;
+	memset (&thread_pool, 0, sizeof(thread_pool));
 
-	memset(&thread_pool, 0, sizeof(thread_pool));
+	thread_pool.mutex = SDL_CreateMutex ();
 
-	numthreads = 2; // the default number of threads (cores) to utilize
-	if(numthreads > MAX_THREADS)
-		numthreads = MAX_THREADS;
-	else if(numthreads < 0)
-		numthreads = 0;
+	Thread_Init_ (num_threads);
+}
 
-	thread_pool.num_threads = numthreads;
+/*
+===============
+Thread_Shutdown
 
-	if(thread_pool.num_threads)
+Shuts down the thread pool.
+===============
+*/
+void Thread_Shutdown (void)
+{
+	if (thread_pool.mutex)
 	{
-		thread_pool.threads = malloc(sizeof(thread_t) * thread_pool.num_threads);
-
-		for(i = 0, t = thread_pool.threads; i < thread_pool.num_threads; i++, t++)
-			t->thread = SDL_CreateThread(Thread_Run, "", t);
-
-		thread_pool.mutex = SDL_CreateMutex();
+		SDL_DestroyMutex (thread_pool.mutex);
+		thread_pool.mutex = NULL;
 	}
+
+	Thread_Shutdown_ ();
+
+	memset (&thread_pool, 0, sizeof(thread_pool));
 }

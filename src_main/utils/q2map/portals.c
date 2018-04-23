@@ -23,8 +23,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #include "qbsp.h"
 
 
-int		c_active_portals;
-int		c_peak_portals;
+static uint32_t c_peak_portals;
 
 /*
 ===========
@@ -33,12 +32,13 @@ AllocPortal
 */
 portal_t *AllocPortal (void)
 {
-	portal_t	*p;
+	portal_t *p;
 	
-	if(!thread_pool.num_threads)
-		c_active_portals++;
-	if (c_active_portals > c_peak_portals)
-		c_peak_portals = c_active_portals;
+	SDL_SemPost(semaphores.active_portals);
+	uint32_t active_portals = SDL_SemValue(semaphores.active_portals);
+
+	if (active_portals > c_peak_portals)
+		c_peak_portals = active_portals;
 	
 	p = malloc (sizeof(*p));
 	memset (p, 0, sizeof(*p));
@@ -46,12 +46,18 @@ portal_t *AllocPortal (void)
 	return p;
 }
 
+/*
+===========
+FreePortal
+===========
+*/
 void FreePortal (portal_t *p)
 {
 	if (p->winding)
 		FreeWinding (p->winding);
-	if(!thread_pool.num_threads)
-		c_active_portals--;
+
+	SDL_SemWait (semaphores.active_portals);
+
 	free (p);
 }
 

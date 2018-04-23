@@ -23,6 +23,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #include <SDL_thread.h>
 #include <stdio.h>
 #include <time.h>
+#include <string.h>
 
 #include "q_types.h"
 #include "q_threads.h"
@@ -31,7 +32,42 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #include "threads.h"
 extern qboolean verbose;
 
+semaphores_t semaphores;
 thread_work_t thread_work;
+
+/*
+=============
+Sem_Init
+
+Initializes the shared semaphores that threads will touch.
+=============
+*/
+void Sem_Init (void)
+{
+	memset (&semaphores, 0, sizeof(semaphores));
+
+	semaphores.active_portals = SDL_CreateSemaphore (0);
+	semaphores.active_nodes = SDL_CreateSemaphore (0);
+	semaphores.vis_nodes = SDL_CreateSemaphore (0);
+	semaphores.nonvis_nodes = SDL_CreateSemaphore (0);
+	semaphores.active_brushes = SDL_CreateSemaphore (0);
+}
+
+/*
+=============
+Sem_Shutdown
+
+Shuts down shared semaphores, releasing any resources they hold.
+=============
+*/
+void Sem_Shutdown (void)
+{
+	SDL_DestroySemaphore (semaphores.active_portals);
+	SDL_DestroySemaphore (semaphores.active_nodes);
+	SDL_DestroySemaphore (semaphores.vis_nodes);
+	SDL_DestroySemaphore (semaphores.nonvis_nodes);
+	SDL_DestroySemaphore (semaphores.active_brushes);
+}
 
 /*
 =============
@@ -42,28 +78,33 @@ return an iteration of work, updating progress when appropriate.
 */
 static int GetThreadWork (void)
 {
-	int	r;
-	int	f;
+	int32_t r, f;
 
 	ThreadLock ();
 
-	if (thread_work.index == thread_work.count)
+	if (thread_work.index == thread_work.count || !was_init)
 	{
-		// done
+		// done or killed
 		ThreadUnlock ();
 		return -1;
 	}
 
 	// update work fraction and output progress if desired
-	f = 10 * thread_work.index / thread_work.count;
+	f = 50 * thread_work.index / thread_work.count;
 	if (f != thread_work.fraction)
 	{
-		thread_work.fraction = f;
 		if (thread_work.progress && !verbose)
 		{
-			Con_Print("%i...", f);
-			fflush(stdout);
+			for (int32_t i = thread_work.fraction; i < f; i++)
+			{
+				if (i % 5 == 0)
+					Con_Print ("%i", i / 5);
+				else
+					Con_Print (".");
+				fflush (stdout);
+			}
 		}
+		thread_work.fraction = f;
 	}
 
 	// assign the next work iteration
@@ -76,7 +117,7 @@ static int GetThreadWork (void)
 }
 
 // generic function pointer to actual work to be done
-static void(*WorkFunction)(int);
+static ThreadWorkFunc WorkFunction;
 
 /*
 =============
@@ -86,13 +127,11 @@ Shared work entry point by all threads.
 Retrieve and perform chunks of work iteratively until work is finished.
 =============
 */
-static void ThreadWork(void *p)
+static void ThreadWork(void *p __attribute__((unused)))
 {
-	int		work;
-
 	while (1)
 	{
-		work = GetThreadWork ();
+		int32_t work = GetThreadWork ();
 		if (work == -1)
 			break;
 		WorkFunction(work);
@@ -134,21 +173,22 @@ RunThreads
 */
 static void RunThreads(void)
 {
-	int i;
+	const uint16_t thread_count = Thread_Count();
+	thread_t *threads[MAX_THREADS];
 
-	if (!thread_pool.num_threads)
+	if (thread_count == 0)
 	{
-		ThreadWork(0);
+		ThreadWork (0);
 		return;
 	}
 
 	lock = SDL_CreateMutex();
 
-	for (i = 0; i < thread_pool.num_threads; i++)
-		Thread_Create(ThreadWork, NULL);
+	for (uint16_t i = 0; i < thread_count; i++)
+		threads[i] = Thread_Create (ThreadWork, NULL);
 
-	for (i = 0; i < thread_pool.num_threads; i++)
-		Thread_Wait(&thread_pool.threads[i]);
+	for (uint16_t i = 0; i < thread_count; i++)
+		Thread_Wait (threads[i]);
 
 	SDL_DestroyMutex(lock);
 	lock = NULL;
@@ -161,23 +201,23 @@ RunThreadsOn
 Entry point for all thread work requests.
 =============
 */
-void RunThreadsOn(int workcount, qboolean progress, void(*func)(int))
+void RunThreadsOn(int32_t workcount, qboolean progress, ThreadWorkFunc func)
 {
 	time_t start, end;
 
 	thread_work.index = 0;
 	thread_work.count = workcount;
-	thread_work.fraction = -1;
+	thread_work.fraction = 0;
 	thread_work.progress = progress;
 
 	WorkFunction = func;
 
-	start = time(NULL);
+	start = time (NULL);
 
-	RunThreads();
+	RunThreads ();
 
-	end = time(NULL);
+	end = time (NULL);
 
 	if (thread_work.progress)
-		Con_Print(" (%i seconds)\n", (int)(end - start));
+		Con_Print (" (%i seconds)\n", (int)(end - start));
 }

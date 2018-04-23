@@ -221,7 +221,7 @@ void CalcPortalVis (void)
 {
 	int		i;
 
-// fastvis just uses mightsee for a very loose bound
+// fastvis just uses the flood result for a very loose bound
 	if (fastvis)
 	{
 		for (i=0 ; i<numportals*2 ; i++)
@@ -496,12 +496,7 @@ int Vis_Main (int argc, char **argv)
 	verbose = false;
 	for (i=1 ; i<argc ; i++)
 	{
-		if (!strcmp(argv[i],"-threads"))
-		{
-			numthreads = atoi (argv[i+1]);
-			i++;
-		}
-		else if (!strcmp(argv[i], "-fast"))
+		if (!strcmp(argv[i], "-fast"))
 		{
 			Con_Print("fastvis = true\n");
 			fastvis = true;
@@ -533,7 +528,7 @@ int Vis_Main (int argc, char **argv)
 	}
 
 	if (i != argc - 1)
-		Con_Error("usage: q2map -vis [-threads #] [-level 0-4] [-fast] [-v] bspfile\n");
+		Con_Error("usage: q2map -vis [-level 0-4] [-fast] [-v] bspfile\n");
 
 	start = I_FloatTime ();
 
