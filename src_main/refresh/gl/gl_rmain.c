@@ -336,14 +336,14 @@ void R_SetupGL (void)
 	if (!gl_lockfrustum->value)
 	{
 		// left
-		frustum[FRUSTUM_LEFT].normal[0] = r_mvpmatrix._14 + r_mvpmatrix._11;
-		frustum[FRUSTUM_LEFT].normal[1] = r_mvpmatrix._24 + r_mvpmatrix._21;
-		frustum[FRUSTUM_LEFT].normal[2] = r_mvpmatrix._34 + r_mvpmatrix._31;
+		frustum[FRUSTUM_LEFT].normal[0] = r_mvpmatrix._14 - r_mvpmatrix._11;
+		frustum[FRUSTUM_LEFT].normal[1] = r_mvpmatrix._24 - r_mvpmatrix._21;
+		frustum[FRUSTUM_LEFT].normal[2] = r_mvpmatrix._34 - r_mvpmatrix._31;
 
 		// right
-		frustum[FRUSTUM_RIGHT].normal[0] = r_mvpmatrix._14 - r_mvpmatrix._11;
-		frustum[FRUSTUM_RIGHT].normal[1] = r_mvpmatrix._24 - r_mvpmatrix._22;
-		frustum[FRUSTUM_RIGHT].normal[2] = r_mvpmatrix._34 - r_mvpmatrix._31;
+		frustum[FRUSTUM_RIGHT].normal[0] = r_mvpmatrix._14 + r_mvpmatrix._11;
+		frustum[FRUSTUM_RIGHT].normal[1] = r_mvpmatrix._24 + r_mvpmatrix._22;
+		frustum[FRUSTUM_RIGHT].normal[2] = r_mvpmatrix._34 + r_mvpmatrix._31;
 
 		// bottom
 		frustum[FRUSTUM_BOTTOM].normal[0] = r_mvpmatrix._14 + r_mvpmatrix._12;
@@ -354,19 +354,9 @@ void R_SetupGL (void)
 		frustum[FRUSTUM_TOP].normal[0] = r_mvpmatrix._14 - r_mvpmatrix._12;
 		frustum[FRUSTUM_TOP].normal[1] = r_mvpmatrix._24 - r_mvpmatrix._22;
 		frustum[FRUSTUM_TOP].normal[2] = r_mvpmatrix._34 - r_mvpmatrix._32;
-
-		// near
-		frustum[FRUSTUM_NEAR].normal[0] = r_mvpmatrix._13;
-		frustum[FRUSTUM_NEAR].normal[1] = r_mvpmatrix._23;
-		frustum[FRUSTUM_NEAR].normal[2] = r_mvpmatrix._33;
-
-		// far
-		frustum[FRUSTUM_FAR].normal[0] = r_mvpmatrix._14 - r_mvpmatrix._13;
-		frustum[FRUSTUM_FAR].normal[1] = r_mvpmatrix._24 - r_mvpmatrix._23;
-		frustum[FRUSTUM_FAR].normal[2] = r_mvpmatrix._34 - r_mvpmatrix._33;
 	}
 
-	for (i = 0; i < 6; i++)
+	for (i = 0; i < FRUSTUM_PLANES; i++)
 	{
 		frustum[i].type = PLANE_ANYZ;
 		frustum[i].dist = DotProduct(r_origin, frustum[i].normal);

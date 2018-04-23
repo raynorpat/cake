@@ -216,17 +216,15 @@ typedef struct
 
 typedef enum
 {
-	FRUSTUM_NEAR,
 	FRUSTUM_LEFT,
 	FRUSTUM_RIGHT,
 	FRUSTUM_BOTTOM,
 	FRUSTUM_TOP,
-	FRUSTUM_FAR,
-	FRUSTUM_PLANES = 5,
-	FRUSTUM_CLIPALL = 1 | 2 | 4 | 8 | 16 //| 32
+	FRUSTUM_PLANES = 4,
+	FRUSTUM_CLIPALL = 1 | 2 | 4 | 8
 } frustumBits_t;
 
-typedef cplane_t frustum_t[6];
+typedef cplane_t frustum_t[FRUSTUM_PLANES];
 
 //====================================================
 
