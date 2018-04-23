@@ -113,6 +113,9 @@ void PostFS ()
 	// brightness
 	sceneColor.rgb = doBrightnessAndContrast(sceneColor.rgb, brightnessContrastAmount.x, brightnessContrastAmount.y);
 
+	// dither screen to prevent banding artifacts
+	Dither(sceneColor.rgb);
+	
 	// convert back to sRGB
 	sceneColor.rgb = LinearRGBToSRGB(sceneColor.rgb);
 	
