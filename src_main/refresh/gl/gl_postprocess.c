@@ -345,8 +345,8 @@ void RPostProcess_Init(void)
 	r_bloomBlurPasses = Cvar_Get("r_bloomBlurPasses", "2", 0);
 
 	r_postprocessing = Cvar_Get("r_postprocessing", "1", CVAR_ARCHIVE);
-	r_ssao = Cvar_Get("r_ssao", "1", CVAR_ARCHIVE);
-	r_fxaa = Cvar_Get("r_fxaa", "0", CVAR_ARCHIVE);
+	r_ssao = Cvar_Get("r_ssao", "1", CVAR_ARCHIVE | CVAR_LATCH);
+	r_fxaa = Cvar_Get("r_fxaa", "0", CVAR_ARCHIVE | CVAR_LATCH);
 
 	r_colorGradeOverride = Cvar_Get("r_colorGradeOverride", "", 0);
 }

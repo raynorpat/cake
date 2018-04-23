@@ -527,11 +527,11 @@ static void R_Register (void)
 	r_znear = Cvar_Get("r_znear", "4", 0);
 	r_zfar = Cvar_Get("r_zfar", "0", 0);
 
-	r_useSrgb = Cvar_Get ("r_useSrgb", "1", CVAR_ARCHIVE);
-	r_useTonemap = Cvar_Get ("r_useTonemap", "1", CVAR_ARCHIVE);
-	r_useVignette = Cvar_Get ("r_useVignette", "1", CVAR_ARCHIVE);
-	r_useFilmgrain = Cvar_Get ("r_useFilmgrain", "1", CVAR_ARCHIVE);
-	r_useBloom = Cvar_Get ("r_useBloom", "1", CVAR_ARCHIVE);
+	r_useSrgb = Cvar_Get ("r_useSrgb", "1", CVAR_ARCHIVE | CVAR_LATCH);
+	r_useTonemap = Cvar_Get ("r_useTonemap", "1", CVAR_ARCHIVE | CVAR_LATCH);
+	r_useVignette = Cvar_Get ("r_useVignette", "1", CVAR_ARCHIVE | CVAR_LATCH);
+	r_useFilmgrain = Cvar_Get ("r_useFilmgrain", "1", CVAR_ARCHIVE | CVAR_LATCH);
+	r_useBloom = Cvar_Get ("r_useBloom", "1", CVAR_ARCHIVE | CVAR_LATCH);
 
 	r_lightlevel = Cvar_Get ("r_lightlevel", "0", 0);
 
