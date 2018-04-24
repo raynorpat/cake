@@ -165,6 +165,10 @@ static void GL_GetShaderHeader (GLenum shadertype, GLchar *entrypoint, char *des
 	if (r_ssao->value)
 		Q_strlcat (dest, "#ifndef r_ssao\n#define r_ssao 1\n#endif\n", size);
 
+	// debugging defines
+	if (gl_showao->value)
+		Q_strlcat(dest, "#ifndef gl_showao\n#define gl_showao 1\n#endif\n", size);
+
 	// load up common.glsl
 	char *commonbuf = NULL;
 	char *commonsrc;

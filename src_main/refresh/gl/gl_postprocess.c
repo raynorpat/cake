@@ -688,7 +688,7 @@ void RPostProcess_GlobalFog(void)
 	GL_LoadMatrix(&unprojectionmatrix, &r_mvpmatrix);
 	GL_InvertMatrix(&unprojectionmatrix, NULL, &unprojectionmatrix);
 	GL_TranslateMatrix(&unprojectionmatrix, -1.0, -1.0, -1.0);
-	GL_ScaleMatrix(&unprojectionmatrix, 2.0 * (1.0f / vid.width), 2.0 * (1.0f / vid.height), 2.0);
+	GL_ScaleMatrix(&unprojectionmatrix, 2.0 / vid.width, 2.0 / vid.height, 2.0);
 
 	GL_Enable(!DEPTHTEST_BIT | !CULLFACE_BIT | BLEND_BIT);
 

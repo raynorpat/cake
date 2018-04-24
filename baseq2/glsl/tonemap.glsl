@@ -74,6 +74,11 @@ void TonemapFS ()
 	#endif
 #endif
 
+	// debugging
+#if gl_showao
+	sceneColor = sceneAOColor;
+#endif
+
 	// send it out to the screen
 	fragColor = sceneColor;
 }

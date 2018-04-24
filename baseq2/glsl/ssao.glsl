@@ -98,14 +98,14 @@ void SSAOFS ()
 		discard;
 		return;
 	}
-	
 	center = depthToZ( center );
-	float spread = max( 1.0, 100.0 / center );
+	
+	float spread = max( 1.0, 300.0 / center );
 
-	for(int i = 0; i < offsets.length(); i++) {
+	for(int i = 0; i < offsets.length(); i++)
+	{
 		vec2 of;
-		int checker = int(mod(gl_FragCoord.x - gl_FragCoord.y, 2.0));
-		if ( checker != 0 )
+		if ((int(gl_FragCoord.x - gl_FragCoord.y) & 1) != 0)
 			of = offsets[i].xy;
 		else
 			of = offsets[i].zw;
