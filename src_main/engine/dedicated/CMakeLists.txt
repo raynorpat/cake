@@ -97,7 +97,7 @@ set(SHARED_INCLUDES
 	../../shared/q_types.h
 	../../shared/q_endian.h
 	../../shared/q_shared.h
-	../../shared/qfiles.h
+	../../shared/q_files.h
 	)
 set(SHARED_SOURCES
 	../../shared/m_flash.c

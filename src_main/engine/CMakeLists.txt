@@ -245,7 +245,7 @@ set(SHARED_INCLUDES
 	../shared/q_endian.h
 	../shared/q_shared.h
 	../shared/q_gitbuild.h
-	../shared/qfiles.h
+	../shared/q_files.h
 	)
 set(SHARED_SOURCES
 	../shared/m_flash.c

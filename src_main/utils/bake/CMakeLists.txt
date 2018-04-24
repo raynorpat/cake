@@ -106,6 +106,7 @@ source_group("roq" FILES ${ROQ_SOURCES})
 include_directories(
 	.
 	../common
+	../../shared
 	)
 
 # build it

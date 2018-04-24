@@ -13,6 +13,7 @@ source_group("qe4" FILES ${QE4_SOURCES})
 # set include directories
 include_directories(
 	.
+	../../shared
 	)
 
 # windows resources

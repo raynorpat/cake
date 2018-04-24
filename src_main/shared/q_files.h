@@ -19,7 +19,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 */
 
 //
-// qfiles.h: quake file formats
+// q_files.h: quake file formats
 // This file must be identical in the quake and utils directories
 //
 
@@ -421,6 +421,8 @@ typedef struct
 #define	SURF_FLOWING	0x40	// scroll towards angle
 #define	SURF_NODRAW		0x80	// don't bother referencing the texture
 
+#define	SURF_HINT		0x100	// make a primary bsp splitter
+#define	SURF_SKIP		0x200	// completely ignore, allowing non-closed brushes
 
 
 

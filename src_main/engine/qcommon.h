@@ -561,7 +561,7 @@ CMODEL
 */
 
 
-#include "qfiles.h"
+#include "q_files.h"
 
 cmodel_t	*CM_LoadMap (char *name, qboolean clientload, unsigned *checksum);
 cmodel_t	*CM_InlineModel (char *name);	// *1, *2, etc

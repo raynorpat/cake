@@ -54,7 +54,7 @@ typedef struct
     int		type;
 } plane_t;
 
-#include "qfiles.h"
+#include "q_files.h"
 
 #include "textures.h"
 #include "brush.h"
