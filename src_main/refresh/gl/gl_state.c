@@ -370,7 +370,7 @@ void GL_SetDefaultState(void)
 	GL_BindNullTextures ();
 
 	// reset all framebuffer state
-	GL_BindNullFramebuffers ();
+	R_BindNullFBO ();
 
 	if(gl_config.gl_arb_framebuffer_srgb_support)
 		glEnable(GL_FRAMEBUFFER_SRGB);
@@ -404,15 +404,10 @@ void GL_SetDefaultState(void)
 	glDepthFunc(GL_LEQUAL);
 
 	glDepthRange(gldepthmin, gldepthmax);
-
-	R_BindNullFBO();
 }
-
 
 void GL_UpdateSwapInterval(void)
 {
 	if (gl_swapinterval->modified)
-	{
 		gl_swapinterval->modified = false;
-	}
 }

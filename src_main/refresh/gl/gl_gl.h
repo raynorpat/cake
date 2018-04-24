@@ -3578,6 +3578,15 @@ GLAPI PFNGLVERTEXARRAYVERTEXATTRIBDIVISOREXTPROC glad_glVertexArrayVertexAttribD
 GLAPI int GLAD_GL_EXT_texture_filter_anisotropic;
 #endif
 
+void* APIENTRY GLDSA_MapNamedBuffer(GLuint buffer, GLenum access);
+void* APIENTRY GLDSA_MapNamedBufferRange(GLuint buffer, GLintptr offset, GLsizei length, GLbitfield access);
+GLboolean APIENTRY GLDSA_UnmapNamedBuffer(GLuint buffer);
+void APIENTRY GLDSA_NamedBufferSubData(GLuint buffer, GLintptr offset, GLsizei size, const GLvoid *data);
+void APIENTRY GLDSA_NamedBufferData(GLuint buffer, GLsizei size, const GLvoid *data, GLenum usage);
+
+void APIENTRY GLDSA_EnableVertexArrayAttribEXT(GLuint vaobj, GLuint index);
+void APIENTRY GLDSA_VertexArrayVertexAttribOffsetEXT(GLuint vaobj, GLuint buffer, GLuint index, GLint size, GLenum type, GLboolean normalized, GLsizei stride, GLintptr offset);
+
 void GL_BindNullTextures(void);
 int GL_BindMultiTexture(GLenum texunit, GLenum target, GLuint texture);
 
@@ -3588,8 +3597,11 @@ GLvoid APIENTRY GLDSA_TextureImage2DEXT(GLuint texture, GLenum target, GLint lev
 	GLsizei width, GLsizei height, GLint border, GLenum format, GLenum type, const GLvoid *pixels);
 GLvoid APIENTRY GLDSA_TextureSubImage2DEXT(GLuint texture, GLenum target, GLint level, GLint xoffset, GLint yoffset,
 	GLsizei width, GLsizei height, GLenum format, GLenum type, const GLvoid *pixels);
+GLvoid APIENTRY GLDSA_TextureSubImage3DEXT(GLuint texture, GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset,
+	GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLenum type, const GLvoid *pixels);
 GLvoid APIENTRY GLDSA_CopyTextureSubImage2DEXT(GLuint texture, GLenum target, GLint level, GLint xoffset, GLint yoffset,
 	GLint x, GLint y, GLsizei width, GLsizei height);
+GLvoid APIENTRY GLDSA_TextureStorage2DEXT(GLuint texture, GLenum target, GLint level, GLenum internalformat, GLsizei width, GLsizei height);
 GLvoid APIENTRY GLDSA_CompressedTextureImage2DEXT(GLuint texture, GLenum target, GLint level, GLenum internalformat,
 	GLsizei width, GLsizei height, GLint border, GLsizei imageSize, const GLvoid *data);
 GLvoid APIENTRY GLDSA_CompressedTextureSubImage2DEXT(GLuint texture, GLenum target, GLint level,

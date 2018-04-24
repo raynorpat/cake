@@ -1661,7 +1661,26 @@ static void load_GL_ARB_vertex_buffer_object(GLADloadproc load) {
 	glad_glGetBufferPointervARB = (PFNGLGETBUFFERPOINTERVARBPROC)load("glGetBufferPointervARB");
 }
 static void load_GL_EXT_direct_state_access(GLADloadproc load) {
-	if(!GLAD_GL_EXT_direct_state_access) return;
+	if (!GLAD_GL_EXT_direct_state_access) {
+		// raynorpat: link to our wrappers...
+		// NOTE: this is only a simple subset of the extension
+		glad_glBindMultiTextureEXT = GLDSA_BindMultiTextureEXT;
+
+		glad_glTextureSubImage3DEXT = GLDSA_TextureSubImage3DEXT;
+		glad_glTextureSubImage2DEXT = GLDSA_TextureSubImage2DEXT;
+		glad_glTextureImage2DEXT = GLDSA_TextureImage2DEXT;
+		glad_glTextureStorage2DEXT = GLDSA_TextureStorage2DEXT;
+
+		glad_glEnableVertexArrayAttribEXT = GLDSA_EnableVertexArrayAttribEXT;
+		glad_glVertexArrayVertexAttribOffsetEXT = GLDSA_VertexArrayVertexAttribOffsetEXT;
+
+		glad_glNamedBufferSubDataEXT = GLDSA_NamedBufferSubData;
+		glad_glNamedBufferDataEXT = GLDSA_NamedBufferData;
+		glad_glUnmapNamedBufferEXT = GLDSA_UnmapNamedBuffer;
+		glad_glMapNamedBufferRangeEXT = GLDSA_MapNamedBufferRange;
+		glad_glMapNamedBufferEXT = GLDSA_MapNamedBuffer;
+		return;
+	}
 	glad_glMatrixLoadfEXT = (PFNGLMATRIXLOADFEXTPROC)load("glMatrixLoadfEXT");
 	glad_glMatrixLoaddEXT = (PFNGLMATRIXLOADDEXTPROC)load("glMatrixLoaddEXT");
 	glad_glMatrixMultfEXT = (PFNGLMATRIXMULTFEXTPROC)load("glMatrixMultfEXT");

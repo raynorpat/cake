@@ -13,24 +13,48 @@ static struct
 	GLuint renderbuffer;
 } glDsaState;
 
-/*
-glMapNamedBufferEXT
-glMapNamedBufferRangeEXT
-glUnmapNamedBufferEXT
-glNamedBufferDataEXT
-glNamedBufferSubDataEXT
+void* APIENTRY GLDSA_MapNamedBuffer(GLuint buffer, GLenum access)
+{
+	glBindBuffer(GL_COPY_READ_BUFFER, buffer);
+	return glMapBuffer(GL_COPY_READ_BUFFER, access);
+}
 
-glEnableVertexArrayAttribEXT
-glVertexArrayVertexAttribOffsetEXT
+void* APIENTRY GLDSA_MapNamedBufferRange(GLuint buffer, GLintptr offset, GLsizei length, GLbitfield access)
+{
+	glBindBuffer(GL_COPY_READ_BUFFER, buffer);
+	return glMapBufferRange(GL_COPY_READ_BUFFER, offset, length, access);
+}
 
-glTextureStorage2DEXT
-glTextureSubImage2DEXT
-glTextureImage2DEXT
-glTextureSubImage2DEXT
-glTextureSubImage3DEXT
+GLboolean APIENTRY GLDSA_UnmapNamedBuffer(GLuint buffer)
+{
+	glBindBuffer(GL_COPY_READ_BUFFER, buffer);
+	return glUnmapBuffer(GL_COPY_READ_BUFFER);
+}
 
-glBindMultiTextureEXT
-*/
+void APIENTRY GLDSA_NamedBufferSubData(GLuint buffer, GLintptr offset, GLsizei size, const GLvoid *data)
+{
+	glBindBuffer(GL_COPY_READ_BUFFER, buffer);
+	glBufferSubData(GL_COPY_READ_BUFFER, offset, size, data);
+}
+
+void APIENTRY GLDSA_NamedBufferData(GLuint buffer, GLsizei size, const GLvoid *data, GLenum usage)
+{
+	glBindBuffer(GL_COPY_READ_BUFFER, buffer);
+	glBufferData(GL_COPY_READ_BUFFER, size, data, usage);
+}
+
+void APIENTRY GLDSA_VertexArrayVertexAttribOffsetEXT(GLuint vaobj, GLuint buffer, GLuint index, GLint size, GLenum type, GLboolean normalized, GLsizei stride, GLintptr offset)
+{
+	glBindVertexArray(vaobj);
+	glBindBuffer(GL_ARRAY_BUFFER, buffer);
+	glVertexAttribPointer(index, size, type, normalized, stride, &offset);
+}
+
+void APIENTRY GLDSA_EnableVertexArrayAttribEXT(GLuint vaobj, GLuint index)
+{
+	glBindVertexArray (vaobj);
+	glEnableVertexAttribArray (index);
+}
 
 void GL_BindNullTextures(void)
 {
@@ -108,6 +132,19 @@ GLvoid APIENTRY GLDSA_TextureSubImage2DEXT(GLuint texture, GLenum target, GLint 
 {
 	GL_BindMultiTexture(glDsaState.texunit, target, texture);
 	glTexSubImage2D(target, level, xoffset, yoffset, width, height, format, type, pixels);
+}
+
+GLvoid APIENTRY GLDSA_TextureSubImage3DEXT(GLuint texture, GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset,
+	GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLenum type, const GLvoid *pixels)
+{
+	GL_BindMultiTexture(glDsaState.texunit, target, texture);
+	glTexSubImage3D(target, level, xoffset, yoffset, zoffset, width, height, depth, format, type, pixels);
+}
+
+GLvoid APIENTRY GLDSA_TextureStorage2DEXT(GLuint texture, GLenum target, GLint level, GLenum internalformat, GLsizei width, GLsizei height)
+{
+	GL_BindMultiTexture(glDsaState.texunit, target, texture);
+	glTexStorage2D(target, level, internalformat, width, height);
 }
 
 GLvoid APIENTRY GLDSA_CopyTextureSubImage2DEXT(GLuint texture, GLenum target, GLint level, GLint xoffset, GLint yoffset,
