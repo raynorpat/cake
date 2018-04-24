@@ -50,8 +50,6 @@ cvar_t		*scr_graphheight;
 cvar_t		*scr_graphscale;
 cvar_t		*scr_graphshift;
 
-cvar_t		*scr_keepVidAspect;
-
 char		*crosshairDotPic[NUM_CROSSHAIRS][MAX_QPATH];
 char		*crosshairCirclePic[NUM_CROSSHAIRS][MAX_QPATH];
 char		*crosshairCrossPic[NUM_CROSSHAIRS][MAX_QPATH];
@@ -69,33 +67,18 @@ Adjusted for resolution and screen aspect ratio
 */
 void SCR_AdjustFrom640 (float *x, float *y, float *w, float *h)
 {
-	float           xscale;
-	float           yscale;
-	float           xbias = 0.0f;
-	float           ybias = 0.0f;
+	float xscale;
+	float yscale;
 
 	// adjust for wide screens
-	xscale = viddef.width / 640.0f;
-	yscale = viddef.height / 480.0f;
-	if (scr_keepVidAspect->integer)
-	{
-		if (viddef.width * 480 > viddef.height * 640)
-		{
-			xbias = 0.5f * (viddef.width - (viddef.height * 640.0f / 480.0f));
-			xscale = yscale;
-		}
-		else if (viddef.width * 480 < viddef.height * 640)
-		{
-			ybias = 0.5f * (viddef.height - (viddef.width * 480.0f / 640.0f));
-			yscale = xscale;
-		}
-	}
+	xscale = viddef.width * (1.0f / 640.0f);
+	yscale = viddef.height * (1.0f / 480.0f);
 
 	// scale for screen sizes
 	if (x)
-		*x = xbias + *x * xscale;
+		*x = *x * xscale;
 	if (y)
-		*y = ybias + *y * yscale;
+		*y = *y * yscale;
 	if (w)
 		*w *= xscale;
 	if (h)
@@ -676,7 +659,6 @@ void SCR_Init (void)
 	scr_graphheight = Cvar_Get ("graphheight", "32", 0);
 	scr_graphscale = Cvar_Get ("graphscale", "1", 0);
 	scr_graphshift = Cvar_Get ("graphshift", "0", 0);
-	scr_keepVidAspect = Cvar_Get ("scr_keepVidAspect", "0", CVAR_ARCHIVE);
 
 	// register our commands
 	Cmd_AddCommand ("loading", SCR_Loading_f);

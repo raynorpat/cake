@@ -35,7 +35,6 @@ static menuslider_s		s_options_screen_crosshaircircle_slider;
 static menuslider_s		s_options_screen_crosshaircross_slider;
 static menuslider_s		s_options_screen_crosshairscale_slider;
 static menuslider_s		s_options_screen_crosshairalpha_slider;
-static menulist_s		s_options_screen_screenvidaspect_box;
 static menuslider_s		s_options_screen_hudalpha_slider;
 static menuslider_s		s_options_screen_gunalpha_slider;
 
@@ -69,11 +68,6 @@ static void CrosshairAlphaFunc(void *unused)
 	Cvar_SetValue("crosshairAlpha", s_options_screen_crosshairalpha_slider.curvalue / 10);
 }
 
-static void ScreenAspectFunc(void *unused)
-{
-	Cvar_SetValue("scr_keepVidAspect", s_options_screen_screenvidaspect_box.curvalue);
-}
-
 static void HUDAlphaFunc(void *unused)
 {
 	Cvar_SetValue("scr_hudAlpha", s_options_screen_hudalpha_slider.curvalue / 10);
@@ -101,8 +95,6 @@ static void ScreenSetMenuItemValues (void)
 	s_options_screen_crosshairscale_slider.curvalue = Cvar_VariableValue("crosshairSize");
 
 	s_options_screen_crosshairalpha_slider.curvalue = Cvar_VariableValue("crosshairAlpha") * 10;
-
-	s_options_screen_screenvidaspect_box.curvalue = scr_keepVidAspect->value;
 
 	s_options_screen_hudalpha_slider.curvalue = Cvar_VariableValue("scr_hudAlpha") * 10;
 	s_options_screen_gunalpha_slider.curvalue = Cvar_VariableValue("cl_gunAlpha") * 10;
@@ -186,14 +178,6 @@ void Screen_MenuInit (void)
 	s_options_screen_crosshairalpha_slider.curvalue = Cvar_VariableValue("crosshairAlpha") * 10;
 	s_options_screen_crosshairalpha_slider.generic.statusbar = "changes transparency of crosshair";
 
-	s_options_screen_screenvidaspect_box.generic.type = MTYPE_SPINCONTROL;
-	s_options_screen_screenvidaspect_box.generic.x = 0;
-	s_options_screen_screenvidaspect_box.generic.y = y += 2 * MENU_LINE_SIZE;
-	s_options_screen_screenvidaspect_box.generic.name = "keep 4:3 screen aspect";
-	s_options_screen_screenvidaspect_box.generic.callback = ScreenAspectFunc;
-	s_options_screen_screenvidaspect_box.itemnames = yesno_names;
-	s_options_screen_screenvidaspect_box.generic.statusbar = "enables or disables 4:3 screen aspect resizing";
-
 	s_options_screen_hudalpha_slider.generic.type = MTYPE_SLIDER;
 	s_options_screen_hudalpha_slider.generic.x = 0;
 	s_options_screen_hudalpha_slider.generic.y = y += 2 * MENU_LINE_SIZE;
@@ -225,7 +209,6 @@ void Screen_MenuInit (void)
 	Menu_AddItem (&s_screens_menu, (void *) &s_options_screen_crosshaircross_slider);
 	Menu_AddItem (&s_screens_menu, (void *) &s_options_screen_crosshairscale_slider);
 	Menu_AddItem (&s_screens_menu, (void *) &s_options_screen_crosshairalpha_slider);
-	Menu_AddItem (&s_screens_menu, (void *) &s_options_screen_screenvidaspect_box);
 	Menu_AddItem (&s_screens_menu, (void *) &s_options_screen_hudalpha_slider);
 	Menu_AddItem (&s_screens_menu, (void *) &s_options_screen_gunalpha_slider);
 }
