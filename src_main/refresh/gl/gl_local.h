@@ -265,6 +265,7 @@ extern	cvar_t	*r_useTonemap;
 extern	cvar_t	*r_useVignette;
 extern	cvar_t	*r_useFilmgrain;
 extern	cvar_t	*r_useBloom;
+extern	cvar_t	*r_useParticleCircle;
 
 extern	cvar_t	*r_lightlevel;	// FIXME: This is a HACK to get the client's light level
 

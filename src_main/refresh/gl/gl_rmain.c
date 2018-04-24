@@ -90,6 +90,7 @@ cvar_t	*r_useTonemap;
 cvar_t	*r_useVignette;
 cvar_t	*r_useFilmgrain;
 cvar_t	*r_useBloom;
+cvar_t	*r_useParticleCircle;
 
 cvar_t	*r_lightlevel;	// FIXME: This is a HACK to get the client's light level
 
@@ -533,6 +534,7 @@ static void R_Register (void)
 	r_useVignette = Cvar_Get ("r_useVignette", "1", CVAR_ARCHIVE | CVAR_LATCH);
 	r_useFilmgrain = Cvar_Get ("r_useFilmgrain", "1", CVAR_ARCHIVE | CVAR_LATCH);
 	r_useBloom = Cvar_Get ("r_useBloom", "1", CVAR_ARCHIVE | CVAR_LATCH);
+	r_useParticleCircle = Cvar_Get("r_useParticleCircle", "0", CVAR_ARCHIVE | CVAR_LATCH);
 
 	r_lightlevel = Cvar_Get ("r_lightlevel", "0", 0);
 

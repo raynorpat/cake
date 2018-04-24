@@ -38,6 +38,13 @@ void ParticleFS ()
 {
 	vec4 color = iocolor;
 
+#if r_useParticleCircle
+	// turn the square into a nice circle 
+	color.a = (1.0 - dot (offsets.st, offsets.st)) * 2.0;
+	if( color.a <= 1.0 )
+		discard;
+#endif
+
 	// multiply the particle color alpha for fading out
 	fragColor = color * iocolor.a;
 }

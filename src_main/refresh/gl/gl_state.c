@@ -164,6 +164,8 @@ static void GL_GetShaderHeader (GLenum shadertype, GLchar *entrypoint, char *des
 		Q_strlcat (dest, "#ifndef r_useFilmgrain\n#define r_useFilmgrain 1\n#endif\n", size);
 	if (r_ssao->value)
 		Q_strlcat (dest, "#ifndef r_ssao\n#define r_ssao 1\n#endif\n", size);
+	if (r_useParticleCircle->value)
+		Q_strlcat (dest, "#ifndef r_useParticleCircle\n#define r_useParticleCircle 1\n#endif\n", size);
 
 	// debugging defines
 	if (gl_showao->value)
