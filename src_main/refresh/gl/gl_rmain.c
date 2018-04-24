@@ -908,6 +908,8 @@ success:
 	vid.refreshRate = viddef.refreshRate;
 	vid.vsyncActive = viddef.vsyncActive;
 
+	VID_Printf(PRINT_ALL, S_COLOR_GREEN "OpenGL initialized.\n");
+
 	// get our various GL strings
 	gl_config.vendor_string = glGetString(GL_VENDOR);
 	VID_Printf(PRINT_ALL, "GL_VENDOR: %s\n", gl_config.vendor_string);
