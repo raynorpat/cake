@@ -131,7 +131,7 @@ static int VID_Menu_FindDetectedResolution(int mode)
 		return mode;
 
 	if (mode < 0)
-		return -1;
+		return 0;
 
 	for (i = 0; detectedResolutions[i]; i++)
 	{
@@ -139,7 +139,7 @@ static int VID_Menu_FindDetectedResolution(int mode)
 			return i;
 	}
 
-	return -1;
+	return 0;
 }
 
 /*
