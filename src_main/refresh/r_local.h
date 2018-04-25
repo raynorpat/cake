@@ -389,6 +389,11 @@ void RE_GL_RegisterFont (char *fontName, int pointSize, fontInfo_t * font);
 
 int R_GetClippedFragments (vec3_t origin, vec3_t axis[3], float radius, int maxPoints, vec3_t *points, int maxFragments, markFragment_t *fragments);
 
+void RDecal_CreatePrograms (void);
+void R_ClearDecals (void);
+void R_DrawDecals (void);
+void RE_GL_AddDecal (vec3_t origin, vec3_t dir, vec4_t color, float size, int type, int flags, float angle);
+
 typedef struct
 {
 	const char *renderer_string;

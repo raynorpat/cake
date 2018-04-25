@@ -1031,6 +1031,7 @@ int RE_GL_Init (void)
 	RBeam_CreatePrograms ();
 	RNull_CreatePrograms ();
 	RPart_CreatePrograms ();
+	RDecal_CreatePrograms ();
 
 	// create our ubo for shared stuff
 	glGenBuffers (1, &gl_sharedubo);
