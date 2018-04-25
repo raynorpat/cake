@@ -527,7 +527,7 @@ static void R_Register (void)
 	r_lerpmodels = Cvar_Get ("r_lerpmodels", "1", 0);
 	r_speeds = Cvar_Get ("r_speeds", "0", 0);
 	r_znear = Cvar_Get("r_znear", "4", 0);
-	r_zfar = Cvar_Get("r_zfar", "0", 0);
+	r_zfar = Cvar_Get("r_zfar", "4096", 0);
 
 	r_useSrgb = Cvar_Get ("r_useSrgb", "1", CVAR_ARCHIVE | CVAR_LATCH);
 	r_useTonemap = Cvar_Get ("r_useTonemap", "1", CVAR_ARCHIVE | CVAR_LATCH);

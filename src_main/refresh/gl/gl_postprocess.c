@@ -603,7 +603,7 @@ void RPostProcess_SSAO(void)
 
 	zFarParam[0] = 2.0f * tanf(DEG2RAD(r_newrefdef.fov_x * 0.5f)) / vid.width;
 	zFarParam[1] = 2.0f * tanf(DEG2RAD(r_newrefdef.fov_y * 0.5f)) / vid.height;
-	zFarParam[2] = r_zfar->value ? r_zfar->value : 4092;
+	zFarParam[2] = r_zfar->value ? r_zfar->value : 4096;
 	glProgramUniform3f(gl_ssaoprog, u_ssaoZFar, zFarParam[0], zFarParam[1], zFarParam[2]);
 
 	zNear = r_znear->value ? r_znear->value : 4.0;
