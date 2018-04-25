@@ -21,6 +21,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
 #include "client.h"
 
+extern qboolean scr_drawWide;
+
 /*
 ================
 CL_ParseInventory
@@ -53,6 +55,8 @@ void CL_DrawInventory (void)
 	int		selected;
 	int		top;
 	vec4_t	fontColor;
+
+	scr_drawWide = true;
 
 	selected = cl.frame.playerstate.stats[STAT_SELECTED_ITEM];
 
@@ -135,4 +139,6 @@ void CL_DrawInventory (void)
 		SCR_Text_Paint (x, y + h, 0.2f, fontColor, string, 0, 0, 0, &cls.consoleFont);
 		y += SMALLCHAR_WIDTH;
 	}
+
+	scr_drawWide = false;
 }

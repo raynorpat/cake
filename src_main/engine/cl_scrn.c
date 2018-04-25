@@ -50,6 +50,8 @@ cvar_t		*scr_graphheight;
 cvar_t		*scr_graphscale;
 cvar_t		*scr_graphshift;
 
+qboolean	scr_drawWide = false;
+
 char		*crosshairDotPic[NUM_CROSSHAIRS][MAX_QPATH];
 char		*crosshairCirclePic[NUM_CROSSHAIRS][MAX_QPATH];
 char		*crosshairCrossPic[NUM_CROSSHAIRS][MAX_QPATH];
@@ -67,18 +69,29 @@ Adjusted for resolution and screen aspect ratio
 */
 void SCR_AdjustFrom640 (float *x, float *y, float *w, float *h)
 {
-	float xscale;
-	float yscale;
+	float xscale, yscale;
+	float bias;
 
-	// adjust for wide screens
+	// for 640x480 virtualized screen
 	xscale = viddef.width * (1.0f / 640.0f);
 	yscale = viddef.height * (1.0f / 480.0f);
+	if (((viddef.width * 480) > (viddef.height * 640)) && scr_drawWide)
+	{
+		// adjust for wide screen
+		bias = 0.5f * (viddef.width - (viddef.height * (640.0f / 480.0f)));
+		xscale = yscale;
+	}
+	else
+	{
+		// no wide screen
+		bias = 0;
+	}
 
 	// scale for screen sizes
 	if (x)
-		*x = *x * xscale;
+		*x = *x * xscale + bias;
 	if (y)
-		*y = *y * yscale;
+		*y *= yscale;
 	if (w)
 		*w *= xscale;
 	if (h)
@@ -579,7 +592,7 @@ void SCR_DrawCenterString (void)
 		}
 		linebuffer[l] = 0;
 
-		COM_StripHighBits (linebuffer, 128); // strip out any quake 2 highbit colors
+		COM_StripHighBits (linebuffer, 1); // strip out any quake 2 highbit colors
 
 		w = SCR_Text_Width (linebuffer, 0.5f, 0, &cls.consoleBoldFont);
 		h = SCR_Text_Height (linebuffer, 0.5f, 0, &cls.consoleBoldFont);
@@ -1134,6 +1147,8 @@ void SCR_ExecuteLayoutString (char *s)
 
 	Vector4Set (mainHUDColor, 1.0, 1.0, 1.0, scr_hudAlpha->value);
 
+	scr_drawWide = true;
+
 	while (s)
 	{
 		token = COM_Parse (&s);
@@ -1484,6 +1499,8 @@ void SCR_ExecuteLayoutString (char *s)
 			continue;
 		}
 	}
+
+	scr_drawWide = false;
 }
 
 
