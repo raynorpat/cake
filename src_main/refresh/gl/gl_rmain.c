@@ -344,7 +344,7 @@ void R_SetupGL (void)
 
 		// right
 		frustum[FRUSTUM_RIGHT].normal[0] = r_mvpmatrix._14 + r_mvpmatrix._11;
-		frustum[FRUSTUM_RIGHT].normal[1] = r_mvpmatrix._24 + r_mvpmatrix._22;
+		frustum[FRUSTUM_RIGHT].normal[1] = r_mvpmatrix._24 + r_mvpmatrix._21;
 		frustum[FRUSTUM_RIGHT].normal[2] = r_mvpmatrix._34 + r_mvpmatrix._31;
 
 		// bottom
@@ -361,7 +361,7 @@ void R_SetupGL (void)
 	for (i = 0; i < FRUSTUM_PLANES; i++)
 	{
 		frustum[i].type = PLANE_ANYZ;
-		frustum[i].dist = DotProduct(r_origin, frustum[i].normal);
+		frustum[i].dist = DotProduct (r_origin, frustum[i].normal);
 		frustum[i].signbits = SignbitsForPlane (&frustum[i]);
 	}
 
