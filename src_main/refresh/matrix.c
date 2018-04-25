@@ -254,46 +254,8 @@ glmatrix *GL_OrthoMatrix (glmatrix *m, float left, float right, float bottom, fl
 	return GL_MultMatrix (m, &tmp, m);
 }
 
+
 glmatrix *GL_PerspectiveMatrix (glmatrix *m, float fovy, float aspect)
-{
-	glmatrix tmp;
-	float xmin, xmax, ymin, ymax;
-	float zNear, zFar;
-	float nudge = 1.0 - 1.0 / (1 << 23);
-
-	zNear = r_znear->value;
-	zFar = r_zfar->value;
-
-	ymax = zNear * tan(fovy * M_PI / 360.0);
-	ymin = -ymax;
-
-	xmin = ymin * aspect;
-	xmax = ymax * aspect;
-
-	tmp.m[0][0] = (2 * zNear) / (xmax - xmin);
-	tmp.m[0][1] = 0;
-	tmp.m[0][2] = 0;
-	tmp.m[0][3] = 0;
-
-	tmp.m[1][0] = 0;
-	tmp.m[1][1] = (2 * zNear) / (ymax - ymin);
-	tmp.m[1][2] = 0;
-	tmp.m[1][3] = 0;
-
-	tmp.m[2][0] = (xmax + xmin) / (xmax - xmin);
-	tmp.m[2][1] = (ymax + ymin) / (ymax - ymin);
-	tmp.m[2][2] = -1 * nudge;
-	tmp.m[2][3] = -1;
-
-	tmp.m[3][0] = 0;
-	tmp.m[3][1] = 0;
-	tmp.m[3][2] = -2 * zNear * nudge;
-	tmp.m[3][3] = 0;
-
-	return GL_MultMatrix(m, &tmp, m);
-}
-
-glmatrix *GL_PerspectiveMatrixInf (glmatrix *m, float fovy, float aspect)
 {
 	glmatrix tmp;
 	float xMin, xMax, yMin, yMax;
