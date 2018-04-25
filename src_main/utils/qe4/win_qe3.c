@@ -222,36 +222,6 @@ int QEW_SetupPixelFormat(HDC hDC, qboolean zbuffer )
 }
 
 /*
-=================
-Error
-
-For abnormal program terminations
-=================
-*/
-void Error (char *error, ...)
-{
-	va_list argptr;
-	char	text[1024];
-	char	text2[1024];
-	int		err;
-
-	err = GetLastError ();
-
-	va_start (argptr,error);
-	vsprintf (text, error,argptr);
-	va_end (argptr);
-
-	sprintf (text2, "%s\nGetLastError() = %i", text, err);
-	if (MessageBox(g_qeglobals.d_hwndMain, text2, "Error", MB_OKCANCEL | MB_ICONERROR /* MB_OK */) == IDOK)
-	{
-		if (modified && MessageBox(g_qeglobals.d_hwndMain, "Map has been modified. Do you want to save your changes?", "Error", MB_YESNO | MB_ICONQUESTION) == IDYES)
-			SaveAsDialog();
-
-		exit(1);
-	}
-}
-
-/*
 ======================================================================
 
 FILE DIALOGS
@@ -495,6 +465,42 @@ void CheckBspProcess (void)
 }
 
 extern int	cambuttonstate;
+
+int		argc;
+char	*argv[MAX_NUM_ARGVS];
+
+/*
+============
+ParseCommandLine
+============
+*/
+static void ParseCommandLine(char *lpCmdLine)
+{
+	argc = 1;
+	argv[0] = "programname";
+
+	while (*lpCmdLine && (argc < MAX_NUM_ARGVS))
+	{
+		while (*lpCmdLine && ((*lpCmdLine <= 32) || (*lpCmdLine > 126)))
+			lpCmdLine++;
+
+		if (*lpCmdLine)
+		{
+			argv[argc] = lpCmdLine;
+			argc++;
+
+			while (*lpCmdLine && ((*lpCmdLine > 32) && (*lpCmdLine <= 126)))
+				lpCmdLine++;
+
+			if (*lpCmdLine)
+			{
+				*lpCmdLine = 0;
+				lpCmdLine++;
+			}
+
+		}
+	}
+}
 
 /*
 ==================

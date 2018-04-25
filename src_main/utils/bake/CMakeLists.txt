@@ -53,14 +53,12 @@ source_group("bake" FILES ${BAKE_SOURCES})
 
 set(COMMON_INCLUDES
 	../common/bspfile.h
-	../common/cmdlib.h
 	../common/l3dslib.h
 	../common/scriplib.h
 	../common/trilib.h
 	)
 set(COMMON_SOURCES
 	../common/bspfile.c
-	../common/cmdlib.c
 	../common/l3dslib.c
 	../common/scriplib.c
 	../common/trilib.c
@@ -72,11 +70,13 @@ set(SHARED_INCLUDES
 	../../shared/mdfour.h
 	../../shared/q_math.h
 	../../shared/piclib.h
+	../../shared/cmdlib.h
 	)
 set(SHARED_SOURCES
 	../../shared/mdfour.c
 	../../shared/q_math.c
 	../../shared/piclib.c
+	../../shared/cmdlib.c
 	)
 source_group("shared" FILES ${SHARED_INCLUDES})
 source_group("shared" FILES ${SHARED_SOURCES})

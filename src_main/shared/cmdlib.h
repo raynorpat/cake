@@ -25,6 +25,15 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #ifndef __CMDLIB__
 #define __CMDLIB__
 
+#ifdef _WIN32
+#pragma warning(disable : 4244)     // MIPS
+#pragma warning(disable : 4136)     // X86
+#pragma warning(disable : 4051)     // ALPHA
+
+#pragma warning(disable : 4018)     // signed/unsigned mismatch
+#pragma warning(disable : 4305)     // truncate from double to float
+#endif
+
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -35,28 +44,42 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 #ifndef __BYTEBOOL__
 #define __BYTEBOOL__
+#ifdef __cplusplus
+typedef int qboolean;
+#else
 typedef enum {false, true} qboolean;
+#endif
 typedef unsigned char byte;
 #endif
 
-// the dec offsetof macro doesn't work very well...
+#define BIT(num)			(1ULL << (num))
+
+#define ALIGN(size, bytes)	(((size) + ((bytes) - 1)) & ~((bytes) - 1))
+
+// the dec offsetof macro doesnt work very well...
 #define myoffsetof(type,identifier) ((size_t)&((type *)0)->identifier)
 
-
-// set these before calling CheckParm
-extern int myargc;
-extern char **myargv;
-
+char *strupr (char *in);
+char *strlower (char *in);
 int Q_strncasecmp (char *s1, char *s2, int n);
 int Q_strcasecmp (char *s1, char *s2);
+void Q_getwd (char *out);
 
 int Q_filelength (FILE *f);
+int	FileTime (char *path);
+
+void	Q_mkdir (char *path);
+
+extern	char		qdir[1024];
+extern	char		gamedir[1024];
+void SetQdirFromPath (char *path);
+char *ExpandArg (char *path);	// from cmd line
+char *ExpandPath (char *path);	// from scripts
+char *ExpandPathAndArchive (char *path);
 
 double I_FloatTime (void);
 
 void	Error (char *error, ...);
-int		CheckParm (char *check);
-void ParseCommandLine (char *lpCmdLine);
 
 FILE	*SafeOpenWrite (char *filename);
 FILE	*SafeOpenRead (char *filename);
@@ -64,8 +87,9 @@ void	SafeRead (FILE *f, void *buffer, int count);
 void	SafeWrite (FILE *f, void *buffer, int count);
 
 int		LoadFile (char *filename, void **bufferptr);
-int		LoadFileNoCrash (char *filename, void **bufferptr);
+int		TryLoadFile (char *filename, void **bufferptr);
 void	SaveFile (char *filename, void *buffer, int count);
+qboolean	FileExists (char *filename);
 
 void 	DefaultExtension (char *path, char *extension);
 void 	DefaultPath (char *path, char *basepath);
@@ -99,5 +123,31 @@ extern	qboolean	com_eof;
 #define	MAX_NUM_ARGVS	32
 extern	int		argc;
 extern	char	*argv[MAX_NUM_ARGVS];
+
+char *copystring(char *s);
+
+void CRC_Init(unsigned short *crcvalue);
+void CRC_ProcessByte(unsigned short *crcvalue, byte data);
+unsigned short CRC_Value(unsigned short crcvalue);
+
+void	CreatePath (char *path);
+void	QCopyFile (char *from, char *to);
+
+extern	qboolean		archive;
+extern	char			archivedir[1024];
+
+extern	qboolean verbose;
+void qprintf (char *format, ...);
+
+void ExpandWildcards (int *argc, char ***argv);
+
+
+// for compression routines
+typedef struct
+{
+	byte	*data;
+	int		count;
+} cblock_t;
+
 
 #endif

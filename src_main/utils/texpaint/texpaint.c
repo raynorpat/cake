@@ -164,9 +164,6 @@ void CalcTmCoords (void)
 
 //===============================================================================
 
-
-
-#define	MAX_NUM_ARGVS	32
 int		argc;
 char	*argv[MAX_NUM_ARGVS];
 
@@ -175,7 +172,7 @@ char	*argv[MAX_NUM_ARGVS];
 ParseCommandLine
 ============
 */
-void ParseCommandLine (char *lpCmdLine)
+static void ParseCommandLine (char *lpCmdLine)
 {
 	argc = 1;
 	argv[0] = "programname";

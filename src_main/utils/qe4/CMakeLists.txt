@@ -10,10 +10,12 @@ source_group("qe4" FILES ${QE4_SOURCES})
 set(SHARED_INCLUDES
 	../../shared/q_math.h
 	../../shared/piclib.h
+	../../shared/cmdlib.h
 	)
 set(SHARED_SOURCES
 	../../shared/q_math.c
 	../../shared/piclib.c
+	../../shared/cmdlib.c
 	)
 source_group("shared" FILES ${SHARED_INCLUDES})
 source_group("shared" FILES ${SHARED_SOURCES})
