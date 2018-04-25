@@ -16,14 +16,12 @@ set(COMMON_INCLUDES
 	../common/bspfile.h
 	../common/cmdlib.h
 	../common/scriplib.h
-	../common/lbmlib.h
 	../common/polylib.h
 	)
 set(COMMON_SOURCES
 	../common/bspfile.c
 	../common/cmdlib.c
 	../common/scriplib.c
-	../common/lbmlib.c
 	../common/polylib.c
 	)
 source_group("common" FILES ${COMMON_INCLUDES})
@@ -50,10 +48,12 @@ set(SHARED_INCLUDES
 	../../shared/q_types.h
 	../../shared/q_threads.h
 	../../shared/q_math.h
+	../../shared/piclib.h
 	)
 set(SHARED_SOURCES
 	../../shared/q_threads.c
 	../../shared/q_math.c
+	../../shared/piclib.c
 	)
 source_group("shared" FILES ${SHARED_INCLUDES})
 source_group("shared" FILES ${SHARED_SOURCES})

@@ -33,9 +33,9 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #include "cmdlib.h"
 #include "scriplib.h"
 #include "trilib.h"
-#include "lbmlib.h"
 #include "l3dslib.h"
 #include "bspfile.h"
+#include "piclib.h"
 
 void Cmd_Modelname (void);
 void Cmd_Base (void);

@@ -18,14 +18,12 @@ source_group("texpaint" FILES ${TEXPAINT_SOURCES})
 set(COMMON_INCLUDES
 	../common/cmdlib.h
 	../common/l3dslib.h
-	../common/lbmlib.h
 	../common/scriplib.h
 	../common/trilib.h
 	)
 set(COMMON_SOURCES
 	../common/cmdlib.c
 	../common/l3dslib.c
-	../common/lbmlib.c
 	../common/scriplib.c
 	../common/trilib.c
 	)
@@ -34,9 +32,11 @@ source_group("common" FILES ${COMMON_SOURCES})
 
 set(SHARED_INCLUDES
 	../../shared/q_math.h
+	../../shared/piclib.h
 	)
 set(SHARED_SOURCES
 	../../shared/q_math.c
+	../../shared/piclib.c
 	)
 source_group("shared" FILES ${SHARED_INCLUDES})
 source_group("shared" FILES ${SHARED_SOURCES})

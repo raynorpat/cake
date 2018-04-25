@@ -23,9 +23,9 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #include "q_math.h"
 
 #include "cmdlib.h"
-#include "lbmlib.h"
 #include "trilib.h"
 #include "l3dslib.h"
+#include "piclib.h"
 
 #include <windows.h>
 #include <GL/gl.h>

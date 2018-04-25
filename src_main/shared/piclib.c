@@ -20,10 +20,10 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 */
 
-// lbmlib.c
+// piclib.c
 
 #include "cmdlib.h"
-#include "lbmlib.h"
+#include "piclib.h"
 
 
 
@@ -309,9 +309,9 @@ void WriteLBMfile (char *filename, byte *data,
 	memset (&basebmhd,0,sizeof(basebmhd));
 	basebmhd.w = BigShort((short)width);
 	basebmhd.h = BigShort((short)height);
-	basebmhd.nPlanes = BigShort(8);
-	basebmhd.xAspect = BigShort(5);
-	basebmhd.yAspect = BigShort(6);
+	basebmhd.nPlanes = 8;
+	basebmhd.xAspect = 5;
+	basebmhd.yAspect = 6;
 	basebmhd.pageWidth = BigShort((short)width);
 	basebmhd.pageHeight = BigShort((short)height);
 
