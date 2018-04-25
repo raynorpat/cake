@@ -1003,7 +1003,6 @@ int RE_GL_Init (void)
 	GL_InitImages ();
 	Mod_Init ();
 	R_InitParticleTexture ();
-	Draw_InitLocal ();
 
 	// create post process programs
 	RPostProcess_CreatePrograms ();
@@ -1097,9 +1096,7 @@ void GL_GFX_CoreInit(void)
 	RE_Draw_StretchRaw = RE_GL_Draw_StretchRaw;
 	RE_Draw_FadeScreen = RE_GL_Draw_FadeScreen;
 	RE_Draw_Fill = RE_GL_Draw_Fill;
-	RE_Draw_TileClear = RE_GL_Draw_TileClear;
 	RE_Draw_SetColor = RE_GL_Draw_SetColor;
-	RE_Draw_Char = RE_GL_Draw_Char;
 	RE_Draw_StretchPic = RE_GL_Draw_StretchPic;
 	RE_Draw_StretchPicExt = RE_GL_Draw_StretchPicExt;
 	RE_Draw_Pic = RE_GL_Draw_Pic;

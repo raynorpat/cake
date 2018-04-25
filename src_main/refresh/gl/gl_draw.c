@@ -26,7 +26,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 int r_lastrawcols = -1;
 int r_lastrawrows = -1;
 GLuint r_rawtexture = 0;
-static image_t *draw_chars;
 
 GLuint gl_drawprog = 0;
 GLuint u_drawBrightnessAmount = 0;
@@ -302,23 +301,6 @@ void Draw_ColouredRect (float x, float y, float w, float h, unsigned color)
 
 
 /*
-===============
-Draw_InitLocal
-===============
-*/
-void Draw_InitLocal (void)
-{
-	// load console characters (don't bilerp characters)
-	draw_chars = GL_FindImage ("pics/charset.png", it_pic);
-	if (!draw_chars)
-	{
-		draw_chars = GL_FindImage("pics/conchars.pcx", it_pic);
-		if (!draw_chars)
-			Com_Error(ERR_FATAL, "Couldn't load pics/conchars.pcx");
-	}
-}
-
-/*
 =============
 RE_Draw_SetColor
 
@@ -338,35 +320,6 @@ void RE_GL_Draw_SetColor (float *rgba)
 	gl_drawstate.colorAdd[1] = rgba[1];
 	gl_drawstate.colorAdd[2] = rgba[2];
 	gl_drawstate.colorAdd[3] = rgba[3];
-}
-
-/*
-================
-RE_Draw_Char
-
-Draws one 8*8 graphics character with 0 being transparent.
-It can be clipped to the top of the screen to allow the console to be
-smoothly scrolled off.
-================
-*/
-void RE_GL_Draw_Char (int x, int y, int num, float scale)
-{
-	float frow, fcol, size, scaledSize;
-
-	num &= 255;
-
-	if ((num & 127) == 32)
-		return;			// space
-	if (y <= -8)
-		return;			// totally off screen
-
-	frow = (num >> 4) * 0.0625;
-	fcol = (num & 15) * 0.0625;
-	size = 0.0625;
-
-	scaledSize = 8 * scale;
-
-	Draw_TexturedRect (draw_chars->texnum, r_drawnearestclampsampler, x, y, scaledSize, scaledSize, fcol, frow, fcol + size, frow + size);
 }
 
 /*
@@ -473,30 +426,6 @@ void RE_GL_Draw_Pic (int x, int y, char *pic, float scale)
 
 	Draw_TexturedRect(gl->texnum, r_drawclampsampler, x, y, w, h, gl->sl, gl->tl, gl->sh, gl->th);
 }
-
-
-/*
-=============
-RE_Draw_TileClear
-
-This repeats a 64*64 tile graphic to fill the screen around a sized down
-refresh window.
-=============
-*/
-void RE_GL_Draw_TileClear (int x, int y, int w, int h, char *pic)
-{
-	image_t	*image;
-
-	image = RE_GL_Draw_RegisterPic (pic);
-	if (!image)
-	{
-		VID_Printf (PRINT_ALL, S_COLOR_RED "Can't find pic: %s\n", pic);
-		return;
-	}
-
-	Draw_TexturedRect (image->texnum, r_drawwrapsampler, x, y, w, h, x / 64.0, y / 64.0, (x + w) / 64.0, (y + h) / 64.0);
-}
-
 
 /*
 =============
