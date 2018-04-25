@@ -400,6 +400,9 @@ typedef struct
 	qboolean	gl_ext_GPUShader5_support;
 	qboolean	gl_ext_computeShader_support;
 	qboolean	gl_arb_framebuffer_srgb_support;
+	qboolean	gl_ext_texturefilter_aniso_support;
+	
+	float		max_texAF;
 } glconfig_t;
 
 typedef struct

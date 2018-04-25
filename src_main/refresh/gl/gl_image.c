@@ -124,7 +124,6 @@ glmode_t modes[] =
 
 int gl_texture_anisotropy = 1;
 
-
 GLuint r_surfacesampler = 0;
 GLuint r_modelsampler = 0;
 GLuint r_lightmapsampler = 0;
@@ -152,10 +151,7 @@ void RImage_SamplerClampMode (GLuint sampler, GLenum clampmode)
 
 void RImage_UpdateSampler (GLuint sampler, GLenum clampmode)
 {
-	if (gl_texture_anisotropy > 1)
-		RImage_SamplerMinMag (sampler, GL_LINEAR_MIPMAP_LINEAR, GL_LINEAR, gl_texture_anisotropy);
-	else RImage_SamplerMinMag (sampler, gl_filter_min, gl_filter_max, 1);
-
+	RImage_SamplerMinMag (sampler, gl_filter_min, gl_filter_max, gl_texture_anisotropy);
 	RImage_SamplerClampMode (sampler, clampmode);
 }
 
@@ -228,7 +224,7 @@ void GL_TextureMode (char *string, int anisotropy)
 {
 	int i;
 	int af;
-	float maxaf;
+	float maxaf = gl_config.max_texAF;
 
 	for (i = 0; i < NUM_GL_MODES; i++)
 	{
@@ -246,11 +242,8 @@ void GL_TextureMode (char *string, int anisotropy)
 	gl_filter_max = modes[i].maximize;
 
 	gl_texture_anisotropy = 1;
-
-	if (GLAD_GL_EXT_texture_filter_anisotropic & (anisotropy > 1))
+	if (gl_config.gl_ext_texturefilter_aniso_support & (anisotropy > 1))
 	{
-		glGetFloatv (GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &maxaf);
-
 		if (maxaf > 1)
 		{
 			for (af = 1; af < anisotropy; af <<= 1);
@@ -885,7 +878,7 @@ GLuint GL_UploadTexture (byte *data, int width, int height, qboolean mipmap, int
 	else
 	{
 		trans = (unsigned *) data;
-		GL_SwapBlueRed (data, width, height, 4);
+		GL_SwapBlueRed (data, width, height, 4); // make sure we turn RGBA textures into BGRA
 	}
 
 	// it's assumed that our hardware can handle Q2 texture sizes
@@ -898,7 +891,7 @@ GLuint GL_UploadTexture (byte *data, int width, int height, qboolean mipmap, int
 
 	for (i = 1; i < nummips; i++)
 	{
-		// do do - alternately resample if non-divisible-by-2
+		// TODO - alternately resample if non-divisible-by-2
 		if ((width & 1) || (height & 1))
 		{
 			unsigned *mipdata = (unsigned *) Img_Alloc (((width + 1) & ~1) * ((height + 1) & ~1));
@@ -906,7 +899,9 @@ GLuint GL_UploadTexture (byte *data, int width, int height, qboolean mipmap, int
 			trans = mipdata;
 		}
 		else
-			GL_MipMap ((byte *) trans, width, height);
+		{
+			GL_MipMap ((byte *)trans, width, height);
+		}
 
 		if ((width = (width >> 1)) < 1) width = 1;
 		if ((height = (height >> 1)) < 1) height = 1;

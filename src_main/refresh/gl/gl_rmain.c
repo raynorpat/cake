@@ -857,6 +857,39 @@ static void RMain_CheckFor_Srgb(void)
 	gl_config.gl_arb_framebuffer_srgb_support = false;
 }
 
+static void RMain_CheckFor_AnisotropicTexFilter(void)
+{
+	VID_Printf(PRINT_ALL, "checking for GL_EXT_texture_filter_anisotropic...\n");
+
+	// check in glad first...
+	if (!GLAD_GL_EXT_texture_filter_anisotropic)
+	{
+		// lets double check the actual extension list we grabbed earlier,
+		// glew is known to be buggy checking for extensions...
+		if (!strcmp("GL_EXT_texture_filter_anisotropic", gl_config.extension_string))
+		{
+			// found it in our list
+			glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &gl_config.max_texAF);
+			gl_config.gl_ext_texturefilter_aniso_support = true;
+			VID_Printf(PRINT_ALL, S_COLOR_GREEN " ...found GL_EXT_texture_filter_anisotropic, max AF is %i\n", (int)gl_config.max_texAF);
+			Cvar_SetValue("gl_textureanisotropy", gl_config.max_texAF / 2); // set the default to half the max
+			return;
+		}
+	}
+	else
+	{
+		// found it in glad's list
+		glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &gl_config.max_texAF);
+		gl_config.gl_ext_texturefilter_aniso_support = true;
+		VID_Printf(PRINT_ALL, S_COLOR_GREEN " ...found GL_EXT_texture_filter_anisotropic, max AF is %i\n", (int)gl_config.max_texAF);
+		Cvar_SetValue("gl_textureanisotropy", gl_config.max_texAF / 2); // set the default to half the max
+		return;
+	}
+
+	VID_Printf(PRINT_ALL, S_COLOR_RED " ...missing GL_EXT_texture_filter_anisotropic\n");
+	gl_config.gl_ext_texturefilter_aniso_support = false;
+}
+
 #define R_MODE_FALLBACK 10 // 1024x768
 
 static int SetMode_impl(int mode, int fullscreen)
@@ -930,7 +963,7 @@ success:
 
 	RMain_PrintSetExtensionList();
 
-	// check for required feature support
+	// check for Direct State Access support
 	RMain_CheckFor_DirectStateAccess();
 
 	// check for GPUShader5 support
@@ -941,6 +974,9 @@ success:
 
 	// check for sRGB framebuffer support
 	RMain_CheckFor_Srgb();
+
+	// check for anisotropic texture filter support
+	RMain_CheckFor_AnisotropicTexFilter();
 
 	return true;
 }
