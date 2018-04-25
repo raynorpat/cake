@@ -282,6 +282,8 @@ extern	cvar_t	*gl_texturemode;
 extern	cvar_t	*gl_textureanisotropy;
 extern  cvar_t  *gl_lockpvs;
 extern  cvar_t  *gl_forcefog;
+extern	cvar_t  *gl_decals;
+extern	cvar_t  *gl_decalsTime;
 
 extern	cvar_t	*vid_fullscreen;
 extern	cvar_t	*vid_gamma;

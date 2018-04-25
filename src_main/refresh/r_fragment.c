@@ -70,7 +70,6 @@ static float *worldVert (int i, msurface_t *surf)
 		return &r_worldmodel->vertexes[r_worldmodel->edges[e].v[0]].position[0];
 	else
 		return &r_worldmodel->vertexes[r_worldmodel->edges[-e].v[1]].position[0];
-
 }
 
 /*
@@ -204,6 +203,7 @@ static void R_ClipFragmentToSurface (msurface_t *surf, const vec3_t normal, mnod
 		mf = &cm_markFragments[cm_numMarkFragments];
 		mf->firstPoint = mf->numPoints = 0;
 		mf->node = node; // vis node
+		mf->surf = surf;
 		
 		VectorCopy (worldVert(0, surf), points[0]);
 		VectorCopy (worldVert(i - 1, surf), points[1]);

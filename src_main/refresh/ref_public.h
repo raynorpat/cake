@@ -138,6 +138,7 @@ typedef struct
 	int			numPoints;
 	int			firstPoint;
 	struct mnode_s *node;
+	struct msurface_s *surf;
 } markFragment_t;
 
 typedef struct

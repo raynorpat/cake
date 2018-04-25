@@ -113,6 +113,8 @@ cvar_t	*gl_textureanisotropy;
 cvar_t	*gl_lockpvs;
 cvar_t	*gl_lockfrustum;
 cvar_t  *gl_forcefog;
+cvar_t  *gl_decals;
+cvar_t  *gl_decalsTime;
 
 cvar_t	*vid_fullscreen;
 cvar_t	*vid_gamma;
@@ -556,6 +558,8 @@ static void R_Register (void)
 	gl_lockpvs = Cvar_Get ("gl_lockpvs", "0", 0);
 	gl_lockfrustum = Cvar_Get ("gl_lockfrustum", "0", 0);
 	gl_forcefog = Cvar_Get ("gl_forcefog", "0", CVAR_ARCHIVE);
+	gl_decals = Cvar_Get ("gl_decals", "1", CVAR_ARCHIVE);
+	gl_decalsTime = Cvar_Get ("gl_decalsTime", "30", CVAR_ARCHIVE);
 	
 	gl_swapinterval = Cvar_Get ("gl_swapinterval", "1", CVAR_ARCHIVE);
 
