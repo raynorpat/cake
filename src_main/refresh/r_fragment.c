@@ -49,7 +49,7 @@ static markFragment_t	*cm_markFragments;
 
 static cplane_t			cm_markPlanes[MAX_FRAGMENT_PLANES];
 
-static int				cm_markCheckCount;
+static int				cm_fragmentFrame;
 
 // ripped from q2map
 static int PlaneTypeForNormal (vec3_t normal)
@@ -261,13 +261,13 @@ static void R_RecursiveMarkFragments_r (vec3_t origin, vec3_t normal, float radi
 	surf = r_worldmodel->surfaces + node->firstsurface;
 	for (i=0 ; i<node->numsurfaces ; i++, surf++)
 	{
-		if (surf->checkCount == cm_markCheckCount)
+		if (surf->fragmentframe == cm_fragmentFrame)
 			continue; // already checked this surface in another node
 
-		if (surf->texinfo->flags & (SURF_SKY|SURF_WARP))
+		if (surf->texinfo->flags & (SURF_SKY | SURF_WARP | SURF_TRANS33 | SURF_TRANS66 | SURF_FLOWING | SURF_NODRAW))
 			continue;
 
-		surf->checkCount = cm_markCheckCount;
+		surf->fragmentframe = cm_fragmentFrame;
 
 		R_ClipFragmentToSurface(surf, normal, node);
 	}
@@ -280,10 +280,10 @@ static void R_RecursiveMarkFragments_r (vec3_t origin, vec3_t normal, float radi
 
 /*
 =================
-RE_MarkFragments
+R_GetClippedFragments
 =================
 */
-int RE_GL_MarkFragments (vec3_t origin, vec3_t axis[3], float radius, int maxPoints, vec3_t *points, int maxFragments, markFragment_t *fragments)
+int R_GetClippedFragments (vec3_t origin, vec3_t axis[3], float radius, int maxPoints, vec3_t *points, int maxFragments, markFragment_t *fragments)
 {
 	int		i;
 	float	dot;
@@ -291,7 +291,7 @@ int RE_GL_MarkFragments (vec3_t origin, vec3_t axis[3], float radius, int maxPoi
 	if (!r_worldmodel || !r_worldmodel->nodes)
 		return 0; // map not loaded
 
-	cm_markCheckCount++; // for multi-check avoidance
+	cm_fragmentFrame++; // for multi-check avoidance
 
 	// initialize fragments
 	cm_numMarkPoints = 0;
