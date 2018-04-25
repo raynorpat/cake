@@ -266,16 +266,6 @@ void R_ConcatTransforms (float in1[3][4], float in2[3][4], float out[3][4])
 
 //============================================================================
 
-float lerp(const float from, const float to, float f)
-{
-	return from + ((to - from) * f);
-}
-
-float clamp(float minf, float maxf, float value)
-{
-	return max(minf, min(maxf, value));
-}
-
 float Q_fabs (float f)
 {
 #if 0
@@ -348,17 +338,8 @@ float LerpAngle (float a2, float a1, float frac)
 	return a2 + frac * (a1 - a2);
 }
 
-
-float	anglemod (float a)
+float anglemod (float a)
 {
-#if 0
-
-	if (a >= 0)
-		a -= 360 * (int) (a / 360);
-	else
-		a += 360 * (1 + (int) (-a / 360));
-
-#endif
 	a = (360.0 / 65536) * ((int) (a * (65536 / 360.0)) & 65535);
 	return a;
 }

@@ -458,8 +458,8 @@ void M_MouseMove (int mx, int my)
 	m_mouse[1] += my;
 
 	// clamp mouse movements to refresh height and width
-	clamp(m_mouse[0], 0, viddef.width - 8);
-	clamp(m_mouse[1], 0, viddef.height - 8);
+	Q_Clamp(m_mouse[0], 0, viddef.width - 8);
+	Q_Clamp(m_mouse[1], 0, viddef.height - 8);
 
 	// see if we have selected anything
 	if(bselected)

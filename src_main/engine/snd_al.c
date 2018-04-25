@@ -131,7 +131,7 @@ qboolean AL_Init (void)
 	activeStreamBuffers = 0;
 	
 	i = (int)s_alStreamBuffers->value;
-	i = clamp(i, MIN_STREAM_BUFFERS, MAX_STREAM_BUFFERS);
+	i = Q_Clamp(i, MIN_STREAM_BUFFERS, MAX_STREAM_BUFFERS);
 	s_alStreamBuffers->value = (float)i;
 	s_alStreamBuffers->modified = false;
 	S_AL_AllocStreamBuffers(i);
@@ -418,7 +418,7 @@ void AL_Update (void)
 	if (s_alStreamBuffers->modified)
 	{
 		int numBuffers = (int)s_alStreamBuffers->value;
-		numBuffers = clamp(numBuffers, MIN_STREAM_BUFFERS, MAX_STREAM_BUFFERS);
+		numBuffers = Q_Clamp(numBuffers, MIN_STREAM_BUFFERS, MAX_STREAM_BUFFERS);
 		s_alStreamBuffers->value = (float)numBuffers;
 		s_alStreamBuffers->modified = false;
 		S_AL_AllocStreamBuffers(numBuffers);

@@ -631,7 +631,7 @@ void List_MoveCursorFromMouse (menulist_s *l, int mouse_old_y, int mouse_y)
 	if(!mouse_y)
 		return;
 
-	clamp(maxItems, 0, numItems);
+	Q_Clamp(maxItems, 0, numItems);
 
 	if(mouse_old_y <= y + 2)
 	{
@@ -652,7 +652,7 @@ void List_MoveCursorFromMouse (menulist_s *l, int mouse_old_y, int mouse_y)
 
 	l->prestep += count;
 
-	clamp(l->prestep, 0, l->count - maxItems);
+	Q_Clamp(l->prestep, 0, l->count - maxItems);
 }
 
 extern qboolean bselected;
@@ -664,7 +664,7 @@ qboolean List_Key (menulist_s *l, int key)
 	if (!l->count)
 		return true;
 
-	clamp(maxItems, 0, l->count);
+	Q_Clamp(maxItems, 0, l->count);
 
 	switch(key)
 	{
