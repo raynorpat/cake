@@ -40,14 +40,16 @@ typedef struct
 	vec4_t color;
 } decal_t;
 
+GLuint r_decalvbo = 0;
+GLuint r_decalvao = 0;
+
 typedef struct cdecal_t
 {
 	struct 		cdecal_t *prev, *next;
 	float		time;
 
 	int			numverts;
-	vec3_t		verts[MAX_DECAL_VERTS];
-	vec2_t		stcoords[MAX_DECAL_VERTS];
+	decal_t		decalvert[MAX_DECAL_VERTS];
 	mnode_t     *node;
 
 	vec3_t		direction;
@@ -74,6 +76,20 @@ void RDecal_CreatePrograms(void)
 {
 	gl_decalprog = GL_CreateShaderFromName("glsl/decals.glsl", "DecalVS", "DecalFS");
 	gl_decalWorldMatrix = glGetUniformLocation(gl_decalprog, "worldMatrix");
+
+	glGenBuffers(1, &r_decalvbo);
+	glNamedBufferDataEXT(r_decalvbo, MAX_DECALS * sizeof(decal_t) * 4, NULL, GL_STREAM_DRAW);
+
+	glGenVertexArrays(1, &r_decalvao);
+
+	glEnableVertexArrayAttribEXT(r_decalvao, 0);
+	glVertexArrayVertexAttribOffsetEXT(r_decalvao, r_decalvbo, 0, 3, GL_FLOAT, GL_FALSE, sizeof(decal_t), 0);
+
+	glEnableVertexArrayAttribEXT(r_decalvao, 1);
+	glVertexArrayVertexAttribOffsetEXT(r_decalvao, r_decalvbo, 1, 2, GL_FLOAT, GL_FALSE, sizeof(decal_t), 12);
+
+	glEnableVertexArrayAttribEXT(r_decalvao, 2);
+	glVertexArrayVertexAttribOffsetEXT(r_decalvao, r_decalvbo, 2, 4, GL_FLOAT, GL_FALSE, sizeof(decal_t), 18);
 }
 
 /*
@@ -220,10 +236,16 @@ void RE_GL_AddDecal (vec3_t origin, vec3_t dir, vec4_t color, float size, int ty
 		{
 			vec3_t v;
 
-			VectorCopy(verts[fr->firstPoint + j], d->verts[j]);
-			VectorSubtract(d->verts[j], origin, v);
-			d->stcoords[j][0] = DotProduct(v, axis[1]) + 0.5;
-			d->stcoords[j][1] = DotProduct(v, axis[2]) + 0.5;
+			// xyz
+			VectorCopy(verts[fr->firstPoint + j], d->decalvert[j].origin);
+
+			// st
+			VectorSubtract(d->decalvert[j].origin, origin, v);
+			d->decalvert[j].texcoords[0] = DotProduct(v, axis[1]) + 0.5;
+			d->decalvert[j].texcoords[1] = DotProduct(v, axis[2]) + 0.5;
+
+			// color
+			VectorCopy(d->color, d->decalvert[j].color);
 		}
 	}
 }
@@ -255,6 +277,10 @@ void R_DrawDecals (void)
 
 	glDepthMask(GL_FALSE);
 	glEnable(GL_BLEND);
+
+	GL_UseProgram(gl_decalprog);
+
+	glProgramUniformMatrix4fv (gl_decalprog, gl_decalWorldMatrix, 1, GL_FALSE, r_worldmatrix.m[0]);
 
 	// TODO: bind decal texture
 
@@ -288,20 +314,8 @@ void R_DrawDecals (void)
 			color[3] *= time / 1.5;
 
 		// draw it
-
-		/*
-		// TODO: color
-		// TODO: draw out the decal - similar to:
-		glColor4fv(color);
-
-		glBegin(GL_TRIANGLE_FAN);
-		for (int i = 0; i < dl->numverts; i++)
-		{
-			glTexCoord2fv (dl->stcoords[i]);
-			glVertex3fv (dl->verts[i]);
-		}
-		glEnd();
-		*/
+		GL_BindVertexArray(r_decalvao);
+		glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
 
 		r_numdecals++;
 		if (r_numdecals >= MAX_DECALS)
