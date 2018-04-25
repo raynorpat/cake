@@ -124,7 +124,7 @@ void XY_MouseDown (int x, int y, int buttons)
 		VectorSubtract (point, camera.origin, point);
 		if (point[1] || point[0])
 		{
-			camera.angles[YAW] = 180/Q_PI*atan2 (point[1], point[0]);
+			camera.angles[YAW] = 180 / M_PI * atan2 (point[1], point[0]);
 			Sys_UpdateWindows (W_CAMERA|W_XY_OVERLAY);
 		}
 	}
@@ -284,7 +284,7 @@ void XY_MouseMoved (int x, int y, int buttons)
 		VectorSubtract (point, camera.origin, point);
 		if (point[1] || point[0])
 		{
-			camera.angles[YAW] = 180/Q_PI*atan2 (point[1], point[0]);
+			camera.angles[YAW] = 180/ M_PI*atan2 (point[1], point[0]);
 			Sys_UpdateWindows (W_XY_OVERLAY | W_CAMERA);
 		}
 		return;
@@ -502,7 +502,7 @@ void DrawCameraIcon (void)
 
 	x = camera.origin[0];
 	y = camera.origin[1];
-	a = camera.angles[YAW]/180*Q_PI;
+	a = camera.angles[YAW]/180* M_PI;
 
 	glColor3f (0.0, 0.0, 1.0);
 	glBegin(GL_LINE_STRIP);
@@ -515,9 +515,9 @@ void DrawCameraIcon (void)
 	glEnd ();
 
 	glBegin(GL_LINE_STRIP);
-	glVertex3f (x+48*cos(a+Q_PI/4), y+48*sin(a+Q_PI/4), 0);
+	glVertex3f (x+48*cos(a+ M_PI /4), y+48*sin(a+ M_PI /4), 0);
 	glVertex3f (x, y, 0);
-	glVertex3f (x+48*cos(a-Q_PI/4), y+48*sin(a-Q_PI/4), 0);
+	glVertex3f (x+48*cos(a- M_PI /4), y+48*sin(a- M_PI /4), 0);
 	glEnd ();
 
 }

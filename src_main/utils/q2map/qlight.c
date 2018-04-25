@@ -240,7 +240,7 @@ void MakeTransfers (int i)
 
 		// calculate vector
 		VectorSubtract (patch2->origin, origin, delta);
-		dist = VectorNormalize (delta, delta);
+		dist = VectorNormalize2 (delta, delta);
 		if (!dist)
 			continue;	// should never happen
 

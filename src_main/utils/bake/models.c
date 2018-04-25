@@ -894,7 +894,7 @@ void GrabFrame (char *frame)
 		VectorSubtract (ptri[i].verts[2], ptri[i].verts[1], vtemp2);
 		CrossProduct (vtemp1, vtemp2, normal);
 
-		VectorNormalize (normal, normal);
+		VectorNormalize2 (normal, normal);
 
 	// rotate the normal so the model faces down the positive x axis
 		ftemp = normal[0];
@@ -938,7 +938,7 @@ void GrabFrame (char *frame)
 			Error ("Vertex with no triangles attached");
 
 		VectorScale (vnorms[i].normalsum, 1.0/c, v);
-		VectorNormalize (v, v);
+		VectorNormalize2 (v, v);
 
 		maxdot = -999999.0;
 		maxdotindex = -1;

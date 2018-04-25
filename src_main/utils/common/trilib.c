@@ -25,8 +25,10 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 //
 
 #include <stdio.h>
+
+#include "q_math.h"
+
 #include "cmdlib.h"
-#include "mathlib.h"
 #include "trilib.h"
 
 // on disk representation of a face

@@ -59,8 +59,8 @@ void Cam_BuildMatrix (void)
 	float	matrix[4][4];
 	int		i;
 
-	xa = camera.angles[0]/180*Q_PI;
-	ya = camera.angles[1]/180*Q_PI;
+	xa = camera.angles[0]/180* M_PI;
+	ya = camera.angles[1]/180* M_PI;
 
 	// the movement matrix is kept 2d
 
@@ -393,7 +393,7 @@ void Cam_Draw (void)
     glLoadIdentity ();
 
     screenaspect = (float)camera.width/camera.height;
-	yfov = 2*atan((float)camera.height/camera.width)*180/Q_PI;
+	yfov = 2*atan((float)camera.height/camera.width)*180/ M_PI;
     gluPerspective (yfov,  screenaspect,  2,  8192);
 
     glRotatef (-90,  1, 0, 0);	    // put Z going up

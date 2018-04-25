@@ -233,7 +233,7 @@ int PlaneFromPoints (int *p0, int *p1, int *p2)
 	VectorSubtract (p0, p1, t1);
 	VectorSubtract (p2, p1, t2);
 	CrossProduct (t1, t2, normal);
-	VectorNormalize (normal, normal);
+	VectorNormalize2 (normal, normal);
 
 	dist = DotProduct (p0, normal);
 
@@ -375,7 +375,7 @@ void AddBrushBevels (mapbrush_t *b)
 		{
 			k = (j+1)%w->numpoints;
 			VectorSubtract (w->p[j], w->p[k], vec);
-			if (VectorNormalize (vec, vec) < 0.5)
+			if (VectorNormalize2 (vec, vec) < 0.5)
 				continue;
 			SnapVector (vec);
 			for (k=0 ; k<3 ; k++)
@@ -393,7 +393,7 @@ void AddBrushBevels (mapbrush_t *b)
 					VectorClear (vec2);
 					vec2[axis] = dir;
 					CrossProduct (vec, vec2, normal);
-					if (VectorNormalize (normal, normal) < 0.5)
+					if (VectorNormalize2 (normal, normal) < 0.5)
 						continue;
 					dist = DotProduct (w->p[j], normal);
 

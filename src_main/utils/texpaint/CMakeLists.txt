@@ -19,7 +19,6 @@ set(COMMON_INCLUDES
 	../common/cmdlib.h
 	../common/l3dslib.h
 	../common/lbmlib.h
-	../common/mathlib.h
 	../common/scriplib.h
 	../common/trilib.h
 	)
@@ -27,12 +26,20 @@ set(COMMON_SOURCES
 	../common/cmdlib.c
 	../common/l3dslib.c
 	../common/lbmlib.c
-	../common/mathlib.c
 	../common/scriplib.c
 	../common/trilib.c
 	)
 source_group("common" FILES ${COMMON_INCLUDES})
 source_group("common" FILES ${COMMON_SOURCES})
+
+set(SHARED_INCLUDES
+	../../shared/q_math.h
+	)
+set(SHARED_SOURCES
+	../../shared/q_math.c
+	)
+source_group("shared" FILES ${SHARED_INCLUDES})
+source_group("shared" FILES ${SHARED_SOURCES})
 
 
 #
@@ -43,6 +50,7 @@ source_group("common" FILES ${COMMON_SOURCES})
 include_directories(
 	.
 	../common
+	../../shared
 	)
 
 # windows resources
@@ -52,7 +60,7 @@ set(WIN32_RESOURCES
 source_group("texpaint\\Resources" FILES ${WIN32_RESOURCES})
 
 # build it
-add_executable(texpaint WIN32 ${WIN32_RESOURCES} ${TEXPAINT_INCLUDES} ${TEXPAINT_SOURCES} ${COMMON_INCLUDES} ${COMMON_SOURCES})
+add_executable(texpaint WIN32 ${WIN32_RESOURCES} ${TEXPAINT_INCLUDES} ${TEXPAINT_SOURCES} ${COMMON_INCLUDES} ${COMMON_SOURCES} ${SHARED_INCLUDES} ${SHARED_SOURCES})
 target_link_libraries(texpaint PRIVATE opengl32 glu32)
 
 q_set_output_dir(texpaint ${Q_UTILS_DIR})

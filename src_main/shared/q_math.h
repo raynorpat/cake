@@ -91,6 +91,11 @@ extern vec4_t g_color_table[8];
 #define M_PI		3.14159265358979323846	// matches value in gcc v2 math.h
 #endif
 
+#define	SIDE_FRONT			0
+#define	SIDE_ON				2
+#define	SIDE_BACK			1
+#define	SIDE_CROSS			-2
+
 // angle indexes
 #define	PITCH				0		// up / down
 #define	YAW					1		// left / right
@@ -115,6 +120,8 @@ extern long Q_ftol (float f);
 
 void Q_sincos (float angradians, float *angsin, float *angcos);
 
+vec_t Q_rint (vec_t in);
+
 #define DotProduct(x,y)			(x[0]*y[0]+x[1]*y[1]+x[2]*y[2])
 #define VectorAvg(a,b,c)        ((c)[0]=((a)[0]+(b)[0])*0.5f, (c)[1]=((a)[1]+(b)[1])*0.5f, (c)[2]=((a)[2]+(b)[2])*0.5f)
 #define VectorSubtract(a,b,dst)	(dst[0]=a[0]-b[0],dst[1]=a[1]-b[1],dst[2]=a[2]-b[2])
@@ -127,7 +134,7 @@ static void VectorReflect(const vec3_t v, const vec3_t normal, vec3_t out)
 {
 	float           d;
 
-	d = 2.0 * (v[0] * normal[0] + v[1] * normal[1] + v[2] * normal[2]);
+	d = 2.0f * (v[0] * normal[0] + v[1] * normal[1] + v[2] * normal[2]);
 
 	out[0] = v[0] - normal[0] * d;
 	out[1] = v[1] - normal[1] * d;
@@ -164,6 +171,7 @@ vec_t VectorLength (vec3_t v);
 void CrossProduct (vec3_t v1, vec3_t v2, vec3_t cross);
 vec_t VectorNormalize (vec3_t v);		// returns vector length
 vec_t VectorNormalize2 (vec3_t v, vec3_t out);
+vec_t ColorNormalize (vec3_t in, vec3_t out);
 void VectorInverse (vec3_t v);
 void VectorScale (vec3_t in, vec_t scale, vec3_t out);
 int Q_log (int val);

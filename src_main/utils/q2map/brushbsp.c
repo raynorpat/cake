@@ -320,12 +320,12 @@ bspbrush_t *CopyBrush (bspbrush_t *brush)
 
 /*
 ==============
-BoxOnPlaneSide
+BSP_BoxOnPlaneSide
 
 Returns PSIDE_FRONT, PSIDE_BACK, or PSIDE_BOTH
 ==============
 */
-int BoxOnPlaneSide (vec3_t mins, vec3_t maxs, plane_t *plane)
+static int BSP_BoxOnPlaneSide (vec3_t mins, vec3_t maxs, plane_t *plane)
 {
 	int		side;
 	int		i;
@@ -404,7 +404,7 @@ int	TestBrushToPlanenum (bspbrush_t *brush, int planenum,
 
 	// box on plane side
 	plane = &mapplanes[planenum];
-	s = BoxOnPlaneSide (brush->mins, brush->maxs, plane);
+	s = BSP_BoxOnPlaneSide (brush->mins, brush->maxs, plane);
 
 	if (s != PSIDE_BOTH)
 		return s;

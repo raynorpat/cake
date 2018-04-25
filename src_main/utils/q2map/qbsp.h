@@ -20,11 +20,13 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 */
 
+#include "q_math.h"
+
 #include "cmdlib.h"
-#include "mathlib.h"
 #include "scriplib.h"
 #include "polylib.h"
 #include "bspfile.h"
+
 #include "threads.h"
 #include "q2map.h"
 

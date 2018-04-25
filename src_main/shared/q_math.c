@@ -326,6 +326,10 @@ void Q_sincos (float angle, float *s, float *c)
 }
 #endif
 
+vec_t Q_rint (vec_t in)
+{
+	return floor (in + 0.5);
+}
 
 /*
 ===============
@@ -503,6 +507,26 @@ vec_t VectorNormalize2 (vec3_t v, vec3_t out)
 	}
 
 	return length;
+}
+
+vec_t ColorNormalize (vec3_t in, vec3_t out)
+{
+	float max, scale;
+
+	max = in[0];
+	if (in[1] > max)
+		max = in[1];
+	if (in[2] > max)
+		max = in[2];
+
+	if (max == 0)
+		return 0;
+
+	scale = 1.0 / max;
+
+	VectorScale (in, scale, out);
+
+	return max;
 }
 
 void VectorMA (vec3_t addvec, float scale, vec3_t mulvec, vec3_t out)

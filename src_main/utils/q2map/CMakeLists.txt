@@ -17,7 +17,6 @@ set(COMMON_INCLUDES
 	../common/cmdlib.h
 	../common/scriplib.h
 	../common/lbmlib.h
-	../common/mathlib.h
 	../common/polylib.h
 	)
 set(COMMON_SOURCES
@@ -25,7 +24,6 @@ set(COMMON_SOURCES
 	../common/cmdlib.c
 	../common/scriplib.c
 	../common/lbmlib.c
-	../common/mathlib.c
 	../common/polylib.c
 	)
 source_group("common" FILES ${COMMON_INCLUDES})
@@ -51,9 +49,11 @@ set(SHARED_INCLUDES
 	../../shared/q_endian.h
 	../../shared/q_types.h
 	../../shared/q_threads.h
+	../../shared/q_math.h
 	)
 set(SHARED_SOURCES
 	../../shared/q_threads.c
+	../../shared/q_math.c
 	)
 source_group("shared" FILES ${SHARED_INCLUDES})
 source_group("shared" FILES ${SHARED_SOURCES})

@@ -6,6 +6,16 @@ file(GLOB QE4_SOURCES ./*.c)
 source_group("qe4" FILES ${QE4_INCLUDES})
 source_group("qe4" FILES ${QE4_SOURCES})
 
+# shared source
+set(SHARED_INCLUDES
+	../../shared/q_math.h
+	)
+set(SHARED_SOURCES
+	../../shared/q_math.c
+	)
+source_group("shared" FILES ${SHARED_INCLUDES})
+source_group("shared" FILES ${SHARED_SOURCES})
+
 #
 # QuakeEd 4 map editor tool
 #
@@ -26,7 +36,7 @@ set(WIN32_RESOURCES
 source_group("qe4\\Resources" FILES ${WIN32_RESOURCES})
 
 # build it
-add_executable(qe4 WIN32 ${WIN32_RESOURCES} ${QE4_INCLUDES} ${QE4_SOURCES})
+add_executable(qe4 WIN32 ${WIN32_RESOURCES} ${SHARED_INCLUDES} ${SHARED_SOURCES} ${QE4_INCLUDES} ${QE4_SOURCES})
 target_link_libraries(qe4 PRIVATE opengl32 glu32 comctl32)
 
 q_set_output_dir(qe4 ${Q_UTILS_DIR})

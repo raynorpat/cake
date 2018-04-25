@@ -360,7 +360,7 @@ void BeginTexturingFace (brush_t *b, face_t *f, qtexture_t *q)
 		{ sinv = -1 ; cosv = 0; }
 	else
 	{
-		ang = f->texdef.rotate / 180 * Q_PI;
+		ang = f->texdef.rotate / 180 * M_PI;
 		sinv = sin(ang);
 		cosv = cos(ang);
 	}
@@ -421,7 +421,7 @@ void EmitTextureCoordinates ( float *xyzst, qtexture_t *q, face_t *f)
 
 	td = &f->texdef;
 
-	ang = td->rotate / 180 * Q_PI;
+	ang = td->rotate / 180 * M_PI;
 	sinv = sin(ang);
 	cosv = cos(ang);
 
@@ -570,8 +570,8 @@ void DrawBrushEntityName (brush_t *b)
 	a = FloatForKey (b->owner, "angle");
 	if (a)
 	{
-		s = sin (a/180*Q_PI);
-		c = cos (a/180*Q_PI);
+		s = sin (a/180* M_PI);
+		c = cos (a/180* M_PI);
 		for (i=0 ; i<3 ; i++)
 			mid[i] = (b->mins[i] + b->maxs[i])*0.5;
 

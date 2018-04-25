@@ -56,7 +56,6 @@ set(COMMON_INCLUDES
 	../common/cmdlib.h
 	../common/l3dslib.h
 	../common/lbmlib.h
-	../common/mathlib.h
 	../common/mdfour.h
 	../common/scriplib.h
 	../common/trilib.h
@@ -66,13 +65,21 @@ set(COMMON_SOURCES
 	../common/cmdlib.c
 	../common/l3dslib.c
 	../common/lbmlib.c
-	../common/mathlib.c
 	../common/mdfour.c
 	../common/scriplib.c
 	../common/trilib.c
 	)
 source_group("common" FILES ${COMMON_INCLUDES})
 source_group("common" FILES ${COMMON_SOURCES})
+
+set(SHARED_INCLUDES
+	../../shared/q_math.h
+	)
+set(SHARED_SOURCES
+	../../shared/q_math.c
+	)
+source_group("shared" FILES ${SHARED_INCLUDES})
+source_group("shared" FILES ${SHARED_SOURCES})
 
 set(ROQ_INCLUDES
 	./roq/audio.h
@@ -112,7 +119,7 @@ include_directories(
 # build it
 add_executable(bake ${OGG_INCLUDES} ${OGG_SOURCES} ${VORBIS_INCLUDES} ${VORBIS_SOURCES} 
 					${BAKE_INCLUDES} ${BAKE_SOURCES} ${COMMON_INCLUDES} ${COMMON_SOURCES}
-					${ROQ_INCLUDES} ${ROQ_SOURCES})
+					${SHARED_INCLUDES} ${SHARED_SOURCES} ${ROQ_INCLUDES} ${ROQ_SOURCES})
 
 q_set_output_dir(bake ${Q_UTILS_DIR})
 install(TARGETS bake RUNTIME DESTINATION ${Q_UTILS_DIR})

@@ -173,7 +173,7 @@ triedge_t	*FindEdge (triangulation_t *trian, int p0, int p1)
 		Con_Error("trian->numedges > MAX_TRI_EDGES-2\n");
 
 	VectorSubtract (trian->points[p1]->origin, trian->points[p0]->origin, v1);
-	VectorNormalize (v1, v1);
+	VectorNormalize2 (v1, v1);
 	CrossProduct (v1, trian->plane->normal, normal);
 	dist = DotProduct (trian->points[p0]->origin, normal);
 
@@ -239,9 +239,9 @@ void TriEdge_r (triangulation_t *trian, triedge_t *e)
 			continue;	// behind edge
 		VectorSubtract (p0, p, v1);
 		VectorSubtract (p1, p, v2);
-		if (!VectorNormalize (v1,v1))
+		if (!VectorNormalize2 (v1,v1))
 			continue;
-		if (!VectorNormalize (v2,v2))
+		if (!VectorNormalize2 (v2,v2))
 			continue;
 		ang = DotProduct (v1, v2);
 		if (ang < best)
@@ -426,7 +426,7 @@ void SampleTriangulation (vec3_t point, triangulation_t *trian, vec3_t color)
 		p1 = trian->points[e->p1];
 	
 		VectorSubtract (p1->origin, p0->origin, v1);
-		VectorNormalize (v1, v1);
+		VectorNormalize2 (v1, v1);
 		VectorSubtract (point, p0->origin, v2);
 		d = DotProduct (v2, v1);
 		if (d < 0)
@@ -583,7 +583,7 @@ void CalcFaceVectors (lightinfo_t *l)
 		- tex->vecs[1][0]*tex->vecs[0][2];
 	texnormal[2] = tex->vecs[1][0]*tex->vecs[0][1]
 		- tex->vecs[1][1]*tex->vecs[0][0];
-	VectorNormalize (texnormal, texnormal);
+	VectorNormalize2 (texnormal, texnormal);
 
 // flip it towards plane normal
 	distscale = DotProduct (texnormal, l->facenormal);
@@ -877,7 +877,7 @@ void CreateDirectLights (void)
 				{
 					GetVectorForKey (e2, "origin", dest);
 					VectorSubtract (dest, dl->origin, dl->normal);
-					VectorNormalize (dl->normal, dl->normal);
+					VectorNormalize2 (dl->normal, dl->normal);
 				}
 			}
 			else
@@ -939,7 +939,7 @@ void GatherSampleLight (vec3_t pos, vec3_t normal,
 		for (l=directlights[i] ; l ; l=l->next)
 		{
 			VectorSubtract (l->origin, pos, delta);
-			dist = VectorNormalize (delta, delta);
+			dist = VectorNormalize2 (delta, delta);
 			dot = DotProduct (delta, normal);
 			if (dot <= 0.001)
 				continue;	// behind sample surface

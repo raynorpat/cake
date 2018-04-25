@@ -395,7 +395,7 @@ void FixFaceEdges (node_t *node, face_t *f)
 		FindEdgeVerts (edge_start, e2);
 
 		VectorSubtract (e2, edge_start, edge_dir);
-		len = VectorNormalize (edge_dir, edge_dir);
+		len = VectorNormalize2 (edge_dir, edge_dir);
 
 		start[i] = numsuperverts;
 		TestEdge (0, len, p1, p2, 0);
@@ -596,7 +596,7 @@ winding_t *TryMergeWinding (winding_t *f1, winding_t *f2, vec3_t planenormal)
 	back = f1->p[(i+f1->numpoints-1)%f1->numpoints];
 	VectorSubtract (p1, back, delta);
 	CrossProduct (planenormal, delta, normal);
-	VectorNormalize (normal, normal);
+	VectorNormalize2 (normal, normal);
 	
 	back = f2->p[(j+2)%f2->numpoints];
 	VectorSubtract (back, p1, delta);
@@ -608,7 +608,7 @@ winding_t *TryMergeWinding (winding_t *f1, winding_t *f2, vec3_t planenormal)
 	back = f1->p[(i+2)%f1->numpoints];
 	VectorSubtract (back, p2, delta);
 	CrossProduct (planenormal, delta, normal);
-	VectorNormalize (normal, normal);
+	VectorNormalize2 (normal, normal);
 
 	back = f2->p[(j+f2->numpoints-1)%f2->numpoints];
 	VectorSubtract (back, p2, delta);
@@ -775,7 +775,7 @@ void SubdivideFace (node_t *node, face_t *f)
 		// split it
 			c_subdivide++;
 			
-			v = VectorNormalize (temp, temp);	
+			v = VectorNormalize2 (temp, temp);	
 
 			dist = (mins + subdivide_size - 16)/v;
 
