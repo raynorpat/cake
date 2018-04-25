@@ -33,7 +33,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 #define EQUAL_EPSILON		0.001
 #define	INTEGRAL_EPSILON	0.01
-#define	POINT_EPSILON		0.5
+#define	POINT_EPSILON		0.1
 #define	OFF_EPSILON			0.5
 
 int	c_merge;
