@@ -143,7 +143,7 @@ int TexinfoForBrushTexture (plane_t *plane, brush_texture_t *bt, vec3_t origin)
 		{ sinv = -1 ; cosv = 0; }
 	else
 	{	
-		ang = bt->rotate / 180 * Q_PI;
+		ang = bt->rotate / 180 * M_PI;
 		sinv = sin(ang);
 		cosv = cos(ang);
 	}
