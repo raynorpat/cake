@@ -22,9 +22,18 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
 #pragma once
 
+#include <assert.h>
+#include <time.h>
+#include <math.h>
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
 #include <stddef.h> // needed for size_t and NULL
 #include <stdarg.h> // needed for va_list
 #include <ctype.h>
+#ifdef _WIN32
+#include <direct.h>
+#endif
 
 #ifndef NULL
 #ifdef __cplusplus
@@ -76,4 +85,10 @@ typedef union byteAlias_u
 	byte b[4];
 	char c[4];
 } byteAlias_t;
+
+
+#define PAD(x,y)			(((x)+(y)-1) & ~((y)-1))
+#define PADLEN(x, y)		(PAD((x), (y)) - (x))
+
+#define ARRAY_LEN(x)		(sizeof(x) / sizeof(*(x)))
 

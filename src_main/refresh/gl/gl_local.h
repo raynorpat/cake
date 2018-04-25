@@ -52,8 +52,6 @@ typedef struct gllightmapstate_s
 	unsigned	*lightmap_data[MAX_LIGHTMAPS];
 } gllightmapstate_t;
 
-#define	REF_VERSION	"GL 0.01"
-
 extern float v_blend[4];
 
 void RMesh_MakeVertexBuffers (struct model_s *mod);

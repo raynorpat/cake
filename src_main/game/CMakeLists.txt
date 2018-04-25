@@ -8,11 +8,13 @@ set(SHARED_INCLUDES
 	../shared/q_types.h
 	../shared/q_endian.h
 	../shared/q_shared.h
+	../shared/q_math.h
 	../shared/q_files.h
 	)
 set(SHARED_SOURCES
 	../shared/m_flash.c
 	../shared/q_shared.c
+	../shared/q_math.c
 	../shared/q_endian.c
 	)
 source_group("shared" FILES ${SHARED_INCLUDES})
