@@ -1,5 +1,5 @@
 
-#include "gl_local.h"
+#include "r_local.h"
 
 static struct
 {

@@ -18,7 +18,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
 */
 
-// gl_font.c
+// r_font.c
 
 //
 // The font system uses FreeType 2.x to render TrueType fonts for use within the game.
@@ -63,7 +63,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 //    touch the font bitmaps.
 //
 
-#include "gl_local.h"
+#include "r_local.h"
 
 #include "stb_image_write.h"
 

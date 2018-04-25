@@ -17,14 +17,14 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
 */
-// GL_RSURF.C: surface-related refresh code
+// r_surf.c: surface-related refresh code
 #include <assert.h>
 #ifndef _WIN32
 #include <sys/mman.h>
 #else
 #include <windows.h>
 #endif
-#include "gl_local.h"
+#include "r_local.h"
 
 GLenum gl_index_type = GL_UNSIGNED_INT;
 int gl_index_size = sizeof (unsigned int);

@@ -17,10 +17,8 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
 */
-// gl_mesh.c: triangle model functions
-// this stuff was fucking nuts
-
-#include "gl_local.h"
+// r_mesh.c - triangle model functions
+#include "r_local.h"
 
 #define NUMVERTEXNORMALS	162
 

@@ -131,6 +131,7 @@ set(CLIENT_SOURCES
 	cl_tent.c
 	cl_view.c
 	cl_keys.c
+	cl_vid.c
 	)
 source_group("client" FILES ${CLIENT_INCLUDES})
 source_group("client" FILES ${CLIENT_SOURCES})
@@ -462,7 +463,7 @@ if (NOT WIN_UWP)
 		${VORBIS_LIBRARY}
 		${CMAKE_DL_LIBS}
 		${OPENAL_LIBRARY}
-		refresh
+		renderer
 		)
 else()
 	target_link_libraries(cake PRIVATE
@@ -473,7 +474,7 @@ else()
 		${OGG_LIBRARY}
 		${VORBIS_LIBRARY}
 		${CMAKE_DL_LIBS}
-		refresh
+		renderer
 		)
 	target_include_directories(cake PRIVATE .
 		../shared
@@ -501,7 +502,7 @@ else()
 			set(RT_LIBRARY rt)
 		endif()
 		target_link_libraries(cake PRIVATE
-			refresh
+			renderer
 			${RT_LIBRARY}
 			${SDL2_LIBRARY}
 			${FREETYPE_LIBRARY}

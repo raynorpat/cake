@@ -1,4 +1,4 @@
-project(refresh)
+project(renderer)
 
 # freetype
 if (USE_FREETYPE)
@@ -59,63 +59,50 @@ include_directories(${SDL2_INCLUDE_DIR})
 set(SDLx_LIBRARY ${SDL2_LIBRARY})
 
 
-# refresh sources
+# renderer sources
 set(RENDERER_INCLUDES
+	../refresh/r_model.h
+	../refresh/r_local.h
 	../refresh/ref_public.h
 	../refresh/vid_public.h
 	)
 set(RENDERER_SOURCES
-	../refresh/matrix.c
-	../refresh/ref.c
+	../refresh/gfx.c
+	../refresh/r_beam.c
+	../refresh/r_draw.c
+	../refresh/r_fragment.c
+	../refresh/r_font.c
+	../refresh/r_image.c
+	../refresh/r_light.c
+	../refresh/r_matrix.c
+	../refresh/r_mesh.c
+	../refresh/r_model.c
+	../refresh/r_nullmodel.c
+	../refresh/r_part.c
+	../refresh/r_postprocess.c
+	../refresh/r_main.c
+	../refresh/r_misc.c
+	../refresh/r_surf.c
+	../refresh/r_sky.c
+	../refresh/r_sprite.c
+	../refresh/r_warp.c
 	)
-source_group("refresh" FILES ${RENDERER_INCLUDES})
-source_group("refresh" FILES ${RENDERER_SOURCES})
+source_group("renderer" FILES ${RENDERER_INCLUDES})
+source_group("renderer" FILES ${RENDERER_SOURCES})
 
-if (NOT WIN_UWP)
-# OpenGL refresh backend sources
+# OpenGL backend sources
 set(RENDERER_GL_INCLUDES
-	../refresh/gl/gl_model.h
-	../refresh/gl/gl_local.h
-	../refresh/gl/gl_gl.h
+	../refresh/gl_gl.h
 	)
 set(RENDERER_GL_SOURCES
-	../refresh/gl/gl_beam.c
-	../refresh/gl/gl_draw.c
-	../refresh/gl/gl_framebuffer.c
-	../refresh/gl/gl_fragment.c
-	../refresh/gl/gl_font.c
-	../refresh/gl/gl_image.c
-	../refresh/gl/gl_light.c
-	../refresh/gl/gl_mesh.c
-	../refresh/gl/gl_model.c
-	../refresh/gl/gl_nullmodel.c
-	../refresh/gl/gl_part.c
-	../refresh/gl/gl_postprocess.c
-	../refresh/gl/gl_rmain.c
-	../refresh/gl/gl_rmisc.c
-	../refresh/gl/gl_rsurf.c
-	../refresh/gl/gl_sky.c
-	../refresh/gl/gl_sprite.c
-	../refresh/gl/gl_state.c
-	../refresh/gl/gl_warp.c
-	../refresh/gl/gl_gl.c
-	../refresh/gl/gl_gl_dsa.c
-	../refresh/vid/vid_gl.c
+	../refresh/gl_framebuffer.c
+	../refresh/gl_state.c
+	../refresh/gl_gl.c
+	../refresh/gl_gl_dsa.c
+	../refresh/gl_vid.c
 	)
-source_group("refresh\\gl" FILES ${RENDERER_GL_INCLUDES})
-source_group("refresh\\gl" FILES ${RENDERER_GL_SOURCES})
-endif()
-
-# video backend sources
-set(RENDERER_VID_INCLUDES
-	../refresh/vid_public.h
-	)
-set(RENDERER_VID_SOURCES
-	../refresh/vid/vid.c
-	)
-source_group("refresh\\vid" FILES ${RENDERER_VID_INCLUDES})
-source_group("refresh\\vid" FILES ${RENDERER_VID_SOURCES})
-
+source_group("renderer\\gl" FILES ${RENDERER_GL_INCLUDES})
+source_group("renderer\\gl" FILES ${RENDERER_GL_SOURCES})
 
 #
 # Refresh library
@@ -130,14 +117,12 @@ include_directories(
 			../libs/libcurl/include # because client.h includes curl.h
             )
 
-# build the refresh library
-add_library(refresh STATIC 
+# build the renderer library
+add_library(renderer STATIC 
 	${FREETYPE_INCLUDES}
 	${FREETYPE_SOURCES}
 	${RENDERER_INCLUDES}
 	${RENDERER_SOURCES}
 	${RENDERER_GL_INCLUDES}
 	${RENDERER_GL_SOURCES}
-	${RENDERER_VID_INCLUDES}
-	${RENDERER_VID_SOURCES}
 	)

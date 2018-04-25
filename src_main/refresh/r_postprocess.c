@@ -17,8 +17,8 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
 */
-// gl_postprocess.c -- screen polygons and effects
-#include "gl_local.h"
+// r_postprocess.c - screen polygons and effects
+#include "r_local.h"
 
 GLuint gl_ssaoprog = 0;
 GLuint u_ssaoZFar = 0;

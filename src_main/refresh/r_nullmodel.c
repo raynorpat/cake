@@ -18,9 +18,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
 */
 
-// draw.c
+// r_nullmodel.c - null model drawing
 
-#include "gl_local.h"
+#include "r_local.h"
 
 #define NUM_NULL_VERTS		12
 

@@ -18,14 +18,14 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
 */
 // r_misc.c
-#include "gl_local.h"
+#include "r_local.h"
 
 /*
 ==================
 R_InitParticleTexture
 ==================
 */
-byte	dottexture[8][8] =
+byte dottexture[8][8] =
 {
 	{0, 0, 0, 0, 0, 0, 0, 0},
 	{0, 0, 1, 1, 0, 0, 0, 0},

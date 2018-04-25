@@ -183,7 +183,7 @@ extern FBO_t *AORenderFBO;
 
 //===================================================================
 
-#include "gl_model.h"
+#include "r_model.h"
 
 void GL_SetDefaultState (void);
 void GL_UpdateSwapInterval (void);

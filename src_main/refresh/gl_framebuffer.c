@@ -19,7 +19,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 */
 // gl_framebuffer.c -- opengl framebuffer functionality
 
-#include "gl_local.h"
+#include "r_local.h"
 
 FBO_t		*fbos[MAX_FBOS];
 int			numFBOs;

@@ -22,7 +22,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #include <assert.h>
 #include <SDL.h>
 
-#include "../gl/gl_gl.h"
+#include "gl_gl.h"
 #include <math.h>
 
 #include "ref_public.h"

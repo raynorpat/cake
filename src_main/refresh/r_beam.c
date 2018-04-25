@@ -18,9 +18,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
 */
 
-// gl_beam.c
+// r_beam.c
 
-#include "gl_local.h"
+#include "r_local.h"
 
 #define NUM_CYLINDER_VERTS	152
 

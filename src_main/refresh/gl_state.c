@@ -18,7 +18,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
 */
 // gl_state.c
-#include "gl_local.h"
+#include "r_local.h"
 
 void GL_BindVertexArray(GLuint vertexarray)
 {
