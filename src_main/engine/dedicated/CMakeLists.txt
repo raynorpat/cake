@@ -54,7 +54,6 @@ set(COMMON_SOURCES
 	../crc.c
 	../cvar.c
 	../files.c
-	../md4.c
 	../net.c
 	../net_chan.c
 	../pmove.c
@@ -99,12 +98,14 @@ set(SHARED_INCLUDES
 	../../shared/q_shared.h
 	../../shared/q_math.h
 	../../shared/q_files.h
+	../../shared/mdfour.h
 	)
 set(SHARED_SOURCES
 	../../shared/m_flash.c
 	../../shared/q_shared.c
 	../../shared/q_math.c
 	../../shared/q_endian.c
+	../../shared/mdfour.c
 	)
 source_group("shared" FILES ${SHARED_INCLUDES})
 source_group("shared" FILES ${SHARED_SOURCES})
