@@ -22,16 +22,18 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
 #include "r_local.h"
 
-#define DF_SHADE			0x00000400	// 1024
-#define DF_NOTIMESCALE		0x00000800	// 2048
-#define INSTANT_DECAL		-10000.0
+#define DF_SHADE				0x00000400	// 1024
+#define DF_NOTIMESCALE			0x00000800	// 2048
+#define INSTANT_DECAL			-10000.0
 
-#define MAX_DECALS			256
-#define MAX_DECAL_VERTS		64
-#define MAX_DECAL_FRAGMENTS	64
+#define MAX_DECALS				256
 
-#define DECAL_BHOLE			1
-#define	DECAL_BLOOD			2
+#define MAX_DECAL_VERTS			256
+#define MAX_FRAGMENTS_PER_DECAL	32
+#define MAX_VERTS_PER_FRAGMENT	8
+
+#define DECAL_BHOLE				1
+#define	DECAL_BLOOD				2
 
 typedef struct cdecal_t
 {
@@ -39,8 +41,8 @@ typedef struct cdecal_t
 	float		time;
 
 	int			numverts;
-	vec3_t		verts[MAX_DECAL_VERTS];
-	vec2_t		stcoords[MAX_DECAL_VERTS];
+	vec3_t		verts[MAX_VERTS_PER_FRAGMENT];
+	vec2_t		stcoords[MAX_VERTS_PER_FRAGMENT];
 	mnode_t     *node;
 
 	vec3_t		direction;
@@ -63,7 +65,7 @@ GLuint gl_decalvbo_xyz = 0;
 GLuint gl_decalvbo_st = 0;
 GLuint gl_decalvbo_color = 0;
 
-GLuint r_bloodDecalImage;
+GLuint r_bloodDecalImage[2];
 GLuint r_bulletholeDecalImage;
 
 /*
@@ -79,7 +81,10 @@ void RDecal_CreatePrograms(void)
 	// create texture for blood decal
 	LoadImageThruSTB("pics/particles/blood.png", "png", &data, &width, &height);
 	if (data)
-		r_bloodDecalImage = GL_UploadTexture(data, width, height, false, 32);
+		r_bloodDecalImage[0] = GL_UploadTexture(data, width, height, false, 32);
+	LoadImageThruSTB("pics/particles/blood2.png", "png", &data, &width, &height);
+	if (data)
+		r_bloodDecalImage[1] = GL_UploadTexture(data, width, height, false, 32);
 
 	// create texture for bullet hole decal
 	LoadImageThruSTB("pics/particles/bullet_mrk.png", "png", &data, &width, &height);
@@ -184,7 +189,7 @@ void RE_GL_AddDecal (vec3_t origin, vec3_t dir, vec4_t color, float size, int ty
 {
 	int			i, j, numfragments;
 	vec3_t		verts[MAX_DECAL_VERTS], shade, temp;
-	markFragment_t *fr, fragments[MAX_DECAL_FRAGMENTS];
+	markFragment_t *fr, fragments[MAX_FRAGMENTS_PER_DECAL];
 	vec3_t		axis[3];
 	cdecal_t	*d;
 	float		lightspot[3];
@@ -203,7 +208,7 @@ void RE_GL_AddDecal (vec3_t origin, vec3_t dir, vec4_t color, float size, int ty
 	CrossProduct(axis[0], axis[2], axis[1]);
 
 	// clip it against the world
-	numfragments = R_GetClippedFragments(origin, axis, size, MAX_DECAL_VERTS, verts, MAX_DECAL_FRAGMENTS, fragments);
+	numfragments = R_GetClippedFragments(origin, axis, size, MAX_DECAL_VERTS, verts, MAX_FRAGMENTS_PER_DECAL, fragments);
 	if (!numfragments)
 		return; // no valid fragments
 
@@ -214,16 +219,10 @@ void RE_GL_AddDecal (vec3_t origin, vec3_t dir, vec4_t color, float size, int ty
 
 	for (i = 0, fr = fragments; i < numfragments; i++, fr++)
 	{
-		if (fr->numPoints > MAX_DECAL_VERTS)
-			fr->numPoints = MAX_DECAL_VERTS;
-		else if (fr->numPoints <= 0)
-			continue;
-
 		d = R_AllocDecal();
 
 		d->time = r_newrefdef.time;
 
-		d->numverts = fr->numPoints;
 		d->node = fr->node;
 
 		VectorCopy(fr->surf->plane->normal, d->direction);
@@ -243,12 +242,11 @@ void RE_GL_AddDecal (vec3_t origin, vec3_t dir, vec4_t color, float size, int ty
 		d->flags = flags;
 
 		// make the decal vert
-		for (j = 0; j < fr->numPoints; j++)
+		d->numverts = fr->numPoints;
+		for (j = 0; j < fr->numPoints && j < MAX_VERTS_PER_FRAGMENT; j++)
 		{
 			// xyz
-			d->verts[j][0] = verts[fr->firstPoint + j][0];
-			d->verts[j][1] = verts[fr->firstPoint + j][1];
-			d->verts[j][2] = verts[fr->firstPoint + j][2];
+			VectorCopy(verts[fr->firstPoint + j], d->verts[j]);
 
 			// st
 			VectorSubtract(d->verts[j], origin, temp);
@@ -283,11 +281,14 @@ void R_DrawDecals (void)
 	glEnable(GL_POLYGON_OFFSET_FILL);
 	glPolygonOffset(-1, -1);
 
-	GL_Enable(BLEND_BIT | DEPTHTEST_BIT);
+	GL_Enable(!BLEND_BIT | DEPTHTEST_BIT);
+	GL_BlendFunc(GL_ZERO, GL_ONE_MINUS_SRC_COLOR);
 
 	GL_UseProgram(gl_decalprog);
 
 	glProgramUniformMatrix4fv (gl_decalprog, gl_decalmvpMatrix, 1, GL_FALSE, r_mvpmatrix.m[0]);
+
+	GL_BindVertexArray(gl_decalvao);
 	
 	for (dl = active->next; dl != active; dl = next)
 	{
@@ -318,7 +319,7 @@ void R_DrawDecals (void)
 			color[3] *= time / 1.5;
 
 		if (dl->type == DECAL_BLOOD)
-			GL_BindTexture(GL_TEXTURE0, GL_TEXTURE_2D, r_drawnearestclampsampler, r_bloodDecalImage);
+			GL_BindTexture(GL_TEXTURE0, GL_TEXTURE_2D, r_drawnearestclampsampler, r_bloodDecalImage[0]);
 		else if (dl->type == DECAL_BHOLE)
 			GL_BindTexture(GL_TEXTURE0, GL_TEXTURE_2D, r_drawnearestclampsampler, r_bulletholeDecalImage);
 
@@ -330,20 +331,21 @@ void R_DrawDecals (void)
 		glBindBuffer(GL_ARRAY_BUFFER, gl_decalvbo_color);
 		glBufferData(GL_ARRAY_BUFFER, sizeof(color), color, GL_DYNAMIC_DRAW);
 
-		// draw it
-		GL_BindVertexArray(gl_decalvao);
+		// draw
 		glBindBuffer(GL_ARRAY_BUFFER, gl_decalvbo_xyz);
 		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
 		glBindBuffer(GL_ARRAY_BUFFER, gl_decalvbo_st);
 		glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, 0);
 		glBindBuffer(GL_ARRAY_BUFFER, gl_decalvbo_color);
 		glVertexAttribPointer(2, 4, GL_FLOAT, GL_FALSE, 0, 0);
+
 		glDrawArrays(GL_TRIANGLE_FAN, 0, dl->numverts);
 
 		r_numdecals++;
 		if (r_numdecals >= MAX_DECALS)
 			break;
 	}
-
+	
+	GL_BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glDisable(GL_POLYGON_OFFSET_FILL);
 }

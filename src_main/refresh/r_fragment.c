@@ -198,6 +198,7 @@ static void R_ClipFragmentToSurface (msurface_t *surf, const vec3_t normal, mnod
 	if ((planeback && d > -0.5) || (!planeback && d < 0.5))
 		return; // greater than 60 degrees
 
+	// clip as triangle fan
 	for (i = 2; i < surf->numvertexes; i++)
 	{
 		mf = &cm_markFragments[cm_numMarkFragments];
@@ -208,7 +209,6 @@ static void R_ClipFragmentToSurface (msurface_t *surf, const vec3_t normal, mnod
 		VectorCopy (worldVert(0, surf), points[0]);
 		VectorCopy (worldVert(i - 1, surf), points[1]);
 		VectorCopy (worldVert(i, surf), points[2]);
-
 		R_ClipFragment (3, points[0], 0, mf);
 
 		if (mf->numPoints)
