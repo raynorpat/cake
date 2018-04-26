@@ -450,12 +450,12 @@ void R_RenderView (refdef_t *fd)
 
 		R_DrawEntitiesOnList ();
 
+		R_DrawDecals ();
+
 		// the common case has particles drawing over alpha surfaces so we adjust for that
 		R_DrawAlphaSurfaces ();
 
 		R_DrawParticles ();
-
-		R_DrawDecals ();
 
 		RPostProcess_FinishToScreen();
 	}
