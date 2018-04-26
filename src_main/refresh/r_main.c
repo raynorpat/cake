@@ -455,6 +455,8 @@ void R_RenderView (refdef_t *fd)
 
 		R_DrawParticles ();
 
+		R_DrawDecals ();
+
 		RPostProcess_FinishToScreen();
 	}
 	else
@@ -1130,6 +1132,8 @@ void GL_GFX_CoreInit(void)
 	RE_BeginFrame = RE_GL_BeginFrame;
 	RE_RenderFrame = RE_GL_RenderFrame;
 	RE_EndFrame = RE_GL_EndFrame;
+
+	RE_AddDecal = RE_GL_AddDecal;
 
 	RE_Init = RE_GL_Init;
 	RE_Shutdown = RE_GL_Shutdown;

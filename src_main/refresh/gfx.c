@@ -27,6 +27,8 @@ void            (* RE_BeginFrame)( float camera_separation ) = NULL;
 void			(* RE_RenderFrame)( refdef_t *fd ) = NULL;
 void			(* RE_EndFrame)( void ) = NULL;
 
+void			(* RE_AddDecal)( vec3_t origin, vec3_t dir, vec4_t color, float size, int type, int flags, float angle ) = NULL;
+
 int		        (* RE_Init)( void ) = NULL;
 void            (* RE_Shutdown)( void ) = NULL;
 

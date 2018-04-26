@@ -192,6 +192,8 @@ extern void(*RE_BeginFrame)(float camera_separation);
 extern void(*RE_RenderFrame)(refdef_t *fd);
 extern void(*RE_EndFrame)(void);
 
+extern void(*RE_AddDecal)(vec3_t origin, vec3_t dir, vec4_t color, float size, int type, int flags, float angle);
+
 extern int(*RE_Init)(void);
 extern void(*RE_Shutdown)(void);
 

@@ -1962,6 +1962,25 @@ void CL_AddParticles (void)
 				CL_FreeParticle (p);
 				continue;
 			}
+			else if (alpha <= 0.3f && p->color == 0xe8)
+			{
+				// do blood decals
+				if (rand() & 4)
+				{
+					trace_t		tr;
+					time2 = time * time;
+					org[0] = p->org[0] + p->vel[0] * time + p->accel[0] * time2;
+					org[1] = p->org[1] + p->vel[1] * time + p->accel[1] * time2;
+					org[2] = p->org[2] + p->vel[2] * time + p->accel[2] * time2;
+					tr = CM_BoxTrace(p->org, org, vec3_origin, vec3_origin, 0, MASK_SOLID);
+					if (tr.fraction != 1.0f)
+					{
+						vec4_t color;
+						Vector4Set (color, 1.0, 0.0, 0.0, 1.0f);
+						RE_AddDecal (tr.endpos, tr.plane.normal, color, 10 + ((rand() % 21 * 0.05) - 0.5), 2, 0, rand() % 361);
+					}
+				}
+			}
 		}
 		else
 		{

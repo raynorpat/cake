@@ -33,23 +33,14 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #define DECAL_BHOLE			1
 #define	DECAL_BLOOD			2
 
-typedef struct
-{
-	vec3_t origin;
-	vec2_t texcoords;
-	vec4_t color;
-} decal_t;
-
-GLuint r_decalvbo = 0;
-GLuint r_decalvao = 0;
-
 typedef struct cdecal_t
 {
 	struct 		cdecal_t *prev, *next;
 	float		time;
 
 	int			numverts;
-	decal_t		decalvert[MAX_DECAL_VERTS];
+	vec3_t		verts[MAX_DECAL_VERTS];
+	vec2_t		stcoords[MAX_DECAL_VERTS];
 	mnode_t     *node;
 
 	vec3_t		direction;
@@ -65,7 +56,15 @@ static cdecal_t	decals[MAX_DECALS];
 static cdecal_t	active_decals, *free_decals;
 
 GLuint gl_decalprog = 0;
-GLuint gl_decalWorldMatrix = 0;
+GLuint gl_decalmvpMatrix = 0;
+
+GLuint gl_decalvao = 0;
+GLuint gl_decalvbo_xyz = 0;
+GLuint gl_decalvbo_st = 0;
+GLuint gl_decalvbo_color = 0;
+
+GLuint r_bloodDecalImage;
+GLuint r_bulletholeDecalImage;
 
 /*
 =================
@@ -74,22 +73,32 @@ RDecal_CreatePrograms
 */
 void RDecal_CreatePrograms(void)
 {
+	byte *data = NULL;
+	int width, height;
+
+	// create texture for blood decal
+	LoadImageThruSTB("pics/particles/blood.png", "png", &data, &width, &height);
+	if (data)
+		r_bloodDecalImage = GL_UploadTexture(data, width, height, false, 32);
+
+	// create texture for bullet hole decal
+	LoadImageThruSTB("pics/particles/bullet_mrk.png", "png", &data, &width, &height);
+	if (data)
+		r_bulletholeDecalImage = GL_UploadTexture(data, width, height, false, 32);
+
 	gl_decalprog = GL_CreateShaderFromName("glsl/decals.glsl", "DecalVS", "DecalFS");
-	gl_decalWorldMatrix = glGetUniformLocation(gl_decalprog, "worldMatrix");
+	gl_decalmvpMatrix = glGetUniformLocation(gl_decalprog, "mvpMatrix");
+	glProgramUniform1i(gl_decalprog, glGetUniformLocation(gl_decalprog, "decalTex"), 0);
 
-	glGenBuffers(1, &r_decalvbo);
-	glNamedBufferDataEXT(r_decalvbo, MAX_DECALS * sizeof(decal_t) * 4, NULL, GL_STREAM_DRAW);
+	glGenVertexArrays(1, &gl_decalvao);
 
-	glGenVertexArrays(1, &r_decalvao);
+	glEnableVertexArrayAttribEXT(gl_decalvao, 0);
+	glEnableVertexArrayAttribEXT(gl_decalvao, 1);
+	glEnableVertexArrayAttribEXT(gl_decalvao, 2);
 
-	glEnableVertexArrayAttribEXT(r_decalvao, 0);
-	glVertexArrayVertexAttribOffsetEXT(r_decalvao, r_decalvbo, 0, 3, GL_FLOAT, GL_FALSE, sizeof(decal_t), 0);
-
-	glEnableVertexArrayAttribEXT(r_decalvao, 1);
-	glVertexArrayVertexAttribOffsetEXT(r_decalvao, r_decalvbo, 1, 2, GL_FLOAT, GL_FALSE, sizeof(decal_t), 12);
-
-	glEnableVertexArrayAttribEXT(r_decalvao, 2);
-	glVertexArrayVertexAttribOffsetEXT(r_decalvao, r_decalvbo, 2, 4, GL_FLOAT, GL_FALSE, sizeof(decal_t), 18);
+	glGenBuffers(1, &gl_decalvbo_xyz);
+	glGenBuffers(1, &gl_decalvbo_st);
+	glGenBuffers(1, &gl_decalvbo_color);
 }
 
 /*
@@ -237,15 +246,12 @@ void RE_GL_AddDecal (vec3_t origin, vec3_t dir, vec4_t color, float size, int ty
 			vec3_t v;
 
 			// xyz
-			VectorCopy(verts[fr->firstPoint + j], d->decalvert[j].origin);
+			VectorCopy(verts[fr->firstPoint + j], d->verts[j]);
 
 			// st
-			VectorSubtract(d->decalvert[j].origin, origin, v);
-			d->decalvert[j].texcoords[0] = DotProduct(v, axis[1]) + 0.5;
-			d->decalvert[j].texcoords[1] = DotProduct(v, axis[2]) + 0.5;
-
-			// color
-			VectorCopy(d->color, d->decalvert[j].color);
+			VectorSubtract(d->verts[j], origin, v);
+			d->stcoords[j][0] = DotProduct(v, axis[1]) + 0.5;
+			d->stcoords[j][1] = DotProduct(v, axis[2]) + 0.5;
 		}
 	}
 }
@@ -280,10 +286,8 @@ void R_DrawDecals (void)
 
 	GL_UseProgram(gl_decalprog);
 
-	glProgramUniformMatrix4fv (gl_decalprog, gl_decalWorldMatrix, 1, GL_FALSE, r_worldmatrix.m[0]);
-
-	// TODO: bind decal texture
-
+	glProgramUniformMatrix4fv (gl_decalprog, gl_decalmvpMatrix, 1, GL_FALSE, r_mvpmatrix.m[0]);
+	
 	for (dl = active->next; dl != active; dl = next)
 	{
 		next = dl->next;
@@ -309,13 +313,31 @@ void R_DrawDecals (void)
 		Vector4Copy(dl->color, color);
 
 		time = dl->time + gl_decalsTime->value - r_newrefdef.time;
-
 		if (time < 1.5)
 			color[3] *= time / 1.5;
 
+		if (dl->type == DECAL_BLOOD)
+			GL_BindTexture(GL_TEXTURE0, GL_TEXTURE_2D, r_drawnearestclampsampler, r_bloodDecalImage);
+		else if (dl->type == DECAL_BHOLE)
+			GL_BindTexture(GL_TEXTURE0, GL_TEXTURE_2D, r_drawnearestclampsampler, r_bulletholeDecalImage);
+
+		// bind data
+		glBindBuffer(GL_ARRAY_BUFFER, gl_decalvbo_xyz);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(dl->verts), dl->verts, GL_DYNAMIC_DRAW);
+		glBindBuffer(GL_ARRAY_BUFFER, gl_decalvbo_st);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(dl->stcoords), dl->stcoords, GL_DYNAMIC_DRAW);
+		glBindBuffer(GL_ARRAY_BUFFER, gl_decalvbo_color);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(color), color, GL_DYNAMIC_DRAW);
+
 		// draw it
-		GL_BindVertexArray(r_decalvao);
-		glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+		GL_BindVertexArray(gl_decalvao);
+		glBindBuffer(GL_ARRAY_BUFFER, gl_decalvbo_xyz);
+		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
+		glBindBuffer(GL_ARRAY_BUFFER, gl_decalvbo_st);
+		glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, 0);
+		glBindBuffer(GL_ARRAY_BUFFER, gl_decalvbo_color);
+		glVertexAttribPointer(2, 4, GL_FLOAT, GL_FALSE, 0, 0);
+		glDrawArrays(GL_TRIANGLE_FAN, 0, dl->numverts);
 
 		r_numdecals++;
 		if (r_numdecals >= MAX_DECALS)
