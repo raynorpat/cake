@@ -65,7 +65,7 @@ GLuint gl_decalvbo_xyz = 0;
 GLuint gl_decalvbo_st = 0;
 GLuint gl_decalvbo_color = 0;
 
-GLuint r_bloodDecalImage[2];
+GLuint r_bloodDecalImage[5];
 GLuint r_bulletholeDecalImage;
 
 /*
@@ -85,6 +85,15 @@ void RDecal_CreatePrograms(void)
 	LoadImageThruSTB("pics/particles/blood2.png", "png", &data, &width, &height);
 	if (data)
 		r_bloodDecalImage[1] = GL_UploadTexture(data, width, height, false, 32);
+	LoadImageThruSTB("pics/particles/blood3.png", "png", &data, &width, &height);
+	if (data)
+		r_bloodDecalImage[2] = GL_UploadTexture(data, width, height, false, 32);
+	LoadImageThruSTB("pics/particles/blood4.png", "png", &data, &width, &height);
+	if (data)
+		r_bloodDecalImage[3] = GL_UploadTexture(data, width, height, false, 32);
+	LoadImageThruSTB("pics/particles/blood5.png", "png", &data, &width, &height);
+	if (data)
+		r_bloodDecalImage[4] = GL_UploadTexture(data, width, height, false, 32);
 
 	// create texture for bullet hole decal
 	LoadImageThruSTB("pics/particles/bullet_mrk.png", "png", &data, &width, &height);

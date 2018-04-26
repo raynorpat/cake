@@ -476,7 +476,7 @@ void CL_ParseTEnt (void)
 
 		if (type != TE_SPARKS)
 		{
-			Vector4Set(colorf, 0.0, 0.0, 0.0, 1.0f);
+			Vector4Set(colorf, 1.0, 1.0, 1.0, 1.0f);
 			RE_AddDecal (pos, dir, colorf, 2 + ((rand() % 21 * 0.05f) - 0.5f), 1, 0, rand() % 361);
 
 			CL_SmokeAndFlash (pos);
@@ -512,7 +512,7 @@ void CL_ParseTEnt (void)
 		MSG_ReadPos (&net_message, pos);
 		MSG_ReadDir (&net_message, dir);
 
-		Vector4Set(colorf, 0.0, 0.0, 0.0, 1.0f);
+		Vector4Set(colorf, 1.0, 1.0, 1.0, 1.0f);
 		RE_AddDecal(pos, dir, colorf, 2 + ((rand() % 21 * 0.05f) - 0.5f), 1, 0, rand() % 361);
 
 		CL_ParticleEffect (pos, dir, 0, 20);

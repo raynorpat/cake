@@ -1977,7 +1977,7 @@ void CL_AddParticles (void)
 					{
 						vec4_t color;
 						Vector4Set (color, 1.0, 0.0, 0.0, 1.0f);
-						RE_AddDecal (tr.endpos, tr.plane.normal, color, 6 + ((rand() % 21 * 0.05) - 0.5), 2, 0, rand() % 361);
+						RE_AddDecal (tr.endpos, tr.plane.normal, color, 10 + ((rand() % 21 * 0.05) - 0.5), 2, 0, rand() % 361);
 					}
 				}
 			}
