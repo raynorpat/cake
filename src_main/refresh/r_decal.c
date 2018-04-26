@@ -207,8 +207,10 @@ void RE_GL_AddDecal (vec3_t origin, vec3_t dir, vec4_t color, float size, int ty
 	if (!numfragments)
 		return; // no valid fragments
 
-	VectorScale(axis[1], 0.5 / size, axis[1]);
-	VectorScale(axis[2], 0.5 / size, axis[2]);
+	// store out vertex data
+	size = 0.5f / size;
+	VectorScale(axis[1], size, axis[1]);
+	VectorScale(axis[2], size, axis[2]);
 
 	for (i = 0, fr = fragments; i < numfragments; i++, fr++)
 	{
@@ -279,10 +281,9 @@ void R_DrawDecals (void)
 	mindist = DotProduct(r_origin, vpn) + 4.0;
 
 	glEnable(GL_POLYGON_OFFSET_FILL);
-	glPolygonOffset(-1, -2);
+	glPolygonOffset(-1, -1);
 
-	glDepthMask(GL_FALSE);
-	glEnable(GL_BLEND);
+	GL_Enable(BLEND_BIT | DEPTHTEST_BIT);
 
 	GL_UseProgram(gl_decalprog);
 
@@ -344,7 +345,5 @@ void R_DrawDecals (void)
 			break;
 	}
 
-	glDisable(GL_BLEND);
-	glDepthMask(GL_TRUE);
 	glDisable(GL_POLYGON_OFFSET_FILL);
 }

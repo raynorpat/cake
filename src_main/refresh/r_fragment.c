@@ -195,8 +195,8 @@ static void R_ClipFragmentToSurface (msurface_t *surf, const vec3_t normal, mnod
 		return; // already reached the limit somewhere else
 
 	d = DotProduct(normal, surf->plane->normal);
-	if ((planeback && d > -0.75) || (!planeback && d < 0.75))
-		return; // greater than X degrees
+	if ((planeback && d > -0.5) || (!planeback && d < 0.5))
+		return; // greater than 60 degrees
 
 	for (i = 2; i < surf->numvertexes; i++)
 	{
