@@ -183,7 +183,7 @@ Adds a single decal to the decal list
 void RE_GL_AddDecal (vec3_t origin, vec3_t dir, vec4_t color, float size, int type, int flags, float angle)
 {
 	int			i, j, numfragments;
-	vec3_t		verts[MAX_DECAL_VERTS], shade;
+	vec3_t		verts[MAX_DECAL_VERTS], shade, temp;
 	markFragment_t *fr, fragments[MAX_DECAL_FRAGMENTS];
 	vec3_t		axis[3];
 	cdecal_t	*d;
@@ -245,15 +245,15 @@ void RE_GL_AddDecal (vec3_t origin, vec3_t dir, vec4_t color, float size, int ty
 		// make the decal vert
 		for (j = 0; j < fr->numPoints; j++)
 		{
-			vec3_t v;
-
 			// xyz
-			VectorCopy(verts[fr->firstPoint + j], d->verts[j]);
+			d->verts[j][0] = verts[fr->firstPoint + j][0];
+			d->verts[j][1] = verts[fr->firstPoint + j][1];
+			d->verts[j][2] = verts[fr->firstPoint + j][2];
 
 			// st
-			VectorSubtract(d->verts[j], origin, v);
-			d->stcoords[j][0] = DotProduct(v, axis[1]) + 0.5;
-			d->stcoords[j][1] = DotProduct(v, axis[2]) + 0.5;
+			VectorSubtract(d->verts[j], origin, temp);
+			d->stcoords[j][0] = DotProduct(temp, axis[1]) + 0.5f;
+			d->stcoords[j][1] = DotProduct(temp, axis[2]) + 0.5f;
 		}
 	}
 }
