@@ -497,8 +497,8 @@ void CL_ParseTEnt (void)
 
 		if (type != TE_SPARKS)
 		{
-			Vector4Set(colorf, 1.0, 1.0, 1.0, 1.0f);
-			RE_AddDecal (pos, dir, colorf, 2 + ((rand() % 21 * 0.05f) - 0.5f), 1, 0, rand() % 361);
+			Vector4Set(colorf, 1.0f, 1.0f, 1.0f, 1.0f);
+			RE_AddDecal (pos, dir, colorf, 2 + ((rand() % 21 * 0.05f) - 0.5f), DECAL_BHOLE, 0, frand() * 360);
 
 			CL_SmokeAndFlash (pos);
 
@@ -533,8 +533,8 @@ void CL_ParseTEnt (void)
 		MSG_ReadPos (&net_message, pos);
 		MSG_ReadDir (&net_message, dir);
 
-		Vector4Set(colorf, 1.0, 1.0, 1.0, 1.0f);
-		RE_AddDecal(pos, dir, colorf, 2 + ((rand() % 21 * 0.05f) - 0.5f), 1, 0, rand() % 361);
+		Vector4Set(colorf, 1.0f, 1.0f, 1.0f, 1.0f);
+		RE_AddDecal(pos, dir, colorf, 2 + ((rand() % 21 * 0.05f) - 0.5f), DECAL_BHOLE, 0, frand() * 360);
 
 		CL_ParticleEffect (pos, dir, 0, 20);
 		CL_SmokeAndFlash (pos);
@@ -572,6 +572,10 @@ void CL_ParseTEnt (void)
 		MSG_ReadPos (&net_message, pos);
 		MSG_ReadDir (&net_message, dir);
 		color = MSG_ReadByte (&net_message);
+		
+		Vector4Set(colorf, 1.0f, 1.0f, 0.0f, 1.0f);
+		RE_AddDecal(pos, dir, colorf, 3 + ((rand() % 21 * 0.05f) - 0.5f), DECAL_BURNMRK, 0, frand() * 360);
+
 		CL_ParticleEffect2 (pos, dir, color, cnt);
 		break;
 
@@ -582,6 +586,9 @@ void CL_ParseTEnt (void)
 		
 		CL_FindRailedSurface (pos, pos2, dir);
 
+		Vector4Set(colorf, 1.0f, 1.0f, 1.0f, 1.0f);
+		RE_AddDecal(pos2, dir, colorf, 3.5 + ((rand() % 21 * 0.05f) - 0.5f), DECAL_TRACKERMRK, 0, frand() * 360);
+
 		S_StartSound (pos2, 0, 0, cl_sfx_railg, 1, ATTN_NORM, 0);
 		break;
 
@@ -589,6 +596,10 @@ void CL_ParseTEnt (void)
 	case TE_GRENADE_EXPLOSION:
 	case TE_GRENADE_EXPLOSION_WATER:
 		MSG_ReadPos (&net_message, pos);
+
+		pos[2] += 3.0; // grenade explosion decal hack
+		Vector4Set(colorf, 0.1f, 0.1f, 0.1f, 1.0f);
+		RE_AddDecal(pos, vec3_origin, colorf, 45 + ((rand() % 21 * 0.05f) - 0.5f), DECAL_BIGBURNMRK, 0, frand() * 360);
 
 		ex = CL_AllocExplosion ();
 		VectorCopy (pos, ex->ent.currorigin);
@@ -616,6 +627,9 @@ void CL_ParseTEnt (void)
 	case TE_ROCKET_EXPLOSION:
 	case TE_ROCKET_EXPLOSION_WATER:
 		MSG_ReadPos (&net_message, pos);
+
+		Vector4Set(colorf, 0.1f, 0.1f, 0.1f, 1.0f);
+		RE_AddDecal(pos, vec3_origin, colorf, 45 + ((rand() % 21 * 0.05f) - 0.5f), DECAL_BIGBURNMRK, 0, frand() * 360);
 
 		ex = CL_AllocExplosion ();
 		VectorCopy (pos, ex->ent.currorigin);
@@ -645,6 +659,10 @@ void CL_ParseTEnt (void)
 
 	case TE_BFG_EXPLOSION:
 		MSG_ReadPos (&net_message, pos);
+
+		Vector4Set(colorf, 0.1f, 0.1f, 0.1f, 1.0f);
+		RE_AddDecal(pos, vec3_origin, colorf, 55 + ((rand() % 21 * 0.05f) - 0.5f), DECAL_BIGBURNMRK, 0, frand() * 360);
+
 		ex = CL_AllocExplosion ();
 		VectorCopy (pos, ex->ent.currorigin);
 		ex->type = ex_poly;
@@ -693,6 +711,9 @@ void CL_ParseTEnt (void)
 	case TE_BLASTER:			// blaster hitting wall
 		MSG_ReadPos (&net_message, pos);
 		MSG_ReadDir (&net_message, dir);
+
+		Vector4Set(colorf, 1.0f, 1.0f, 0.0f, 1.0f);
+		RE_AddDecal(pos, dir, colorf, 3 + ((rand() % 21 * 0.05f) - 0.5f), DECAL_BURNMRK, 0, frand() * 360);
 
 		CL_BlasterParticles (pos, dir, 0xe0);
 

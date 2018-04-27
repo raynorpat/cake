@@ -212,9 +212,35 @@ void RE_GL_AddDecal (vec3_t origin, vec3_t dir, vec4_t color, float size, int ty
 	if (!gl_decals->value)
 		return;
 
-	// invalid decal
-	if (size <= 0 || VectorCompare(dir, vec3_origin))
+	// invalid decal size
+	if (size <= 0)
 		return;
+
+	// a hack to produce decals from explosions etc
+	if (VectorCompare(dir, vec3_origin))
+	{
+		float	scale = 1.5 * size;
+		trace_t	trace;
+		vec3_t	end, dirs[6] = {
+				{ 1.0, 0.0, 0.0 },
+				{ -1.0, 0.0, 0.0 },
+				{ 0.0, 1.0, 0.0 },
+				{ 0.0, -1.0, 0.0 },
+				{ 0.0, 0.0, 1.0 },
+				{ 0.0, 0.0, -1.0 }
+		};
+
+		for (i = 0; i < 6; i++)
+		{
+			extern trace_t SV_Trace(vec3_t start, vec3_t mins, vec3_t maxs, vec3_t end, struct edict_s *passedict, int contentmask);
+
+			VectorMA(origin, scale, dirs[i], end);
+			trace = SV_Trace(origin, vec3_origin, vec3_origin, end, NULL, MASK_SOLID);
+			if (trace.fraction != 1.0)
+				RE_GL_AddDecal(origin, trace.plane.normal, color, size, type, flags, angle);
+		}
+		return;
+	}
 
 	// calculate orientation matrix
 	VectorNormalize2(dir, axis[0]);
