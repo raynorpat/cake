@@ -141,6 +141,19 @@ typedef struct
 	struct msurface_s *surf;
 } markFragment_t;
 
+#define	DECAL_BLOOD				0
+#define	DECAL_BLOOD_2			1
+#define	DECAL_BLOOD_3			2
+#define	DECAL_BLOOD_4			3
+#define	DECAL_BLOOD_5			4
+#define DECAL_BHOLE				5
+#define DECAL_BURNMRK			6
+#define DECAL_BIGBURNMRK		7
+#define DECAL_TRACKERMRK		8
+#define DECAL_FOOTPRINT			9
+
+#define MAX_DECAL_TEX			10
+
 typedef struct
 {
 	float		rgb[3];			// 0.0 - 2.0

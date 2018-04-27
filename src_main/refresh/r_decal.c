@@ -32,9 +32,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #define MAX_FRAGMENTS_PER_DECAL	32
 #define MAX_VERTS_PER_FRAGMENT	8
 
-#define DECAL_BHOLE				1
-#define	DECAL_BLOOD				2
-
 typedef struct cdecal_t
 {
 	struct 		cdecal_t *prev, *next;
@@ -65,8 +62,7 @@ GLuint gl_decalvbo_xyz = 0;
 GLuint gl_decalvbo_st = 0;
 GLuint gl_decalvbo_color = 0;
 
-GLuint r_bloodDecalImage[5];
-GLuint r_bulletholeDecalImage;
+GLuint r_decalImages[MAX_DECAL_TEX];
 
 /*
 =================
@@ -78,27 +74,37 @@ void RDecal_CreatePrograms(void)
 	byte *data = NULL;
 	int width, height;
 
-	// create texture for blood decal
+	// create textures for decals
 	LoadImageThruSTB("pics/particles/blood.png", "png", &data, &width, &height);
 	if (data)
-		r_bloodDecalImage[0] = GL_UploadTexture(data, width, height, false, 32);
+		r_decalImages[DECAL_BLOOD] = GL_UploadTexture(data, width, height, false, 32);
 	LoadImageThruSTB("pics/particles/blood2.png", "png", &data, &width, &height);
 	if (data)
-		r_bloodDecalImage[1] = GL_UploadTexture(data, width, height, false, 32);
+		r_decalImages[DECAL_BLOOD_2] = GL_UploadTexture(data, width, height, false, 32);
 	LoadImageThruSTB("pics/particles/blood3.png", "png", &data, &width, &height);
 	if (data)
-		r_bloodDecalImage[2] = GL_UploadTexture(data, width, height, false, 32);
+		r_decalImages[DECAL_BLOOD_3] = GL_UploadTexture(data, width, height, false, 32);
 	LoadImageThruSTB("pics/particles/blood4.png", "png", &data, &width, &height);
 	if (data)
-		r_bloodDecalImage[3] = GL_UploadTexture(data, width, height, false, 32);
+		r_decalImages[DECAL_BLOOD_4] = GL_UploadTexture(data, width, height, false, 32);
 	LoadImageThruSTB("pics/particles/blood5.png", "png", &data, &width, &height);
 	if (data)
-		r_bloodDecalImage[4] = GL_UploadTexture(data, width, height, false, 32);
-
-	// create texture for bullet hole decal
+		r_decalImages[DECAL_BLOOD_5] = GL_UploadTexture(data, width, height, false, 32);
 	LoadImageThruSTB("pics/particles/bullet_mrk.png", "png", &data, &width, &height);
 	if (data)
-		r_bulletholeDecalImage = GL_UploadTexture(data, width, height, false, 32);
+		r_decalImages[DECAL_BHOLE] = GL_UploadTexture(data, width, height, false, 32);
+	LoadImageThruSTB("pics/particles/burn_mrk.png", "png", &data, &width, &height);
+	if (data)
+		r_decalImages[DECAL_BURNMRK] = GL_UploadTexture(data, width, height, false, 32);
+	LoadImageThruSTB("pics/particles/bigburn_mrk.png", "png", &data, &width, &height);
+	if (data)
+		r_decalImages[DECAL_BIGBURNMRK] = GL_UploadTexture(data, width, height, false, 32);
+	LoadImageThruSTB("pics/particles/tracker_mrk.png", "png", &data, &width, &height);
+	if (data)
+		r_decalImages[DECAL_TRACKERMRK] = GL_UploadTexture(data, width, height, false, 32);
+	LoadImageThruSTB("pics/particles/footprint.png", "png", &data, &width, &height);
+	if (data)
+		r_decalImages[DECAL_FOOTPRINT] = GL_UploadTexture(data, width, height, false, 32);
 
 	gl_decalprog = GL_CreateShaderFromName("glsl/decals.glsl", "DecalVS", "DecalFS");
 	gl_decalmvpMatrix = glGetUniformLocation(gl_decalprog, "mvpMatrix");
@@ -241,7 +247,7 @@ void RE_GL_AddDecal (vec3_t origin, vec3_t dir, vec4_t color, float size, int ty
 		Vector4Set(d->color, color[0], color[1], color[2], color[3]);
 		VectorCopy(origin, d->org);
 
-		if (flags & DF_SHADE)
+		//if (flags & DF_SHADE)
 		{
 			R_LightPoint(origin, shade, lightspot);
 			for (j = 0; j < 3; j++)
@@ -308,6 +314,13 @@ void R_DrawDecals (void)
 		if (dl->node == NULL || dl->node->visframe != r_visframecount)
 			continue;
 
+		// check type
+		if (dl->type < 0 || dl->type > MAX_DECAL_TEX)
+		{
+			R_FreeDecal (dl);
+			continue;
+		}
+
 		// have we faded out yet?
 		if (dl->time + gl_decalsTime->value <= r_newrefdef.time)
 		{
@@ -330,10 +343,8 @@ void R_DrawDecals (void)
 		if (time < 1.5)
 			color[3] *= time / 1.5;
 
-		if (dl->type == DECAL_BLOOD)
-			GL_BindTexture(GL_TEXTURE0, GL_TEXTURE_2D, r_drawnearestclampsampler, r_bloodDecalImage[0]);
-		else if (dl->type == DECAL_BHOLE)
-			GL_BindTexture(GL_TEXTURE0, GL_TEXTURE_2D, r_drawnearestclampsampler, r_bulletholeDecalImage);
+		// bind texture
+		GL_BindTexture(GL_TEXTURE0, GL_TEXTURE_2D, r_drawnearestclampsampler, r_decalImages[dl->type]);
 
 		// bind data
 		glBindBuffer(GL_ARRAY_BUFFER, gl_decalvbo_xyz);
