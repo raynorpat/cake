@@ -283,6 +283,9 @@ void R_DrawDecals (void)
 	if (!gl_decals->value)
 		return;
 
+	if (r_newrefdef.rdflags & RDF_NOWORLDMODEL)
+		return;
+
 	active = &active_decals;
 
 	mindist = DotProduct(r_origin, vpn) + 4.0;
