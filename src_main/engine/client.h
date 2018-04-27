@@ -561,6 +561,9 @@ void CL_RegisterTEntModels (void);
 void CL_PredictMovement(void);
 void CL_CheckPredictionError (void);
 
+trace_t CL_BrushTrace (vec3_t start, vec3_t end, float size, int contentmask);
+trace_t CL_Trace (vec3_t start, vec3_t end, float size, int contentmask);
+
 //
 // cl_fx.c
 //

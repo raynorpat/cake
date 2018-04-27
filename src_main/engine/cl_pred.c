@@ -69,7 +69,6 @@ void CL_CheckPredictionError (void)
 /*
 ====================
 CL_ClipMoveToEntities
-
 ====================
 */
 void CL_ClipMoveToEntities (vec3_t start, vec3_t mins, vec3_t maxs, vec3_t end, trace_t *tr)
@@ -146,6 +145,43 @@ void CL_ClipMoveToEntities (vec3_t start, vec3_t mins, vec3_t maxs, vec3_t end, 
 	}
 }
 
+/*
+====================
+CL_Trace
+====================
+*/
+trace_t CL_Trace(vec3_t start, vec3_t end, float size, int contentmask)
+{
+	vec3_t maxs = { size, size, size };
+	vec3_t mins = { -size, -size, -size };
+
+	// check against world
+	return CM_BoxTrace(start, end, mins, maxs, 0, contentmask);
+}
+
+/*
+====================
+CL_BrushTrace
+
+Similar to CL_Trace, but also clips against brush models.
+====================
+*/
+trace_t CL_BrushTrace(vec3_t start, vec3_t end, float size, int contentmask)
+{
+	vec3_t maxs = { size, size, size };
+	vec3_t mins = { -size, -size, -size };
+	trace_t	t;
+
+	// check against world
+	t = CM_BoxTrace(start, end, mins, maxs, 0, contentmask);
+	if (t.fraction < 1.0)
+		t.ent = (struct edict_s *)1;
+
+	// check all other solid models
+	CL_ClipMoveToEntities(start, mins, maxs, end, &t);
+
+	return t;
+}
 
 /*
 ================
@@ -168,6 +204,11 @@ trace_t CL_PMTrace (vec3_t start, vec3_t mins, vec3_t maxs, vec3_t end)
 	return t;
 }
 
+/*
+================
+CL_PMpointcontents
+================
+*/
 int CL_PMpointcontents (vec3_t point)
 {
 	int			i;
