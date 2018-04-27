@@ -26,15 +26,7 @@ out vec4 fragColor;
 void DecalFS ()
 {
 	vec4 decalColor = texture(decalTex, texcoord.st);
-	
-	// clear out black
-	//if(decalColor.rgb == vec3(0.0))
-    //    discard;
-		
-	// clear out alpha channel
-	if(decalColor.a <= 0.666)
-        discard;
-	
+
 	// multiply by color
 	decalColor *= iocolor;
 	
