@@ -302,14 +302,15 @@ void R_DrawDecals (void)
 	{
 		next = dl->next;
 
+		if (dl->node == NULL || dl->node->visframe != r_visframecount)
+			continue;
+
+		// have we faded out yet?
 		if (dl->time + gl_decalsTime->value <= r_newrefdef.time)
 		{
 			R_FreeDecal (dl);
 			continue;
 		}
-
-		if (dl->node == NULL || dl->node->visframe != r_visframecount)
-			continue;
 
 		// do not render if the decal is behind the view
 		if (DotProduct(dl->org, vpn) < mindist)
