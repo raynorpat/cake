@@ -2123,7 +2123,7 @@ void CL_AddParticles (void)
 					org[0] = p->org[0] + p->vel[0] * time + p->accel[0] * time2;
 					org[1] = p->org[1] + p->vel[1] * time + p->accel[1] * time2;
 					org[2] = p->org[2] + p->vel[2] * time + p->accel[2] * time2;
-					tr = CM_BoxTrace(p->org, org, vec3_origin, vec3_origin, 0, MASK_SOLID);
+					tr = CL_Trace(p->org, org, 0, MASK_SOLID);
 					if (tr.fraction != 1.0f)
 					{
 						vec4_t color;
