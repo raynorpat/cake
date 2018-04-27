@@ -2155,8 +2155,8 @@ void CL_AddParticles (void)
 		org[2] = p->org[2] + p->vel[2] * time + p->accel[2] * time2;
 
 		// gravity modulation
-		//if (!p->ignoreGrav)
-		//	org[2] -= 0.5 * ( Cvar_VariableValue("sv_gravity") / 4 ) * time2; // raynorpat: this looks so funky ingame...
+		if (!p->ignoreGrav)
+			org[2] += time2 * -PARTICLE_GRAVITY;
 
 		// collision test
 		if (cl_particleCollision->integer)
