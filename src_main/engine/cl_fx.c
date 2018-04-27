@@ -1324,6 +1324,8 @@ void CL_DiminishingTrail (vec3_t start, vec3_t end, centity_t *old, int flags)
 	float		dec;
 	float		orgscale;
 	float		velscale;
+	trace_t		trace;
+	vec4_t		colorf;
 
 	VectorCopy (start, move);
 	VectorSubtract (end, start, vec);
@@ -1331,6 +1333,9 @@ void CL_DiminishingTrail (vec3_t start, vec3_t end, centity_t *old, int flags)
 
 	dec = 0.5;
 	VectorScale (vec, dec, vec);
+
+	trace = CM_BoxTrace(start, end, vec3_origin, vec3_origin, 0, MASK_SOLID);
+	VectorNormalize(trace.plane.normal);
 
 	if (old->trailcount > 900)
 	{
@@ -1381,9 +1386,18 @@ void CL_DiminishingTrail (vec3_t start, vec3_t end, centity_t *old, int flags)
 
 				p->vel[2] -= PARTICLE_GRAVITY;
 
-				p->bounceFactor = 0.3f;
+				p->bounceFactor = 0.0f;
 
 				p->ignoreGrav = false;
+
+				if (trace.fraction != 1.0)
+				{
+					Vector4Set(colorf, 1.0f, 1.0f, 0.0f, 1.0f);
+					for (int i = 0; i < 1; i++)		
+						RE_AddDecal(trace.endpos, trace.plane.normal, colorf, 20 + ((rand() % 21 * 0.05f) - 0.5f), DECAL_BLOOD_5, 0, frand() * 360);
+					VectorClear(trace.plane.normal);
+					return;
+				}
 			}
 			else
 			{
@@ -2114,7 +2128,7 @@ void CL_AddParticles (void)
 					{
 						vec4_t color;
 						Vector4Set (color, 1.0, 0.0, 0.0, 1.0f);
-						RE_AddDecal (tr.endpos, tr.plane.normal, color, 10 + ((rand() % 21 * 0.05) - 0.5), 2, 0, rand() % 361);
+ 						RE_AddDecal (tr.endpos, tr.plane.normal, color, 8 + ((rand() % 21 * 0.05f) - 0.5f), DECAL_BLOOD + (rand() & 4), 0, frand() * 360);
 					}
 				}
 			}
