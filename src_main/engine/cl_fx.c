@@ -2163,13 +2163,12 @@ void CL_AddParticles (void)
 		{
 			if (p->bounceFactor)
 			{
-				extern trace_t SV_Trace(vec3_t start, vec3_t mins, vec3_t maxs, vec3_t end, struct edict_s *passedict, int contentmask);
 				trace_t trace;
 				vec3_t vel;
 				int hitTime;
 				float time;
 
-				trace = SV_Trace(p->oldOrg, NULL, NULL, org, NULL, CONTENTS_SOLID);
+				trace = CL_Trace(p->oldOrg, org, 0, CONTENTS_SOLID);
 				if (trace.fraction > 0 && trace.fraction < 1)
 				{
 					// reflect the velocity on the trace plane
