@@ -290,8 +290,7 @@ void R_DrawDecals (void)
 	glEnable(GL_POLYGON_OFFSET_FILL);
 	glPolygonOffset(-1, -1);
 
-	GL_Enable(!BLEND_BIT | DEPTHTEST_BIT);
-	GL_BlendFunc(GL_ZERO, GL_ONE_MINUS_SRC_COLOR);
+	GL_Enable(BLEND_BIT | DEPTHTEST_BIT);
 
 	GL_UseProgram(gl_decalprog);
 
@@ -354,7 +353,6 @@ void R_DrawDecals (void)
 		if (r_numdecals >= MAX_DECALS)
 			break;
 	}
-	
-	GL_BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
 	glDisable(GL_POLYGON_OFFSET_FILL);
 }
