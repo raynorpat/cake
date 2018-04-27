@@ -1918,6 +1918,143 @@ void CL_TeleportParticles (vec3_t org)
 
 /*
 ===============
+CL_ParticleRailRick
+===============
+*/
+void CL_ParticleRailRick (vec3_t org, vec3_t dir)
+{
+	float d;
+	int j, i;
+	cparticle_t *p;
+	vec3_t dir2;
+
+	VectorNormalize(dir);
+
+	// sparks
+	for (i = 0; i < 25; i++)
+	{
+		if (!free_particles)
+			return;
+		p = free_particles;
+		free_particles = p->next;
+		p->next = active_particles;
+		active_particles = p;
+
+		VectorClear(p->accel);
+		VectorClear(p->vel);
+
+		p->time = cl.time;
+		p->alpha = 0.7;
+		p->alphavel = -1.0 / (0.3 + frand() * 0.2);
+
+		p->color = 4 + (rand() & 7);
+
+		d = rand() & 5;
+		for (j = 0; j < 3; j++)
+		{
+			p->org[j] = org[j] + d * dir[j];
+			p->vel[j] = dir[j] * 30 + crand() * 10;
+		}
+
+		p->accel[0] = p->accel[1] = 0;
+		p->accel[2] = -PARTICLE_GRAVITY;
+
+		p->bounceFactor = 0.3f;
+	}
+
+	// smoke
+	for (i = 0; i < 11; i++)
+	{
+		if (!free_particles)
+			return;
+		p = free_particles;
+		free_particles = p->next;
+		p->next = active_particles;
+		active_particles = p;
+
+		p->time = cl.time;
+
+		p->color = 4 + (rand() & 7);
+
+		p->alpha = 1;
+		p->alphavel = -1.0 / (0.5 + frand() * 0.5);
+
+		d = rand() & 15;
+		for (j = 0; j < 3; j++)
+		{
+			p->org[j] = org[j] + ((rand() & 7) - 4) + d * dir[j];
+			p->vel[j] = dir[j] * 30;
+		}
+
+		p->accel[0] = p->accel[1] = 0;
+		p->accel[2] = 10;
+
+		p->bounceFactor = 0.0f;
+	}
+
+	// more smoke
+	if (!free_particles)
+		return;
+	p = free_particles;
+	free_particles = p->next;
+	p->next = active_particles;
+	active_particles = p;
+	
+	VectorClear(p->accel);
+	VectorClear(p->vel);
+
+	VectorCopy(dir, dir2);
+	VectorNormalize(dir2);
+	p->time = cl.time;
+
+	p->color = 4 + (rand() & 7);
+
+	p->alpha = 0.7;
+	p->alphavel = -1.0 / (0.5 + frand() * 0.5);
+
+	for (j = 0; j < 3; j++)
+	{
+		p->org[j] = org[j];
+		p->vel[j] = dir2[j] * 2;
+	}
+
+	p->bounceFactor = 0.0f;
+
+	// more sparks
+	for (i = 0; i < 35; i++)
+	{
+		if (!free_particles)
+			return;
+		p = free_particles;
+		free_particles = p->next;
+		p->next = active_particles;
+		active_particles = p;
+
+		p->time = cl.time;
+
+		p->color = 0x40 + (rand() & 7);
+
+		p->alpha = 1;
+		p->alphavel = -0.25 / (0.3 + frand() * 0.2);
+
+		d = rand() & 15;
+		for (j = 0; j < 3; j++)
+		{
+			p->org[j] = org[j] + ((rand() & 7) - 4) + d*dir[j];
+			p->vel[j] = dir[j] * 30 + crand() * 40;
+		}
+
+		p->accel[0] = p->accel[1] = 0;
+		p->accel[2] = -PARTICLE_GRAVITY * 1.5;
+
+		VectorCopy(p->org, p->oldOrg);
+
+		p->bounceFactor = 0.3f;
+	}
+}
+
+/*
+===============
 CL_AddParticles
 ===============
 */

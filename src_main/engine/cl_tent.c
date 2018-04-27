@@ -437,6 +437,27 @@ void CL_ParseLaser (int colors)
 
 /*
 =================
+CL_FindRailedSurface
+=================
+*/
+static void CL_FindRailedSurface (vec3_t start, vec3_t end, vec3_t dir)
+{
+	trace_t trace;
+	vec3_t vec, point;
+	float len;
+
+	VectorSubtract(end, start, vec);
+	len = VectorNormalize(vec);
+	VectorMA(start, len + 0.5, vec, point);
+
+	trace = CM_BoxTrace(start, point, vec3_origin, vec3_origin, 0, MASK_SOLID);
+
+	if (!(trace.surface->flags & SURF_SKY))
+		CL_ParticleRailRick(end, dir);
+}
+
+/*
+=================
 CL_ParseTEnt
 =================
 */
@@ -558,6 +579,9 @@ void CL_ParseTEnt (void)
 		MSG_ReadPos (&net_message, pos);
 		MSG_ReadPos (&net_message, pos2);
 		CL_RailTrail (pos, pos2);
+		
+		CL_FindRailedSurface (pos, pos2, dir);
+
 		S_StartSound (pos2, 0, 0, cl_sfx_railg, 1, ATTN_NORM, 0);
 		break;
 
