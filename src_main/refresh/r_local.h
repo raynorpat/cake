@@ -339,6 +339,7 @@ void R_DrawWorld (void);
 void R_DrawAlphaSurfaces (void);
 void R_InitParticleTexture (void);
 qboolean R_CullBox (vec3_t mins, vec3_t maxs);
+qboolean R_CullSphere (vec3_t center, float radius);
 void R_MarkLeaves (void);
 void R_DrawNullModel (entity_t *e);
 void R_DrawParticles (void);

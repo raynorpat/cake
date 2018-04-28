@@ -146,6 +146,30 @@ qboolean R_CullBox (vec3_t mins, vec3_t maxs)
 	return false;
 }
 
+/*
+=================
+R_CullSphere
+
+Returns true if the sphere is completely outside the frustom
+=================
+*/
+qboolean R_CullSphere (vec3_t center, float radius)
+{
+	int		i;
+	cplane_t *p;
+
+	if (r_nocull->integer)
+		return false;
+
+	for (i = 0, p = frustum; i < FRUSTUM_PLANES; i++, p++)
+	{
+		if (DotProduct(center, p->normal) - p->dist <= -radius)
+			return true;
+	}
+
+	return false;
+}
+
 
 //==================================================================================
 
