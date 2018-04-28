@@ -2132,7 +2132,7 @@ void CL_AddParticles (void)
 						{
 							vec4_t color;
 							Vector4Set(color, 1.0, 0.0, 0.0, 1.0f);
-							RE_AddDecal(tr.endpos, tr.plane.normal, color, 8 + ((rand() % 21 * 0.05f) - 0.5f), DECAL_BLOOD + (rand() & 4), 0, frand() * 360);
+							RE_AddDecal(tr.endpos, tr.plane.normal, color, 16 + ((rand() % 21 * 0.05f) - 0.5f), DECAL_BLOOD + (rand() & 4), 0, frand() * 360);
 						}
 					}
 				}
