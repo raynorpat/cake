@@ -454,6 +454,8 @@ SCR_DrawCrosshair
 void SCR_DrawCrosshair (void)
 {
 	float x, y, w, h;
+	float xscale, yscale;
+	float bias;
 	vec4_t color;
 	int health;
 	char dot[MAX_QPATH], circle[MAX_QPATH], cross[MAX_QPATH];
@@ -488,7 +490,25 @@ void SCR_DrawCrosshair (void)
 
 	x = crosshairX->integer;
 	y = crosshairY->integer;
-	SCR_AdjustFrom640 (&x, &y, &w, &h);
+
+	// for 640x480 virtualized screen
+	xscale = viddef.width * (1.0f / 640.0f);
+	yscale = viddef.height * (1.0f / 480.0f);
+	if ((viddef.width * 480) > (viddef.height * 640))
+	{
+		// adjust for wide screen
+		bias = 0.5f * (viddef.width - (viddef.height * (640.0f / 480.0f)));
+		xscale = yscale;
+	}
+	else
+	{
+		// no wide screen
+		bias = 0;
+	}
+
+	// scale width and height for screen sizes
+	w *= xscale;
+	h *= yscale;
 
 	// set color based on health
 	color[0] = 1.0f;
