@@ -26,7 +26,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #define DF_NOTIMESCALE			0x00000800	// 2048
 #define INSTANT_DECAL			-10000.0
 
-#define MAX_DECALS				256
+#define MAX_DECALS				1024
 
 #define MAX_DECAL_VERTS			256
 #define MAX_FRAGMENTS_PER_DECAL	32
