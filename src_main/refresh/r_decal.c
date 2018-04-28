@@ -254,6 +254,12 @@ void RE_GL_AddDecal (vec3_t origin, vec3_t dir, vec4_t color, float size, int ty
 
 	for (i = 0, fr = fragments; i < numfragments; i++, fr++)
 	{
+		// check if we have hit the max
+		if (fr->numPoints > MAX_DECAL_VERTS)
+			fr->numPoints = MAX_DECAL_VERTS;
+		else if (fr->numPoints <= 0)
+			continue;
+
 		d = R_AllocDecal();
 
 		d->time = r_newrefdef.time;
