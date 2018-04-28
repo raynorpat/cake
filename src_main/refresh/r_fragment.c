@@ -188,7 +188,8 @@ static void R_ClipFragmentToSurface (msurface_t *surf, const vec3_t normal, mnod
 		mf = &cm_markFragments[cm_numMarkFragments];
 		mf->numPoints = 0;
 		mf->node = node; // vis node
-		
+		mf->surf = surf;
+
 		VectorCopy (worldVert(0, surf), verts[0]);
 		VectorCopy (worldVert(i + 1, surf), verts[1]);
 		VectorCopy (worldVert(i + 2, surf), verts[2]);
