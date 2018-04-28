@@ -196,6 +196,8 @@ int Cmd_Argc (void);
 char *Cmd_Argv (int arg);
 void Cbuf_ExecuteText (int exec_when, char *text);
 
+trace_t CL_Trace (vec3_t start, vec3_t end, float size, int contentmask);
+
 int FS_LoadFile (char *path, void **buffer);
 void FS_FreeFile (void *buffer);
 char *FS_Gamedir (void);

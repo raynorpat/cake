@@ -58,9 +58,7 @@ GLuint gl_decalprog = 0;
 GLuint gl_decalmvpMatrix = 0;
 
 GLuint gl_decalvao = 0;
-GLuint gl_decalvbo_xyz = 0;
-GLuint gl_decalvbo_st = 0;
-GLuint gl_decalvbo_color = 0;
+GLuint gl_decalvbo = 0;
 
 GLuint r_decalImages[MAX_DECAL_TEX];
 
@@ -116,9 +114,7 @@ void RDecal_CreatePrograms(void)
 	glEnableVertexArrayAttribEXT(gl_decalvao, 1);
 	glEnableVertexArrayAttribEXT(gl_decalvao, 2);
 
-	glGenBuffers(1, &gl_decalvbo_xyz);
-	glGenBuffers(1, &gl_decalvbo_st);
-	glGenBuffers(1, &gl_decalvbo_color);
+	glGenBuffers(1, &gl_decalvbo);
 }
 
 /*
@@ -232,8 +228,6 @@ void RE_GL_AddDecal (vec3_t origin, vec3_t dir, vec4_t color, float size, int ty
 
 		for (i = 0; i < 6; i++)
 		{
-			extern trace_t CL_Trace(vec3_t start, vec3_t end, float size, int contentmask);
-
 			VectorMA(origin, scale, dirs[i], end);
 			trace = CL_Trace(origin, end, 0, MASK_SOLID);
 			if (trace.fraction != 1.0)
@@ -331,8 +325,6 @@ void R_DrawDecals (void)
 
 	glProgramUniformMatrix4fv (gl_decalprog, gl_decalmvpMatrix, 1, GL_FALSE, r_mvpmatrix.m[0]);
 
-	GL_BindVertexArray(gl_decalvao);
-	
 	for (dl = active->next; dl != active; dl = next)
 	{
 		next = dl->next;
@@ -372,22 +364,20 @@ void R_DrawDecals (void)
 		// bind texture
 		GL_BindTexture(GL_TEXTURE0, GL_TEXTURE_2D, r_drawnearestclampsampler, r_decalImages[dl->type]);
 
-		// bind data
-		glBindBuffer(GL_ARRAY_BUFFER, gl_decalvbo_xyz);
-		glBufferData(GL_ARRAY_BUFFER, sizeof(dl->verts), dl->verts, GL_DYNAMIC_DRAW);
-		glBindBuffer(GL_ARRAY_BUFFER, gl_decalvbo_st);
-		glBufferData(GL_ARRAY_BUFFER, sizeof(dl->stcoords), dl->stcoords, GL_DYNAMIC_DRAW);
-		glBindBuffer(GL_ARRAY_BUFFER, gl_decalvbo_color);
-		glBufferData(GL_ARRAY_BUFFER, sizeof(color), color, GL_DYNAMIC_DRAW);
+		// bind data into vbo
+		glBindBuffer(GL_ARRAY_BUFFER, gl_decalvbo);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(dl->verts) + sizeof(dl->stcoords) + sizeof(color), NULL, GL_DYNAMIC_DRAW);
+		glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(dl->verts), dl->verts);
+		glBufferSubData(GL_ARRAY_BUFFER, sizeof(dl->verts), sizeof(dl->stcoords), dl->stcoords);
+		glBufferSubData(GL_ARRAY_BUFFER, sizeof(dl->verts) + sizeof(dl->stcoords), sizeof(color), color);
+
+		// bind vao
+		GL_BindVertexArray(gl_decalvao);
+		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
+		glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, sizeof(dl->verts));
+		glVertexAttribPointer(2, 4, GL_FLOAT, GL_FALSE, 0, sizeof(dl->verts) + sizeof(dl->stcoords));
 
 		// draw
-		glBindBuffer(GL_ARRAY_BUFFER, gl_decalvbo_xyz);
-		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
-		glBindBuffer(GL_ARRAY_BUFFER, gl_decalvbo_st);
-		glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, 0);
-		glBindBuffer(GL_ARRAY_BUFFER, gl_decalvbo_color);
-		glVertexAttribPointer(2, 4, GL_FLOAT, GL_FALSE, 0, 0);
-
 		glDrawArrays(GL_TRIANGLE_FAN, 0, dl->numverts);
 
 		r_numdecals++;
