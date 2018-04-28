@@ -584,7 +584,7 @@ static void R_Register (void)
 	gl_lockpvs = Cvar_Get ("gl_lockpvs", "0", 0);
 	gl_lockfrustum = Cvar_Get ("gl_lockfrustum", "0", 0);
 	gl_forcefog = Cvar_Get ("gl_forcefog", "0", CVAR_ARCHIVE);
-	gl_decals = Cvar_Get ("gl_decals", "1", CVAR_ARCHIVE);
+	gl_decals = Cvar_Get ("gl_decals", "0", CVAR_ARCHIVE);
 	gl_decalsTime = Cvar_Get ("gl_decalsTime", "30", CVAR_ARCHIVE);
 	
 	gl_swapinterval = Cvar_Get ("gl_swapinterval", "1", CVAR_ARCHIVE);
