@@ -23,6 +23,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
 #include <SDL.h>
 
+static SDL_AudioDeviceID sdlPlaybackDevice;
+
 int snd_inited = 0;
 static int dmapos = 0;
 static int dmasize = 0;
@@ -52,9 +54,7 @@ void Snd_Memset(void* dest, const int val, const size_t count)
 	iterate = count / sizeof(int);
 	pDest = (int*)dest;
 	for (i = 0; i < iterate; i++)
-	{
 		pDest[i] = val;
-	}
 }
 
 static void sdl_audio_callback(void *data, Uint8 *stream, int length)
@@ -64,9 +64,7 @@ static void sdl_audio_callback(void *data, Uint8 *stream, int length)
 	int pos = (dmapos * (dmabackend->samplebits / 8));
 
 	if (pos >= dmasize)
-	{
 		dmapos = pos = 0;
-	}
 
 	// This can't happen!
 	if (!snd_inited)
@@ -102,9 +100,7 @@ static void sdl_audio_callback(void *data, Uint8 *stream, int length)
 	}
 
 	if (dmapos >= dmasize)
-	{
 		dmapos = 0;
-	}
 }
 
 /*
@@ -124,9 +120,7 @@ qboolean SNDDMA_Init(void)
 
 	// This should never happen...
 	if (snd_inited)
-	{
-		return 1;
-	}
+		return true;
 
 	int sndbits = (Cvar_Get("sndbits", "16", CVAR_ARCHIVE))->value;
 	int sndfreq = (Cvar_Get("s_khz", "44", CVAR_ARCHIVE))->value;
@@ -147,75 +141,56 @@ qboolean SNDDMA_Init(void)
 	putenv(reqdriver);
 #endif
 
-	Com_Printf("Starting SDL audio callback.\n");
+	Com_Printf ("Starting SDL audio\n");
 	if (SDL_Init(SDL_INIT_AUDIO) != 0)
 	{
-		Com_Printf(S_COLOR_RED "Couldn't init SDL audio: %s.\n", SDL_GetError());
-		return 0;
+		Com_Printf (S_COLOR_RED "Couldn't init SDL audio: %s.\n", SDL_GetError());
+		return false;
 	}
 
 	const char* drivername = SDL_GetCurrentAudioDriver();
 	if (drivername == NULL)
-	{
 		drivername = "(UNKNOWN)";
-	}
 
-	Com_Printf("SDL audio driver is \"%s\".\n", drivername);
+	Com_Printf ("SDL audio driver is \"%s\".\n", drivername);
 
-	memset(&desired, '\0', sizeof(desired));
-	memset(&obtained, '\0', sizeof(obtained));
+	memset (&desired, '\0', sizeof(desired));
+	memset (&obtained, '\0', sizeof(obtained));
 
 	// Users are stupid
 	if ((sndbits != 16) && (sndbits != 8))
-	{
 		sndbits = 16;
-	}
 
 	if (sndfreq == 48)
-	{
 		desired.freq = 48000;
-	}
 	else if (sndfreq == 44)
-	{
 		desired.freq = 44100;
-	}
 	else if (sndfreq == 22)
-	{
 		desired.freq = 22050;
-	}
 	else if (sndfreq == 11)
-	{
 		desired.freq = 11025;
-	}
 
 	desired.format = ((sndbits == 16) ? AUDIO_S16SYS : AUDIO_U8);
 
 	if (desired.freq <= 11025)
-	{
 		desired.samples = 256;
-	}
 	else if (desired.freq <= 22050)
-	{
 		desired.samples = 512;
-	}
 	else if (desired.freq <= 44100)
-	{
 		desired.samples = 1024;
-	}
 	else
-	{
 		desired.samples = 2048;
-	}
 
 	desired.channels = sndchans;
 	desired.callback = sdl_audio_callback;
 
 	// Okay, let's try our luck
-	if (SDL_OpenAudio(&desired, &obtained) == -1)
+	sdlPlaybackDevice = SDL_OpenAudioDevice (NULL, SDL_FALSE, &desired, &obtained, SDL_AUDIO_ALLOW_ANY_CHANGE);
+	if (sdlPlaybackDevice == 0)
 	{
-		Com_Printf(S_COLOR_RED "SDL_OpenAudio() failed: %s\n", SDL_GetError());
-		SDL_QuitSubSystem(SDL_INIT_AUDIO);
-		return 0;
+		Com_Printf (S_COLOR_RED "SDL_OpenAudioDevice() failed: %s\n", SDL_GetError());
+		SDL_QuitSubSystem (SDL_INIT_AUDIO);
+		return false;
 	}
 
 	// This points to the frontend
@@ -246,11 +221,12 @@ qboolean SNDDMA_Init(void)
 	s_numchannels = MAX_CHANNELS;
 	S_InitScaletable();
 
-	SDL_PauseAudio(0);
+	Com_Printf ("Starting SDL audio callback...\n");
+	SDL_PauseAudioDevice(sdlPlaybackDevice, 0);
 
-	Com_Printf("SDL audio initialized.\n");
+	Com_Printf ("SDL audio initialized.\n");
 	snd_inited = 1;
-	return 1;
+	return true;
 }
 
 
@@ -277,7 +253,7 @@ Makes sure dma.buffer is valid
 */
 void SNDDMA_BeginPainting (void)
 {
-	SDL_LockAudio();
+	SDL_LockAudioDevice (sdlPlaybackDevice);
 }
 
 /*
@@ -289,7 +265,7 @@ Send sound to device if buffer isn't really the dma buffer
 */
 void SNDDMA_Submit (void)
 {
-	SDL_UnlockAudio();
+	SDL_UnlockAudioDevice (sdlPlaybackDevice);
 }
 
 /*
@@ -301,18 +277,23 @@ Reset the sound device for exiting
 */
 void SNDDMA_Shutdown (void)
 {
-	Com_Printf("Closing SDL audio device...\n");
+	if (sdlPlaybackDevice != 0)
+	{
+		Com_Printf ("Closing SDL audio playback device...\n");
+		SDL_CloseAudioDevice (sdlPlaybackDevice);
+		
+		Com_Printf ("SDL audio playback device closed.\n");
+		sdlPlaybackDevice = 0;
+	}
 
-	SDL_CloseAudio();
-	
-	SDL_QuitSubSystem(SDL_INIT_AUDIO);
+	SDL_QuitSubSystem (SDL_INIT_AUDIO);
 
-	free(dmabackend->buffer);
+	free (dmabackend->buffer);
 	dmabackend->buffer = NULL;
 	dmapos = dmasize = 0;
 	snd_inited = 0;
 
-	Com_Printf("SDL audio device shut down.\n");
+	Com_Printf ("SDL audio device shut down.\n");
 }
 
 
@@ -328,12 +309,8 @@ between a deactivate and an activate.
 void S_Activate (qboolean active)
 {
 	if (active)
-	{
-		SDL_PauseAudio(0);
-	}
+		SDL_PauseAudioDevice (sdlPlaybackDevice, SDL_FALSE);
 	else
-	{
-		SDL_PauseAudio(1);
-	}
+		SDL_PauseAudioDevice (sdlPlaybackDevice, SDL_TRUE);
 }
 
