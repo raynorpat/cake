@@ -530,6 +530,7 @@ CENTER PRINTING
 
 char		scr_centerstring[1024];
 float		scr_centertime_time;
+float		scr_centertime_off;
 float		scr_center_y;
 int			scr_center_lines;
 
@@ -547,7 +548,8 @@ void SCR_CenterPrint (char *str)
 
 	Q_strlcpy (scr_centerstring, str, sizeof(scr_centerstring));
 	scr_centertime_time = cl.time;
-	scr_center_y = SCREEN_HEIGHT * 0.30;
+	scr_centertime_off = scr_centertime->value * 1000;
+	scr_center_y = SCREEN_HEIGHT * 0.35;
 
 	// count the number of lines for centering
 	scr_center_lines = 1;
@@ -560,17 +562,15 @@ void SCR_CenterPrint (char *str)
 	}
 }
 
-void SCR_DrawCenterString (void)
+static void SCR_DrawCenterString (void)
 {
 	char	*start;
 	int		l;
 	int		x, y, w, h;
 	float	*color;
 
-	if (!scr_centertime_time)
-		return;
-
-	color = SCR_FadeColor (scr_centertime_time, 1000 * scr_centertime->value);
+	// check to see if we faded out
+	color = SCR_FadeColor (scr_centertime_time, scr_centertime_off);
 	if (!color)
 		return;
 
@@ -609,6 +609,25 @@ void SCR_DrawCenterString (void)
 
 	RE_Draw_SetColor (NULL);
 }
+
+static void SCR_CheckDrawCenterString (void)
+{
+	// make sure to display only when ingame
+	if (cls.key_dest != key_game)
+		return;
+
+	// check time
+	if (!scr_centertime_time)
+		return;
+
+	scr_centertime_off -= cls.rframetime * 1000;
+	if (scr_centertime_off <= 0)
+		return;
+
+	// draw the center string
+	SCR_DrawCenterString ();
+}
+
 
 
 //=============================================================================
@@ -1635,7 +1654,7 @@ void SCR_UpdateScreen (void)
 
 			SCR_DrawNet ();
 
-			SCR_DrawCenterString ();
+			SCR_CheckDrawCenterString ();
 
 			if (scr_timegraph->value)
 				SCR_DebugGraph (cls.rframetime * 300, 0);
