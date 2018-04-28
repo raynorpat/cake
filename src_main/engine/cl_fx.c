@@ -1392,7 +1392,7 @@ void CL_DiminishingTrail (vec3_t start, vec3_t end, centity_t *old, int flags)
 
 				if (trace.fraction != 1.0)
 				{
-					Vector4Set(colorf, 1.0f, 1.0f, 0.0f, 1.0f);
+					Vector4Set(colorf, 1.0f, 0.0f, 0.0f, 1.0f);
 					for (int i = 0; i < 1; i++)		
 						RE_AddDecal(trace.endpos, trace.plane.normal, colorf, 20 + ((rand() % 21 * 0.05f) - 0.5f), DECAL_BLOOD_5, 0, frand() * 360);
 					VectorClear(trace.plane.normal);
@@ -2118,17 +2118,22 @@ void CL_AddParticles (void)
 				// do blood decals
 				if (rand() & 4)
 				{
-					trace_t		tr;
+					trace_t tr;
+
 					time2 = time * time;
 					org[0] = p->org[0] + p->vel[0] * time + p->accel[0] * time2;
 					org[1] = p->org[1] + p->vel[1] * time + p->accel[1] * time2;
 					org[2] = p->org[2] + p->vel[2] * time + p->accel[2] * time2;
+
 					tr = CL_Trace(p->org, org, 0, MASK_SOLID);
 					if (tr.fraction != 1.0f)
 					{
-						vec4_t color;
-						Vector4Set (color, 1.0, 0.0, 0.0, 1.0f);
- 						RE_AddDecal (tr.endpos, tr.plane.normal, color, 8 + ((rand() % 21 * 0.05f) - 0.5f), DECAL_BLOOD + (rand() & 4), 0, frand() * 360);
+						if (!VectorCompare(tr.plane.normal, vec3_origin) && !(CM_PointContents(p->org, 0) & MASK_WATER)) // no blood splatters underwater...
+						{
+							vec4_t color;
+							Vector4Set(color, 1.0, 0.0, 0.0, 1.0f);
+							RE_AddDecal(tr.endpos, tr.plane.normal, color, 8 + ((rand() % 21 * 0.05f) - 0.5f), DECAL_BLOOD + (rand() & 4), 0, frand() * 360);
+						}
 					}
 				}
 			}
@@ -2155,8 +2160,8 @@ void CL_AddParticles (void)
 		org[2] = p->org[2] + p->vel[2] * time + p->accel[2] * time2;
 
 		// gravity modulation
-		if (!p->ignoreGrav)
-			org[2] += time2 * -PARTICLE_GRAVITY;
+		//if (!p->ignoreGrav)
+		//	org[2] += time2 * -PARTICLE_GRAVITY;
 
 		// collision test
 		if (cl_particleCollision->integer)
