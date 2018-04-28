@@ -374,8 +374,8 @@ void R_DrawDecals (void)
 		// bind vao
 		GL_BindVertexArray(gl_decalvao);
 		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
-		glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, sizeof(dl->verts));
-		glVertexAttribPointer(2, 4, GL_FLOAT, GL_FALSE, 0, sizeof(dl->verts) + sizeof(dl->stcoords));
+		glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, (void *)sizeof(dl->verts));
+		glVertexAttribPointer(2, 4, GL_FLOAT, GL_FALSE, 0, (void *)(sizeof(dl->verts) + sizeof(dl->stcoords)));
 
 		// draw
 		glDrawArrays(GL_TRIANGLE_FAN, 0, dl->numverts);
