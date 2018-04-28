@@ -450,8 +450,7 @@ static void CL_FindRailedSurface (vec3_t start, vec3_t end, vec3_t dir)
 	len = VectorNormalize(vec);
 	VectorMA(start, len + 0.5, vec, point);
 
-	trace = CM_BoxTrace(start, point, vec3_origin, vec3_origin, 0, MASK_SOLID);
-
+	trace = CL_Trace(start, point, 0, MASK_SOLID);
 	if (!(trace.surface->flags & SURF_SKY))
 		CL_ParticleRailRick(end, dir);
 }
