@@ -116,7 +116,7 @@ typedef struct msurface_s
 	float		cached_light[MAXLIGHTMAPS];	// values currently used in lightmap
 	byte		*samples;		// [numstyles*surfsize]
 
-	int			checkCount; // for checking if surface has fragment
+	int			fragmentframe; // for checking if surface has fragment
 } msurface_t;
 
 typedef struct mnode_s

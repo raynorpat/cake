@@ -437,6 +437,26 @@ void CL_ParseLaser (int colors)
 
 /*
 =================
+CL_FindRailedSurface
+=================
+*/
+static void CL_FindRailedSurface (vec3_t start, vec3_t end, vec3_t dir)
+{
+	trace_t trace;
+	vec3_t vec, point;
+	float len;
+
+	VectorSubtract(end, start, vec);
+	len = VectorNormalize(vec);
+	VectorMA(start, len + 0.5, vec, point);
+
+	trace = CL_Trace(start, point, 0, MASK_SOLID);
+	if (!(trace.surface->flags & SURF_SKY))
+		CL_ParticleRailRick(end, dir);
+}
+
+/*
+=================
 CL_ParseTEnt
 =================
 */
@@ -451,6 +471,7 @@ void CL_ParseTEnt (void)
 	int		color;
 	int		r;
 	int		ent;
+	vec4_t	colorf;
 
 	type = MSG_ReadByte (&net_message);
 
@@ -459,7 +480,7 @@ void CL_ParseTEnt (void)
 	case TE_BLOOD:				// bullet hitting flesh
 		MSG_ReadPos (&net_message, pos);
 		MSG_ReadDir (&net_message, dir);
-		CL_ParticleEffect (pos, dir, 0xe8, 60);
+		CL_BloodPuff (pos, dir, 12);
 		break;
 
 	case TE_GUNSHOT:			// bullet hitting wall
@@ -475,6 +496,9 @@ void CL_ParseTEnt (void)
 
 		if (type != TE_SPARKS)
 		{
+			Vector4Set(colorf, 1.0f, 1.0f, 1.0f, 1.0f);
+			RE_AddDecal (pos, dir, colorf, 2 + ((rand() % 21 * 0.05f) - 0.5f), DECAL_BHOLE, 0, frand() * 360);
+
 			CL_SmokeAndFlash (pos);
 
 			// impact sound
@@ -507,6 +531,10 @@ void CL_ParseTEnt (void)
 	case TE_SHOTGUN:			// bullet hitting wall
 		MSG_ReadPos (&net_message, pos);
 		MSG_ReadDir (&net_message, dir);
+
+		Vector4Set(colorf, 1.0f, 1.0f, 1.0f, 1.0f);
+		RE_AddDecal(pos, dir, colorf, 2 + ((rand() % 21 * 0.05f) - 0.5f), DECAL_BHOLE, 0, frand() * 360);
+
 		CL_ParticleEffect (pos, dir, 0, 20);
 		CL_SmokeAndFlash (pos);
 		break;
@@ -543,6 +571,10 @@ void CL_ParseTEnt (void)
 		MSG_ReadPos (&net_message, pos);
 		MSG_ReadDir (&net_message, dir);
 		color = MSG_ReadByte (&net_message);
+		
+		Vector4Set(colorf, 1.0f, 1.0f, 0.0f, 1.0f);
+		RE_AddDecal(pos, dir, colorf, 3 + ((rand() % 21 * 0.05f) - 0.5f), DECAL_BURNMRK, 0, frand() * 360);
+
 		CL_ParticleEffect2 (pos, dir, color, cnt);
 		break;
 
@@ -550,6 +582,12 @@ void CL_ParseTEnt (void)
 		MSG_ReadPos (&net_message, pos);
 		MSG_ReadPos (&net_message, pos2);
 		CL_RailTrail (pos, pos2);
+		
+		CL_FindRailedSurface (pos, pos2, dir);
+
+		Vector4Set(colorf, 1.0f, 1.0f, 1.0f, 1.0f);
+		RE_AddDecal(pos2, dir, colorf, 3.5 + ((rand() % 21 * 0.05f) - 0.5f), DECAL_TRACKERMRK, 0, frand() * 360);
+
 		S_StartSound (pos2, 0, 0, cl_sfx_railg, 1, ATTN_NORM, 0);
 		break;
 
@@ -557,6 +595,10 @@ void CL_ParseTEnt (void)
 	case TE_GRENADE_EXPLOSION:
 	case TE_GRENADE_EXPLOSION_WATER:
 		MSG_ReadPos (&net_message, pos);
+
+		pos[2] += 3.0; // grenade explosion decal hack
+		Vector4Set(colorf, 0.1f, 0.1f, 0.1f, 1.0f);
+		RE_AddDecal(pos, vec3_origin, colorf, 45 + ((rand() % 21 * 0.05f) - 0.5f), DECAL_BIGBURNMRK, 0, frand() * 360);
 
 		ex = CL_AllocExplosion ();
 		VectorCopy (pos, ex->ent.currorigin);
@@ -584,6 +626,9 @@ void CL_ParseTEnt (void)
 	case TE_ROCKET_EXPLOSION:
 	case TE_ROCKET_EXPLOSION_WATER:
 		MSG_ReadPos (&net_message, pos);
+
+		Vector4Set(colorf, 0.1f, 0.1f, 0.1f, 1.0f);
+		RE_AddDecal(pos, vec3_origin, colorf, 45 + ((rand() % 21 * 0.05f) - 0.5f), DECAL_BIGBURNMRK, 0, frand() * 360);
 
 		ex = CL_AllocExplosion ();
 		VectorCopy (pos, ex->ent.currorigin);
@@ -613,6 +658,10 @@ void CL_ParseTEnt (void)
 
 	case TE_BFG_EXPLOSION:
 		MSG_ReadPos (&net_message, pos);
+
+		Vector4Set(colorf, 0.1f, 0.1f, 0.1f, 1.0f);
+		RE_AddDecal(pos, vec3_origin, colorf, 55 + ((rand() % 21 * 0.05f) - 0.5f), DECAL_BIGBURNMRK, 0, frand() * 360);
+
 		ex = CL_AllocExplosion ();
 		VectorCopy (pos, ex->ent.currorigin);
 		ex->type = ex_poly;
@@ -661,6 +710,9 @@ void CL_ParseTEnt (void)
 	case TE_BLASTER:			// blaster hitting wall
 		MSG_ReadPos (&net_message, pos);
 		MSG_ReadDir (&net_message, dir);
+
+		Vector4Set(colorf, 1.0f, 1.0f, 0.0f, 1.0f);
+		RE_AddDecal(pos, dir, colorf, 3 + ((rand() % 21 * 0.05f) - 0.5f), DECAL_BURNMRK, 0, frand() * 360);
 
 		CL_BlasterParticles (pos, dir, 0xe0);
 

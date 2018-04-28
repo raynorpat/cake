@@ -282,6 +282,8 @@ extern	cvar_t	*gl_texturemode;
 extern	cvar_t	*gl_textureanisotropy;
 extern  cvar_t  *gl_lockpvs;
 extern  cvar_t  *gl_forcefog;
+extern	cvar_t  *gl_decals;
+extern	cvar_t  *gl_decalsTime;
 
 extern	cvar_t	*vid_fullscreen;
 extern	cvar_t	*vid_gamma;
@@ -385,7 +387,12 @@ void R_InitFreeType (void);
 void R_DoneFreeType (void);
 void RE_GL_RegisterFont (char *fontName, int pointSize, fontInfo_t * font);
 
-int RE_GL_MarkFragments (vec3_t origin, vec3_t axis[3], float radius, int maxPoints, vec3_t *points, int maxFragments, markFragment_t *fragments);
+int R_GetClippedFragments (vec3_t origin, vec3_t axis[3], float radius, int maxPoints, vec3_t *points, int maxFragments, markFragment_t *fragments);
+
+void RDecal_CreatePrograms (void);
+void R_ClearDecals (void);
+void R_DrawDecals (void);
+void RE_GL_AddDecal (vec3_t origin, vec3_t dir, vec4_t color, float size, int type, int flags, float angle);
 
 typedef struct
 {

@@ -27,6 +27,8 @@ void            (* RE_BeginFrame)( float camera_separation ) = NULL;
 void			(* RE_RenderFrame)( refdef_t *fd ) = NULL;
 void			(* RE_EndFrame)( void ) = NULL;
 
+void			(* RE_AddDecal)( vec3_t origin, vec3_t dir, vec4_t color, float size, int type, int flags, float angle ) = NULL;
+
 int		        (* RE_Init)( void ) = NULL;
 void            (* RE_Shutdown)( void ) = NULL;
 
@@ -38,8 +40,6 @@ void		    (* RE_Draw_StretchPic)( int x, int y, int w, int h, char *pic ) = NULL
 void			(* RE_Draw_StretchPicExt)( float x, float y, float w, float h, float sl, float tl, float sh, float th, char *pic ) = NULL;
 void            (* RE_Draw_Pic)( int x, int y, char *pic, float scale ) = NULL;
 void            (* RE_Draw_GetPicSize)( int *w, int *h, char *pic ) = NULL;
-
-int				(* RE_MarkFragments)( vec3_t origin, vec3_t axis[3], float radius, int maxPoints, vec3_t *points, int maxFragments, markFragment_t *fragments ) = NULL;
 
 void            (* RE_BeginRegistration)( char *model ) = NULL;
 struct model_s * (* RE_RegisterModel)( char *name ) = NULL;

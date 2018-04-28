@@ -113,6 +113,8 @@ cvar_t	*gl_textureanisotropy;
 cvar_t	*gl_lockpvs;
 cvar_t	*gl_lockfrustum;
 cvar_t  *gl_forcefog;
+cvar_t  *gl_decals;
+cvar_t  *gl_decalsTime;
 
 cvar_t	*vid_fullscreen;
 cvar_t	*vid_gamma;
@@ -448,6 +450,8 @@ void R_RenderView (refdef_t *fd)
 
 		R_DrawEntitiesOnList ();
 
+		R_DrawDecals ();
+
 		// the common case has particles drawing over alpha surfaces so we adjust for that
 		R_DrawAlphaSurfaces ();
 
@@ -556,6 +560,8 @@ static void R_Register (void)
 	gl_lockpvs = Cvar_Get ("gl_lockpvs", "0", 0);
 	gl_lockfrustum = Cvar_Get ("gl_lockfrustum", "0", 0);
 	gl_forcefog = Cvar_Get ("gl_forcefog", "0", CVAR_ARCHIVE);
+	gl_decals = Cvar_Get ("gl_decals", "1", CVAR_ARCHIVE);
+	gl_decalsTime = Cvar_Get ("gl_decalsTime", "30", CVAR_ARCHIVE);
 	
 	gl_swapinterval = Cvar_Get ("gl_swapinterval", "1", CVAR_ARCHIVE);
 
@@ -1027,6 +1033,7 @@ int RE_GL_Init (void)
 	RBeam_CreatePrograms ();
 	RNull_CreatePrograms ();
 	RPart_CreatePrograms ();
+	RDecal_CreatePrograms ();
 
 	// create our ubo for shared stuff
 	glGenBuffers (1, &gl_sharedubo);
@@ -1126,6 +1133,8 @@ void GL_GFX_CoreInit(void)
 	RE_RenderFrame = RE_GL_RenderFrame;
 	RE_EndFrame = RE_GL_EndFrame;
 
+	RE_AddDecal = RE_GL_AddDecal;
+
 	RE_Init = RE_GL_Init;
 	RE_Shutdown = RE_GL_Shutdown;
 
@@ -1137,8 +1146,6 @@ void GL_GFX_CoreInit(void)
 	RE_Draw_StretchPicExt = RE_GL_Draw_StretchPicExt;
 	RE_Draw_Pic = RE_GL_Draw_Pic;
 	RE_Draw_GetPicSize = RE_GL_Draw_GetPicSize;
-
-	RE_MarkFragments = RE_GL_MarkFragments;
 
 	RE_BeginRegistration = RE_GL_BeginRegistration;
 	RE_RegisterModel = RE_GL_RegisterModel;

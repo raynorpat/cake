@@ -1254,6 +1254,9 @@ void RE_GL_BeginRegistration (char *model)
 
 	Com_sprintf (fullname, sizeof (fullname), "maps/%s.bsp", model);
 
+	// clear decal list
+	R_ClearDecals ();
+
 	// explicitly free the old map if different
 	// this guarantees that mod_known[0] is the world map
 	flushmap = Cvar_Get ("flushmap", "0", 0);
@@ -1389,4 +1392,7 @@ void Mod_FreeAll (void)
 		if (mod_known[i].extradatasize)
 			Mod_Free (&mod_known[i]);
 	}
+
+	// clear decal list
+	R_ClearDecals ();
 }

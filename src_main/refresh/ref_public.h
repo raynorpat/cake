@@ -138,7 +138,21 @@ typedef struct
 	int			numPoints;
 	int			firstPoint;
 	struct mnode_s *node;
+	struct msurface_s *surf;
 } markFragment_t;
+
+#define	DECAL_BLOOD				0
+#define	DECAL_BLOOD_2			1
+#define	DECAL_BLOOD_3			2
+#define	DECAL_BLOOD_4			3
+#define	DECAL_BLOOD_5			4
+#define DECAL_BHOLE				5
+#define DECAL_BURNMRK			6
+#define DECAL_BIGBURNMRK		7
+#define DECAL_TRACKERMRK		8
+#define DECAL_FOOTPRINT			9
+
+#define MAX_DECAL_TEX			10
 
 typedef struct
 {
@@ -182,6 +196,8 @@ int Cmd_Argc (void);
 char *Cmd_Argv (int arg);
 void Cbuf_ExecuteText (int exec_when, char *text);
 
+trace_t CL_Trace (vec3_t start, vec3_t end, float size, int contentmask);
+
 int FS_LoadFile (char *path, void **buffer);
 void FS_FreeFile (void *buffer);
 char *FS_Gamedir (void);
@@ -190,6 +206,8 @@ char *FS_Gamedir (void);
 extern void(*RE_BeginFrame)(float camera_separation);
 extern void(*RE_RenderFrame)(refdef_t *fd);
 extern void(*RE_EndFrame)(void);
+
+extern void(*RE_AddDecal)(vec3_t origin, vec3_t dir, vec4_t color, float size, int type, int flags, float angle);
 
 extern int(*RE_Init)(void);
 extern void(*RE_Shutdown)(void);
@@ -202,8 +220,6 @@ extern void(*RE_Draw_StretchPic)(int x, int y, int w, int h, char *pic);
 extern void(*RE_Draw_StretchPicExt)(float x, float y, float w, float h, float sl, float tl, float sh, float th, char *pic);
 extern void(*RE_Draw_Pic)(int x, int y, char *pic, float scale);
 extern void(*RE_Draw_GetPicSize)(int *w, int *h, char *pic);
-
-extern int(*RE_MarkFragments)(vec3_t origin, vec3_t axis[3], float radius, int maxPoints, vec3_t *points, int maxFragments, markFragment_t *fragments);
 
 extern void(*RE_BeginRegistration)(char *model);
 extern struct model_s * (*RE_RegisterModel)(char *name);

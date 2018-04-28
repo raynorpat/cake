@@ -773,6 +773,51 @@ void CL_FreeParticle(cparticle_t * p)
 
 /*
 ===============
+CL_BloodPuff
+
+Blood puffs
+===============
+*/
+void CL_BloodPuff(vec3_t org, vec3_t dir, int count)
+{
+	int			i, j;
+	cparticle_t	*p;
+	float		d;
+
+	for (i = 0; i < count; i++)
+	{
+		if (!free_particles)
+			return;
+
+		p = free_particles;
+		free_particles = p->next;
+		p->next = active_particles;
+		active_particles = p;
+
+		p->time = cl.time;
+		p->color = 240;
+
+		d = rand() & 31;
+
+		for (j = 0; j < 3; j++)
+		{
+			p->org[j] = org[j] + ((rand() & 7) - 4) + d * dir[j];
+			p->vel[j] = crand() * 20;
+		}
+
+		p->accel[0] = p->accel[1] = 0;
+		p->accel[2] = -PARTICLE_GRAVITY;
+		p->alpha = 1.0;
+
+		p->alphavel = -1.0 / (0.5 + frand() * 0.3);
+
+		p->bounceFactor = 0.0f;
+		p->ignoreGrav = false;
+	}
+}
+
+/*
+===============
 CL_ParticleEffect
 
 Wall impact puffs
@@ -1324,6 +1369,8 @@ void CL_DiminishingTrail (vec3_t start, vec3_t end, centity_t *old, int flags)
 	float		dec;
 	float		orgscale;
 	float		velscale;
+	trace_t		trace;
+	vec4_t		colorf;
 
 	VectorCopy (start, move);
 	VectorSubtract (end, start, vec);
@@ -1331,6 +1378,9 @@ void CL_DiminishingTrail (vec3_t start, vec3_t end, centity_t *old, int flags)
 
 	dec = 0.5;
 	VectorScale (vec, dec, vec);
+
+	trace = CM_BoxTrace(start, end, vec3_origin, vec3_origin, 0, MASK_SOLID);
+	VectorNormalize(trace.plane.normal);
 
 	if (old->trailcount > 900)
 	{
@@ -1370,7 +1420,7 @@ void CL_DiminishingTrail (vec3_t start, vec3_t end, centity_t *old, int flags)
 			{
 				p->alpha = 1.0;
 				p->alphavel = -1.0 / (1 + frand () * 0.4);
-				p->color = 0xe8 + (rand () & 7);
+				p->color = 240;
 
 				for (j = 0; j < 3; j++)
 				{
@@ -1381,9 +1431,18 @@ void CL_DiminishingTrail (vec3_t start, vec3_t end, centity_t *old, int flags)
 
 				p->vel[2] -= PARTICLE_GRAVITY;
 
-				p->bounceFactor = 0.3f;
+				p->bounceFactor = 0.0f;
 
 				p->ignoreGrav = false;
+
+				if (trace.fraction != 1.0)
+				{
+					Vector4Set(colorf, 1.0f, 0.0f, 0.0f, 1.0f);
+					for (int i = 0; i < 1; i++)	
+						RE_AddDecal(trace.endpos, trace.plane.normal, colorf, 20 + ((rand() % 21 * 0.05f) - 0.5f), DECAL_BLOOD_5, 0, frand() * 360);
+					VectorClear(trace.plane.normal);
+					return;
+				}
 			}
 			else
 			{
@@ -1918,6 +1977,143 @@ void CL_TeleportParticles (vec3_t org)
 
 /*
 ===============
+CL_ParticleRailRick
+===============
+*/
+void CL_ParticleRailRick (vec3_t org, vec3_t dir)
+{
+	float d;
+	int j, i;
+	cparticle_t *p;
+	vec3_t dir2;
+
+	VectorNormalize(dir);
+
+	// sparks
+	for (i = 0; i < 25; i++)
+	{
+		if (!free_particles)
+			return;
+		p = free_particles;
+		free_particles = p->next;
+		p->next = active_particles;
+		active_particles = p;
+
+		VectorClear(p->accel);
+		VectorClear(p->vel);
+
+		p->time = cl.time;
+		p->alpha = 0.7;
+		p->alphavel = -1.0 / (0.3 + frand() * 0.2);
+
+		p->color = 4 + (rand() & 7);
+
+		d = rand() & 5;
+		for (j = 0; j < 3; j++)
+		{
+			p->org[j] = org[j] + d * dir[j];
+			p->vel[j] = dir[j] * 30 + crand() * 10;
+		}
+
+		p->accel[0] = p->accel[1] = 0;
+		p->accel[2] = -PARTICLE_GRAVITY;
+
+		p->bounceFactor = 0.3f;
+	}
+
+	// smoke
+	for (i = 0; i < 11; i++)
+	{
+		if (!free_particles)
+			return;
+		p = free_particles;
+		free_particles = p->next;
+		p->next = active_particles;
+		active_particles = p;
+
+		p->time = cl.time;
+
+		p->color = 4 + (rand() & 7);
+
+		p->alpha = 1;
+		p->alphavel = -1.0 / (0.5 + frand() * 0.5);
+
+		d = rand() & 15;
+		for (j = 0; j < 3; j++)
+		{
+			p->org[j] = org[j] + ((rand() & 7) - 4) + d * dir[j];
+			p->vel[j] = dir[j] * 30;
+		}
+
+		p->accel[0] = p->accel[1] = 0;
+		p->accel[2] = 10;
+
+		p->bounceFactor = 0.0f;
+	}
+
+	// more smoke
+	if (!free_particles)
+		return;
+	p = free_particles;
+	free_particles = p->next;
+	p->next = active_particles;
+	active_particles = p;
+	
+	VectorClear(p->accel);
+	VectorClear(p->vel);
+
+	VectorCopy(dir, dir2);
+	VectorNormalize(dir2);
+	p->time = cl.time;
+
+	p->color = 4 + (rand() & 7);
+
+	p->alpha = 0.7;
+	p->alphavel = -1.0 / (0.5 + frand() * 0.5);
+
+	for (j = 0; j < 3; j++)
+	{
+		p->org[j] = org[j];
+		p->vel[j] = dir2[j] * 2;
+	}
+
+	p->bounceFactor = 0.0f;
+
+	// more sparks
+	for (i = 0; i < 35; i++)
+	{
+		if (!free_particles)
+			return;
+		p = free_particles;
+		free_particles = p->next;
+		p->next = active_particles;
+		active_particles = p;
+
+		p->time = cl.time;
+
+		p->color = 0x40 + (rand() & 7);
+
+		p->alpha = 1;
+		p->alphavel = -0.25 / (0.3 + frand() * 0.2);
+
+		d = rand() & 15;
+		for (j = 0; j < 3; j++)
+		{
+			p->org[j] = org[j] + ((rand() & 7) - 4) + d*dir[j];
+			p->vel[j] = dir[j] * 30 + crand() * 40;
+		}
+
+		p->accel[0] = p->accel[1] = 0;
+		p->accel[2] = -PARTICLE_GRAVITY * 1.5;
+
+		VectorCopy(p->org, p->oldOrg);
+
+		p->bounceFactor = 0.3f;
+	}
+}
+
+/*
+===============
 CL_AddParticles
 ===============
 */
@@ -1962,6 +2158,30 @@ void CL_AddParticles (void)
 				CL_FreeParticle (p);
 				continue;
 			}
+			else if (alpha <= 0.3f && p->color == 240) // this is HACK central...
+			{
+				// do blood decals
+				if (rand() & 4)
+				{
+					trace_t tr;
+
+					time2 = time * time;
+					org[0] = p->org[0] + p->vel[0] * time + p->accel[0] * time2;
+					org[1] = p->org[1] + p->vel[1] * time + p->accel[1] * time2;
+					org[2] = p->org[2] + p->vel[2] * time + p->accel[2] * time2;
+
+					tr = CL_Trace(p->org, org, 0, MASK_SOLID);
+					if (tr.fraction != 1.0f)
+					{
+						if (!VectorCompare(tr.plane.normal, vec3_origin) && !(CM_PointContents(p->org, 0) & MASK_WATER)) // no blood splatters underwater...
+						{
+							vec4_t color;
+							Vector4Set(color, 1.0, 0.0, 0.0, 1.0f);
+							RE_AddDecal(tr.endpos, tr.plane.normal, color, 16 + ((rand() % 21 * 0.05f) - 0.5f), DECAL_BLOOD + (rand() & 4), 0, frand() * 360);
+						}
+					}
+				}
+			}
 		}
 		else
 		{
@@ -1986,20 +2206,19 @@ void CL_AddParticles (void)
 
 		// gravity modulation
 		//if (!p->ignoreGrav)
-		//	org[2] -= 0.5 * ( Cvar_VariableValue("sv_gravity") / 4 ) * time2; // raynorpat: this looks so funky ingame...
+		//	org[2] += time2 * -PARTICLE_GRAVITY;
 
 		// collision test
 		if (cl_particleCollision->integer)
 		{
 			if (p->bounceFactor)
 			{
-				extern trace_t SV_Trace(vec3_t start, vec3_t mins, vec3_t maxs, vec3_t end, struct edict_s *passedict, int contentmask);
 				trace_t trace;
 				vec3_t vel;
 				int hitTime;
 				float time;
 
-				trace = SV_Trace(p->oldOrg, NULL, NULL, org, NULL, CONTENTS_SOLID);
+				trace = CL_Trace(p->oldOrg, org, 0, CONTENTS_SOLID);
 				if (trace.fraction > 0 && trace.fraction < 1)
 				{
 					// reflect the velocity on the trace plane

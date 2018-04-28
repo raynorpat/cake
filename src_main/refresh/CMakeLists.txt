@@ -70,6 +70,7 @@ set(RENDERER_SOURCES
 	../refresh/gfx.c
 	../refresh/r_beam.c
 	../refresh/r_draw.c
+	../refresh/r_decal.c
 	../refresh/r_fragment.c
 	../refresh/r_font.c
 	../refresh/r_image.c
