@@ -773,6 +773,51 @@ void CL_FreeParticle(cparticle_t * p)
 
 /*
 ===============
+CL_BloodPuff
+
+Blood puffs
+===============
+*/
+void CL_BloodPuff(vec3_t org, vec3_t dir, int count)
+{
+	int			i, j;
+	cparticle_t	*p;
+	float		d;
+
+	for (i = 0; i < count; i++)
+	{
+		if (!free_particles)
+			return;
+
+		p = free_particles;
+		free_particles = p->next;
+		p->next = active_particles;
+		active_particles = p;
+
+		p->time = cl.time;
+		p->color = 240;
+
+		d = rand() & 31;
+
+		for (j = 0; j < 3; j++)
+		{
+			p->org[j] = org[j] + ((rand() & 7) - 4) + d * dir[j];
+			p->vel[j] = crand() * 20;
+		}
+
+		p->accel[0] = p->accel[1] = 0;
+		p->accel[2] = -PARTICLE_GRAVITY;
+		p->alpha = 1.0;
+
+		p->alphavel = -1.0 / (0.5 + frand() * 0.3);
+
+		p->bounceFactor = 0.0f;
+		p->ignoreGrav = false;
+	}
+}
+
+/*
+===============
 CL_ParticleEffect
 
 Wall impact puffs

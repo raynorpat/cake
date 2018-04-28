@@ -428,6 +428,7 @@ void CL_TeleporterParticles (entity_state_t *ent);
 void CL_ParticleEffect (vec3_t org, vec3_t dir, int color, int count);
 void CL_ParticleEffect2 (vec3_t org, vec3_t dir, int color, int count);
 void CL_ParticleRailRick (vec3_t org, vec3_t dir);
+void CL_BloodPuff (vec3_t org, vec3_t dir, int count);
 
 int CL_ParseEntityBits (unsigned *bits);
 void CL_ParseDelta (entity_state_t *from, entity_state_t *to, int number, int bits);
