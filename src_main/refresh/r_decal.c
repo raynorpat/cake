@@ -232,10 +232,10 @@ void RE_GL_AddDecal (vec3_t origin, vec3_t dir, vec4_t color, float size, int ty
 
 		for (i = 0; i < 6; i++)
 		{
-			extern trace_t SV_Trace(vec3_t start, vec3_t mins, vec3_t maxs, vec3_t end, struct edict_s *passedict, int contentmask);
+			extern trace_t CL_Trace(vec3_t start, vec3_t end, float size, int contentmask);
 
 			VectorMA(origin, scale, dirs[i], end);
-			trace = SV_Trace(origin, vec3_origin, vec3_origin, end, NULL, MASK_SOLID);
+			trace = CL_Trace(origin, end, 0, MASK_SOLID);
 			if (trace.fraction != 1.0)
 				RE_GL_AddDecal(origin, trace.plane.normal, color, size, type, flags, angle);
 		}
@@ -323,7 +323,7 @@ void R_DrawDecals (void)
 	mindist = DotProduct(r_origin, vpn) + 4.0;
 
 	glEnable(GL_POLYGON_OFFSET_FILL);
-	glPolygonOffset(-1, -1);
+	glPolygonOffset(-2, -2);
 
 	GL_Enable(BLEND_BIT | DEPTHTEST_BIT);
 
