@@ -891,6 +891,8 @@ int main(int argc, char **argv)
 	printf("\nCake v%4.2f\n", VERSION);
 	printf("=====================\n\n");
 
+	srand(time(0));
+
 	Qcommon_Init(argc, argv);
 
 	// set signal handlers now that everything should be initialized
