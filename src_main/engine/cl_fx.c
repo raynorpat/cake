@@ -1420,7 +1420,7 @@ void CL_DiminishingTrail (vec3_t start, vec3_t end, centity_t *old, int flags)
 			{
 				p->alpha = 1.0;
 				p->alphavel = -1.0 / (1 + frand () * 0.4);
-				p->color = 0xe8 + (rand () & 7);
+				p->color = 240;
 
 				for (j = 0; j < 3; j++)
 				{
@@ -1438,7 +1438,7 @@ void CL_DiminishingTrail (vec3_t start, vec3_t end, centity_t *old, int flags)
 				if (trace.fraction != 1.0)
 				{
 					Vector4Set(colorf, 1.0f, 0.0f, 0.0f, 1.0f);
-					for (int i = 0; i < 1; i++)		
+					for (int i = 0; i < 1; i++)	
 						RE_AddDecal(trace.endpos, trace.plane.normal, colorf, 20 + ((rand() % 21 * 0.05f) - 0.5f), DECAL_BLOOD_5, 0, frand() * 360);
 					VectorClear(trace.plane.normal);
 					return;
@@ -2158,7 +2158,7 @@ void CL_AddParticles (void)
 				CL_FreeParticle (p);
 				continue;
 			}
-			else if (alpha <= 0.3f && p->color == 0xe8)
+			else if (alpha <= 0.3f && p->color == 240) // this is HACK central...
 			{
 				// do blood decals
 				if (rand() & 4)

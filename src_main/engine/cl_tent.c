@@ -481,7 +481,7 @@ void CL_ParseTEnt (void)
 	case TE_BLOOD:				// bullet hitting flesh
 		MSG_ReadPos (&net_message, pos);
 		MSG_ReadDir (&net_message, dir);
-		CL_ParticleEffect (pos, dir, 0xe8, 60);
+		CL_BloodPuff (pos, dir, 12);
 		break;
 
 	case TE_GUNSHOT:			// bullet hitting wall
