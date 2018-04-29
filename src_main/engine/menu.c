@@ -430,6 +430,7 @@ void M_Init (void)
 	Cmd_AddCommand ("menu_downloadoptions", M_Menu_DownloadOptions_f);
 	Cmd_AddCommand ("menu_credits", M_Menu_Credits_f);
 	Cmd_AddCommand ("menu_multiplayer", M_Menu_Multiplayer_f);
+	Cmd_AddCommand ("menu_demos", M_Menu_Demos_f);
 	Cmd_AddCommand ("menu_video", M_Menu_Video_f);
 	Cmd_AddCommand ("menu_options", M_Menu_Options_f);
 	Cmd_AddCommand ("menu_keys", M_Menu_Keys_f);

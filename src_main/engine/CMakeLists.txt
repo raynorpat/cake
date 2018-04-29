@@ -152,6 +152,7 @@ set(MENU_SOURCES
 	menu_mp_joinserver.c
 	menu_mp_playersetup.c
 	menu_mp_startserver.c
+	menu_mp_demos.c
 	menu_singleplayer.c
 	menu_sp_saveload.c
 	menu_sp_credits.c

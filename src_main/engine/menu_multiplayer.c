@@ -32,6 +32,7 @@ menuframework_s			s_multiplayer_menu;
 static menuaction_s		s_join_gamespy_server_action;
 static menuaction_s		s_join_network_server_action;
 static menuaction_s		s_start_network_server_action;
+static menuaction_s		s_demos_action;
 static menuaction_s		s_player_setup_action;
 static menuaction_s		s_download_options_action;
 
@@ -61,6 +62,11 @@ static void JoinNetworkServerFunc (void *unused)
 static void StartNetworkServerFunc (void *unused)
 {
 	M_Menu_StartServer_f ();
+}
+
+static void DemosFunc(void *unused)
+{
+	M_Menu_Demos_f ();
 }
 
 static void DownloadOptionsFunc (void *unused)
@@ -100,6 +106,14 @@ void Multiplayer_MenuInit (void)
 	s_start_network_server_action.generic.callback = StartNetworkServerFunc;
 
 	y += MENU_LINE_SIZE;
+	s_demos_action.generic.type = MTYPE_ACTION;
+	s_demos_action.generic.flags = QMF_LEFT_JUSTIFY;
+	s_demos_action.generic.x = 0;
+	s_demos_action.generic.y = y;
+	s_demos_action.generic.name = " demos";
+	s_demos_action.generic.callback = DemosFunc;
+
+	y += MENU_LINE_SIZE;
 	s_player_setup_action.generic.type = MTYPE_ACTION;
 	s_player_setup_action.generic.flags = QMF_LEFT_JUSTIFY;
 	s_player_setup_action.generic.x = 0;
@@ -121,6 +135,7 @@ void Multiplayer_MenuInit (void)
 	Menu_AddItem (&s_multiplayer_menu, (void *) &s_join_gamespy_server_action);
 	Menu_AddItem (&s_multiplayer_menu, (void *) &s_join_network_server_action);
 	Menu_AddItem (&s_multiplayer_menu, (void *) &s_start_network_server_action);
+	Menu_AddItem (&s_multiplayer_menu, (void *) &s_demos_action);
 	Menu_AddItem (&s_multiplayer_menu, (void *) &s_player_setup_action);
 	Menu_AddItem (&s_multiplayer_menu, (void *) &s_download_options_action);
 

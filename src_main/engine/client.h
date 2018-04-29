@@ -644,6 +644,7 @@ void M_Menu_Main_f(void);
 			void M_Menu_AddressBook_f(void);
 		void M_Menu_StartServer_f(void);
 			void M_Menu_DMOptions_f(void);
+			void M_Menu_Demos_f (void);
 		void M_Menu_PlayerConfig_f(void);
 		void M_Menu_DownloadOptions_f(void);
 	void M_Menu_Options_f(void);
