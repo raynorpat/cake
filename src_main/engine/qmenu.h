@@ -34,8 +34,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #define MTYPE_BITMAP		6
 
 #define MLIST_SPACING		10
-#define MLIST_BSIZE 		3
-#define MLIST_SSIZE 		16
+#define MLIST_BSIZE 		4
+#define MLIST_SSIZE 		8
 
 #define QMF_LEFT_JUSTIFY	0x00000001
 #define QMF_RIGHT2LEFT		0x00000002

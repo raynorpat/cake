@@ -516,10 +516,19 @@ void Menulist_DoEnter( menulist_s *l )
 
 static void DrawBorder (int x, int y, int w, int h, int c, int s)
 {
+	SCR_AdjustFrom640((float *)&x, (float *)&y, (float *)&w, (float *)&h);
+
 	RE_Draw_Fill (x, y, w, s, c );
 	RE_Draw_Fill (x, y + h - s, w, s, c);
 	RE_Draw_Fill (x, y, s, h, c);
 	RE_Draw_Fill (x + w - s, y, s, h, c);
+}
+
+static void DrawFill(int x, int y, int w, int h, int c)
+{
+	SCR_AdjustFrom640 ((float *)&x, (float *)&y, (float *)&w, (float *)&h);
+
+	RE_Draw_Fill (x, y, w, h, c);
 }
 
 void MenuList_Init (menulist_s *l)
@@ -538,7 +547,7 @@ void MenuList_Draw (menulist_s *l)
 	char buffer[128];
 	int i, pituus = 100, px = 0;
 
-	DrawBorder(x, y, width, height, 215, MLIST_BSIZE);
+	DrawBorder (x, y, width, height, 215, MLIST_BSIZE);
 	x += MLIST_BSIZE;
 	y += MLIST_BSIZE;
 	width -= 2 * MLIST_BSIZE;
@@ -552,8 +561,8 @@ void MenuList_Draw (menulist_s *l)
 		pituus = height / 100 * (maxItems / numItems * 100);
 		px = height / 100 * (l->prestep / numItems * 100);
 		width -= MLIST_SSIZE;
-  		RE_Draw_Fill(x + width, y + px, MLIST_SSIZE, pituus + 1, 215);
-		DrawBorder(x + width, y + px, MLIST_SSIZE, pituus + 1, 7, 3);
+		DrawFill (x + width, y + px, MLIST_SSIZE, pituus + 1, 215);
+		DrawBorder (x + width, y + px, MLIST_SSIZE, pituus + 1, 7, 3);
 	}
 	else
 	{
@@ -566,14 +575,13 @@ void MenuList_Draw (menulist_s *l)
 	for (i = 0; i < maxItems && *n; i++, n++)
 	{
 		if (n - l->itemnames == l->curvalue)
-			RE_Draw_Fill(x, y - 1, width, 10, 16);
+			DrawFill (x, y, width, MLIST_SSIZE, 16);
 
-		Q_strlcpy(buffer, *n, sizeof(buffer));
+		Q_strlcpy (buffer, *n, sizeof(buffer));
 		if (strlen(buffer) > (width / 8))
-			strcpy(buffer + (width / 8) - 3, "...");
+			strcpy (buffer + (width / 8) - 3, "...");
 
-		//TODO
-		//DrawStringScaled(x, y, buffer, SCR_GetMenuScale());
+		SCR_Text_Paint (x, y + 6, 0.1f, colorWhite, buffer, 0, 0, UI_DROPSHADOW, &cls.consoleFont);
 		y += MLIST_SPACING;
 	}
 }
