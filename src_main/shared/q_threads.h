@@ -50,8 +50,8 @@ typedef struct thread_s
 thread_t *Thread_Create_ (char *name, ThreadRunFunc Run, void *data);
 #define Thread_Create(f, d) Thread_Create_(#f, f, d)
 void Thread_Wait (thread_t *t);
-uint16_t Thread_Count (void);
-void Thread_Init (uint16_t num_threads);
+size_t Thread_Count (void);
+void Thread_Init (size_t num_threads);
 void Thread_Shutdown (void);
 
 #endif

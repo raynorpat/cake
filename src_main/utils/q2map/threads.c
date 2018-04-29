@@ -173,7 +173,7 @@ RunThreads
 */
 static void RunThreads(void)
 {
-	const uint16_t thread_count = Thread_Count();
+	const size_t thread_count = Thread_Count();
 	thread_t *threads[MAX_THREADS];
 
 	if (thread_count == 0)
@@ -184,10 +184,10 @@ static void RunThreads(void)
 
 	lock = SDL_CreateMutex();
 
-	for (uint16_t i = 0; i < thread_count; i++)
+	for (size_t i = 0; i < thread_count; i++)
 		threads[i] = Thread_Create (ThreadWork, NULL);
 
-	for (uint16_t i = 0; i < thread_count; i++)
+	for (size_t i = 0; i < thread_count; i++)
 		Thread_Wait (threads[i]);
 
 	SDL_DestroyMutex(lock);

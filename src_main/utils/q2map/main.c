@@ -44,9 +44,7 @@ int main (int argc, char **argv)
 	Con_Print ("q2map v1.1 (c) 2017-2018 Pat 'raynorpat' Raynor <raynorpat@gmail.com>\n\n");
 	
 	if(argc < 2)
-	{
 		goto showUsage;
-	}
 
 	SDL_Init (SDL_INIT_TIMER);
 
@@ -85,13 +83,13 @@ showUsage:
 exit:
 	was_init = false;
 
+	Thread_Shutdown ();
 	Sem_Shutdown ();
-	//Thread_Shutdown ();
 
 	SDL_Quit ();
 
-	puts("\nPress any key to close..\n");
-	getchar();
+	puts ("\nPress any key to close..\n");
+	getchar ();
 
 	exit (0);
 	return 0;

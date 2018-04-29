@@ -34,7 +34,7 @@ typedef struct thread_pool_s
 	SDL_mutex *mutex;
 
 	thread_t *threads;
-	uint16_t num_threads;
+	size_t num_threads;
 } thread_pool_t;
 
 static thread_pool_t thread_pool;
@@ -84,7 +84,7 @@ Thread_Init_
 Initializes the threads backing the thread pool
 ===============
 */
-static void Thread_Init_ (uint16_t num_threads)
+static void Thread_Init_ (size_t num_threads)
 {
 	if (num_threads == 0)
 		num_threads = SDL_GetCPUCount ();
@@ -99,7 +99,7 @@ static void Thread_Init_ (uint16_t num_threads)
 		thread_pool.threads = malloc (sizeof(thread_t) * thread_pool.num_threads);
 
 		thread_t *t = thread_pool.threads;
-		uint16_t i = 0;
+		size_t i = 0;
 
 		for (i = 0; i < thread_pool.num_threads; i++, t++)
 		{
@@ -124,7 +124,6 @@ static void Thread_Shutdown_ (void)
 
 		for (i = 0; i < thread_pool.num_threads; i++, t++)
 		{
-			Thread_Wait (t);
 			SDL_CondSignal (t->cond);
 			SDL_WaitThread (t->thread, NULL);
 			SDL_DestroyCond (t->cond);
@@ -155,6 +154,7 @@ thread_t *Thread_Create_(char *name, ThreadRunFunc run, void *data)
 
 		for(i = 0; i < thread_pool.num_threads; i++, t++)
 		{
+			// if the thread appears idle, lock it and check again
 			if(t->status == THREAD_IDLE)
 			{
 				SDL_mutexP (t->mutex);
@@ -185,11 +185,8 @@ thread_t *Thread_Create_(char *name, ThreadRunFunc run, void *data)
 	// if we failed to allocate a thread, run the function in this thread
 	if (i == thread_pool.num_threads)
 	{
-		if (thread_pool.num_threads)
-		{
-			t = NULL;
-			run (data);
-		}
+		t = NULL;
+		run (data);
 	}
 
 	return t;
@@ -220,7 +217,7 @@ Thread_Count
 Returns the number of threads in the pool.
 ===============
 */
-uint16_t Thread_Count(void)
+size_t Thread_Count(void)
 {
 	return thread_pool.num_threads;
 }
@@ -232,7 +229,7 @@ Thread_Init
 Initializes the thread pool.
 ===============
 */
-void Thread_Init(uint16_t num_threads)
+void Thread_Init(size_t num_threads)
 {
 	memset (&thread_pool, 0, sizeof(thread_pool));
 
