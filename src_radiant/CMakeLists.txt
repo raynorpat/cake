@@ -38,7 +38,7 @@ execute_process(
         OUTPUT_VARIABLE GIT_VERSION
         OUTPUT_STRIP_TRAILING_WHITESPACE
 )
-set(RADIANT_VERSION_STRING "${GTKRadiant_VERSION}n")
+set(RADIANT_VERSION_STRING "${GTKRadiant_VERSION}")
 if (GIT_VERSION)
     set(RADIANT_VERSION_STRING "${RADIANT_VERSION_STRING}-git-${GIT_VERSION}")
 endif ()
@@ -72,9 +72,15 @@ endif ()
 #-----------------------------------------------------------------------
 
 if(CMAKE_COMPILER_IS_GNUCC OR CMAKE_C_COMPILER_ID STREQUAL "Clang")
-	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS}   -fno-strict-aliasing")
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-strict-aliasing -fno-exceptions -fno-rtti")
-	set(CMAKE_POSITION_INDEPENDENT_CODE 1)
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-exceptions -fno-rtti")
+	macro(addflags args)
+		set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${args}")
+		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${args}")
+	endmacro()
+	addflags("-fno-strict-aliasing")
+	if (NOT WIN32)
+		addflags("-fvisibility=hidden")
+	endif ()
 elseif(MSVC)
 	# define the standard link libraries
 	set(CMAKE_CXX_STANDARD_LIBRARIES "kernel32.lib user32.lib gdi32.lib winspool.lib shell32.lib ole32.lib oleaut32.lib uuid.lib comdlg32.lib advapi32.lib dbghelp.lib wsock32.lib ws2_32.lib rpcrt4.lib wininet.lib")
@@ -98,6 +104,8 @@ elseif(MSVC)
 	set(CMAKE_VS_INCLUDE_INSTALL_TO_DEFAULT_BUILD 1)
 endif()
 
+set(CMAKE_POSITION_INDEPENDENT_CODE 1)
+
 set(GTK_TARGET 2 CACHE STRING "GTK target")
 add_definitions(-DGTK_TARGET=${GTK_TARGET})
 
@@ -114,19 +122,6 @@ add_definitions(-DRADIANT_ABOUTMSG="${GTKRadiant_ABOUT}")
 if (NOT CMAKE_BUILD_TYPE MATCHES Release)
     add_definitions(-D_DEBUG=1)
 endif ()
-
-#add_definitions(
-#		-DGTK_DISABLE_SINGLE_INCLUDES
-#       -DGDK_PIXBUF_DISABLE_SINGLE_INCLUDES
-#       -DGSEAL_ENABLE
-#)
-
-#if (GTK_TARGET EQUAL 2)
-#    add_definitions(
-#            -DGTK_DISABLE_DEPRECATED
-#            -DGDK_DISABLE_DEPRECATED
-#    )
-#endif ()
 
 if (APPLE)
     option(XWINDOWS "Build against X11" ON)
@@ -186,7 +181,7 @@ if (BUILD_RADIANT)
 endif ()
 
 if (CMAKE_EXECUTABLE_SUFFIX)
-    set(RADIANT_EXECUTABLE ${CMAKE_EXECUTABLE_SUFFIX})
+    string(REGEX REPLACE "^[.]" "" RADIANT_EXECUTABLE ${CMAKE_EXECUTABLE_SUFFIX})
 else ()
     execute_process(
             COMMAND uname -m
