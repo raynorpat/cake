@@ -1,0 +1,22 @@
+Set these as your environment variables after extracting the zip to wherever, obviously changing the locations as well.
+
+GTK_BASEPATH 
+ - D:\GTK
+
+INCLUDE 
+ - D:\GTK\INCLUDE
+ - D:\GTK\INCLUDE\GTK-2.0
+ - D:\GTK\INCLUDE\GLIB-2.0
+ - D:\GTK\INCLUDE\PANGO-1.0
+ - D:\GTK\INCLUDE\CAIRO
+ - D:\GTK\INCLUDE\ATK-1.0
+ - D:\GTK\INCLUDE\GTKGLEXT-1.0
+ - D:\GTK\LIB\GTK-2.0\INCLUDE
+ - D:\GTK\LIB\GLIB-2.0\INCLUDE
+ - D:\GTK\LIB\GTKGLEXT-1.0\INCLUDE
+ - D:\GTK\INCLUDE\LIBXML2
+ 
+LIB
+ - D:\GTK\LIB
+ 
+Add %GTK_BASEPATH%\bin to PATH
