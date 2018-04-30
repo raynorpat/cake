@@ -1,0 +1,1129 @@
+<classes>
+<point name="air_bubbles" color="0 .5 .8" box="-8 -8 -8 8 8 8">
+Air bubbles. They disappear in Deathmatch.
+<flag key="NOT_EASY" name="Not Easy" bit="8"/>
+<flag key="NOT_NORMAL" name="Not Hard" bit="9"/>
+<flag key="NOT_HARD" name="Not Normal" bit="10"/>
+<flag key="NOT_DM" name="Not Deathmatch" bit="11"/>
+</point>
+<point name="ambient_light_buzz" color="0.3 0.1 0.6" box="-10 -10 -8 10 10 8">
+Buzzing light.
+<flag key="NOT_EASY" name="Not Easy" bit="8"/>
+<flag key="NOT_NORMAL" name="Not Hard" bit="9"/>
+<flag key="NOT_HARD" name="Not Normal" bit="10"/>
+<flag key="NOT_DM" name="Not Deathmatch" bit="11"/>
+</point>
+<point name="ambient_drip" color="0.3 0.1 0.6" box="-10 -10 -8 10 10 8">
+Dripping sound.
+<flag key="NOT_EASY" name="Not Easy" bit="8"/>
+<flag key="NOT_NORMAL" name="Not Hard" bit="9"/>
+<flag key="NOT_HARD" name="Not Normal" bit="10"/>
+<flag key="NOT_DM" name="Not Deathmatch" bit="11"/>
+</point>
+<point name="ambient_drone" color="0.3 0.1 0.6" box="-10 -10 -8 10 10 8">
+Drone sound.
+<flag key="NOT_EASY" name="Not Easy" bit="8"/>
+<flag key="NOT_NORMAL" name="Not Hard" bit="9"/>
+<flag key="NOT_HARD" name="Not Normal" bit="10"/>
+<flag key="NOT_DM" name="Not Deathmatch" bit="11"/>
+</point>
+<point name="ambient_comp_hum" color="0.3 0.1 0.6" box="-10 -10 -8 10 10 8">
+Computer sound.
+<flag key="NOT_EASY" name="Not Easy" bit="8"/>
+<flag key="NOT_NORMAL" name="Not Hard" bit="9"/>
+<flag key="NOT_HARD" name="Not Normal" bit="10"/>
+<flag key="NOT_DM" name="Not Deathmatch" bit="11"/>
+</point>
+<point name="ambient_flouro_buzz" color="0.3 0.1 0.6" box="-10 -10 -8 10 10 8">
+Fluorescent light sound.
+<flag key="NOT_EASY" name="Not Easy" bit="8"/>
+<flag key="NOT_NORMAL" name="Not Hard" bit="9"/>
+<flag key="NOT_HARD" name="Not Normal" bit="10"/>
+<flag key="NOT_DM" name="Not Deathmatch" bit="11"/>
+</point>
+<point name="ambient_suck_wind" color="0.3 0.1 0.6" box="-10 -10 -8 10 10 8">
+Wind sound.
+<flag key="NOT_EASY" name="Not Easy" bit="8"/>
+<flag key="NOT_NORMAL" name="Not Hard" bit="9"/>
+<flag key="NOT_HARD" name="Not Normal" bit="10"/>
+<flag key="NOT_DM" name="Not Deathmatch" bit="11"/>
+</point>
+<point name="ambient_swamp1" color="0.3 0.1 0.6" box="-10 -10 -8 10 10 8">
+Swamp sound 1.
+<flag key="NOT_EASY" name="Not Easy" bit="8"/>
+<flag key="NOT_NORMAL" name="Not Hard" bit="9"/>
+<flag key="NOT_HARD" name="Not Normal" bit="10"/>
+<flag key="NOT_DM" name="Not Deathmatch" bit="11"/>
+</point>
+<point name="ambient_swamp2" color="0.3 0.1 0.6" box="-10 -10 -8 10 10 8">
+Swamp sound 2.
+<flag key="NOT_EASY" name="Not Easy" bit="8"/>
+<flag key="NOT_NORMAL" name="Not Hard" bit="9"/>
+<flag key="NOT_HARD" name="Not Normal" bit="10"/>
+<flag key="NOT_DM" name="Not Deathmatch" bit="11"/>
+</point>
+<point name="ambient_thunder" color="0.3 0.1 0.6" box="-10 -10 -8 10 10 8">
+Thunder sound.
+<flag key="NOT_EASY" name="Not Easy" bit="8"/>
+<flag key="NOT_NORMAL" name="Not Hard" bit="9"/>
+<flag key="NOT_HARD" name="Not Normal" bit="10"/>
+<flag key="NOT_DM" name="Not Deathmatch" bit="11"/>
+</point>
+<point name="event_lightning" color="0 1 1" box="-16 -16 -16 16 16 16">
+Just for boss level. Used for killing Cthon.
+<flag key="NOT_EASY" name="Not Easy" bit="8"/>
+<flag key="NOT_NORMAL" name="Not Hard" bit="9"/>
+<flag key="NOT_HARD" name="Not Normal" bit="10"/>
+<flag key="NOT_DM" name="Not Deathmatch" bit="11"/>
+</point>
+<group name="func_bossgate" color="0 .5 .8">
+This bmodel appears unless players have all of the episode sigils. Used to close the floor in start.map (stairs to Shub).
+</group>
+<group name="func_button" color="0 .5 .8">
+When a button is touched, it moves some distance in the direction of its angle, triggers all of its targets, waits some time, then returns to its original position where it can be triggered again.
+
+Keys:
+<direction key="angle" name="Move Direction">determines the opening direction</direction>
+<target key="target" name="Target"> all entities with a matching targetname will be used</target>
+<target key="killtarget" name="Kill Target">kills the target when fired</target>
+<real key="speed" name="Move Speed">default is 40</real>
+<real key="wait" name="Return Delay">default is 1 (-1 = never return) - does not apply to doors that open with a key</real>
+<real key="lip" name="Lip">override the default 4 pixel lip remaining at end of move</real>
+<boolean key="health" name="Shootable">if set, the button must be killed instead of touched</boolean>
+<integer key="sounds" name="Sounds">
+ 0 = steam metal
+ 1 = wooden clunk
+ 2 = metallic click
+ 3 = in-out</integer>
+</group>
+<group name="func_door" color="0 .5 .8">
+
+Flags:
+<flag key="START_OPEN" name="Start Open" bit="0">causes the door to move to its destination when spawned, and operate in reverse. It is used to temporarily or permanently close off an area when triggered (not useful for touch or takedamage doors).</flag>
+<flag key="DOOR_DONT_LINK" name="Don't Link" bit="2"/>
+<flag key="GOLD_KEY" name="Gold Key" bit="3"/>
+<flag key="SILVER_KEY" name="Silver Key" bit="4"/>
+<flag key="TOGGLE" name="Toggle" bit="5">If two doors touch, they are assumed to be connected and operate as a unit. TOGGLE causes the door to wait in both the start and end states for a trigger event.</flag>
+<flag key="NOT_EASY" name="Not Easy" bit="8"/>
+<flag key="NOT_NORMAL" name="Not Hard" bit="9"/>
+<flag key="NOT_HARD" name="Not Normal" bit="10"/>
+<flag key="NOT_DM" name="Not Deathmatch" bit="11"/>
+
+Keys:
+<string key="message" name="Message">is printed when the door is touched if it is a trigger door and it hasn't been fired yet</string>
+<direction key="angle" name="Opening Direction">determines the opening direction</direction>
+<targetname key="targetname" name="Targetname">if set, no touch field will be spawned and a remote button or trigger field activates the door.</targetname>
+<boolean key="health" name="Shootable">if set, door must be shot open</boolean>
+<real key="speed" name="Move Speed">movement speed (100 default)</real>
+<real key="wait" name="Return Delay">wait before returning (3 is default, -1 = never return)</real>
+<real key="lip" name="Lip">lip remaining at end of move. 8 is default</real>
+<real key="dmg" name="Damage Inflicted">damage to inflict when blocked. 2 is default</real>
+<integer key="sounds" name="Sounds">
+ 0 = no sound
+ 1 = stone
+ 2 = base
+ 3 = stone chain
+ 4 = screechy metal</integer>
+</group>
+<group name="func_door_secret" color="0 .5 .8">
+Basic secret door. Slides back, then to the side. Angle determines direction.
+
+Flags:
+<flag key="open_once" name="Open Once" bit="0">stays open</flag>
+<flag key="1st_left" name="First Left" bit="1">1st move is left of arrow</flag>
+<flag key="1st_down" name="First Down" bit="2">1st move is down from arrow</flag>
+<flag key="no_shoot" name="Not Shootable" bit="3">only opened by trigger</flag>
+<flag key="always_shoot" name="Always Shootable" bit="4">even if targeted, keep shootable</flag>
+<flag key="NOT_EASY" name="Not Easy" bit="8"/>
+<flag key="NOT_NORMAL" name="Not Hard" bit="9"/>
+<flag key="NOT_HARD" name="Not Normal" bit="10"/>
+<flag key="NOT_DM" name="Not Deathmatch" bit="11"/>
+
+Keys:
+<real key="wait" name="Return Delay"># of seconds before coming back</real>
+<real key="t_width" name="First Distance">override Width to move back (or height if going down)</real>
+<real key="t_length" name="Second Distance">override Length to move sideways</real>
+<real key="dmg" name="Damage Inflicted">damage to inflict when blocked (2 default)</real>
+<targetname key="targetname" name="Targetname">If a secret door has a targetname, it will only be opened by its button or trigger, not by damage.</targetname>
+<integer key="sounds" name="Sounds">
+ 1 = medieval
+ 2 = metal
+ 3 = base</integer>
+</group>
+<group name="func_episodegate" color="0 .5 .8">
+This entity will appear if the player was possession of the corresponding item_sigil entity at the time the level was started (it won't appear if the player acquires the sigil while playing the current level).  It is expected that the player acquires an item_sigil after completing an episode and that the func_episodegate entity is placed in front of the trigger_changelevel entity that changes to the corresponding episode.  This way, the game will block access to the episodes that the player has already completed.
+
+Flags:
+<flag key="E1" name="Episode 1" bit="0"/>
+<flag key="E2" name="Episode 2" bit="1"/>
+<flag key="E3" name="Episode 3" bit="2"/>
+<flag key="E4" name="Episode 4" bit="3"/>
+<flag key="NOT_EASY" name="Not Easy" bit="8"/>
+<flag key="NOT_NORMAL" name="Not Hard" bit="9"/>
+<flag key="NOT_HARD" name="Not Normal" bit="10"/>
+<flag key="NOT_DM" name="Not Deathmatch" bit="11"/>
+</group>
+<group name="func_illusionary" color="0 .5 .8">
+A simple entity that looks solid but lets you walk through it. Does not block light.
+</group>
+<group name="func_wall" color="0 .5 .8">
+This is just a solid wall if not inhibitted.
+
+Changes its texture(s) to alternate ones (e.g. basebtn), if targetted.
+</group>
+<group name="func_train" color="0 .5 .8">
+Trains are moving platforms that players can ride. The target's origin specifies the min point of the train at each corner. The train spawns at the first target it is pointing at.
+
+Use path_corner as targets.
+
+If the train itself is the target of a button or trigger, it will not begin moving until activated.
+
+Keys:
+<real key="speed" name="Move Speed">moving speed, default is 100</real>
+<real key="dmg" name="Damage Inflicted">damage, default is 2</real>
+<integer key="sounds" name="Sounds">
+1 = ratchet metal</integer>
+</group>
+<group name="func_plat" color="0 .5 .8">
+Plats are always drawn in the extended position, so they will light correctly.
+
+If the plat is the target of another trigger or button, it will start out disabled in the extended position until it is triggered, when it will lower and become a normal plat.
+
+Flags:
+<flag key="PLAT_LOW_TRIGGER" name="Low Trigger" bit="0"/>
+<flag key="NOT_EASY" name="Not Easy" bit="8"/>
+<flag key="NOT_NORMAL" name="Not Hard" bit="9"/>
+<flag key="NOT_HARD" name="Not Normal" bit="10"/>
+<flag key="NOT_DM" name="Not Deathmatch" bit="11"/>
+
+Keys:
+<real key="speed" name="Move Speed">moving speed, default is 150</real>
+<real key="height" name="Height">determines the amount the plat moves, instead of being implicitly determined by the model's height.</real>
+<integer key="sounds" name="Sounds">
+ 1 = base fast
+ 2 = chain slow</integer>
+</group>
+<group name="func_dm_only" color=".0 .0 1.0">
+A teleporter that only appears in deathmatch.
+<flag key="NOT_EASY" name="Not Easy" bit="8"/>
+<flag key="NOT_NORMAL" name="Not Hard" bit="9"/>
+<flag key="NOT_HARD" name="Not Normal" bit="10"/>
+<flag key="NOT_DM" name="Not Deathmatch" bit="11"/>
+</group>
+<point name="info_null" color="0 0.5 0" box="-4 -4 -4 4 4 4">
+Invisible entity. Used as a positional target for spotlights, etc. Removes itself.
+<flag key="NOT_EASY" name="Not Easy" bit="8"/>
+<flag key="NOT_NORMAL" name="Not Hard" bit="9"/>
+<flag key="NOT_HARD" name="Not Normal" bit="10"/>
+<flag key="NOT_DM" name="Not Deathmatch" bit="11"/>
+</point>
+<point name="info_notnull" color="0 0.5 0" box="-4 -4 -4 4 4 4">
+Invisible entity. Used as a positional target for lightning.
+<flag key="NOT_EASY" name="Not Easy" bit="8"/>
+<flag key="NOT_NORMAL" name="Not Hard" bit="9"/>
+<flag key="NOT_HARD" name="Not Normal" bit="10"/>
+<flag key="NOT_DM" name="Not Deathmatch" bit="11"/>
+</point>
+<point name="info_intermission" color="1 0.5 0.5" box="-16 -16 -16 16 16 16">
+This is the camera point for the
+intermission. Use mangle instead
+of angle, so you can set pitch or roll
+as well as yaw.  'pitch roll yaw'
+Quake does a random pick if more
+than one exists.
+If no info_intermission entity is set,
+Quake uses the player start.
+
+<flag key="NOT_EASY" name="Not Easy" bit="8"/>
+<flag key="NOT_NORMAL" name="Not Hard" bit="9"/>
+<flag key="NOT_HARD" name="Not Normal" bit="10"/>
+<flag key="NOT_DM" name="Not Deathmatch" bit="11"/>
+
+Keys:
+<real3 key="mangle" name="Pitch Yaw Roll">set pitch roll yaw</real3>
+</point>
+<point name="info_player_start" color="1 0 0" box="-16 -16 -24 16 16 24">
+The normal starting point for a level.
+Only one is allowed.
+
+<flag key="NOT_EASY" name="Not Easy" bit="8"/>
+<flag key="NOT_NORMAL" name="Not Hard" bit="9"/>
+<flag key="NOT_HARD" name="Not Normal" bit="10"/>
+<flag key="NOT_DM" name="Not Deathmatch" bit="11"/>
+
+Keys:
+<angle key="angle" name="Yaw Angle">viewing angle when spawning</angle>
+</point>
+<point name="info_player_deathmatch" color="1 0 1" box="-16 -16 -24 16 16 24">
+Potential spawning position(s) for
+deathmatch games.
+
+<flag key="NOT_EASY" name="Not Easy" bit="8"/>
+<flag key="NOT_NORMAL" name="Not Hard" bit="9"/>
+<flag key="NOT_HARD" name="Not Normal" bit="10"/>
+<flag key="NOT_DM" name="Not Deathmatch" bit="11"/>
+
+Keys:
+<angle key="angle" name="Yaw Angle">viewing angle when spawning</angle>
+</point>
+<point name="info_player_coop" color="1 0 1" box="-16 -16 -24 16 16 24">
+Potential spawning position(s) for
+coop games.
+
+<flag key="NOT_EASY" name="Not Easy" bit="8"/>
+<flag key="NOT_NORMAL" name="Not Hard" bit="9"/>
+<flag key="NOT_HARD" name="Not Normal" bit="10"/>
+<flag key="NOT_DM" name="Not Deathmatch" bit="11"/>
+
+Keys:
+<angle key="angle" name="Yaw Angle">viewing angle when spawning</angle>
+</point>
+<point name="info_player_start2" color="1 0 0" box="-16 -16 -24 16 16 24">
+Only used on start map for the
+return point from an episode.
+
+<flag key="NOT_EASY" name="Not Easy" bit="8"/>
+<flag key="NOT_NORMAL" name="Not Hard" bit="9"/>
+<flag key="NOT_HARD" name="Not Normal" bit="10"/>
+<flag key="NOT_DM" name="Not Deathmatch" bit="11"/>
+
+Keys:
+<angle key="angle" name="Yaw Angle">viewing angle when spawning</angle>
+</point>
+<point name="info_teleport_destination" color="0.5 0.5 0.5" box="-8 -8 -8 8 8 32">
+This is the destination marker for a
+teleporter.
+
+<flag key="NOT_EASY" name="Not Easy" bit="8"/>
+<flag key="NOT_NORMAL" name="Not Hard" bit="9"/>
+<flag key="NOT_HARD" name="Not Normal" bit="10"/>
+<flag key="NOT_DM" name="Not Deathmatch" bit="11"/>
+
+Keys:
+<targetname key="targetname" name="Targetname">value used by teleporter</targetname>
+<angle key="angle" name="Yaw Angle">new view angle after teleporting</angle>
+</point>
+<point name="item_cells" color="0 .5 .8" box="0 0 0 32 32 32"> big x x x x x x x NOT_EASY NOT_NORMAL NOT_HARD NOT_DM
+6 ammo points (cells) for the
+Thunderbolt (Lightning).
+
+Flags:
+<flag key="big" name="Big" bit="0">gives 12 instead of 6</flag>
+<flag key="NOT_EASY" name="Not Easy" bit="8"/>
+<flag key="NOT_NORMAL" name="Not Hard" bit="9"/>
+<flag key="NOT_HARD" name="Not Normal" bit="10"/>
+<flag key="NOT_DM" name="Not Deathmatch" bit="11"/>
+
+</point>
+<point name="item_rockets" color="0 .5 .8" box="0 0 0 32 32 32">
+5 ammo points (rockets) for the
+Rocket/Grenade Launcher.
+
+Flags:
+<flag key="big" name="Big" bit="0">gives 10 instead of 5</flag>
+<flag key="NOT_EASY" name="Not Easy" bit="8"/>
+<flag key="NOT_NORMAL" name="Not Hard" bit="9"/>
+<flag key="NOT_HARD" name="Not Normal" bit="10"/>
+<flag key="NOT_DM" name="Not Deathmatch" bit="11"/>
+
+</point>
+<point name="item_shells" color="0 .5 .8" box="0 0 0 32 32 32">
+20 shells for both Shotgun and
+SuperShotgun.
+
+Flags:
+<flag key="big" name="Big" bit="0">gives 40 instead of 20</flag>
+<flag key="NOT_EASY" name="Not Easy" bit="8"/>
+<flag key="NOT_NORMAL" name="Not Hard" bit="9"/>
+<flag key="NOT_HARD" name="Not Normal" bit="10"/>
+<flag key="NOT_DM" name="Not Deathmatch" bit="11"/>
+
+</point>
+<point name="item_spikes" color="0 .5 .8" box="0 0 0 32 32 32">
+25 ammo points (spikes) for
+Perforator and Super Perforator.
+
+Flags:
+<flag key="big" name="Big" bit="0">gives 50 instead of 25</flag>
+<flag key="NOT_EASY" name="Not Easy" bit="8"/>
+<flag key="NOT_NORMAL" name="Not Hard" bit="9"/>
+<flag key="NOT_HARD" name="Not Normal" bit="10"/>
+<flag key="NOT_DM" name="Not Deathmatch" bit="11"/>
+
+</point>
+<point name="item_health" color=".3 .3 1" box="0 0 0 32 32 32">
+Health box. Normally gives 25 points.
+
+Flags:
+<flag key="rotten" name="Rotten" bit="0">gives 5-10 points</flag>
+<flag key="megahealth" name="Rotten" bit="1">will add 100 health, then rot you down to your maximum health limit, one point per second</flag>
+<flag key="NOT_EASY" name="Not Easy" bit="8"/>
+<flag key="NOT_NORMAL" name="Not Hard" bit="9"/>
+<flag key="NOT_HARD" name="Not Normal" bit="10"/>
+<flag key="NOT_DM" name="Not Deathmatch" bit="11"/>
+
+</point>
+<point name="item_artifact_envirosuit" color="0 .5 .8" box="-16 -16 -24 16 16 32">
+Player takes no damage from water
+or slime for 30 seconds.
+<flag key="NOT_EASY" name="Not Easy" bit="8"/>
+<flag key="NOT_NORMAL" name="Not Hard" bit="9"/>
+<flag key="NOT_HARD" name="Not Normal" bit="10"/>
+<flag key="NOT_DM" name="Not Deathmatch" bit="11"/>
+</point>
+<point name="item_artifact_invulnerability" color="0 .5 .8" box="-16 -16 -24 16 16 32">
+Player is invulnerable for 30 seconds.
+<flag key="NOT_EASY" name="Not Easy" bit="8"/>
+<flag key="NOT_NORMAL" name="Not Hard" bit="9"/>
+<flag key="NOT_HARD" name="Not Normal" bit="10"/>
+<flag key="NOT_DM" name="Not Deathmatch" bit="11"/>
+</point>
+<point name="item_artifact_invisibility" color="0 .5 .8" box="-16 -16 -24 16 16 32">
+Player is invisible for 30 seconds.
+<flag key="NOT_EASY" name="Not Easy" bit="8"/>
+<flag key="NOT_NORMAL" name="Not Hard" bit="9"/>
+<flag key="NOT_HARD" name="Not Normal" bit="10"/>
+<flag key="NOT_DM" name="Not Deathmatch" bit="11"/>
+</point>
+<point name="item_artifact_super_damage" color="0 .5 .8" box="-16 -16 -24 16 16 32">
+The next attack from the player will
+do 4x damage. Lasts 30 seconds.
+<flag key="NOT_EASY" name="Not Easy" bit="8"/>
+<flag key="NOT_NORMAL" name="Not Hard" bit="9"/>
+<flag key="NOT_HARD" name="Not Normal" bit="10"/>
+<flag key="NOT_DM" name="Not Deathmatch" bit="11"/>
+</point>
+<point name="item_armorInv" color="0 .5 .8" box="-16 -16 0 16 16 32">
+Red armor, gives 200 armor points.
+<flag key="NOT_EASY" name="Not Easy" bit="8"/>
+<flag key="NOT_NORMAL" name="Not Hard" bit="9"/>
+<flag key="NOT_HARD" name="Not Normal" bit="10"/>
+<flag key="NOT_DM" name="Not Deathmatch" bit="11"/>
+</point>
+<point name="item_armor2" color="0 .5 .8" box="-16 -16 0 16 16 32">
+Yellow armor, gives 150 points.
+<flag key="NOT_EASY" name="Not Easy" bit="8"/>
+<flag key="NOT_NORMAL" name="Not Hard" bit="9"/>
+<flag key="NOT_HARD" name="Not Normal" bit="10"/>
+<flag key="NOT_DM" name="Not Deathmatch" bit="11"/>
+</point>
+<point name="item_armor1" color="0 .5 .8" box="-16 -16 0 16 16 32">
+Green armor, gives 100 points.
+<flag key="NOT_EASY" name="Not Easy" bit="8"/>
+<flag key="NOT_NORMAL" name="Not Hard" bit="9"/>
+<flag key="NOT_HARD" name="Not Normal" bit="10"/>
+<flag key="NOT_DM" name="Not Deathmatch" bit="11"/>
+</point>
+<point name="item_key1" color="0 .5 .8" box="-16 -16 -24 16 16 32">
+SILVER key.
+
+In order for keys to work you
+MUST set your maps worldtype
+(see worldspawn).
+<flag key="NOT_EASY" name="Not Easy" bit="8"/>
+<flag key="NOT_NORMAL" name="Not Hard" bit="9"/>
+<flag key="NOT_HARD" name="Not Normal" bit="10"/>
+<flag key="NOT_DM" name="Not Deathmatch" bit="11"/>
+</point>
+<point name="item_key2" color="0 .5 .8" box="-16 -16 -24 16 16 32">
+GOLD key.
+
+In order for keys to work you
+MUST set your maps worldtype
+(see worldspawn).
+<flag key="NOT_EASY" name="Not Easy" bit="8"/>
+<flag key="NOT_NORMAL" name="Not Hard" bit="9"/>
+<flag key="NOT_HARD" name="Not Normal" bit="10"/>
+<flag key="NOT_DM" name="Not Deathmatch" bit="11"/>
+</point>
+<point name="item_sigil" color="0 .5 .8" box="-16 -16 -24 16 16 32">
+End of episode sigil.  If the player is in possession of a sigil, then the next time the player changes levels, all func_episodegate entities for that episode will appear.  This is used to block access to slipgates that lead to episodes that the player has already completed.  If the player is in possession of the item_sigil for all four episodes, then the func_bossgate entity will NOT appear.  This is used to grant access to the final boss once the player has completed all episodes.
+
+Flags:
+<flag key="E1" name="Episode 1" bit="0">This is the sigil for episode 1</flag>
+<flag key="E2" name="Episode 2" bit="1">This is the sigil for episode 2</flag>
+<flag key="E3" name="Episode 3" bit="2">This is the sigil for episode 3</flag>
+<flag key="E4" name="Episode 4" bit="3">This is the sigil for episode 4</flag>
+<flag key="NOT_EASY" name="Not Easy" bit="8"/>
+<flag key="NOT_NORMAL" name="Not Hard" bit="9"/>
+<flag key="NOT_HARD" name="Not Normal" bit="10"/>
+<flag key="NOT_DM" name="Not Deathmatch" bit="11"/>
+</point>
+<point name="light" color="0 1 0" box="-8 -8 -8 8 8 8">
+Non-displayed light. If targeted, it
+will toggle between on or off.
+
+Flags:
+<flag key="START_OFF" name="Start Off" bit="0">starts off until triggered</flag>
+<flag key="NOT_EASY" name="Not Easy" bit="8"/>
+<flag key="NOT_NORMAL" name="Not Hard" bit="9"/>
+<flag key="NOT_HARD" name="Not Normal" bit="10"/>
+<flag key="NOT_DM" name="Not Deathmatch" bit="11"/>
+
+Keys:
+<real key="light" name="Brightness">sets brightness, 300 is default</real>
+<integer key="style" name="Style">
+0 = normal
+1 = flicker (first variety)
+2 = slow strong pulse
+3 = candle (first variety)
+4 = fast strobe
+5 = gentle pulse
+6 = flicker (second variety)
+7 = candle (second variety)
+8 = candle (third variety)
+9 = slow strobe
+10 = flourescent flicker
+11 = slow pulse, not fading to black
+
+styles 32-62 are assigned by the light program for switchable lights. 0 is default</integer>
+</point>
+<point name="light_torch_small_walltorch" color="0 .5 0" box="-10 -10 -20 10 10 20">
+Short wall torch.
+
+<flag key="NOT_EASY" name="Not Easy" bit="8"/>
+<flag key="NOT_NORMAL" name="Not Hard" bit="9"/>
+<flag key="NOT_HARD" name="Not Normal" bit="10"/>
+<flag key="NOT_DM" name="Not Deathmatch" bit="11"/>
+
+Keys:
+<real key="light" name="Brightness">sets brightness, 200 is default</real>
+<integer key="style" name="Style">
+0 = normal
+1 = flicker (first variety)
+2 = slow strong pulse
+3 = candle (first variety)
+4 = fast strobe
+5 = gentle pulse
+6 = flicker (second variety)
+7 = candle (second variety)
+8 = candle (third variety)
+9 = slow strobe
+10 = flourescent flicker
+11 = slow pulse, not fading to black
+
+styles 32-62 are assigned by the light program for switchable lights. 0 is default</integer>
+</point>
+<point name="light_flame_large_yellow" color="0 1 0" box="-10 -10 -12 12 12 18">
+Large yellow flames.
+
+<flag key="NOT_EASY" name="Not Easy" bit="8"/>
+<flag key="NOT_NORMAL" name="Not Hard" bit="9"/>
+<flag key="NOT_HARD" name="Not Normal" bit="10"/>
+<flag key="NOT_DM" name="Not Deathmatch" bit="11"/>
+
+Keys:
+<real key="light" name="Brightness">sets brightness</real>
+</point>
+<point name="light_flame_small_yellow" color="0 1 0" box="-8 -8 -8 8 8 8">
+Small yellow flames.
+
+<flag key="NOT_EASY" name="Not Easy" bit="8"/>
+<flag key="NOT_NORMAL" name="Not Hard" bit="9"/>
+<flag key="NOT_HARD" name="Not Normal" bit="10"/>
+<flag key="NOT_DM" name="Not Deathmatch" bit="11"/>
+
+Keys:
+<real key="light" name="Brightness">sets brightness</real>
+</point>
+<point name="light_flame_small_white" color="0 1 0" box="-10 -10 -40 10 10 40">
+Small white flames.
+
+<flag key="NOT_EASY" name="Not Easy" bit="8"/>
+<flag key="NOT_NORMAL" name="Not Hard" bit="9"/>
+<flag key="NOT_HARD" name="Not Normal" bit="10"/>
+<flag key="NOT_DM" name="Not Deathmatch" bit="11"/>
+
+Keys:
+<real key="light" name="Brightness">sets brightness</real>
+</point>
+<point name="light_fluoro" color="0 1 0" box="-8 -8 -8 8 8 8">
+Non-displayed light. Makes steady
+fluorescent humming sound.
+
+<flag key="START_OFF" name="Start Off" bit="0">starts off until triggered</flag>
+<flag key="NOT_EASY" name="Not Easy" bit="8"/>
+<flag key="NOT_NORMAL" name="Not Hard" bit="9"/>
+<flag key="NOT_HARD" name="Not Normal" bit="10"/>
+<flag key="NOT_DM" name="Not Deathmatch" bit="11"/>
+
+Keys:
+<real key="light" name="Brightness">sets brightness, 300 is default</real>
+<integer key="style" name="Style">
+0 = normal
+1 = flicker (first variety)
+2 = slow strong pulse
+3 = candle (first variety)
+4 = fast strobe
+5 = gentle pulse
+6 = flicker (second variety)
+7 = candle (second variety)
+8 = candle (third variety)
+9 = slow strobe
+10 = flourescent flicker
+11 = slow pulse, not fading to black
+
+styles 32-62 are assigned by the light program for switchable lights. 0 is default</integer>
+</point>
+<point name="light_fluorospark" color="0 1 0" box="-8 -8 -8 8 8 8">
+Non-displayed light. Makes sparking, broken fluorescent sound.
+
+<flag key="NOT_EASY" name="Not Easy" bit="8"/>
+<flag key="NOT_NORMAL" name="Not Hard" bit="9"/>
+<flag key="NOT_HARD" name="Not Normal" bit="10"/>
+<flag key="NOT_DM" name="Not Deathmatch" bit="11"/>
+
+Keys:
+<real key="light" name="Brightness">sets brightness, 300 is default</real>
+<integer key="style" name="Style">
+0 = normal
+1 = flicker (first variety)
+2 = slow strong pulse
+3 = candle (first variety)
+4 = fast strobe
+5 = gentle pulse
+6 = flicker (second variety)
+7 = candle (second variety)
+8 = candle (third variety)
+9 = slow strobe
+10 = flourescent flicker
+11 = slow pulse, not fading to black
+
+styles 32-62 are assigned by the light program for switchable lights. 10 is default</integer>
+</point>
+<point name="light_globe" color="0 1 0" box="-8 -8 -8 8 8 8">
+Sphere globe light (sprite).
+
+<flag key="NOT_EASY" name="Not Easy" bit="8"/>
+<flag key="NOT_NORMAL" name="Not Hard" bit="9"/>
+<flag key="NOT_HARD" name="Not Normal" bit="10"/>
+<flag key="NOT_DM" name="Not Deathmatch" bit="11"/>
+
+Keys:
+<real key="light" name="Brightness">sets brightness, 300 is default</real>
+<integer key="style" name="Style">
+0 = normal
+1 = flicker (first variety)
+2 = slow strong pulse
+3 = candle (first variety)
+4 = fast strobe
+5 = gentle pulse
+6 = flicker (second variety)
+7 = candle (second variety)
+8 = candle (third variety)
+9 = slow strobe
+10 = flourescent flicker
+11 = slow pulse, not fading to black
+
+styles 32-62 are assigned by the light program for switchable lights. 0 is default</integer>
+</point>
+<point name="misc_noisemaker" color="1 0.5 0" box="-10 -10 -10 10 10 10">
+For optimization testing, starts
+a lot of sounds. Not very useful.
+<flag key="NOT_EASY" name="Not Easy" bit="8"/>
+<flag key="NOT_NORMAL" name="Not Hard" bit="9"/>
+<flag key="NOT_HARD" name="Not Normal" bit="10"/>
+<flag key="NOT_DM" name="Not Deathmatch" bit="11"/>
+</point>
+<point name="monster_enforcer" color="1 0 0" box="-16 -16 -24 16 16 40">
+Enforcer, 80 health points.
+
+Flags:
+<flag key="ambush" name="Ambush" bit="0">the monster will only wake up on really seeing the player, not another monster getting angry</flag>
+<flag key="NOT_EASY" name="Not Easy" bit="8"/>
+<flag key="NOT_NORMAL" name="Not Hard" bit="9"/>
+<flag key="NOT_HARD" name="Not Normal" bit="10"/>
+<flag key="NOT_DM" name="Not Deathmatch" bit="11"/>
+</point>
+<point name="monster_hell_knight" color="1 0 0" box="-16 -16 -24 16 16 40">
+Hell Knight, 250 health points.
+
+Flags:
+<flag key="ambush" name="Ambush" bit="0">the monster will only wake up on really seeing the player, not another monster getting angry</flag>
+<flag key="NOT_EASY" name="Not Easy" bit="8"/>
+<flag key="NOT_NORMAL" name="Not Hard" bit="9"/>
+<flag key="NOT_HARD" name="Not Normal" bit="10"/>
+<flag key="NOT_DM" name="Not Deathmatch" bit="11"/>
+</point>
+<point name="monster_army" color="1 0 0" box="-16 -16 -24 16 16 40">
+Grunt, 30 health points.
+
+Flags:
+<flag key="ambush" name="Ambush" bit="0">the monster will only wake up on really seeing the player, not another monster getting angry</flag>
+<flag key="NOT_EASY" name="Not Easy" bit="8"/>
+<flag key="NOT_NORMAL" name="Not Hard" bit="9"/>
+<flag key="NOT_HARD" name="Not Normal" bit="10"/>
+<flag key="NOT_DM" name="Not Deathmatch" bit="11"/>
+</point>
+<point name="monster_dog" color="1 0 0" box="-32 -32 -24 32 32 40">
+Dog (Rottweiler), 25 health points.
+
+Flags:
+<flag key="ambush" name="Ambush" bit="0">the monster will only wake up on really seeing the player, not another monster getting angry</flag>
+<flag key="NOT_EASY" name="Not Easy" bit="8"/>
+<flag key="NOT_NORMAL" name="Not Hard" bit="9"/>
+<flag key="NOT_HARD" name="Not Normal" bit="10"/>
+<flag key="NOT_DM" name="Not Deathmatch" bit="11"/>
+</point>
+<point name="monster_ogre" color="1 0 0" box="-32 -32 -24 32 32 64">
+Ogre, 200 health points.
+
+Flags:
+<flag key="ambush" name="Ambush" bit="0">the monster will only wake up on really seeing the player, not another monster getting angry</flag>
+<flag key="NOT_EASY" name="Not Easy" bit="8"/>
+<flag key="NOT_NORMAL" name="Not Hard" bit="9"/>
+<flag key="NOT_HARD" name="Not Normal" bit="10"/>
+<flag key="NOT_DM" name="Not Deathmatch" bit="11"/>
+</point>
+<point name="monster_knight" color="1 0 0" box="-16 -16 -24 16 16 40">
+Knight, 75 health points.
+
+Flags:
+<flag key="ambush" name="Ambush" bit="0">the monster will only wake up on really seeing the player, not another monster getting angry</flag>
+<flag key="NOT_EASY" name="Not Easy" bit="8"/>
+<flag key="NOT_NORMAL" name="Not Hard" bit="9"/>
+<flag key="NOT_HARD" name="Not Normal" bit="10"/>
+<flag key="NOT_DM" name="Not Deathmatch" bit="11"/>
+</point>
+<point name="monster_zombie" color="1 0 0" box="-16 -16 -24 16 16 32">
+Zombie, 60 health points. If crucified, stick the bounding box 12 pixels back into a wall to look right.
+
+Flags:
+<flag key="crucified" name="Crucified" bit="0">:-)</flag>
+<flag key="ambush" name="Ambush" bit="1">the monster will only wake up on really seeing the player, not another monster getting angry</flag>
+<flag key="NOT_EASY" name="Not Easy" bit="8"/>
+<flag key="NOT_NORMAL" name="Not Hard" bit="9"/>
+<flag key="NOT_HARD" name="Not Normal" bit="10"/>
+<flag key="NOT_DM" name="Not Deathmatch" bit="11"/>
+</point>
+<point name="monster_wizard" color="1 0 0" box="-16 -16 -24 16 16 40">
+Scrag (Wizard), 80 health points.
+
+Flags:
+<flag key="ambush" name="Ambush" bit="0">the monster will only wake up on really seeing the player, not another monster getting angry</flag>
+<flag key="NOT_EASY" name="Not Easy" bit="8"/>
+<flag key="NOT_NORMAL" name="Not Hard" bit="9"/>
+<flag key="NOT_HARD" name="Not Normal" bit="10"/>
+<flag key="NOT_DM" name="Not Deathmatch" bit="11"/>
+</point>
+<point name="monster_demon1" color="1 0 0" box="-32 -32 -24 32 32 64">
+Fiend (Demon), 300 health points.
+
+Flags:
+<flag key="ambush" name="Ambush" bit="0">the monster will only wake up on really seeing the player, not another monster getting angry</flag>
+<flag key="NOT_EASY" name="Not Easy" bit="8"/>
+<flag key="NOT_NORMAL" name="Not Hard" bit="9"/>
+<flag key="NOT_HARD" name="Not Normal" bit="10"/>
+<flag key="NOT_DM" name="Not Deathmatch" bit="11"/>
+</point>
+<point name="monster_oldone" color="1 0 0" box="-16 -16 -24 16 16 32">
+Shub-Niggurath, 40000 health points. Most likely killed by teleport frag.
+<flag key="NOT_EASY" name="Not Easy" bit="8"/>
+<flag key="NOT_NORMAL" name="Not Hard" bit="9"/>
+<flag key="NOT_HARD" name="Not Normal" bit="10"/>
+<flag key="NOT_DM" name="Not Deathmatch" bit="11"/>
+</point>
+<point name="monster_shambler" color="1 0 0" box="-32 -32 -24 32 32 64">
+Shambler, 600 health points. Rockets only have half damage when hitting the Shambler.
+
+Flags:
+<flag key="ambush" name="Ambush" bit="0">the monster will only wake up on really seeing the player, not another monster getting angry</flag>
+<flag key="NOT_EASY" name="Not Easy" bit="8"/>
+<flag key="NOT_NORMAL" name="Not Hard" bit="9"/>
+<flag key="NOT_HARD" name="Not Normal" bit="10"/>
+<flag key="NOT_DM" name="Not Deathmatch" bit="11"/>
+</point>
+<point name="monster_shalrath" color="1 0 0" box="-32 -32 -24 32 32 48">
+Vore (Shalrath), 400 health points.
+
+Flags:
+<flag key="ambush" name="Ambush" bit="0">the monster will only wake up on really seeing the player, not another monster getting angry</flag>
+<flag key="NOT_EASY" name="Not Easy" bit="8"/>
+<flag key="NOT_NORMAL" name="Not Hard" bit="9"/>
+<flag key="NOT_HARD" name="Not Normal" bit="10"/>
+<flag key="NOT_DM" name="Not Deathmatch" bit="11"/>
+</point>
+<point name="monster_boss" color="1 0 0" box="-128 -128 -24 128 128 256">
+Cthon (Boss of Shareware Quake). Only event_lightning can kill him.
+<flag key="NOT_EASY" name="Not Easy" bit="8"/>
+<flag key="NOT_NORMAL" name="Not Hard" bit="9"/>
+<flag key="NOT_HARD" name="Not Normal" bit="10"/>
+<flag key="NOT_DM" name="Not Deathmatch" bit="11"/>
+</point>
+<point name="monster_tarbaby" color="1 0 0" box="-16 -16 -24 16 16 24">
+Spawn (Tarbaby), 80 health points.
+
+Flags:
+<flag key="ambush" name="Ambush" bit="0">the monster will only wake up on really seeing the player, not another monster getting angry</flag>
+<flag key="NOT_EASY" name="Not Easy" bit="8"/>
+<flag key="NOT_NORMAL" name="Not Hard" bit="9"/>
+<flag key="NOT_HARD" name="Not Normal" bit="10"/>
+<flag key="NOT_DM" name="Not Deathmatch" bit="11"/>
+</point>
+<point name="monster_fish" color="1 0 0" box="-16 -16 -24 16 16 24">
+Rotfish, 25 health points.
+
+Flags:
+<flag key="ambush" name="Ambush" bit="0">the monster will only wake up on really seeing the player, not another monster getting angry</flag>
+<flag key="NOT_EASY" name="Not Easy" bit="8"/>
+<flag key="NOT_NORMAL" name="Not Hard" bit="9"/>
+<flag key="NOT_HARD" name="Not Normal" bit="10"/>
+<flag key="NOT_DM" name="Not Deathmatch" bit="11"/>
+</point>
+<point name="misc_teleporttrain" color="0 .5 .8" box="-8 -8 -8 8 8 8">
+This is used for the final boss. Flying ball needed to teleport kill Shub-Niggurath.
+<flag key="NOT_EASY" name="Not Easy" bit="8"/>
+<flag key="NOT_NORMAL" name="Not Hard" bit="9"/>
+<flag key="NOT_HARD" name="Not Normal" bit="10"/>
+<flag key="NOT_DM" name="Not Deathmatch" bit="11"/>
+</point>
+<point name="misc_fireball" color="0 .5 .8" box="-8 -8 -8 8 8 8">
+Lava Ball.
+
+<flag key="NOT_EASY" name="Not Easy" bit="8"/>
+<flag key="NOT_NORMAL" name="Not Hard" bit="9"/>
+<flag key="NOT_HARD" name="Not Normal" bit="10"/>
+<flag key="NOT_DM" name="Not Deathmatch" bit="11"/>
+
+Keys:
+<real key="speed" name="Speed">speed of ball, default is 100</real>
+</point>
+<point name="misc_explobox" color="0 .5 .8" box="0 0 0 32 32 64">
+Exploding box.
+<flag key="NOT_EASY" name="Not Easy" bit="8"/>
+<flag key="NOT_NORMAL" name="Not Hard" bit="9"/>
+<flag key="NOT_HARD" name="Not Normal" bit="10"/>
+<flag key="NOT_DM" name="Not Deathmatch" bit="11"/>
+</point>
+<point name="misc_explobox2" color="0 .5 .8" box="0 0 0 32 32 64">
+Smaller exploding box.
+<flag key="NOT_EASY" name="Not Easy" bit="8"/>
+<flag key="NOT_NORMAL" name="Not Hard" bit="9"/>
+<flag key="NOT_HARD" name="Not Normal" bit="10"/>
+<flag key="NOT_DM" name="Not Deathmatch" bit="11"/>
+</point>
+<point name="noclass" color="0 0 0" box="-8 -8 -8 8 8 8">
+Prints a warning message and its position (to console) when spawned. Removes itself after doing this.
+<flag key="NOT_EASY" name="Not Easy" bit="8"/>
+<flag key="NOT_NORMAL" name="Not Hard" bit="9"/>
+<flag key="NOT_HARD" name="Not Normal" bit="10"/>
+<flag key="NOT_DM" name="Not Deathmatch" bit="11"/>
+</point>
+<point name="path_corner" color="0.5 0.3 0" box="-8 -8 -8 8 8 8">
+Monsters will continue walking towards the next target corner. Also used by func_train.
+<flag key="NOT_EASY" name="Not Easy" bit="8"/>
+<flag key="NOT_NORMAL" name="Not Hard" bit="9"/>
+<flag key="NOT_HARD" name="Not Normal" bit="10"/>
+<flag key="NOT_DM" name="Not Deathmatch" bit="11"/>
+</point>
+<group name="test_teleport" color="0 .5 .8">
+Teleporter testing. For testing only. Don't use it.
+</group>
+<group name="test_fodder" color="0 .5 .8">
+Beating guy? For testing only. Never used in Quake. Don't use it.
+</group>
+<point name="trap_spikeshooter" color="0 .5 .8" box="-8 -8 -8 8 8 8">
+When triggered, fires a spike in
+the direction determined by angle.
+
+Flags:
+<flag key="superspike" name="Super Spike" bit="0">fires large spikes</flag>
+<flag key="laser" name="Laser" bit="1">fires laser</flag>
+<flag key="NOT_EASY" name="Not Easy" bit="8"/>
+<flag key="NOT_NORMAL" name="Not Hard" bit="9"/>
+<flag key="NOT_HARD" name="Not Normal" bit="10"/>
+<flag key="NOT_DM" name="Not Deathmatch" bit="11"/>
+
+Keys:
+<angle key="angle" name="Yaw Angle">angle to fire</angle>
+</point>
+<point name="trap_shooter" color="0 .5 .8" box="-8 -8 -8 8 8 8">
+Continuously fires spikes.
+
+Flags:
+<flag key="superspike" name="Super Spike" bit="0">fires large spikes</flag>
+<flag key="laser" name="Laser" bit="1">fires laser</flag>
+<flag key="NOT_EASY" name="Not Easy" bit="8"/>
+<flag key="NOT_NORMAL" name="Not Hard" bit="9"/>
+<flag key="NOT_HARD" name="Not Normal" bit="10"/>
+<flag key="NOT_DM" name="Not Deathmatch" bit="11"/>
+
+Keys:
+<angle key="angle" name="Yaw Angle">angle to fire</angle>
+<real key="wait" name="Firing Delay">time between spikes (1.0 default)</real>
+<real key="nextthink" name="Start Delay">delay before firing first spike, so multiple shooters can be staggered</real>
+</point>
+<group name="trigger_teleport" color="0.5 0.0 0.5">
+Any object touching this will be transported to the corresponding info_teleport_destination entity. You must set the "target" field, and create an object with a "targetname" field that matches.
+
+Flags:
+<flag key="PLAYER_ONLY" name="Player Only" bit="0">only players will teleport</flag>
+<flag key="SILENT" name="Silent" bit="1">silences teleporting</flag>
+<flag key="NOT_EASY" name="Not Easy" bit="8"/>
+<flag key="NOT_NORMAL" name="Not Hard" bit="9"/>
+<flag key="NOT_HARD" name="Not Normal" bit="10"/>
+<flag key="NOT_DM" name="Not Deathmatch" bit="11"/>
+
+Keys:
+<target key="target" name="Target">name of info_teleport_destination</target>
+</group>
+<group name="trigger_changelevel" color="0.5 0.5 0.5">
+When the player touches this, he gets sent to the map listed in the "map" variable. The view will go to the info_intermission spot and display stats.
+
+Keys:
+<string key="map" name="Next Map">set to name of next map (e.g. e1m1) if no map is set, the current map will be restarted</string>
+
+Flags:
+<flag key="NO_INTERMISSION" name="No Intermission" bit="0"/>
+<flag key="NOT_EASY" name="Not Easy" bit="8"/>
+<flag key="NOT_NORMAL" name="Not Hard" bit="9"/>
+<flag key="NOT_HARD" name="Not Normal" bit="10"/>
+<flag key="NOT_DM" name="Not Deathmatch" bit="11"/>
+
+</group>
+<group name="trigger_setskill" color="0.5 0.0 0.5">
+Sets skill level to the value of "message". Only used on start map.
+
+Keys:
+<integer key="message" name="Skill Level">
+sets skill level
+0 = easy
+1 = normal
+2 = hard
+3 = nightmare</integer>
+ 
+Flags:
+<flag key="NOT_EASY" name="Not Easy" bit="8"/>
+<flag key="NOT_NORMAL" name="Not Hard" bit="9"/>
+<flag key="NOT_HARD" name="Not Normal" bit="10"/>
+<flag key="NOT_DM" name="Not Deathmatch" bit="11"/>
+
+</group>
+
+<point name="trigger_counter" color="0.5 0.0 0.5" box="-8 -8 -8 8 8 8">
+Acts as an intermediary for an action that takes multiple inputs. If nomessage is not set, it will print "1 more.. " etc. when triggered and "sequence complete" when finished. After the counter has been triggered "count" times, it will fire all of its targets and remove itself.
+
+It's a once-only trigger (i.e. Wait is always -1).
+
+Flags:
+<flag key="nomessage" name="Not Easy" bit="0">disables count display</flag>
+<flag key="NOT_EASY" name="Not Easy" bit="8"/>
+<flag key="NOT_NORMAL" name="Not Hard" bit="9"/>
+<flag key="NOT_HARD" name="Not Normal" bit="10"/>
+<flag key="NOT_DM" name="Not Deathmatch" bit="11"/>
+
+Keys:
+<integer key="count" name="Count">number of triggers needed to fire own target, default is 2</integer>
+<target key="target" name="Target">target entity</target>
+<targetname key="targetname" name="Targetname"/>
+</point>
+<group name="trigger_once" color="0.5 0.0 0.5">
+Variable sized trigger. Triggers once, then removes itself. You must set the key "target" to the name of another object in the level that has a matching "targetname". If notouch is set, the trigger is only fired by other entities, not by touching.
+
+Wait is always -1.
+
+Flags:
+<flag key="notouch" name="No Touch" bit="0">only triggered by other entities, not by touching</flag>
+<flag key="NOT_EASY" name="Not Easy" bit="8"/>
+<flag key="NOT_NORMAL" name="Not Hard" bit="9"/>
+<flag key="NOT_HARD" name="Not Normal" bit="10"/>
+<flag key="NOT_DM" name="Not Deathmatch" bit="11"/>
+
+Keys:
+<boolean key="health" name="Shootable">can be shot to activate</boolean>
+<angle key="angle" name="Facing Direction">if set, the trigger will only fire when someone is facing the direction of the angle, use "360" for angle 0.</angle>
+<integer key="sounds" name="Sounds">
+ 1 = secret
+ 2 = beep beep
+ 3 = large switch</integer>
+<string key="message" name="Message">message text</string>
+<real key="delay" name="Delay">delay before firing (after being triggered)</real>
+</group>
+<group name="trigger_multiple" color="0.5 0.0 0.5">
+Variable sized repeatable trigger.
+Must be targeted at one or more
+entities.
+
+Flags:
+<flag key="notouch" name="No Touch" bit="0">only triggered by other entities, not by touching</flag>
+<flag key="NOT_EASY" name="Not Easy" bit="8"/>
+<flag key="NOT_NORMAL" name="Not Hard" bit="9"/>
+<flag key="NOT_HARD" name="Not Normal" bit="10"/>
+<flag key="NOT_DM" name="Not Deathmatch" bit="11"/>
+
+Keys:
+<boolean key="health" name="Shootable">activated by shooting</boolean>
+<angle key="angle" name="Facing Direction">the trigger will only fire when someone is facing the direction of the angle, use "360" for angle 0.</angle>
+<integer key="sounds" name="Sounds">
+ 1 = secret
+ 2 = beep beep
+ 3 = large switch</integer>
+<string key="message" name="Message">message text</string>
+<real key="delay" name="Delay">delay before firing (after being triggered)</real>
+<real key="wait" name="Repeat Delay">delay between triggerings default is 0.2</real>
+</group>
+<group name="trigger_onlyregistered" color="0.5 0.0 0.5">
+Only fires if playing the registered
+version, otherwise prints the message.
+
+Flags:
+<flag key="NOT_EASY" name="Not Easy" bit="8"/>
+<flag key="NOT_NORMAL" name="Not Hard" bit="9"/>
+<flag key="NOT_HARD" name="Not Normal" bit="10"/>
+<flag key="NOT_DM" name="Not Deathmatch" bit="11"/>
+
+Keys:
+<string key="message" name="Message">message to print when playing the shareware version.</string>
+</group>
+<group name="trigger_secret" color="0.5 0.0 0.5">
+Secret counter trigger.
+
+Flags:
+<flag key="NOT_EASY" name="Not Easy" bit="8"/>
+<flag key="NOT_NORMAL" name="Not Hard" bit="9"/>
+<flag key="NOT_HARD" name="Not Normal" bit="10"/>
+<flag key="NOT_DM" name="Not Deathmatch" bit="11"/>
+
+Keys:
+<string key="message" name="Message">message to display when triggered</string>
+<integer key="sounds" name="Sounds">
+ 1 = secret
+ 2 = beep beep</integer>
+</group>
+<group name="trigger_monsterjump" color="0.5 0.0 0.5">
+Walking monsters that touch this
+will jump in the direction of the
+trigger's angle.
+
+Flags:
+<flag key="NOT_EASY" name="Not Easy" bit="8"/>
+<flag key="NOT_NORMAL" name="Not Hard" bit="9"/>
+<flag key="NOT_HARD" name="Not Normal" bit="10"/>
+<flag key="NOT_DM" name="Not Deathmatch" bit="11"/>
+
+Keys:
+<angle key="angle" name="Direction">angle towards the monster jumps</angle>
+<real key="speed" name="Speed">the speed thrown forward. default is 200</real>
+<real key="height" name="Height">the speed thrown upwards. default is 200</real>
+</group>
+<point name="trigger_relay" color="0.5 0.0 0.5" box="-8 -8 -8 8 8 8">
+This fixed size trigger cannot be
+touched, it can only be fired by
+other events.
+
+Flags:
+<flag key="NOT_EASY" name="Not Easy" bit="8"/>
+<flag key="NOT_NORMAL" name="Not Hard" bit="9"/>
+<flag key="NOT_HARD" name="Not Normal" bit="10"/>
+<flag key="NOT_DM" name="Not Deathmatch" bit="11"/>
+
+Keys:
+<boolean key="killtarget" name="Remove Target">removes target</boolean>
+<target key="target" name="Target">fires target when triggered</target>
+<real key="delay" name="Delay">delay before firing (after being triggered)</real>
+<string key="message" name="Message">displayed when fired</string>
+</point>
+<group name="trigger_hurt" color="0.5 0.0 0.5">
+Any object touching this will be hurt.
+
+Flags:
+<flag key="NOT_EASY" name="Not Easy" bit="8"/>
+<flag key="NOT_NORMAL" name="Not Hard" bit="9"/>
+<flag key="NOT_HARD" name="Not Normal" bit="10"/>
+<flag key="NOT_DM" name="Not Deathmatch" bit="11"/>
+
+Keys:
+<real key="dmg" name="Damage Inflicted">sets damage, default is 5</real>
+</group>
+<group name="trigger_push" color="0.5 0.0 0.5">
+Pushes the player and Grenades.
+
+Flags:
+<flag key="push_once" name="Push Once" bit="0">removes itself after firing</flag>
+<flag key="NOT_EASY" name="Not Easy" bit="8"/>
+<flag key="NOT_NORMAL" name="Not Hard" bit="9"/>
+<flag key="NOT_HARD" name="Not Normal" bit="10"/>
+<flag key="NOT_DM" name="Not Deathmatch" bit="11"/>
+
+Keys:
+<direction key="angle" name="Direction">direction of push (-2 is down, -1 up)</direction>
+<real key="speed" name="Speed">speed of push, default is 1000</real>
+ 
+</group>
+<point name="viewthing" color="0 .5 .8" box="-8 -8 -8 8 8 8">
+A model will be spawned at
+the position of this entity.
+(default = player)
+
+Just for debugging.
+Don't use.
+
+Use the console commands
+'viewmodel', 'viewframe',
+'viewnext', 'viewprev' to
+view frames of model.
+<flag key="NOT_EASY" name="Not Easy" bit="8"/>
+<flag key="NOT_NORMAL" name="Not Hard" bit="9"/>
+<flag key="NOT_HARD" name="Not Normal" bit="10"/>
+<flag key="NOT_DM" name="Not Deathmatch" bit="11"/>
+</point>
+<point name="weapon_supershotgun" color="0 .5 .8" box="-16 -16 0 16 16 32">
+SuperShotgun.
+<flag key="NOT_EASY" name="Not Easy" bit="8"/>
+<flag key="NOT_NORMAL" name="Not Hard" bit="9"/>
+<flag key="NOT_HARD" name="Not Normal" bit="10"/>
+<flag key="NOT_DM" name="Not Deathmatch" bit="11"/>
+</point>
+<point name="weapon_nailgun" color="0 .5 .8" box="-16 -16 0 16 16 32">
+Perforator (Nailgun).
+<flag key="NOT_EASY" name="Not Easy" bit="8"/>
+<flag key="NOT_NORMAL" name="Not Hard" bit="9"/>
+<flag key="NOT_HARD" name="Not Normal" bit="10"/>
+<flag key="NOT_DM" name="Not Deathmatch" bit="11"/>
+</point>
+<point name="weapon_supernailgun" color="0 .5 .8" box="-16 -16 0 16 16 32">
+Super Perforator (Super
+Nailgun).
+<flag key="NOT_EASY" name="Not Easy" bit="8"/>
+<flag key="NOT_NORMAL" name="Not Hard" bit="9"/>
+<flag key="NOT_HARD" name="Not Normal" bit="10"/>
+<flag key="NOT_DM" name="Not Deathmatch" bit="11"/>
+</point>
+<point name="weapon_grenadelauncher" color="0 .5 .8" box="-16 -16 0 16 16 32">
+Grenade Launcher.
+<flag key="NOT_EASY" name="Not Easy" bit="8"/>
+<flag key="NOT_NORMAL" name="Not Hard" bit="9"/>
+<flag key="NOT_HARD" name="Not Normal" bit="10"/>
+<flag key="NOT_DM" name="Not Deathmatch" bit="11"/>
+</point>
+<point name="weapon_rocketlauncher" color="0 .5 .8" box="-16 -16 0 16 16 32">
+Rocket Launcher.
+<flag key="NOT_EASY" name="Not Easy" bit="8"/>
+<flag key="NOT_NORMAL" name="Not Hard" bit="9"/>
+<flag key="NOT_HARD" name="Not Normal" bit="10"/>
+<flag key="NOT_DM" name="Not Deathmatch" bit="11"/>
+</point>
+<point name="weapon_lightning" color="0 .5 .8" box="-16 -16 0 16 16 32">
+Thunderbolt Cannon.
+<flag key="NOT_EASY" name="Not Easy" bit="8"/>
+<flag key="NOT_NORMAL" name="Not Hard" bit="9"/>
+<flag key="NOT_HARD" name="Not Normal" bit="10"/>
+<flag key="NOT_DM" name="Not Deathmatch" bit="11"/>
+</point>
+<group name="worldspawn" color="0 0 0">
+Only used for the world entity.
+Should be only one per MAP.
+
+Keys:
+<string key="wad" name="Wad File">which graphics wad to use</string>
+<string key="message" name="Message">sets the title of the map</string>
+<integer key="worldtype" name="World Type">
+0 = medieval
+1 = metal
+2 = base
+MUST be set when using keys!</integer>
+<integer key="sounds" name="Music Track">CD track to play</integer>
+<real key="light" name="Brightness">default light level</real>
+</group>
+</classes>
+

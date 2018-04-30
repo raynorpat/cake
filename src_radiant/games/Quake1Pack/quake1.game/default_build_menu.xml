@@ -1,0 +1,135 @@
+<?xml version="1.0"?>
+<!--
+build commands
+[RadiantPath]: path to Radiant .. C:\Program Files\Gtkradiant
+[EnginePath]: path to the engine .. C:\quake3\ C:\Program Files\Quake III Arena\ /usr/local/games/quake3/
+-->
+<project version="2.0">
+  <var name="bsp">"[RadiantPath]hqbsp"</var>
+  <var name="vis">"[RadiantPath]hvis"</var>
+  <var name="light">"[RadiantPath]hlight"</var>
+  <build name="hqbsp">
+    <command>[bsp] "[MapFile]"</command>
+  </build>
+  <build name="hqbsp -onlyents">
+    <command>[bsp] -onlyents "[MapFile]"</command>
+  </build>
+  <build name="hvis">
+    <command>[bsp] "[MapFile]"</command>
+    <command>[vis] "[MapFile]"</command>
+  </build>
+  <build name="hvis -fast">
+    <command>[bsp] "[MapFile]"</command>
+    <command>[vis] -fast "[MapFile]"</command>
+  </build>
+  <build name="hvis -noambient">
+    <command>[bsp] "[MapFile]"</command>
+    <command>[vis] -noambient "[MapFile]"</command>
+  </build>
+  <build name="hvis -noambient -fast">
+    <command>[bsp] "[MapFile]"</command>
+    <command>[vis] -noambient -fast "[MapFile]"</command>
+  </build>
+  <build name="hlight">
+    <command>[bsp] "[MapFile]"</command>
+    <command>[light] "[MapFile]"</command>
+  </build>
+  <build name="hlight -extra">
+    <command>[bsp] "[MapFile]"</command>
+    <command>[light] -extra "[MapFile]"</command>
+  </build>
+  <build name="hlight -extra4x4">
+    <command>[bsp] "[MapFile]"</command>
+    <command>[light] -extra4x4 "[MapFile]"</command>
+  </build>
+  <build name="hqbsp">
+    <command>[bsp] "[MapFile]"</command>
+  </build>
+  <build name="hqbsp, hlight">
+    <command>[bsp] "[MapFile]"</command>
+    <command>[light] "[MapFile]"</command>
+  </build>
+  <build name="hqbsp, hlight -extra">
+    <command>[bsp] "[MapFile]"</command>
+    <command>[light] -extra "[MapFile]"</command>
+  </build>
+  <build name="hqbsp, hlight -extra4x4">
+    <command>[bsp] "[MapFile]"</command>
+    <command>[light] -extra4x4 "[MapFile]"</command>
+  </build>
+  <build name="hqbsp, hvis">
+    <command>[bsp] "[MapFile]"</command>
+    <command>[vis] "[MapFile]"</command>
+  </build>
+  <build name="hqbsp, hvis, hlight">
+    <command>[bsp] "[MapFile]"</command>
+    <command>[vis] "[MapFile]"</command>
+    <command>[light] "[MapFile]"</command>  </build>
+  <build name="hqbsp, hvis, hlight -extra">
+    <command>[bsp] "[MapFile]"</command>
+    <command>[vis] "[MapFile]"</command>
+    <command>[light] -extra "[MapFile]"</command>
+  </build>
+  <build name="hqbsp, hvis, hlight -extra4x4">
+    <command>[bsp] "[MapFile]"</command>
+    <command>[vis] "[MapFile]"</command>
+    <command>[light] -extra4x4 "[MapFile]"</command>
+  </build>
+  <build name="hqbsp, hvis -fast">
+    <command>[bsp] "[MapFile]"</command>
+    <command>[vis] -fast "[MapFile]"</command>
+  </build>
+  <build name="hqbsp, hvis -fast, hlight">
+    <command>[bsp] "[MapFile]"</command>
+    <command>[vis] -fast "[MapFile]"</command>
+    <command>[light] "[MapFile]"</command>
+  </build>
+  <build name="hqbsp, hvis -fast, hlight -extra">
+    <command>[bsp] "[MapFile]"</command>
+    <command>[vis] -fast "[MapFile]"</command>
+    <command>[light] -extra "[MapFile]"</command>
+  </build>
+  <build name="hqbsp, hvis -fast, hlight -extra4x4">
+    <command>[bsp] "[MapFile]"</command>
+    <command>[vis] -fast "[MapFile]"</command>
+    <command>[light] -extra4x4 "[MapFile]"</command>
+  </build>
+  <build name="hqbsp, hvis -noambient">
+    <command>[bsp] "[MapFile]"</command>
+    <command>[vis] -noambient "[MapFile]"</command>
+  </build>
+  <build name="hqbsp, hvis -noambient, hlight">
+    <command>[bsp] "[MapFile]"</command>
+    <command>[vis] -noambient "[MapFile]"</command>
+    <command>[light] "[MapFile]"</command>
+  </build>
+  <build name="hqbsp, hvis -noambient, hlight -extra">
+    <command>[bsp] "[MapFile]"</command>
+    <command>[vis] -noambient "[MapFile]"</command>
+    <command>[light] -extra "[MapFile]"</command>
+  </build>
+  <build name="hqbsp, hvis -noambient, hlight -extra4x4">
+    <command>[bsp] "[MapFile]"</command>
+    <command>[vis] -noambient "[MapFile]"</command>
+    <command>[light] -extra4x4 "[MapFile]"</command>
+  </build>
+  <build name="hqbsp, hvis -noambient -fast">
+    <command>[bsp] "[MapFile]"</command>
+    <command>[vis] -noambient -fast "[MapFile]"</command>
+  </build>
+  <build name="hqbsp, hvis -noambient -fast, hlight">
+    <command>[bsp] "[MapFile]"</command>
+    <command>[vis] -noambient -fast "[MapFile]"</command>
+    <command>[light] "[MapFile]"</command>  </build>
+  <build name="hqbsp, hvis -noambient -fast, hlight -extra">
+    <command>[bsp] "[MapFile]"</command>
+    <command>[vis] -noambient -fast "[MapFile]"</command>
+    <command>[light] -extra "[MapFile]"</command>
+  </build>
+  <build name="hqbsp, hvis -noambient -fast, hlight -extra4x4">
+    <command>[bsp] "[MapFile]"</command>
+    <command>[vis] -noambient -fast "[MapFile]"</command>
+    <command>[light] -extra4x4 "[MapFile]"</command>
+  </build>
+</project>
+
