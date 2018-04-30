@@ -197,20 +197,6 @@ if (BUILD_RADIANT)
 endif ()
 
 #-----------------------------------------------------------------------
-# Game packs
-#-----------------------------------------------------------------------
-
-option(DOWNLOAD_GAMEPACKS "Download game packs" OFF)
-add_custom_target(game_packs
-        COMMAND ${CMAKE_COMMAND} -E make_directory games
-        COMMAND DOWNLOAD_GAMEPACKS=yes SOURCE_DIR="${PROJECT_SOURCE_DIR}" "${PROJECT_SOURCE_DIR}/install-gamepacks.sh" "${PROJECT_BINARY_DIR}"
-        COMMENT "Downloading game packs"
-        )
-if (DOWNLOAD_GAMEPACKS)
-    add_custom_target(game_packs_all ALL DEPENDS game_packs)
-endif ()
-
-#-----------------------------------------------------------------------
 # Install
 #-----------------------------------------------------------------------
 
@@ -218,19 +204,27 @@ install(
         FILES
         "${PROJECT_BINARY_DIR}/RADIANT_MAJOR"
         "${PROJECT_BINARY_DIR}/RADIANT_MINOR"
-        DESTINATION ${CMAKE_INSTALL_PREFIX}
+        DESTINATION .
 )
-file(GLOB GAME_FILES "${PROJECT_SOURCE_DIR}/games/*")
+
+set(GAME_FILES
+        Doom3
+        Quake3
+        Quake2
+        Quake1
+        )
 unset(_tmp)
 foreach (it ${GAME_FILES})
-list(APPEND _tmp "${it}/games")
-    file(GLOB GAME_DIR "${it}/*.game")
-    list(APPEND _tmp "${GAME_DIR}")
+    set(dir "${PROJECT_SOURCE_DIR}/games/${it}Pack")
+    string(TOLOWER "${it}" it)
+    list(APPEND _tmp "${dir}/games")
+    list(APPEND _tmp "${dir}/${it}.game")
 endforeach ()
 set(GAME_FILES ${_tmp})
 
 install(
         DIRECTORY
         ${GAME_FILES}
-        DESTINATION ${CMAKE_INSTALL_PREFIX}
+        DESTINATION .
 )
+

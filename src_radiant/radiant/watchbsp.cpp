@@ -626,7 +626,7 @@ public:
 
 inline void GlobalGameDescription_string_write_mapparameter(StringOutputStream& string, const char* mapname)
 {
-  if(g_pGameDescription->mGameType == "q2"
+  if(g_pGameDescription->mGameType == "quake2"
     || g_pGameDescription->mGameType == "heretic2")
   {
     string << ". +exec radiant.cfg +map " << mapname;

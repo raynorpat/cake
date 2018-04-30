@@ -154,7 +154,7 @@ CGameDescription::CGameDescription(xmlDocPtr pDoc, const CopiedString& gameFile)
     {
       globalErrorStream() << "Warning, 'type' attribute not found in '" << reinterpret_cast<const char*>(pDoc->URL) << "'\n";
       // default
-      mGameType = "q3";
+      mGameType = "quake3";
     }
     else
     {
