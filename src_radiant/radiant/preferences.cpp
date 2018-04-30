@@ -26,6 +26,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 //
 
 #include "preferences.h"
+#include "environment.h"
 
 #include "debugging/debugging.h"
 
@@ -335,12 +336,14 @@ void CGameDialog::CreateGlobalFrame(PreferencesPage& page)
   {
     games.push_back((*i)->getRequiredKeyValue("name"));
   }
+
   page.appendCombo(
     "Select the game",
     StringArrayRange(&(*games.begin()), &(*games.end())),
     ReferenceCaller1<CGameDialog, int, CGameDialog_GameFileImport>(*this),
     ReferenceCaller1<CGameDialog, const IntImportCallback&, CGameDialog_GameFileExport>(*this)
   );
+
   page.appendCheckBox("Startup", "Show Global Preferences", m_bGamePrompt);
 }
 
@@ -447,6 +450,20 @@ void CGameDialog::Init()
   if (mGames.empty())
   {
     Error("Didn't find any valid game file descriptions, aborting\n");
+  }
+  else
+  {
+	std::list<CGameDescription *>::iterator iGame, iPrevGame;
+	for ( iGame = mGames.begin(), iPrevGame = mGames.end(); iGame != mGames.end(); iPrevGame = iGame, ++iGame )
+	{
+	   if ( iPrevGame != mGames.end() ) {
+		  if ( strcmp( ( *iGame )->getRequiredKeyValue( "name" ), ( *iPrevGame )->getRequiredKeyValue( "name" ) ) < 0 ) {
+			 CGameDescription *h = *iGame;
+			 *iGame = *iPrevGame;
+		     *iPrevGame = h;
+		  }
+	   }
+	}
   }
  
   CGameDescription* currentGameDescription = 0;

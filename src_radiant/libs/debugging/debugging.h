@@ -29,9 +29,9 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #include "warnings.h"
 #include "generic/static.h"
 
-#if defined(_MSC_VER) && defined(_M_IX86)
+#if defined( _MSC_VER ) && ( defined( _M_IX86 ) || defined( _M_AMD64 ) )
 #define DEBUGGER_BREAKPOINT() __asm { int 3 }
-#elif defined (__i386__) && defined (__GNUC__) && __GNUC__ >= 2
+#elif ( defined ( __i386__ ) || defined ( __x86_64__ ) ) && defined ( __GNUC__ ) && __GNUC__ >= 2
 #define DEBUGGER_BREAKPOINT() __asm__ __volatile__ ("int $03")
 #else
 #include <signal.h>

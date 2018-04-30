@@ -28,6 +28,7 @@ set(GTKRadiant_VERSION "${GTKRadiant_VERSION_MAJOR}.${GTKRadiant_VERSION_MINOR}.
 
 file(WRITE "${PROJECT_BINARY_DIR}/RADIANT_MAJOR" ${GTKRadiant_VERSION_MAJOR})
 file(WRITE "${PROJECT_BINARY_DIR}/RADIANT_MINOR" ${GTKRadiant_VERSION_MINOR})
+file(WRITE "${PROJECT_BINARY_DIR}/RADIANT_PATCH" ${GTKRadiant_VERSION_PATCH})
 
 set(RADIANT_ABOUTMSG "Custom build" CACHE STRING "About message")
 
@@ -71,12 +72,13 @@ endif ()
 # Flags
 #-----------------------------------------------------------------------
 
+macro(addflags args)
+	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${args}")
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${args}")
+endmacro()
+	
 if(CMAKE_COMPILER_IS_GNUCC OR CMAKE_C_COMPILER_ID STREQUAL "Clang")
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-exceptions -fno-rtti")
-	macro(addflags args)
-		set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${args}")
-		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${args}")
-	endmacro()
 	addflags("-fno-strict-aliasing")
 	if (NOT WIN32)
 		addflags("-fvisibility=hidden")
@@ -85,6 +87,17 @@ elseif(MSVC)
 	# define the standard link libraries
 	set(CMAKE_CXX_STANDARD_LIBRARIES "kernel32.lib user32.lib gdi32.lib winspool.lib shell32.lib ole32.lib oleaut32.lib uuid.lib comdlg32.lib advapi32.lib dbghelp.lib wsock32.lib ws2_32.lib rpcrt4.lib wininet.lib")
 	set(CMAKE_C_STANDARD_LIBRARIES "kernel32.lib user32.lib gdi32.lib winspool.lib shell32.lib ole32.lib oleaut32.lib uuid.lib comdlg32.lib advapi32.lib dbghelp.lib wsock32.lib ws2_32.lib rpcrt4.lib wininet.lib")
+		
+	# define standard static MSVC runtime
+	set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /MDd")
+	set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MD")
+	set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} /MDd")
+	set(CMAKE_CXX_FLAGS_MINSIZEREL "${CMAKE_CXX_FLAGS_MINSIZEREL} /MD")
+		
+	set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} /MDd")
+	set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} /MD")
+	set(CMAKE_C_FLAGS_RELWITHDEBINFO "${CMAKE_C_FLAGS_RELWITHDEBINFO} /MDd")
+	set(CMAKE_C_FLAGS_MINSIZEREL "${CMAKE_C_FLAGS_MINSIZEREL} /MD")
 		
 	# for MSVC 2013+, without /SAFESEH:NO, we can't link against older libraries
 	if (NOT(MSVC_VERSION LESS 1800))
@@ -98,7 +111,8 @@ elseif(MSVC)
 					-D_WINDOWS
 					-D_CRT_SECURE_NO_DEPRECATE
 					-D_CRT_NONSTDC_NO_DEPRECATE
-					-D_CRT_SECURE_NO_WARNINGS)
+					-D_CRT_SECURE_NO_WARNINGS
+					-D_ITERATOR_DEBUG_LEVEL=0)
 
 	set_property(DIRECTORY PROPERTY VS_STARTUP_PROJECT "radiant")
 	set(CMAKE_VS_INCLUDE_INSTALL_TO_DEFAULT_BUILD 1)
@@ -116,12 +130,13 @@ add_definitions(-DGTK_TARGET=${GTK_TARGET})
 add_definitions(-DRADIANT_VERSION="${GTKRadiant_VERSION}")
 add_definitions(-DRADIANT_MAJOR_VERSION="${GTKRadiant_VERSION_MAJOR}")
 add_definitions(-DRADIANT_MINOR_VERSION="${GTKRadiant_VERSION_MINOR}")
+add_definitions(-DRADIANT_PATCH_VERSION="${GTKRadiant_VERSION_PATCH}")
 
 add_definitions(-DRADIANT_ABOUTMSG="${GTKRadiant_ABOUT}")
 
-if (NOT CMAKE_BUILD_TYPE MATCHES Release)
-    add_definitions(-D_DEBUG=1)
-endif ()
+#if (NOT CMAKE_BUILD_TYPE MATCHES Release)
+#    add_definitions(-D_DEBUG=1)
+#endif ()
 
 if (APPLE)
     option(XWINDOWS "Build against X11" ON)
@@ -204,6 +219,7 @@ install(
         FILES
         "${PROJECT_BINARY_DIR}/RADIANT_MAJOR"
         "${PROJECT_BINARY_DIR}/RADIANT_MINOR"
+		"${PROJECT_BINARY_DIR}/RADIANT_PATCH"
         DESTINATION .
 )
 

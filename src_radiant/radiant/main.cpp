@@ -181,20 +181,14 @@ void error_redirect (const gchar *domain, GLogLevelFlags log_level, const gchar 
   else
     strcat (buf, "\n");
 
-  printf ("%s\n", buf);
+	// spam it...
+	globalErrorStream() << buf << "\n";
 
-  ERROR_MESSAGE("GTK+ error: " << buf);
-}
-
-#if defined (_DEBUG) && defined (WIN32) && defined (_MSC_VER)
-#include "crtdbg.h"
+	// FIXME why are warnings is_fatal?
+#ifndef _DEBUG
+	if ( is_fatal )
 #endif
-
-void crt_init()
-{
-#if defined (_DEBUG) && defined (WIN32) && defined (_MSC_VER)
-  _CrtSetDbgFlag( _CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF );
-#endif
+  	ERROR_MESSAGE("GTK+ error: " << buf);
 }
 
 class Lock
@@ -320,7 +314,7 @@ void paths_init()
 
   {
     StringOutputStream path(256);
-    path << home << RADIANT_VERSION << '/';
+	path << home << RADIANT_MAJOR_VERSION "." RADIANT_MINOR_VERSION "." RADIANT_PATCH_VERSION "/";
     g_strSettingsPath = path.c_str();
   }
 
@@ -542,24 +536,22 @@ void user_shortcuts_init()
 
 int main (int argc, char* argv[])
 {
-  crt_init();
-
   streams_init();
-
+  
   gtk_disable_setlocale();
   gtk_init(&argc, &argv);
 
   // redirect Gtk warnings to the console
   g_log_set_handler ("Gdk", (GLogLevelFlags)(G_LOG_LEVEL_ERROR|G_LOG_LEVEL_CRITICAL|G_LOG_LEVEL_WARNING|
-                                             G_LOG_LEVEL_MESSAGE|G_LOG_LEVEL_INFO|G_LOG_LEVEL_DEBUG), error_redirect, 0);
+												G_LOG_LEVEL_MESSAGE | G_LOG_LEVEL_INFO | G_LOG_LEVEL_DEBUG | G_LOG_FLAG_FATAL | G_LOG_FLAG_RECURSION ), error_redirect, 0 );
   g_log_set_handler ("Gtk", (GLogLevelFlags)(G_LOG_LEVEL_ERROR|G_LOG_LEVEL_CRITICAL|G_LOG_LEVEL_WARNING|
-                                             G_LOG_LEVEL_MESSAGE|G_LOG_LEVEL_INFO|G_LOG_LEVEL_DEBUG), error_redirect, 0);
+												G_LOG_LEVEL_MESSAGE | G_LOG_LEVEL_INFO | G_LOG_LEVEL_DEBUG | G_LOG_FLAG_FATAL | G_LOG_FLAG_RECURSION ), error_redirect, 0 );
   g_log_set_handler ("GtkGLExt", (GLogLevelFlags)(G_LOG_LEVEL_ERROR|G_LOG_LEVEL_CRITICAL|G_LOG_LEVEL_WARNING|
-                                             G_LOG_LEVEL_MESSAGE|G_LOG_LEVEL_INFO|G_LOG_LEVEL_DEBUG), error_redirect, 0);
+													 G_LOG_LEVEL_MESSAGE | G_LOG_LEVEL_INFO | G_LOG_LEVEL_DEBUG | G_LOG_FLAG_FATAL | G_LOG_FLAG_RECURSION ), error_redirect, 0 );
   g_log_set_handler ("GLib", (GLogLevelFlags)(G_LOG_LEVEL_ERROR|G_LOG_LEVEL_CRITICAL|G_LOG_LEVEL_WARNING|
-                                             G_LOG_LEVEL_MESSAGE|G_LOG_LEVEL_INFO|G_LOG_LEVEL_DEBUG), error_redirect, 0);
+												 G_LOG_LEVEL_MESSAGE | G_LOG_LEVEL_INFO | G_LOG_LEVEL_DEBUG | G_LOG_FLAG_FATAL | G_LOG_FLAG_RECURSION ), error_redirect, 0 );
   g_log_set_handler (0, (GLogLevelFlags)(G_LOG_LEVEL_ERROR|G_LOG_LEVEL_CRITICAL|G_LOG_LEVEL_WARNING|
-                                             G_LOG_LEVEL_MESSAGE|G_LOG_LEVEL_INFO|G_LOG_LEVEL_DEBUG), error_redirect, 0);
+											G_LOG_LEVEL_MESSAGE | G_LOG_LEVEL_INFO | G_LOG_LEVEL_DEBUG | G_LOG_FLAG_FATAL | G_LOG_FLAG_RECURSION ), error_redirect, 0 );
 
   GlobalDebugMessageHandler::instance().setHandler(GlobalPopupDebugMessageHandler::instance());
 

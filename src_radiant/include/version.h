@@ -8,3 +8,6 @@
 #ifndef RADIANT_MINOR_VERSION
 #error no RADIANT_MINOR_VERSION defined
 #endif
+#ifndef RADIANT_PATCH_VERSION
+#error no RADIANT_PATCH_VERSION defined
+#endif

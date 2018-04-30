@@ -78,22 +78,18 @@ void QE_InitVFS()
 
   const char* gamename = gamename_get();
   const char* basegame = basegame_get();
-#if defined(POSIX)
   const char* userRoot = g_qeglobals.m_userEnginePath.c_str();
-#endif
   const char* globalRoot = EnginePath_get();
 
   // if we have a mod dir
   if(!string_equal(gamename, basegame))
   {
-#if defined(POSIX)
     // ~/.<gameprefix>/<fs_game>
-    {
+	if ( userRoot ) {
       StringOutputStream userGamePath(256);
       userGamePath << userRoot << gamename << '/';
       GlobalFileSystem().initDirectory(userGamePath.c_str());
     }
-#endif
 
     // <fs_basepath>/<fs_game>
     {
@@ -103,14 +99,12 @@ void QE_InitVFS()
     }
   }
 
-#if defined(POSIX)
   // ~/.<gameprefix>/<fs_main>
-  {
+  if ( userRoot ) {
     StringOutputStream userBasePath(256);
     userBasePath << userRoot << basegame << '/';
     GlobalFileSystem().initDirectory(userBasePath.c_str());
   }
-#endif
 
   // <fs_basepath>/<fs_main>
   {
@@ -170,24 +164,12 @@ bool ConfirmModified(const char* title)
   return true;
 }
 
-
-const char* const EXECUTABLE_TYPE = 
-#if defined(__linux__) || defined (__FreeBSD__)
-"x86"
-#elif defined(__APPLE__)
-"ppc"
-#elif defined(WIN32)
-"exe"
-#else
-#error "unknown platform"
-#endif
-;
-
 void bsp_init()
 {
   build_set_variable("RadiantPath", AppPath_get());
-  build_set_variable("ExecutableType", EXECUTABLE_TYPE);
+  build_set_variable("ExecutableType", RADIANT_EXECUTABLE);
   build_set_variable("EnginePath", EnginePath_get());
+  build_set_variable("UserEnginePath", g_qeglobals.m_userEnginePath.c_str());
   build_set_variable("MonitorAddress", (g_WatchBSP_Enabled) ? "127.0.0.1:39000" : "");
   build_set_variable("GameName", gamename_get());
 
