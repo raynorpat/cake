@@ -1,0 +1,184 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{04A5D9EE-EC49-4CBC-BD05-D80BC287897C}</ProjectGuid>
+    <Keyword>Win32Proj</Keyword>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <PlatformToolset>v140</PlatformToolset>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <PlatformToolset>v140</PlatformToolset>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="$(VCTargetsPath)Microsoft.CPP.UpgradeFromVC71.props" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="$(VCTargetsPath)Microsoft.CPP.UpgradeFromVC71.props" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup>
+    <_ProjectFileVersion>14.0.25431.1</_ProjectFileVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <OutDir>Debug\</OutDir>
+    <IntDir>Debug\</IntDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <OutDir>Release\</OutDir>
+    <IntDir>Release\</IntDir>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <Optimization>Disabled</Optimization>
+      <AdditionalIncludeDirectories>../include;../libs;../../STLport-4.6/stlport;../../libxml2-2.6/include;../../iconv-1.9/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_DEPRECATE;WIN32;_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <StringPooling>true</StringPooling>
+      <MinimalRebuild>true</MinimalRebuild>
+      <ExceptionHandling />
+      <BasicRuntimeChecks>Default</BasicRuntimeChecks>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <BufferSecurityCheck>false</BufferSecurityCheck>
+      <ForceConformanceInForLoopScope>true</ForceConformanceInForLoopScope>
+      <PrecompiledHeader />
+      <BrowseInformation />
+      <WarningLevel>Level3</WarningLevel>
+      <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
+      <DisableSpecificWarnings>4610;4510;4512;4505;4100;4127;%(DisableSpecificWarnings)</DisableSpecificWarnings>
+    </ClCompile>
+    <Lib>
+      <OutputFile>$(OutDir)include.lib</OutputFile>
+    </Lib>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <AdditionalIncludeDirectories>../include;../libs;../../STLport-4.6/stlport;../../libxml2-2.6/include;../../iconv-1.9/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_DEPRECATE;WIN32;NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <StringPooling>true</StringPooling>
+      <ExceptionHandling />
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <BufferSecurityCheck>false</BufferSecurityCheck>
+      <ForceConformanceInForLoopScope>true</ForceConformanceInForLoopScope>
+      <PrecompiledHeader />
+      <WarningLevel>Level4</WarningLevel>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <DisableSpecificWarnings>4610;4510;4512;4505;4100;4127;%(DisableSpecificWarnings)</DisableSpecificWarnings>
+    </ClCompile>
+    <Lib>
+      <OutputFile>$(OutDir)include.lib</OutputFile>
+    </Lib>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="cullable.cpp" />
+    <ClCompile Include="editable.cpp" />
+    <ClCompile Include="iarchive.cpp" />
+    <ClCompile Include="ibrush.cpp" />
+    <ClCompile Include="icamera.cpp" />
+    <ClCompile Include="idatastream.cpp" />
+    <ClCompile Include="ieclass.cpp" />
+    <ClCompile Include="ientity.cpp" />
+    <ClCompile Include="ifilesystem.cpp" />
+    <ClCompile Include="ifiletypes.cpp" />
+    <ClCompile Include="ifilter.cpp" />
+    <ClCompile Include="igl.cpp" />
+    <ClCompile Include="iglrender.cpp" />
+    <ClCompile Include="igtkgl.cpp" />
+    <ClCompile Include="iimage.cpp" />
+    <ClCompile Include="imap.cpp" />
+    <ClCompile Include="imodel.cpp" />
+    <ClCompile Include="ipatch.cpp" />
+    <ClCompile Include="iplugin.cpp" />
+    <ClCompile Include="ireference.cpp" />
+    <ClCompile Include="irender.cpp" />
+    <ClCompile Include="iscenegraph.cpp" />
+    <ClCompile Include="iscriplib.cpp" />
+    <ClCompile Include="iselection.cpp" />
+    <ClCompile Include="ishaders.cpp" />
+    <ClCompile Include="itexdef.cpp" />
+    <ClCompile Include="itextstream.cpp" />
+    <ClCompile Include="itextures.cpp" />
+    <ClCompile Include="itoolbar.cpp" />
+    <ClCompile Include="iundo.cpp" />
+    <ClCompile Include="mapfile.cpp" />
+    <ClCompile Include="modelskin.cpp" />
+    <ClCompile Include="moduleobserver.cpp" />
+    <ClCompile Include="modulesystem.cpp" />
+    <ClCompile Include="nameable.cpp" />
+    <ClCompile Include="namespace.cpp" />
+    <ClCompile Include="preferencesystem.cpp" />
+    <ClCompile Include="qerplugin.cpp" />
+    <ClCompile Include="renderable.cpp" />
+    <ClCompile Include="selectable.cpp" />
+    <ClCompile Include="windowobserver.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="cullable.h" />
+    <ClInclude Include="editable.h" />
+    <ClInclude Include="iarchive.h" />
+    <ClInclude Include="ibrush.h" />
+    <ClInclude Include="icamera.h" />
+    <ClInclude Include="idatastream.h" />
+    <ClInclude Include="ieclass.h" />
+    <ClInclude Include="ientity.h" />
+    <ClInclude Include="ifilesystem.h" />
+    <ClInclude Include="ifiletypes.h" />
+    <ClInclude Include="ifilter.h" />
+    <ClInclude Include="igl.h" />
+    <ClInclude Include="iglrender.h" />
+    <ClInclude Include="igtkgl.h" />
+    <ClInclude Include="iimage.h" />
+    <ClInclude Include="imap.h" />
+    <ClInclude Include="imodel.h" />
+    <ClInclude Include="ipatch.h" />
+    <ClInclude Include="iplugin.h" />
+    <ClInclude Include="ireference.h" />
+    <ClInclude Include="irender.h" />
+    <ClInclude Include="iscenegraph.h" />
+    <ClInclude Include="iscriplib.h" />
+    <ClInclude Include="iselection.h" />
+    <ClInclude Include="ishaders.h" />
+    <ClInclude Include="itexdef.h" />
+    <ClInclude Include="itextstream.h" />
+    <ClInclude Include="itextures.h" />
+    <ClInclude Include="itoolbar.h" />
+    <ClInclude Include="iundo.h" />
+    <ClInclude Include="mapfile.h" />
+    <ClInclude Include="modelskin.h" />
+    <ClInclude Include="moduleobserver.h" />
+    <ClInclude Include="modulesystem.h" />
+    <ClInclude Include="nameable.h" />
+    <ClInclude Include="namespace.h" />
+    <ClInclude Include="preferencesystem.h" />
+    <ClInclude Include="qerplugin.h" />
+    <ClInclude Include="renderable.h" />
+    <ClInclude Include="selectable.h" />
+    <ClInclude Include="stream_version.h" />
+    <ClInclude Include="warnings.h" />
+    <ClInclude Include="windowobserver.h" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>
