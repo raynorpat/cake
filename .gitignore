@@ -77,6 +77,12 @@ baseq2/video
 
 bin_nt/bsp_output.txt
 
+radiant/games
+radiant/*.game
+radiant/RADIANT_MAJOR
+radiant/RADIANT_MINOR
+radiant/RADIANT_PATCH
+
 *.lst
 *.bak
 *.tmp
