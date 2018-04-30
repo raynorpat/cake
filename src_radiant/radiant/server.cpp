@@ -204,7 +204,7 @@ public:
 
 class DynamicLibraryModule
 {
-  typedef void (RADIANT_DLLEXPORT* RegisterModulesFunc)(ModuleServer& server);
+  typedef void (RADIANT_DLLIMPORT* RegisterModulesFunc)(ModuleServer& server);
   DynamicLibrary m_library;
   RegisterModulesFunc m_registerModule;
 public:
